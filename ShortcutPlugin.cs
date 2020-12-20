@@ -22,7 +22,7 @@ namespace ShortcutPlugin
         public BarConfig()
         {
             ShortcutList = new List<Shortcut>();
-            Visibility = VisibilityMode.Slide;
+            Visibility = VisibilityMode.Always;
         }
     }
 
