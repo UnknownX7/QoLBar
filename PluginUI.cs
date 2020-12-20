@@ -157,7 +157,11 @@ namespace ShortcutPlugin
                                             plugin.ExecuteCommand(_command);
                                             break;
                                         case Shortcut.ShortcutType.Multiline:
-                                            plugin.ExecuteCommand(_command);
+                                            foreach (string c in _command.Split('\n'))
+                                            {
+                                                if (!string.IsNullOrEmpty(c))
+                                                    plugin.ExecuteCommand(c);
+                                            }
                                             break;
                                         default:
                                             break;
