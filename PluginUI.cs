@@ -176,17 +176,20 @@ namespace ShortcutPlugin
                                 ItemConfigPopup($"{name}{i}editItem{j}", sublist, j);
                             }
 
-                            if (!hideadd && ImGui.Selectable("                         +", false, ImGuiSelectableFlags.DontClosePopups, new Vector2(140, 20)))
+                            if (!hideadd)
                             {
-                                _inputname = string.Empty;
-                                _inputtype = 0;
-                                _inputcommand = string.Empty;
-                                _hideadd = false;
+                                if (ImGui.Selectable("                         +", false, ImGuiSelectableFlags.DontClosePopups, new Vector2(140, 20)))
+                                {
+                                    _inputname = string.Empty;
+                                    _inputtype = 0;
+                                    _inputcommand = string.Empty;
+                                    _hideadd = false;
 
-                                ImGui.OpenPopup($"{name}{i}addItem");
+                                    ImGui.OpenPopup($"{name}{i}addItem");
+                                }
+                                if (ImGui.IsItemHovered())
+                                    ImGui.SetTooltip("Add a new button.");
                             }
-                            if (ImGui.IsItemHovered())
-                                ImGui.SetTooltip("Add a new button.");
 
                             ItemConfigPopup($"{name}{i}addItem", sublist, -1);
 
