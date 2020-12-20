@@ -25,6 +25,7 @@ namespace ShortcutPlugin
         private float barY = window.Y - 1; // -1 so the bar will draw for a single frame to initialize variables on start
         private readonly ImGuiWindowFlags flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar
                 | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoSavedSettings;
+        private readonly int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
 
         private float _lastY, _curY, _nextY, _tweenProgress;
         private float _mx = 0f;
@@ -102,13 +103,14 @@ namespace ShortcutPlugin
                         switch (type)
                         {
                             case Shortcut.ShortcutType.Single:
-                                plugin.ExecuteCommand(command);
+                                if (!string.IsNullOrEmpty(command))
+                                    plugin.ExecuteCommand(command.Substring(0, Math.Min(command.Length, maxCommandLength)));
                                 break;
                             case Shortcut.ShortcutType.Multiline:
                                 foreach (string c in command.Split('\n'))
                                 {
                                     if (!string.IsNullOrEmpty(c))
-                                        plugin.ExecuteCommand(c);
+                                        plugin.ExecuteCommand(c.Substring(0, Math.Min(c.Length, maxCommandLength)));
                                 }
                                 break;
                             case Shortcut.ShortcutType.Category:
@@ -154,13 +156,14 @@ namespace ShortcutPlugin
                                     switch (_type)
                                     {
                                         case Shortcut.ShortcutType.Single:
-                                            plugin.ExecuteCommand(_command);
+                                            if (!string.IsNullOrEmpty(_command))
+                                                plugin.ExecuteCommand(_command.Substring(0, Math.Min(_command.Length, maxCommandLength)));
                                             break;
                                         case Shortcut.ShortcutType.Multiline:
                                             foreach (string c in _command.Split('\n'))
                                             {
                                                 if (!string.IsNullOrEmpty(c))
-                                                    plugin.ExecuteCommand(c);
+                                                    plugin.ExecuteCommand(c.Substring(0, Math.Min(c.Length, maxCommandLength)));
                                             }
                                             break;
                                         default:
@@ -270,18 +273,18 @@ namespace ShortcutPlugin
                         ImGui.Text("Command");
                         ImGui.SameLine();
                         ImGui.SetNextItemWidth(205);
-                        ImGui.InputText("##CommandInput", ref _inputcommand, 256);
+                        ImGui.InputText("##CommandInput", ref _inputcommand, (uint)maxCommandLength);
                         break;
                     case Shortcut.ShortcutType.Multiline:
                         ImGui.Text("Command");
                         ImGui.SameLine();
-                        ImGui.InputTextMultiline("##CommandInput", ref _inputcommand, 1024, new Vector2(205, 124));
+                        ImGui.InputTextMultiline("##CommandInput", ref _inputcommand, (uint)maxCommandLength * 15, new Vector2(205, 124));
                         break;
                     case Shortcut.ShortcutType.Category:
                         ImGui.Text("Tooltip");
                         ImGui.SameLine();
                         ImGui.SetNextItemWidth(223);
-                        ImGui.InputText("##CommandInput", ref _inputcommand, 256);
+                        ImGui.InputText("##CommandInput", ref _inputcommand, (uint)maxCommandLength);
 
                         ImGui.Text("Hide + Button");
                         ImGui.SameLine();
