@@ -339,7 +339,8 @@ namespace ShortcutPlugin
                 if (i >= 0)
                 {
                     ImGui.SameLine();
-                    ImGui.Button("Delete");
+                    if (ImGui.Button("Delete"))
+                        plugin.ExecuteCommand("/echo <se> Right click to delete!");
                     /*if (ImGui.IsItemClicked(1)) // Jesus christ I hate ImGui who made this function activate on PRESS AND NOT RELEASE??? THIS ISN'T A CLICK
                     {
                         shortcuts.RemoveAt(i);
