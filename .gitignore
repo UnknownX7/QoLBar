@@ -1,0 +1,10 @@
+
+obj/
+
+Attributes/
+
+.vs/
+
+bin/
+
+PluginCommandManager.cs
