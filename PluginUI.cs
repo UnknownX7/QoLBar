@@ -218,7 +218,7 @@ namespace ShortcutPlugin
                 {
                     _nextY = window.Y - barH;
 
-                    ImGui.SetTooltip("Add a new button.\nRight click for options.");
+                    ImGui.SetTooltip("Add a new button.\nRight click this for options.\nRight click other buttons to edit them.");
                 }
 
                 ImGui.OpenPopupOnItemClick("BarConfig", 1);
