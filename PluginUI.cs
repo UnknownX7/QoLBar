@@ -3,6 +3,7 @@ using System;
 using System.Numerics;
 using System.Collections.Generic;
 using static ShortcutPlugin.BarConfig;
+using Dalamud.Plugin;
 
 namespace ShortcutPlugin
 {
