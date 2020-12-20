@@ -1,4 +1,4 @@
-﻿using ImGuiNET;
+using ImGuiNET;
 using System;
 using System.Numerics;
 using System.Collections.Generic;
@@ -279,7 +279,7 @@ namespace ShortcutPlugin
                         ImGui.SetNextItemWidth(223);
                         ImGui.InputText("##CommandInput", ref _inputcommand, 256);
 
-                        ImGui.Text("Hide + button");
+                        ImGui.Text("Hide + Button");
                         ImGui.SameLine();
                         ImGui.Checkbox("##Hide+", ref _hideadd);
                         break;
