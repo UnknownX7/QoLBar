@@ -59,9 +59,9 @@ namespace ShortcutPlugin
 
             // Check if mouse is nearby
             if (barConfig.Visibility == VisibilityMode.Always || (Math.Abs(mousePos.X - barX) <= (barW / 2) && (window.Y - mousePos.Y) <= barH))
-                _nextY = window.Y - barH;
+                Reveal();
             else
-                _nextY = window.Y;
+                Hide();
 
             // Old invisible UI method just in case
             /*ImGui.SetNextWindowPos(new Vector2(window.X / 2, window.Y - barH / 1.75f), ImGuiCond.Always, new Vector2(0.5f, 0.0f));
@@ -69,7 +69,7 @@ namespace ShortcutPlugin
             ImGui.Begin("ShortcutBarMouseDetection", flags | ImGuiWindowFlags.NoBackground);
             if (ImGui.IsWindowHovered())
             {
-                _nextY = window.Y - barH;
+                Reveal();
 
                 ImGui.SetTooltip($"Math.Abs(mousePos.X - barX) {Math.Abs(mousePos.X - barX)} (barW / 2) {(barW / 2)} (window.Y - mousePos.Y) {(window.Y - mousePos.Y)} barh {barH}");
             }
@@ -86,7 +86,7 @@ namespace ShortcutPlugin
                 ImGui.Begin("ShortcutBar", flags);
 
                 if (ImGui.IsWindowHovered())
-                    _nextY = window.Y - barH;
+                    Reveal();
 
                 for (int i = 0; i < barConfig.ShortcutList.Count; i++)
                 {
@@ -100,7 +100,7 @@ namespace ShortcutPlugin
                         ItemClicked(type, command, $"{name}{i}Category");
                     if (ImGui.IsItemHovered())
                     {
-                        _nextY = window.Y - barH;
+                        Reveal();
                         _inputname = name; // Don't ask
                         _inputtype = (int)type;
                         _inputcommand = command;
@@ -117,7 +117,7 @@ namespace ShortcutPlugin
                         ImGui.SetNextWindowPos(new Vector2(_mx, _my - 6), ImGuiCond.Always, new Vector2(0.5f, 1.0f));
                         if (ImGui.BeginPopup($"{name}{i}Category"))
                         {
-                            _nextY = window.Y - barH;
+                            Reveal();
 
                             var sublist = _sh.SubList;
 
@@ -172,7 +172,7 @@ namespace ShortcutPlugin
 
                 if (ImGui.Button("+"))
                 {
-                    _nextY = window.Y - barH;
+                    Reveal();
                     _inputname = string.Empty;
                     _inputtype = 0;
                     _inputcommand = string.Empty;
@@ -182,7 +182,7 @@ namespace ShortcutPlugin
                 }
                 if (ImGui.IsItemHovered())
                 {
-                    _nextY = window.Y - barH;
+                    Reveal();
 
                     ImGui.SetTooltip("Add a new button.\nRight click this for options.\nRight click other buttons to edit them.");
                 }
@@ -208,9 +208,19 @@ namespace ShortcutPlugin
                 barY = _nextY;
         }
 
-        private void ItemClicked(Shortcut.ShortcutType type, string command, string categoryid = "")
+        private void Reveal()
         {
             _nextY = window.Y - barH;
+        }
+
+        private void Hide()
+        {
+            _nextY = window.Y;
+        }
+
+        private void ItemClicked(Shortcut.ShortcutType type, string command, string categoryid = "")
+        {
+            Reveal();
 
             switch (type)
             {
@@ -239,7 +249,7 @@ namespace ShortcutPlugin
         {
             if (ImGui.BeginPopup(id))
             {
-                _nextY = window.Y - barH;
+                Reveal();
 
                 ImGui.Text("Name");
                 ImGui.SameLine();
@@ -374,7 +384,7 @@ namespace ShortcutPlugin
         {
             if (ImGui.BeginPopup("BarConfig"))
             {
-                _nextY = window.Y - barH;
+                Reveal();
 
                 var _visibility = (int)barConfig.Visibility;
 
