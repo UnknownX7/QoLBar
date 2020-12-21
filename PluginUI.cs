@@ -97,31 +97,7 @@ namespace ShortcutPlugin
                     var hideadd = _sh.HideAdd;
 
                     if (ImGui.Button($"{name}##{i}"))
-                    {
-                        _nextY = window.Y - barH;
-
-                        switch (type)
-                        {
-                            case Shortcut.ShortcutType.Single:
-                                if (!string.IsNullOrEmpty(command))
-                                    plugin.ExecuteCommand(command.Substring(0, Math.Min(command.Length, maxCommandLength)));
-                                break;
-                            case Shortcut.ShortcutType.Multiline:
-                                foreach (string c in command.Split('\n'))
-                                {
-                                    if (!string.IsNullOrEmpty(c))
-                                        plugin.ExecuteCommand(c.Substring(0, Math.Min(c.Length, maxCommandLength)));
-                                }
-                                break;
-                            case Shortcut.ShortcutType.Category:
-                                ImGui.OpenPopup($"{name}{i}Category");
-                                _mx = mousePos.X;
-                                _my = mousePos.Y;
-                                break;
-                            default:
-                                break;
-                        }
-                    }
+                        ItemClicked(type, command, $"{name}{i}Category");
                     if (ImGui.IsItemHovered())
                     {
                         _nextY = window.Y - barH;
@@ -152,24 +128,7 @@ namespace ShortcutPlugin
                                 var _command = sublist[j].Command;
 
                                 if (ImGui.Selectable($"{_name}##{name} {i} {j}", false, ImGuiSelectableFlags.None, new Vector2(140, 20)))
-                                {
-                                    switch (_type)
-                                    {
-                                        case Shortcut.ShortcutType.Single:
-                                            if (!string.IsNullOrEmpty(_command))
-                                                plugin.ExecuteCommand(_command.Substring(0, Math.Min(_command.Length, maxCommandLength)));
-                                            break;
-                                        case Shortcut.ShortcutType.Multiline:
-                                            foreach (string c in _command.Split('\n'))
-                                            {
-                                                if (!string.IsNullOrEmpty(c))
-                                                    plugin.ExecuteCommand(c.Substring(0, Math.Min(c.Length, maxCommandLength)));
-                                            }
-                                            break;
-                                        default:
-                                            break;
-                                    }
-                                }
+                                    ItemClicked(_type, _command);
                                 if (ImGui.IsItemHovered())
                                 {
                                     _inputname = _name; // Don't ask
@@ -247,6 +206,33 @@ namespace ShortcutPlugin
 
             if (barConfig.Visibility == VisibilityMode.Immediate || barConfig.Visibility == VisibilityMode.Always)
                 barY = _nextY;
+        }
+
+        private void ItemClicked(Shortcut.ShortcutType type, string command, string categoryid = "")
+        {
+            _nextY = window.Y - barH;
+
+            switch (type)
+            {
+                case Shortcut.ShortcutType.Single:
+                    if (!string.IsNullOrEmpty(command))
+                        plugin.ExecuteCommand(command.Substring(0, Math.Min(command.Length, maxCommandLength)));
+                    break;
+                case Shortcut.ShortcutType.Multiline:
+                    foreach (string c in command.Split('\n'))
+                    {
+                        if (!string.IsNullOrEmpty(c))
+                            plugin.ExecuteCommand(c.Substring(0, Math.Min(c.Length, maxCommandLength)));
+                    }
+                    break;
+                case Shortcut.ShortcutType.Category:
+                    ImGui.OpenPopup(categoryid);
+                    _mx = mousePos.X;
+                    _my = mousePos.Y;
+                    break;
+                default:
+                    break;
+            }
         }
 
         private void ItemConfigPopup(string id, List<Shortcut> shortcuts, int i)
