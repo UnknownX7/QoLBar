@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
@@ -17,12 +17,27 @@ namespace ShortcutPlugin
             Immediate,
             Always
         }
-        public VisibilityMode Visibility;
+        public VisibilityMode Visibility = VisibilityMode.Always;
+        public enum BarAlign
+        {
+            LeftOrTop,
+            Center,
+            RightOrBottom
+        }
+        public BarAlign Alignment = BarAlign.Center;
+        public enum BarDock
+        {
+            Top,
+            Left,
+            Bottom,
+            Right,
+            Undocked
+        }
+        public BarDock DockSide = BarDock.Bottom;
 
         public BarConfig()
         {
             ShortcutList = new List<Shortcut>();
-            Visibility = VisibilityMode.Always;
         }
     }
 

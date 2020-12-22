@@ -19,15 +19,20 @@ namespace ShortcutPlugin
         private bool _hideadd = false;
         private static Vector2 window = ImGui.GetIO().DisplaySize;
         private static Vector2 mousePos = ImGui.GetIO().MousePos;
-        private float barW = 200;
-        private float barH = 38;
-        private float barX = window.X / 2;
-        private float barY = window.Y - 1; // -1 so the bar will draw for a single frame to initialize variables on start
+        private Vector2 barSize = new Vector2(200, 38);
+        private Vector2 barPos;
         private readonly ImGuiWindowFlags flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar
                 | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoSavedSettings;
         private readonly int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
+        private Vector2 piv = new Vector2();
+        private Vector2 hidePos = new Vector2();
+        private Vector2 revealPos = new Vector2();
+        private bool reverse = false;
 
-        private float _lastY, _curY, _nextY, _tweenProgress;
+        private bool _reveal = true;
+        private bool _lastReveal = true;
+        private Vector2 _tweenStart;
+        private float _tweenProgress = 1;
         private float _mx = 0f;
         private float _my = 0f;
 
@@ -39,49 +44,140 @@ namespace ShortcutPlugin
             plugin = p;
             this.config = config;
             barConfig = config.BarConfigs[0]; // For now, only one shortcut bar exists
+            SetupPosition();
+        }
 
-            _lastY = barY; // Previous Y before tweening was reset
-            _curY = barY; // Current tweening target for Y
-            _nextY = barY; // Resets Y tweening when changed
-            _tweenProgress = 0;
+        private void SetupPosition()
+        {
+            var pivX = 0.0f;
+            var pivY = 0.0f;
+            var defPos = 0.0f;
+            var offset = 0.0f;
+            switch (barConfig.DockSide)
+            {
+                case BarDock.Top: //    0.0 1.0, 0.5 1.0, 1.0 1.0 // 0 0(+H),    winX/2 0(+H),    winX 0(+H)
+                    pivY = 1.0f;
+                    defPos = 0.0f;
+                    reverse = false;
+                    break;
+                case BarDock.Left: //   1.0 0.0, 1.0 0.5, 1.0 1.0 // 0(+W) 0,    0(+W) winY/2,    0(+W) winY
+                    pivY = 1.0f;
+                    defPos = 0.0f;
+                    reverse = true;
+                    break;
+                case BarDock.Bottom: // 0.0 0.0, 0.5 0.0, 1.0 0.0 // 0 winY(-H), winX/2 winY(-H), winX winY(-H)
+                    pivY = 0.0f;
+                    defPos = window.Y;
+                    reverse = false;
+                    break;
+                case BarDock.Right: //  0.0 0.0, 0.0 0.5, 0.0 1.0 // winX(-W) 0, winX(-W) winY/2, winX(-W) winY
+                    pivY = 0.0f;
+                    defPos = window.X;
+                    reverse = true;
+                    break;
+                case BarDock.Undocked:
+                    break;
+                default:
+                    break;
+            }
+
+            switch (barConfig.Alignment)
+            {
+                case BarAlign.LeftOrTop:
+                    pivX = 0.0f;
+                    offset = 10;
+                    break;
+                case BarAlign.Center:
+                    pivX = 0.5f;
+                    break;
+                case BarAlign.RightOrBottom:
+                    pivX = 1.0f;
+                    offset = -10;
+                    break;
+                default:
+                    break;
+            }
+
+            if (!reverse)
+            {
+                piv.X = pivX;
+                piv.Y = pivY;
+
+                hidePos.X = window.X * pivX + offset;
+                hidePos.Y = defPos;
+                revealPos.X = hidePos.X;
+            }
+            else
+            {
+                piv.X = pivY;
+                piv.Y = pivX;
+
+                hidePos.X = defPos;
+                hidePos.Y = window.Y * pivX + offset;
+                revealPos.Y = hidePos.Y;
+            }
+
+            //PluginLog.Log($"piv {piv.X} {piv.Y} hide {hidePos.X} {hidePos.Y} reveal {revealPos.X} {revealPos.Y}");
+
+            barPos = revealPos;
+            _tweenStart = hidePos;
         }
 
         public void Draw()
         {
             if (!IsVisible || plugin.pluginInterface.ClientState.LocalPlayer == null) return;
 
-            // Refresh these to correct any window size changes
             var io = ImGui.GetIO();
             window = io.DisplaySize;
-            barX = window.X / 2;
-
             mousePos = io.MousePos;
 
+            switch (barConfig.DockSide)
+            {
+                case BarDock.Top:
+                    //barPos.X = revealPos.X;
+                    revealPos.Y = hidePos.Y + barSize.Y;
+                    break;
+                case BarDock.Left:
+                    revealPos.X = hidePos.X + barSize.X;
+                    //barPos.Y = revealPos.Y;
+                    break;
+                case BarDock.Bottom:
+                    //barPos.X = revealPos.X;
+                    revealPos.Y = hidePos.Y - barSize.Y;
+                    break;
+                case BarDock.Right:
+                    revealPos.X = hidePos.X - barSize.X;
+                    //barPos.Y = revealPos.Y;
+                    break;
+                case BarDock.Undocked:
+                    break;
+                default:
+                    break;
+            }
+
             // Check if mouse is nearby
-            if (barConfig.Visibility == VisibilityMode.Always || (Math.Abs(mousePos.X - barX) <= (barW / 2) && (window.Y - mousePos.Y) <= barH))
+            /*if (barConfig.Visibility == VisibilityMode.Always || (Math.Abs(mousePos.X - barPos.X) <= (barSize.X / 2) && (window.Y - mousePos.Y) <= barSize.Y))
+                Reveal();
+            else
+                Hide();*/
+
+            // Invisible UI to check if the mouse is nearby
+            ImGui.SetNextWindowPos(revealPos, ImGuiCond.Always, piv);
+            ImGui.SetNextWindowSize(barSize);
+            ImGui.Begin("ShortcutBarMouseDetection", flags | ImGuiWindowFlags.NoBackground);
+            if (barConfig.Visibility == VisibilityMode.Always || ImGui.IsWindowHovered())
                 Reveal();
             else
                 Hide();
+            ImGui.End();
 
-            // Old invisible UI method just in case
-            /*ImGui.SetNextWindowPos(new Vector2(window.X / 2, window.Y - barH / 1.75f), ImGuiCond.Always, new Vector2(0.5f, 0.0f));
-            ImGui.SetNextWindowSize(new Vector2(barW, barH / 1.75f));
-            ImGui.Begin("ShortcutBarMouseDetection", flags | ImGuiWindowFlags.NoBackground);
-            if (ImGui.IsWindowHovered())
-            {
-                Reveal();
-
-                ImGui.SetTooltip($"Math.Abs(mousePos.X - barX) {Math.Abs(mousePos.X - barX)} (barW / 2) {(barW / 2)} (window.Y - mousePos.Y) {(window.Y - mousePos.Y)} barh {barH}");
-            }
-            ImGui.End();*/
-
-            if (barY != window.Y || _nextY != window.Y) // Don't bother to render when fully off screen
+            if (_reveal || barPos != hidePos) // Don't bother to render when fully off screen
             {
                 ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0);
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0);
 
-                ImGui.SetNextWindowPos(new Vector2(barX, barY), ImGuiCond.Always, new Vector2(0.5f, 0.0f));
-                ImGui.SetNextWindowSize(new Vector2(barW, barH));
+                ImGui.SetNextWindowPos(barPos, ImGuiCond.Always, piv);
+                ImGui.SetNextWindowSize(barSize);
 
                 ImGui.Begin("ShortcutBar", flags);
 
@@ -196,26 +292,31 @@ namespace ShortcutPlugin
                 // I hope this works
                 ImGui.SameLine();
                 //PluginLog.Log($"{ImGui.GetCursorPosX()} {ImGui.GetCursorPosY()}");
-                barW = ImGui.GetCursorPosX();
+                barSize.X = ImGui.GetCursorPosX();
 
                 ImGui.End();
             }
 
             if (barConfig.Visibility == VisibilityMode.Slide)
-                TweenPositionY();
+                TweenPosition();
 
             if (barConfig.Visibility == VisibilityMode.Immediate || barConfig.Visibility == VisibilityMode.Always)
-                barY = _nextY;
+            {
+                if (_reveal)
+                    barPos = revealPos;
+                else
+                    barPos = hidePos;
+            }
         }
 
         private void Reveal()
         {
-            _nextY = window.Y - barH;
+            _reveal = true;
         }
 
         private void Hide()
         {
-            _nextY = window.Y;
+            _reveal = false;
         }
 
         private void ItemClicked(Shortcut.ShortcutType type, string command, string categoryid = "")
@@ -356,7 +457,7 @@ namespace ShortcutPlugin
                             config.Save();
                             ImGui.CloseCurrentPopup();
                         }
-                    }    
+                    }
 
                     ImGui.SameLine();
                     if (ImGui.Button((shortcuts == barConfig.ShortcutList) ? "→" : "↓") && i < (shortcuts.Count - 1))
@@ -386,8 +487,27 @@ namespace ShortcutPlugin
             {
                 Reveal();
 
-                var _visibility = (int)barConfig.Visibility;
+                var _dock = (int)barConfig.DockSide;
+                ImGui.Text("Bar Side");
+                ImGui.SameLine();
+                if (ImGui.Combo("##Dock", ref _dock, "Top\0Left\0Bottom\0Right\0Undocked"))
+                {
+                    barConfig.DockSide = (BarDock)_dock;
+                    config.Save();
+                    SetupPosition();
+                }
 
+                var _align = (int)barConfig.Alignment;
+                ImGui.Text("Bar Alignment");
+                ImGui.SameLine();
+                if (ImGui.Combo("##Alignment", ref _align, "Left\0Center\0Right"))
+                {
+                    barConfig.Alignment = (BarAlign)_align;
+                    config.Save();
+                    SetupPosition();
+                }
+
+                var _visibility = (int)barConfig.Visibility;
                 ImGui.Text("Bar Animation");
                 ImGui.SameLine();
                 if (ImGui.Combo("##Animation", ref _visibility, "Slide\0Immediate\0Always Visible"))
@@ -400,16 +520,35 @@ namespace ShortcutPlugin
             }
         }
         
-        public void Dispose()
+        private void TweenPosition()
         {
-
-        }
-
-        private void TweenPositionY()
-        {
-            if (_curY != _nextY)
+            if (_reveal != _lastReveal)
             {
-                _lastY = barY;
+                _lastReveal = _reveal;
+                _tweenStart = barPos;
+                _tweenProgress = 0;
+            }
+
+            if (_tweenProgress >= 1)
+            {
+                barPos = _reveal ? revealPos : hidePos;
+            }
+            else
+            {
+                var dt = ImGui.GetIO().DeltaTime * 2;
+                _tweenProgress = Math.Min(_tweenProgress + dt, 1);
+
+                var x = -1 * ((float)Math.Pow(_tweenProgress - 1, 4) - 1); // Quartic ease out
+                var deltaX = ((_reveal ? revealPos.X : hidePos.X) - _tweenStart.X) * x;
+                var deltaY = ((_reveal ? revealPos.Y : hidePos.Y) - _tweenStart.Y) * x;
+
+                barPos.X = _tweenStart.X + deltaX;
+                barPos.Y = _tweenStart.Y + deltaY;
+            }
+
+            /*if (_curY != _nextY)
+            {
+                _lastY = barPos.Y;
                 _curY = _nextY;
                 _tweenProgress = 0;
             }
@@ -418,7 +557,12 @@ namespace ShortcutPlugin
 
             var delta = _curY - _lastY;
             delta *= -1 * ((float)Math.Pow(_tweenProgress - 1, 4) - 1); // Quartic ease out
-            barY = _lastY + delta;
+            barPos.Y = _lastY + delta;*/
+        }
+
+        public void Dispose()
+        {
+
         }
     }
 }
