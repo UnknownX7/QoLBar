@@ -31,7 +31,8 @@ namespace ShortcutPlugin
             Left,
             Bottom,
             Right,
-            Undocked
+            UndockedH,
+            UndockedV
         }
         public BarDock DockSide = BarDock.Bottom;
         public float ButtonWidth = 64;

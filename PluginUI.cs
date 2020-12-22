@@ -75,7 +75,10 @@ namespace ShortcutPlugin
                     defPos = window.X;
                     vertical = true;
                     break;
-                case BarDock.Undocked:
+                case BarDock.UndockedH:
+                    break;
+                case BarDock.UndockedV:
+                    vertical = true;
                     break;
                 default:
                     break;
@@ -145,7 +148,9 @@ namespace ShortcutPlugin
                 case BarDock.Right:
                     revealPos.X = hidePos.X - barSize.X;
                     break;
-                case BarDock.Undocked:
+                case BarDock.UndockedH:
+                    break;
+                case BarDock.UndockedV:
                     break;
                 default:
                     break;
@@ -487,36 +492,49 @@ namespace ShortcutPlugin
                 var _dock = (int)barConfig.DockSide;
                 ImGui.Text("Bar Side");
                 ImGui.SameLine();
-                if (ImGui.Combo("##Dock", ref _dock, "Top\0Left\0Bottom\0Right\0Undocked"))
+                if (ImGui.Combo("##Dock", ref _dock, "Top\0Left\0Bottom\0Right\0Undocked\0Undocked (Vertical)"))
                 {
                     barConfig.DockSide = (BarDock)_dock;
                     config.Save();
                     SetupPosition();
                 }
 
-                var _align = (int)barConfig.Alignment;
-                ImGui.Text("Bar Alignment");
-                ImGui.SameLine();
-                if (ImGui.Combo("##Alignment", ref _align, vertical ? "Top\0Center\0Bottom" : "Left\0Center\0Right"))
+                if (barConfig.DockSide != BarDock.UndockedH && barConfig.DockSide != BarDock.UndockedV)
                 {
-                    barConfig.Alignment = (BarAlign)_align;
-                    config.Save();
-                    SetupPosition();
+                    var _align = (int)barConfig.Alignment;
+                    ImGui.Text("Bar Alignment");
+                    ImGui.SameLine();
+                    if (ImGui.Combo("##Alignment", ref _align, vertical ? "Top\0Center\0Bottom" : "Left\0Center\0Right"))
+                    {
+                        barConfig.Alignment = (BarAlign)_align;
+                        config.Save();
+                        SetupPosition();
+                    }
+
+                    var _visibility = (int)barConfig.Visibility;
+                    ImGui.Text("Bar Animation");
+                    ImGui.SameLine();
+                    if (ImGui.Combo("##Animation", ref _visibility, "Slide\0Immediate\0Always Visible"))
+                    {
+                        barConfig.Visibility = (VisibilityMode)_visibility;
+                        config.Save();
+                    }
                 }
 
-                var _visibility = (int)barConfig.Visibility;
-                ImGui.Text("Bar Animation");
-                ImGui.SameLine();
-                if (ImGui.Combo("##Animation", ref _visibility, "Slide\0Immediate\0Always Visible"))
+                if (vertical)
                 {
-                    barConfig.Visibility = (VisibilityMode)_visibility;
-                    config.Save();
+                    ImGui.Text("Button Width");
+                    ImGui.SameLine();
+                    if (ImGui.SliderFloat("##ButtonWidth", ref barConfig.ButtonWidth, 16, 200))
+                        config.Save();
                 }
 
-                ImGui.Text("Button Width");
-                ImGui.SameLine();
-                if (ImGui.SliderFloat("##ButtonWidth", ref barConfig.ButtonWidth, 16, 200))
-                    config.Save();
+                // Clamp popup to screen
+                var _lastPos = ImGui.GetWindowPos();
+                var _size = ImGui.GetWindowSize();
+                var _x = Math.Min(Math.Max(_lastPos.X, 0), window.X - _size.X);
+                var _y = Math.Min(Math.Max(_lastPos.Y, 0), window.Y - _size.Y);
+                ImGui.SetWindowPos(new Vector2(_x, _y));
 
                 ImGui.EndPopup();
             }
