@@ -27,7 +27,7 @@ namespace ShortcutPlugin
         private Vector2 piv = new Vector2();
         private Vector2 hidePos = new Vector2();
         private Vector2 revealPos = new Vector2();
-        private bool reverse = false;
+        private bool vertical = false;
 
         private bool _reveal = true;
         private bool _lastReveal = true;
@@ -58,22 +58,22 @@ namespace ShortcutPlugin
                 case BarDock.Top: //    0.0 1.0, 0.5 1.0, 1.0 1.0 // 0 0(+H),    winX/2 0(+H),    winX 0(+H)
                     pivY = 1.0f;
                     defPos = 0.0f;
-                    reverse = false;
+                    vertical = false;
                     break;
                 case BarDock.Left: //   1.0 0.0, 1.0 0.5, 1.0 1.0 // 0(+W) 0,    0(+W) winY/2,    0(+W) winY
                     pivY = 1.0f;
                     defPos = 0.0f;
-                    reverse = true;
+                    vertical = true;
                     break;
                 case BarDock.Bottom: // 0.0 0.0, 0.5 0.0, 1.0 0.0 // 0 winY(-H), winX/2 winY(-H), winX winY(-H)
                     pivY = 0.0f;
                     defPos = window.Y;
-                    reverse = false;
+                    vertical = false;
                     break;
                 case BarDock.Right: //  0.0 0.0, 0.0 0.5, 0.0 1.0 // winX(-W) 0, winX(-W) winY/2, winX(-W) winY
                     pivY = 0.0f;
                     defPos = window.X;
-                    reverse = true;
+                    vertical = true;
                     break;
                 case BarDock.Undocked:
                     break;
@@ -98,7 +98,7 @@ namespace ShortcutPlugin
                     break;
             }
 
-            if (!reverse)
+            if (!vertical)
             {
                 piv.X = pivX;
                 piv.Y = pivY;
@@ -188,7 +188,7 @@ namespace ShortcutPlugin
                     var command = _sh.Command;
                     var hideadd = _sh.HideAdd;
 
-                    if (!reverse ? ImGui.Button($"{name}##{i}") : ImGui.Button($"{name}##{i}", new Vector2(barConfig.ButtonWidth, 23)))
+                    if (!vertical ? ImGui.Button($"{name}##{i}") : ImGui.Button($"{name}##{i}", new Vector2(barConfig.ButtonWidth, 23)))
                         ItemClicked(type, command, $"{name}{i}Category");
                     if (ImGui.IsItemHovered())
                     {
@@ -259,11 +259,11 @@ namespace ShortcutPlugin
 
                     ItemConfigPopup($"editItem{i}", barConfig.ShortcutList, i);
 
-                    if (!reverse)
+                    if (!vertical)
                         ImGui.SameLine();
                 }
 
-                if (!reverse ? ImGui.Button("+") : ImGui.Button("+", new Vector2(barConfig.ButtonWidth, 23)))
+                if (!vertical ? ImGui.Button("+") : ImGui.Button("+", new Vector2(barConfig.ButtonWidth, 23)))
                 {
                     Reveal();
                     _inputname = string.Empty;
@@ -497,7 +497,7 @@ namespace ShortcutPlugin
                 var _align = (int)barConfig.Alignment;
                 ImGui.Text("Bar Alignment");
                 ImGui.SameLine();
-                if (ImGui.Combo("##Alignment", ref _align, reverse ? "Top\0Center\0Bottom" : "Left\0Center\0Right"))
+                if (ImGui.Combo("##Alignment", ref _align, vertical ? "Top\0Center\0Bottom" : "Left\0Center\0Right"))
                 {
                     barConfig.Alignment = (BarAlign)_align;
                     config.Save();
