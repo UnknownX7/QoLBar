@@ -134,20 +134,16 @@ namespace ShortcutPlugin
             switch (barConfig.DockSide)
             {
                 case BarDock.Top:
-                    //barPos.X = revealPos.X;
                     revealPos.Y = hidePos.Y + barSize.Y;
                     break;
                 case BarDock.Left:
                     revealPos.X = hidePos.X + barSize.X;
-                    //barPos.Y = revealPos.Y;
                     break;
                 case BarDock.Bottom:
-                    //barPos.X = revealPos.X;
                     revealPos.Y = hidePos.Y - barSize.Y;
                     break;
                 case BarDock.Right:
                     revealPos.X = hidePos.X - barSize.X;
-                    //barPos.Y = revealPos.Y;
                     break;
                 case BarDock.Undocked:
                     break;
@@ -192,7 +188,7 @@ namespace ShortcutPlugin
                     var command = _sh.Command;
                     var hideadd = _sh.HideAdd;
 
-                    if (ImGui.Button($"{name}##{i}"))
+                    if (!reverse ? ImGui.Button($"{name}##{i}") : ImGui.Button($"{name}##{i}", new Vector2(barConfig.ButtonWidth, 23)))
                         ItemClicked(type, command, $"{name}{i}Category");
                     if (ImGui.IsItemHovered())
                     {
@@ -263,10 +259,11 @@ namespace ShortcutPlugin
 
                     ItemConfigPopup($"editItem{i}", barConfig.ShortcutList, i);
 
-                    ImGui.SameLine();
+                    if (!reverse)
+                        ImGui.SameLine();
                 }
 
-                if (ImGui.Button("+"))
+                if (!reverse ? ImGui.Button("+") : ImGui.Button("+", new Vector2(barConfig.ButtonWidth, 23)))
                 {
                     Reveal();
                     _inputname = string.Empty;
@@ -289,10 +286,10 @@ namespace ShortcutPlugin
 
                 BarConfigPopup();
 
-                // I hope this works
+                barSize.Y = ImGui.GetCursorPosY() + 4;
                 ImGui.SameLine();
-                //PluginLog.Log($"{ImGui.GetCursorPosX()} {ImGui.GetCursorPosY()}");
                 barSize.X = ImGui.GetCursorPosX();
+                //PluginLog.Log($"{ImGui.GetCursorPosX()} {ImGui.GetCursorPosY()}");
 
                 ImGui.End();
             }
@@ -500,7 +497,7 @@ namespace ShortcutPlugin
                 var _align = (int)barConfig.Alignment;
                 ImGui.Text("Bar Alignment");
                 ImGui.SameLine();
-                if (ImGui.Combo("##Alignment", ref _align, "Left\0Center\0Right"))
+                if (ImGui.Combo("##Alignment", ref _align, reverse ? "Top\0Center\0Bottom" : "Left\0Center\0Right"))
                 {
                     barConfig.Alignment = (BarAlign)_align;
                     config.Save();
@@ -515,6 +512,11 @@ namespace ShortcutPlugin
                     barConfig.Visibility = (VisibilityMode)_visibility;
                     config.Save();
                 }
+
+                ImGui.Text("Button Width");
+                ImGui.SameLine();
+                if (ImGui.SliderFloat("##ButtonWidth", ref barConfig.ButtonWidth, 16, 200))
+                    config.Save();
 
                 ImGui.EndPopup();
             }
@@ -545,19 +547,6 @@ namespace ShortcutPlugin
                 barPos.X = _tweenStart.X + deltaX;
                 barPos.Y = _tweenStart.Y + deltaY;
             }
-
-            /*if (_curY != _nextY)
-            {
-                _lastY = barPos.Y;
-                _curY = _nextY;
-                _tweenProgress = 0;
-            }
-            var dt = ImGui.GetIO().DeltaTime * 2;
-            _tweenProgress = Math.Min(_tweenProgress + dt, 1);
-
-            var delta = _curY - _lastY;
-            delta *= -1 * ((float)Math.Pow(_tweenProgress - 1, 4) - 1); // Quartic ease out
-            barPos.Y = _lastY + delta;*/
         }
 
         public void Dispose()
