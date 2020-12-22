@@ -472,12 +472,7 @@ namespace ShortcutPlugin
                     }
                 }
 
-                // Clamp popup to screen
-                var _lastPos = ImGui.GetWindowPos();
-                var _size = ImGui.GetWindowSize();
-                var _x = Math.Min(Math.Max(_lastPos.X, 0), window.X - _size.X);
-                var _y = Math.Min(Math.Max(_lastPos.Y, 0), window.Y - _size.Y);
-                ImGui.SetWindowPos(new Vector2(_x, _y));
+                ClampWindowPos();
 
                 ImGui.EndPopup();
             }
@@ -529,15 +524,19 @@ namespace ShortcutPlugin
                         config.Save();
                 }
 
-                // Clamp popup to screen
-                var _lastPos = ImGui.GetWindowPos();
-                var _size = ImGui.GetWindowSize();
-                var _x = Math.Min(Math.Max(_lastPos.X, 0), window.X - _size.X);
-                var _y = Math.Min(Math.Max(_lastPos.Y, 0), window.Y - _size.Y);
-                ImGui.SetWindowPos(new Vector2(_x, _y));
+                ClampWindowPos();
 
                 ImGui.EndPopup();
             }
+        }
+
+        private void ClampWindowPos()
+        {
+            var _lastPos = ImGui.GetWindowPos();
+            var _size = ImGui.GetWindowSize();
+            var _x = Math.Min(Math.Max(_lastPos.X, 0), window.X - _size.X);
+            var _y = Math.Min(Math.Max(_lastPos.Y, 0), window.Y - _size.Y);
+            ImGui.SetWindowPos(new Vector2(_x, _y));
         }
         
         private void TweenPosition()
