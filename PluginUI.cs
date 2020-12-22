@@ -525,7 +525,7 @@ namespace ShortcutPlugin
                 {
                     ImGui.Text("Button Width");
                     ImGui.SameLine();
-                    if (ImGui.SliderFloat("##ButtonWidth", ref barConfig.ButtonWidth, 16, 200))
+                    if (ImGui.SliderInt("##ButtonWidth", ref barConfig.ButtonWidth, 16, 200))
                         config.Save();
                 }
 

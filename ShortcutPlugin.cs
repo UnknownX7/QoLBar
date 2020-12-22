@@ -35,7 +35,7 @@ namespace ShortcutPlugin
             UndockedV
         }
         public BarDock DockSide = BarDock.Bottom;
-        public float ButtonWidth = 64;
+        public int ButtonWidth = 64;
 
         public BarConfig()
         {
