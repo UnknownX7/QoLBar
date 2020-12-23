@@ -261,14 +261,8 @@ namespace ShortcutPlugin
 
             if (barConfig.Visibility == VisibilityMode.Slide)
                 TweenPosition();
-
-            if (barConfig.Visibility == VisibilityMode.Immediate || barConfig.Visibility == VisibilityMode.Always)
-            {
-                if (_reveal)
-                    barPos = revealPos;
-                else
-                    barPos = hidePos;
-            }
+            else
+                barPos = _reveal ? revealPos : hidePos;
 
             _firstframe = false;
         }
