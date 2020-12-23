@@ -21,8 +21,7 @@ namespace ShortcutPlugin
         private static Vector2 mousePos = ImGui.GetIO().MousePos;
         private Vector2 barSize = new Vector2(200, 38);
         private Vector2 barPos;
-        private readonly ImGuiWindowFlags flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar
-                | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoSavedSettings;
+        private ImGuiWindowFlags flags;
         private readonly int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
         private Vector2 piv = new Vector2();
         private Vector2 hidePos = new Vector2();
@@ -156,6 +155,16 @@ namespace ShortcutPlugin
             }
         }
 
+        public void SetupImGuiFlags()
+        {
+            flags = ImGuiWindowFlags.None;
+
+            flags |= ImGuiWindowFlags.NoDecoration;
+            flags |= ImGuiWindowFlags.NoMove;
+            flags |= ImGuiWindowFlags.NoScrollWithMouse;
+            flags |= ImGuiWindowFlags.NoSavedSettings;
+        }
+
         public void Draw()
         {
             if (!IsVisible) return;
@@ -176,6 +185,7 @@ namespace ShortcutPlugin
                 ImGui.SetNextWindowPos(barPos, ImGuiCond.Always, piv);
                 ImGui.SetNextWindowSize(barSize);
 
+                SetupImGuiFlags();
                 ImGui.Begin("ShortcutBar", flags);
 
                 if (ImGui.IsWindowHovered())
@@ -208,7 +218,7 @@ namespace ShortcutPlugin
             // Invisible UI to check if the mouse is nearby
             ImGui.SetNextWindowPos(revealPos, ImGuiCond.Always, piv);
             ImGui.SetNextWindowSize(barSize);
-            ImGui.Begin("ShortcutBarMouseDetection", flags | ImGuiWindowFlags.NoBackground);
+            ImGui.Begin("ShortcutBarMouseDetection", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoBringToFrontOnFocus);
             if (barConfig.Visibility == VisibilityMode.Always || ImGui.IsWindowHovered())
                 Reveal();
             else
