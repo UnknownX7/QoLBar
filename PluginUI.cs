@@ -513,7 +513,7 @@ namespace ShortcutPlugin
                 var _dock = (int)barConfig.DockSide;
                 ImGui.Text("Bar Side");
                 ImGui.SameLine();
-                if (ImGui.Combo("##Dock", ref _dock, "Top\0Left\0Bottom\0Right\0Undocked\0Undocked (Vertical)"))
+                if (ImGui.Combo("##Dock", ref _dock, "Top\0Left\0Bottom\0Right"))
                 {
                     barConfig.DockSide = (BarDock)_dock;
                     config.Save();
