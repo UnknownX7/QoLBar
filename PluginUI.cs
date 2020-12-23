@@ -208,7 +208,7 @@ namespace ShortcutPlugin
                     if (ImGui.IsItemHovered())
                     {
                         Reveal();
-                        _inputname = name; // Don't ask
+                        _inputname = name;
                         _inputtype = (int)type;
                         _inputcommand = command;
                         _hideadd = hideadd;
@@ -352,7 +352,7 @@ namespace ShortcutPlugin
                         ItemClicked(_type, _command);
                     if (ImGui.IsItemHovered())
                     {
-                        _inputname = _name; // Don't ask
+                        _inputname = _name;
                         _inputtype = (int)_type;
                         _inputcommand = _command;
                         _hideadd = false;
