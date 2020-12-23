@@ -203,7 +203,7 @@ namespace ShortcutPlugin
                     var command = _sh.Command;
                     var hideadd = _sh.HideAdd;
 
-                    if (!vertical ? ImGui.Button($"{name}##{i}") : ImGui.Button($"{name}##{i}", new Vector2(barConfig.ButtonWidth, 23)))
+                    if ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button($"{name}##{i}") : ImGui.Button($"{name}##{i}", new Vector2(barConfig.ButtonWidth, 23)))
                         ItemClicked(type, command, $"{name}{i}Category");
                     if (ImGui.IsItemHovered())
                     {
@@ -228,7 +228,7 @@ namespace ShortcutPlugin
                         ImGui.SameLine();
                 }
 
-                if (!vertical ? ImGui.Button("+") : ImGui.Button("+", new Vector2(barConfig.ButtonWidth, 23)))
+                if ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button("+") : ImGui.Button("+", new Vector2(barConfig.ButtonWidth, 23)))
                 {
                     Reveal();
                     _inputname = string.Empty;
@@ -546,7 +546,14 @@ namespace ShortcutPlugin
                     }
                 }
 
-                if (vertical)
+                if (!vertical)
+                {
+                    ImGui.Text("Automatic Button Width");
+                    ImGui.SameLine();
+                    ImGui.Checkbox("##AutoButtonWidth", ref barConfig.AutoButtonWidth);
+                }
+
+                if (vertical || !barConfig.AutoButtonWidth)
                 {
                     ImGui.Text("Button Width");
                     ImGui.SameLine();

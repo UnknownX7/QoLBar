@@ -36,6 +36,7 @@ namespace ShortcutPlugin
         }
         public BarDock DockSide = BarDock.Bottom;
         public int ButtonWidth = 64;
+        public bool AutoButtonWidth = false;
 
         public BarConfig()
         {
