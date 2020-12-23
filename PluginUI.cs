@@ -29,6 +29,7 @@ namespace ShortcutPlugin
         private Vector2 revealPos = new Vector2();
         private bool vertical = false;
 
+        private bool _firstframe = true;
         private bool _reveal = true;
         private bool _lastReveal = true;
         private Vector2 _tweenStart;
@@ -124,18 +125,14 @@ namespace ShortcutPlugin
 
             //PluginLog.Log($"piv {piv.X} {piv.Y} hide {hidePos.X} {hidePos.Y} reveal {revealPos.X} {revealPos.Y}");
 
-            barPos = revealPos;
+            SetupRevealPosition();
+
+            barPos = hidePos;
             _tweenStart = hidePos;
         }
 
-        public void Draw()
+        public void SetupRevealPosition()
         {
-            if (!IsVisible) return;
-
-            var io = ImGui.GetIO();
-            window = io.DisplaySize;
-            mousePos = io.MousePos;
-
             switch (barConfig.DockSide)
             {
                 case BarDock.Top:
@@ -157,6 +154,17 @@ namespace ShortcutPlugin
                 default:
                     break;
             }
+        }
+
+        public void Draw()
+        {
+            if (!IsVisible) return;
+
+            var io = ImGui.GetIO();
+            window = io.DisplaySize;
+            mousePos = io.MousePos;
+
+            SetupRevealPosition();
 
             // Check if mouse is nearby
             /*if (barConfig.Visibility == VisibilityMode.Always || (Math.Abs(mousePos.X - barPos.X) <= (barSize.X / 2) && (window.Y - mousePos.Y) <= barSize.Y))
@@ -174,7 +182,7 @@ namespace ShortcutPlugin
                 Hide();
             ImGui.End();
 
-            if (_reveal || barPos != hidePos) // Don't bother to render when fully off screen
+            if (_firstframe || _reveal || barPos != hidePos) // Don't bother to render when fully off screen
             {
                 ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0);
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0);
@@ -261,6 +269,8 @@ namespace ShortcutPlugin
                 else
                     barPos = hidePos;
             }
+
+            _firstframe = false;
         }
 
         private void Reveal()
