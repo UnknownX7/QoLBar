@@ -28,8 +28,11 @@ namespace ShortcutPlugin
         private Vector2 revealPos = new Vector2();
         private bool vertical = false;
 
-        private bool _firstframe = true;
         private bool _reveal = true;
+        private void Reveal() => _reveal = true;
+        private void Hide() => _reveal = false;
+
+        private bool _firstframe = true;
         private bool _lastReveal = true;
         private Vector2 _tweenStart;
         private float _tweenProgress = 1;
@@ -284,16 +287,6 @@ namespace ShortcutPlugin
             ImGui.OpenPopupOnItemClick("BarConfig", 1);
 
             ItemConfigPopup("addItem", barConfig.ShortcutList, -1);
-        }
-
-        private void Reveal()
-        {
-            _reveal = true;
-        }
-
-        private void Hide()
-        {
-            _reveal = false;
         }
 
         private void ItemClicked(Shortcut.ShortcutType type, string command, string categoryid = "")
