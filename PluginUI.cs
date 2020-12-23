@@ -166,6 +166,39 @@ namespace ShortcutPlugin
 
             SetupRevealPosition();
 
+            CheckMouse();
+
+            if (_firstframe || _reveal || barPos != hidePos) // Don't bother to render when fully off screen
+            {
+                ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0);
+                ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0);
+
+                ImGui.SetNextWindowPos(barPos, ImGuiCond.Always, piv);
+                ImGui.SetNextWindowSize(barSize);
+
+                ImGui.Begin("ShortcutBar", flags);
+
+                if (ImGui.IsWindowHovered())
+                    Reveal();
+
+                DrawItems();
+
+                DrawAddButton();
+
+                BarConfigPopup();
+
+                SetBarSize();
+
+                ImGui.End();
+            }
+
+            SetBarPosition();
+
+            _firstframe = false;
+        }
+
+        private void CheckMouse()
+        {
             // Check if mouse is nearby
             /*if (barConfig.Visibility == VisibilityMode.Always || (Math.Abs(mousePos.X - barPos.X) <= (barSize.X / 2) && (window.Y - mousePos.Y) <= barSize.Y))
                 Reveal();
@@ -181,90 +214,66 @@ namespace ShortcutPlugin
             else
                 Hide();
             ImGui.End();
+        }
 
-            if (_firstframe || _reveal || barPos != hidePos) // Don't bother to render when fully off screen
+        private void DrawItems()
+        {
+            for (int i = 0; i < barConfig.ShortcutList.Count; i++)
             {
-                ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0);
-                ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0);
+                var _sh = barConfig.ShortcutList[i];
+                var name = _sh.Name;
+                var type = _sh.Type;
+                var command = _sh.Command;
+                var hideadd = _sh.HideAdd;
 
-                ImGui.SetNextWindowPos(barPos, ImGuiCond.Always, piv);
-                ImGui.SetNextWindowSize(barSize);
-
-                ImGui.Begin("ShortcutBar", flags);
-
-                if (ImGui.IsWindowHovered())
-                    Reveal();
-
-                for (int i = 0; i < barConfig.ShortcutList.Count; i++)
-                {
-                    var _sh = barConfig.ShortcutList[i];
-                    var name = _sh.Name;
-                    var type = _sh.Type;
-                    var command = _sh.Command;
-                    var hideadd = _sh.HideAdd;
-
-                    if ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button($"{name}##{i}") : ImGui.Button($"{name}##{i}", new Vector2(barConfig.ButtonWidth, 23)))
-                        ItemClicked(type, command, $"{name}{i}Category");
-                    if (ImGui.IsItemHovered())
-                    {
-                        Reveal();
-                        _inputname = name;
-                        _inputtype = (int)type;
-                        _inputcommand = command;
-                        _hideadd = hideadd;
-
-                        if (type == Shortcut.ShortcutType.Category && !string.IsNullOrEmpty(command))
-                            ImGui.SetTooltip(command);
-                    }
-
-                    if (type == Shortcut.ShortcutType.Category)
-                        CategoryPopup(i);
-
-                    ImGui.OpenPopupOnItemClick($"editItem{i}", 1);
-
-                    ItemConfigPopup($"editItem{i}", barConfig.ShortcutList, i);
-
-                    if (!vertical)
-                        ImGui.SameLine();
-                }
-
-                if ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button("+") : ImGui.Button("+", new Vector2(barConfig.ButtonWidth, 23)))
-                {
-                    Reveal();
-                    _inputname = string.Empty;
-                    _inputtype = 0;
-                    _inputcommand = string.Empty;
-                    _hideadd = false;
-
-                    ImGui.OpenPopup("addItem");
-                }
+                if ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button($"{name}##{i}") : ImGui.Button($"{name}##{i}", new Vector2(barConfig.ButtonWidth, 23)))
+                    ItemClicked(type, command, $"{name}{i}Category");
                 if (ImGui.IsItemHovered())
                 {
                     Reveal();
+                    _inputname = name;
+                    _inputtype = (int)type;
+                    _inputcommand = command;
+                    _hideadd = hideadd;
 
-                    ImGui.SetTooltip("Add a new button.\nRight click this for options.\nRight click other buttons to edit them.");
+                    if (type == Shortcut.ShortcutType.Category && !string.IsNullOrEmpty(command))
+                        ImGui.SetTooltip(command);
                 }
 
-                ImGui.OpenPopupOnItemClick("BarConfig", 1);
+                if (type == Shortcut.ShortcutType.Category)
+                    CategoryPopup(i);
 
-                ItemConfigPopup("addItem", barConfig.ShortcutList, -1);
+                ImGui.OpenPopupOnItemClick($"editItem{i}", 1);
 
-                BarConfigPopup();
+                ItemConfigPopup($"editItem{i}", barConfig.ShortcutList, i);
 
-                barSize.Y = ImGui.GetCursorPosY() + 4;
-                ImGui.SameLine();
-                barSize.X = ImGui.GetCursorPosX();
-                //PluginLog.Log($"{ImGui.GetCursorPosX()} {ImGui.GetCursorPosY()}");
+                if (!vertical)
+                    ImGui.SameLine();
+            }
+        }
 
-                ImGui.End();
+        private void DrawAddButton()
+        {
+            if ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button("+") : ImGui.Button("+", new Vector2(barConfig.ButtonWidth, 23)))
+            {
+                Reveal();
+                _inputname = string.Empty;
+                _inputtype = 0;
+                _inputcommand = string.Empty;
+                _hideadd = false;
+
+                ImGui.OpenPopup("addItem");
+            }
+            if (ImGui.IsItemHovered())
+            {
+                Reveal();
+
+                ImGui.SetTooltip("Add a new button.\nRight click this for options.\nRight click other buttons to edit them.");
             }
 
-            if (barConfig.Visibility == VisibilityMode.Slide)
-                TweenPosition();
-            else
-                barPos = _reveal ? revealPos : hidePos;
+            ImGui.OpenPopupOnItemClick("BarConfig", 1);
 
-            _firstframe = false;
+            ItemConfigPopup("addItem", barConfig.ShortcutList, -1);
         }
 
         private void Reveal()
@@ -567,6 +576,14 @@ namespace ShortcutPlugin
             }
         }
 
+        private void SetBarSize()
+        {
+            barSize.Y = ImGui.GetCursorPosY() + 4;
+            ImGui.SameLine();
+            barSize.X = ImGui.GetCursorPosX();
+            //PluginLog.Log($"{ImGui.GetCursorPosX()} {ImGui.GetCursorPosY()}");
+        }
+
         private void ClampWindowPos()
         {
             var _lastPos = ImGui.GetWindowPos();
@@ -575,8 +592,16 @@ namespace ShortcutPlugin
             var _y = Math.Min(Math.Max(_lastPos.Y, 0), window.Y - _size.Y);
             ImGui.SetWindowPos(new Vector2(_x, _y));
         }
-        
-        private void TweenPosition()
+
+        private void SetBarPosition()
+        {
+            if (barConfig.Visibility == VisibilityMode.Slide)
+                TweenBarPosition();
+            else
+                barPos = _reveal ? revealPos : hidePos;
+        }
+
+        private void TweenBarPosition()
         {
             if (_reveal != _lastReveal)
             {
