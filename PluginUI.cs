@@ -9,7 +9,7 @@ namespace ShortcutPlugin
 {
     public class PluginUI : IDisposable
     {
-        public bool IsVisible { get; set; } = true;
+        public bool IsVisible => plugin.pluginInterface.ClientState.LocalPlayer != null;
 
         private readonly BarConfig barConfig;
 
@@ -130,7 +130,7 @@ namespace ShortcutPlugin
 
         public void Draw()
         {
-            if (!IsVisible || plugin.pluginInterface.ClientState.LocalPlayer == null) return;
+            if (!IsVisible) return;
 
             var io = ImGui.GetIO();
             window = io.DisplaySize;
