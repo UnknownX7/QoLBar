@@ -35,6 +35,8 @@ namespace ShortcutPlugin
         private float _tweenProgress = 1;
         private float _mx = 0f;
         private float _my = 0f;
+        private Vector2 _catpiv = new Vector2();
+        private Vector2 _catpos = new Vector2();
 
         private readonly ShortcutPlugin plugin;
         private readonly Configuration config;
@@ -208,57 +210,7 @@ namespace ShortcutPlugin
                     }
 
                     if (type == Shortcut.ShortcutType.Category)
-                    {
-                        //var buttonPos = ImGui.GetCursorPos(); // I give up... just place the popup above the mouse
-                        //PluginLog.Log($"{buttonPos.X} {buttonPos.Y} {ImGui.GetItemRectSize().X} {ImGui.GetItemRectSize().Y}");
-                        ImGui.SetNextWindowPos(new Vector2(_mx, _my - 6), ImGuiCond.Always, new Vector2(0.5f, 1.0f));
-                        if (ImGui.BeginPopup($"{name}{i}Category"))
-                        {
-                            Reveal();
-
-                            var sublist = _sh.SubList;
-
-                            for (int j = 0; j < sublist.Count; j++)
-                            {
-                                var _name = sublist[j].Name;
-                                var _type = sublist[j].Type;
-                                var _command = sublist[j].Command;
-
-                                if (ImGui.Selectable($"{_name}##{name} {i} {j}", false, ImGuiSelectableFlags.None, new Vector2(140, 20)))
-                                    ItemClicked(_type, _command);
-                                if (ImGui.IsItemHovered())
-                                {
-                                    _inputname = _name; // Don't ask
-                                    _inputtype = (int)_type;
-                                    _inputcommand = _command;
-                                    _hideadd = false;
-                                }
-
-                                ImGui.OpenPopupOnItemClick($"{name}{i}editItem{j}", 1);
-
-                                ItemConfigPopup($"{name}{i}editItem{j}", sublist, j);
-                            }
-
-                            if (!hideadd)
-                            {
-                                if (ImGui.Selectable("                         +", false, ImGuiSelectableFlags.DontClosePopups, new Vector2(140, 20)))
-                                {
-                                    _inputname = string.Empty;
-                                    _inputtype = 0;
-                                    _inputcommand = string.Empty;
-                                    _hideadd = false;
-
-                                    ImGui.OpenPopup($"{name}{i}addItem");
-                                }
-                                if (ImGui.IsItemHovered())
-                                    ImGui.SetTooltip("Add a new button.");
-                            }
-
-                            ItemConfigPopup($"{name}{i}addItem", sublist, -1);
-
-                            ImGui.EndPopup();
-                        }
-                    }
+                        CategoryPopup(i);
 
                     ImGui.OpenPopupOnItemClick($"editItem{i}", 1);
 
@@ -339,12 +291,86 @@ namespace ShortcutPlugin
                     }
                     break;
                 case Shortcut.ShortcutType.Category:
-                    ImGui.OpenPopup(categoryid);
                     _mx = mousePos.X;
                     _my = mousePos.Y;
+                    // I feel like I'm overcomplicating this...
+                    float pX, pY;
+                    var mousePadding = 6.0f;
+                    if (!vertical)
+                    {
+                        pX = piv.X;
+                        pY = Math.Abs(piv.Y - 1.0f);
+                        _my += mousePadding - ((mousePadding * 2) * pY);
+                    }
+                    else
+                    {
+                        pX = Math.Abs(piv.X - 1.0f);
+                        pY = piv.Y;
+                        _mx += (mousePadding - ((mousePadding * 2) * pX)) * (1 - (2 * Math.Abs(pY - 0.5f)));
+                        _my += -(mousePadding * 2) * (pY - 0.5f);
+                    }
+                    _catpiv = new Vector2(pX, pY);
+                    _catpos = new Vector2(_mx, _my);
+                    ImGui.OpenPopup(categoryid);
                     break;
                 default:
                     break;
+            }
+        }
+
+        private void CategoryPopup(int i)
+        {
+            var sh = barConfig.ShortcutList[i];
+            var name = sh.Name;
+
+            //var buttonPos = ImGui.GetCursorPos(); // I give up... just place the popup above the mouse
+            //PluginLog.Log($"{buttonPos.X} {buttonPos.Y} {ImGui.GetItemRectSize().X} {ImGui.GetItemRectSize().Y}");
+            ImGui.SetNextWindowPos(_catpos, ImGuiCond.Always, _catpiv);
+            if (ImGui.BeginPopup($"{name}{i}Category"))
+            {
+                Reveal();
+
+                var sublist = sh.SubList;
+
+                for (int j = 0; j < sublist.Count; j++)
+                {
+                    var _name = sublist[j].Name;
+                    var _type = sublist[j].Type;
+                    var _command = sublist[j].Command;
+
+                    if (ImGui.Selectable($"{_name}##{name} {i} {j}", false, ImGuiSelectableFlags.None, new Vector2(140, 20)))
+                        ItemClicked(_type, _command);
+                    if (ImGui.IsItemHovered())
+                    {
+                        _inputname = _name; // Don't ask
+                        _inputtype = (int)_type;
+                        _inputcommand = _command;
+                        _hideadd = false;
+                    }
+
+                    ImGui.OpenPopupOnItemClick($"{name}{i}editItem{j}", 1);
+
+                    ItemConfigPopup($"{name}{i}editItem{j}", sublist, j);
+                }
+
+                if (!sh.HideAdd)
+                {
+                    if (ImGui.Selectable("                         +", false, ImGuiSelectableFlags.DontClosePopups, new Vector2(140, 20)))
+                    {
+                        _inputname = string.Empty;
+                        _inputtype = 0;
+                        _inputcommand = string.Empty;
+                        _hideadd = false;
+
+                        ImGui.OpenPopup($"{name}{i}addItem");
+                    }
+                    if (ImGui.IsItemHovered())
+                        ImGui.SetTooltip("Add a new button.");
+                }
+
+                ItemConfigPopup($"{name}{i}addItem", sublist, -1);
+
+                ImGui.EndPopup();
             }
         }
 
