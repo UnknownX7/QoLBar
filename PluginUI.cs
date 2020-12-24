@@ -192,11 +192,17 @@ namespace ShortcutPlugin
                 ImGui.Begin("ShortcutBar", flags);
 
                 if (ImGui.IsWindowHovered())
+                {
                     Reveal();
+
+                    if (ImGui.IsMouseReleased(1))
+                        ImGui.OpenPopup("BarConfig");
+                }
 
                 DrawItems();
 
-                DrawAddButton();
+                if (!barConfig.HideAdd || barConfig.ShortcutList.Count < 1)
+                    DrawAddButton();
 
                 BarConfigPopup();
 
@@ -260,13 +266,16 @@ namespace ShortcutPlugin
 
                 ItemConfigPopup($"editItem{i}", barConfig.ShortcutList, i);
 
-                if (!vertical)
+                if (!vertical && i != barConfig.ShortcutList.Count - 1)
                     ImGui.SameLine();
             }
         }
 
         private void DrawAddButton()
         {
+            if (!vertical && barConfig.ShortcutList.Count > 0)
+                ImGui.SameLine();
+
             if ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button("+") : ImGui.Button("+", new Vector2(barConfig.ButtonWidth, 23)))
             {
                 Reveal();
@@ -281,7 +290,7 @@ namespace ShortcutPlugin
             {
                 Reveal();
 
-                ImGui.SetTooltip("Add a new button.\nRight click this for options.\nRight click other buttons to edit them.");
+                ImGui.SetTooltip("Add a new button.\nRight click this (or the bar background) for options.\nRight click other buttons to edit them.");
             }
 
             ImGui.OpenPopupOnItemClick("BarConfig", 1);
@@ -562,7 +571,8 @@ namespace ShortcutPlugin
                 {
                     ImGui.Text("Automatic Button Width");
                     ImGui.SameLine();
-                    ImGui.Checkbox("##AutoButtonWidth", ref barConfig.AutoButtonWidth);
+                    if (ImGui.Checkbox("##AutoButtonWidth", ref barConfig.AutoButtonWidth))
+                        config.Save();
                 }
 
                 if (vertical || !barConfig.AutoButtonWidth)
@@ -571,6 +581,18 @@ namespace ShortcutPlugin
                     ImGui.SameLine();
                     if (ImGui.SliderInt("##ButtonWidth", ref barConfig.ButtonWidth, 16, 200))
                         config.Save();
+                }
+
+                if (barConfig.ShortcutList.Count > 0)
+                {
+                    ImGui.Text("Hide + Button");
+                    ImGui.SameLine();
+                    if (ImGui.Checkbox("##Hide+", ref barConfig.HideAdd))
+                    {
+                        if (barConfig.HideAdd)
+                            plugin.ExecuteCommand("/echo <se> You can right click on the bar itself (the black background) to reopen this settings menu!");
+                        config.Save();
+                    }
                 }
 
                 ClampWindowPos();
