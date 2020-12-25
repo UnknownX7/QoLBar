@@ -446,7 +446,7 @@ namespace QoLBar
 
                 if (i >= 0)
                 {
-                    if (ImGui.Button((shortcuts == barConfig.ShortcutList) ? "←" : "↑") && i > 0)
+                    if (ImGui.Button((shortcuts == barConfig.ShortcutList && !vertical) ? "←" : "↑") && i > 0)
                     {
                         var sh = shortcuts[i];
                         shortcuts.RemoveAt(i);
@@ -513,7 +513,7 @@ namespace QoLBar
                     }
 
                     ImGui.SameLine();
-                    if (ImGui.Button((shortcuts == barConfig.ShortcutList) ? "→" : "↓") && i < (shortcuts.Count - 1))
+                    if (ImGui.Button((shortcuts == barConfig.ShortcutList && !vertical) ? "→" : "↓") && i < (shortcuts.Count - 1))
                     {
                         var sh = shortcuts[i];
                         shortcuts.RemoveAt(i);
