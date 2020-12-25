@@ -428,7 +428,7 @@ namespace ShortcutPlugin
                     case Shortcut.ShortcutType.Multiline:
                         ImGui.Text("Command");
                         ImGui.SameLine();
-                        ImGui.InputTextMultiline("##CommandInput", ref _inputcommand, (uint)maxCommandLength * 15, new Vector2(205, 124));
+                        ImGui.InputTextMultiline("##MultiCommandInput", ref _inputcommand, (uint)maxCommandLength * 15, new Vector2(205, 124));
                         break;
                     case Shortcut.ShortcutType.Category:
                         ImGui.Text("Tooltip");
