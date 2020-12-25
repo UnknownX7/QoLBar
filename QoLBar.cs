@@ -35,7 +35,7 @@ namespace QoLBar
             UndockedV
         }
         public BarDock DockSide = BarDock.Bottom;
-        public int ButtonWidth = 64;
+        public int ButtonWidth = 100;
         public bool AutoButtonWidth = false;
         public bool HideAdd = false;
 
