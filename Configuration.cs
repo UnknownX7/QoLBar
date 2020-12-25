@@ -3,7 +3,7 @@ using Dalamud.Plugin;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 
-namespace ShortcutPlugin
+namespace QoLBar
 {
     public class Configuration : IPluginConfiguration
     {

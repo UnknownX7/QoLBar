@@ -2,10 +2,10 @@ using ImGuiNET;
 using System;
 using System.Numerics;
 using System.Collections.Generic;
-using static ShortcutPlugin.BarConfig;
+using static QoLBar.BarConfig;
 using Dalamud.Plugin;
 
-namespace ShortcutPlugin
+namespace QoLBar
 {
     public class PluginUI : IDisposable
     {
@@ -41,10 +41,10 @@ namespace ShortcutPlugin
         private Vector2 _catpiv = new Vector2();
         private Vector2 _catpos = new Vector2();
 
-        private readonly ShortcutPlugin plugin;
+        private readonly QoLBar plugin;
         private readonly Configuration config;
 
-        public PluginUI(ShortcutPlugin p, Configuration config)
+        public PluginUI(QoLBar p, Configuration config)
         {
             plugin = p;
             this.config = config;
@@ -189,7 +189,7 @@ namespace ShortcutPlugin
                 ImGui.SetNextWindowSize(barSize);
 
                 SetupImGuiFlags();
-                ImGui.Begin("ShortcutBar", flags);
+                ImGui.Begin("QoLBar", flags);
 
                 if (ImGui.IsWindowHovered())
                 {
@@ -227,7 +227,7 @@ namespace ShortcutPlugin
             // Invisible UI to check if the mouse is nearby
             ImGui.SetNextWindowPos(revealPos, ImGuiCond.Always, piv);
             ImGui.SetNextWindowSize(barSize);
-            ImGui.Begin("ShortcutBarMouseDetection", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoBringToFrontOnFocus);
+            ImGui.Begin("QoLBarMouseDetection", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoBringToFrontOnFocus);
             if (barConfig.Visibility == VisibilityMode.Always || ImGui.IsWindowHovered())
                 Reveal();
             else

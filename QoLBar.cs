@@ -6,7 +6,7 @@ using Dalamud.Plugin;
 using Dalamud.Game.Chat;
 
 // Disclaimer: I have no idea what I'm doing.
-namespace ShortcutPlugin
+namespace QoLBar
 {
     public class BarConfig
     {
@@ -60,13 +60,13 @@ namespace ShortcutPlugin
         public bool HideAdd;
     }
 
-    public class ShortcutPlugin : IDalamudPlugin
+    public class QoLBar : IDalamudPlugin
     {
         public DalamudPluginInterface pluginInterface;
         private Configuration config;
         private PluginUI ui;
 
-        public string Name => "Shortcut Plugin";
+        public string Name => "QoL Bar";
 
         public void Initialize(DalamudPluginInterface pInterface)
         {

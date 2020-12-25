@@ -61,7 +61,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="ShortcutPlugin.json">
+    <None Update="QoLBar.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
