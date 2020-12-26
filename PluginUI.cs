@@ -209,6 +209,8 @@ namespace QoLBar
                 SetBarSize();
 
                 ImGui.End();
+
+                ImGui.PopStyleVar(2);
             }
 
             SetBarPosition();
