@@ -77,8 +77,11 @@ namespace QoLBar
             config.Initialize(pluginInterface);
 
             ui = new PluginUI(this, config);
+            pluginInterface.UiBuilder.OnOpenConfigUi += ToggleConfig;
             pluginInterface.UiBuilder.OnBuildUi += ui.Draw;
         }
+
+        public void ToggleConfig(object sender = null, EventArgs e = null) => ui.ToggleConfig();
 
         // I'm too dumb to do any of this so its (almost) all taken from here https://git.sr.ht/~jkcclemens/CCMM/tree/master/Custom%20Commands%20and%20Macro%20Macros/GameFunctions.cs
         #region Chat Injection
@@ -141,13 +144,15 @@ namespace QoLBar
         {
             if (!disposing) return;
 
-            this.pluginInterface.SavePluginConfig(this.config);
+            pluginInterface.SavePluginConfig(config);
 
-            this.pluginInterface.UiBuilder.OnBuildUi -= this.ui.Draw;
+            pluginInterface.UiBuilder.OnOpenConfigUi -= ToggleConfig;
 
-            this.pluginInterface.Dispose();
+            pluginInterface.UiBuilder.OnBuildUi -= ui.Draw;
 
-            this.ui.Dispose();
+            pluginInterface.Dispose();
+
+            ui.Dispose();
         }
 
         public void Dispose()

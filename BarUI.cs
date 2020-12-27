@@ -598,6 +598,9 @@ namespace QoLBar
                     }
                 }
 
+                if (ImGui.Button("QoL Bar Config"))
+                    plugin.ToggleConfig();
+
                 ClampWindowPos();
 
                 ImGui.EndPopup();
