@@ -12,6 +12,7 @@ namespace QoLBar
     {
         public string Title = string.Empty;
         public List<Shortcut> ShortcutList;
+        public bool Hidden = false;
         public enum VisibilityMode
         {
             Slide,

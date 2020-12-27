@@ -9,10 +9,20 @@ namespace QoLBar
 {
     public class BarUI : IDisposable
     {
-        public bool IsVisible => plugin.pluginInterface.ClientState.LocalPlayer != null;
-
         private int barNumber;
         private BarConfig barConfig => config.BarConfigs[barNumber];
+        public void SetBarNumber(int i)
+        {
+            barNumber = i;
+            SetupPosition();
+        }
+
+        public bool IsVisible => !barConfig.Hidden && plugin.pluginInterface.ClientState.LocalPlayer != null;
+        public void ToggleVisible()
+        {
+            barConfig.Hidden = !barConfig.Hidden;
+            config.Save();
+        }
 
         private string _inputname = string.Empty;
         private int _inputtype = 0;
