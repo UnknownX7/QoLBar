@@ -7,11 +7,12 @@ using Dalamud.Plugin;
 
 namespace QoLBar
 {
-    public class PluginUI : IDisposable
+    public class BarUI : IDisposable
     {
         public bool IsVisible => plugin.pluginInterface.ClientState.LocalPlayer != null;
 
-        private readonly BarConfig barConfig;
+        private int barNumber;
+        private BarConfig barConfig => config.BarConfigs[barNumber];
 
         private string _inputname = string.Empty;
         private int _inputtype = 0;
@@ -44,11 +45,11 @@ namespace QoLBar
         private readonly QoLBar plugin;
         private readonly Configuration config;
 
-        public PluginUI(QoLBar p, Configuration config)
+        public BarUI(QoLBar p, Configuration config, int nbar = 0)
         {
             plugin = p;
             this.config = config;
-            barConfig = config.BarConfigs[0]; // For now, only one shortcut bar exists
+            barNumber = nbar;
             SetupPosition();
         }
 
