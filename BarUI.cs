@@ -134,7 +134,7 @@ namespace QoLBar
             _tweenStart = hidePos;
         }
 
-        public void SetupRevealPosition()
+        private void SetupRevealPosition()
         {
             switch (barConfig.DockSide)
             {
@@ -159,7 +159,7 @@ namespace QoLBar
             }
         }
 
-        public void SetupImGuiFlags()
+        private void SetupImGuiFlags()
         {
             flags = ImGuiWindowFlags.None;
 
