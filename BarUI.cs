@@ -45,7 +45,7 @@ namespace QoLBar
         private readonly QoLBar plugin;
         private readonly Configuration config;
 
-        public BarUI(QoLBar p, Configuration config, int nbar = 0)
+        public BarUI(QoLBar p, Configuration config, int nbar)
         {
             plugin = p;
             this.config = config;
@@ -177,8 +177,6 @@ namespace QoLBar
             window = io.DisplaySize;
             mousePos = io.MousePos;
 
-            ImGui.PushID(barNumber);
-
             SetupRevealPosition();
 
             CheckMouse();
@@ -192,14 +190,14 @@ namespace QoLBar
                 ImGui.SetNextWindowSize(barSize);
 
                 SetupImGuiFlags();
-                ImGui.Begin("QoLBar", flags);
+                ImGui.Begin($"QoLBar##{barNumber}", flags);
 
                 if (ImGui.IsWindowHovered())
                 {
                     Reveal();
 
                     if (ImGui.IsMouseReleased(1))
-                        ImGui.OpenPopup("BarConfig");
+                        ImGui.OpenPopup($"BarConfig##{barNumber}");
                 }
 
                 DrawItems();
@@ -218,8 +216,6 @@ namespace QoLBar
 
             SetBarPosition();
 
-            ImGui.PopID();
-
             _firstframe = false;
         }
 
@@ -234,7 +230,7 @@ namespace QoLBar
             // Invisible UI to check if the mouse is nearby
             ImGui.SetNextWindowPos(revealPos, ImGuiCond.Always, piv);
             ImGui.SetNextWindowSize(barSize);
-            ImGui.Begin("QoLBarMouseDetection", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoBringToFrontOnFocus);
+            ImGui.Begin($"QoLBarMouseDetection##{barNumber}", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoBringToFrontOnFocus);
             if (barConfig.Visibility == VisibilityMode.Always || ImGui.IsWindowHovered())
                 Reveal();
             else
@@ -300,7 +296,7 @@ namespace QoLBar
                 ImGui.SetTooltip("Add a new button.\nRight click this (or the bar background) for options.\nRight click other buttons to edit them.");
             }
 
-            ImGui.OpenPopupOnItemClick("BarConfig", 1);
+            ImGui.OpenPopupOnItemClick($"BarConfig##{barNumber}", 1);
 
             ItemConfigPopup("addItem", barConfig.ShortcutList, -1);
         }
@@ -538,7 +534,7 @@ namespace QoLBar
 
         private void BarConfigPopup()
         {
-            if (ImGui.BeginPopup("BarConfig"))
+            if (ImGui.BeginPopup($"BarConfig##{barNumber}"))
             {
                 Reveal();
 
