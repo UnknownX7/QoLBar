@@ -177,6 +177,8 @@ namespace QoLBar
             window = io.DisplaySize;
             mousePos = io.MousePos;
 
+            ImGui.PushID(barNumber);
+
             SetupRevealPosition();
 
             CheckMouse();
@@ -215,6 +217,8 @@ namespace QoLBar
             }
 
             SetBarPosition();
+
+            ImGui.PopID();
 
             _firstframe = false;
         }

@@ -10,6 +10,7 @@ namespace QoLBar
 {
     public class BarConfig
     {
+        public string Title = string.Empty;
         public List<Shortcut> ShortcutList;
         public enum VisibilityMode
         {

@@ -17,11 +17,8 @@ namespace QoLBar
         {
             pluginInterface = pInterface;
 
-            // Initialize the number of configs we need
-            for (int i = BarConfigs.Count; i < 1; i++)
-            {
+            if (BarConfigs.Count < 1)
                 BarConfigs.Add(new BarConfig());
-            }
         }
 
         public void Save()
