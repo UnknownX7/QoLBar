@@ -15,6 +15,7 @@ namespace QoLBar
         {
             barNumber = i;
             SetupPosition();
+            _setPos = true;
         }
 
         public bool IsVisible => !barConfig.Hidden && plugin.pluginInterface.ClientState.LocalPlayer != null;
@@ -38,12 +39,14 @@ namespace QoLBar
         private Vector2 hidePos = new Vector2();
         private Vector2 revealPos = new Vector2();
         private bool vertical = false;
+        private bool docked = true;
 
         private bool _reveal = false;
         private void Reveal() => _reveal = true;
         private void Hide() => _reveal = false;
 
         private bool _firstframe = true;
+        private bool _setPos = true;
         private bool _lastReveal = true;
         private Vector2 _tweenStart;
         private float _tweenProgress = 1;
@@ -75,27 +78,34 @@ namespace QoLBar
                     pivY = 1.0f;
                     defPos = 0.0f;
                     vertical = false;
+                    docked = true;
                     break;
                 case BarDock.Left: //   1.0 0.0, 1.0 0.5, 1.0 1.0 // 0(+W) 0,    0(+W) winY/2,    0(+W) winY
                     pivY = 1.0f;
                     defPos = 0.0f;
                     vertical = true;
+                    docked = true;
                     break;
                 case BarDock.Bottom: // 0.0 0.0, 0.5 0.0, 1.0 0.0 // 0 winY(-H), winX/2 winY(-H), winX winY(-H)
                     pivY = 0.0f;
                     defPos = window.Y;
                     vertical = false;
+                    docked = true;
                     break;
                 case BarDock.Right: //  0.0 0.0, 0.0 0.5, 0.0 1.0 // winX(-W) 0, winX(-W) winY/2, winX(-W) winY
                     pivY = 0.0f;
                     defPos = window.X;
                     vertical = true;
+                    docked = true;
                     break;
                 case BarDock.UndockedH:
-                    break;
+                    vertical = false;
+                    docked = false;
+                    return;
                 case BarDock.UndockedV:
                     vertical = true;
-                    break;
+                    docked = false;
+                    return;
                 default:
                     break;
             }
@@ -174,7 +184,8 @@ namespace QoLBar
             flags = ImGuiWindowFlags.None;
 
             flags |= ImGuiWindowFlags.NoDecoration;
-            flags |= ImGuiWindowFlags.NoMove;
+            if (docked || barConfig.LockedPosition)
+                flags |= ImGuiWindowFlags.NoMove;
             flags |= ImGuiWindowFlags.NoScrollWithMouse;
             flags |= ImGuiWindowFlags.NoSavedSettings;
             flags |= ImGuiWindowFlags.NoFocusOnAppearing;
@@ -188,16 +199,27 @@ namespace QoLBar
             window = io.DisplaySize;
             mousePos = io.MousePos;
 
-            SetupRevealPosition();
+            if (docked)
+            {
+                SetupRevealPosition();
 
-            CheckMouse();
+                CheckMouse();
+            }
+            else
+                Reveal();
 
             if (_firstframe || _reveal || barPos != hidePos) // Don't bother to render when fully off screen
             {
                 ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0);
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0);
 
-                ImGui.SetNextWindowPos(barPos, ImGuiCond.Always, piv);
+                if (docked)
+                    ImGui.SetNextWindowPos(barPos, ImGuiCond.Always, piv);
+                else if (_setPos)
+                {
+                    ImGui.SetNextWindowPos(barConfig.Position);
+                    _setPos = false;
+                }
                 ImGui.SetNextWindowSize(barSize);
 
                 SetupImGuiFlags();
@@ -216,6 +238,12 @@ namespace QoLBar
                 if (!barConfig.HideAdd || barConfig.ShortcutList.Count < 1)
                     DrawAddButton();
 
+                if (!docked && ImGui.GetWindowPos() != barConfig.Position)
+                {
+                    barConfig.Position = ImGui.GetWindowPos();
+                    config.Save();
+                }
+
                 BarConfigPopup();
 
                 SetBarSize();
@@ -225,8 +253,11 @@ namespace QoLBar
                 ImGui.PopStyleVar(2);
             }
 
-            SetBarPosition();
-            Hide(); // Allows other objects to reveal the bar
+            if (docked)
+            {
+                SetBarPosition();
+                Hide(); // Allows other objects to reveal the bar
+            }
 
             _firstframe = false;
         }
@@ -340,18 +371,64 @@ namespace QoLBar
                     // I feel like I'm overcomplicating this...
                     float pX, pY;
                     var mousePadding = 6.0f;
-                    if (!vertical)
+                    if (docked)
                     {
-                        pX = piv.X;
-                        pY = Math.Abs(piv.Y - 1.0f);
-                        _my += mousePadding - ((mousePadding * 2) * pY);
+                        if (!vertical)
+                        {
+                            pX = piv.X;
+                            pY = Math.Abs(piv.Y - 1.0f);
+                            _my += mousePadding - ((mousePadding * 2) * pY);
+                        }
+                        else
+                        {
+                            pX = Math.Abs(piv.X - 1.0f);
+                            pY = piv.Y;
+                            _mx += (mousePadding - ((mousePadding * 2) * pX)) * (1 - (2 * Math.Abs(pY - 0.5f)));
+                            _my += -(mousePadding * 2) * (pY - 0.5f);
+                        }
                     }
                     else
                     {
-                        pX = Math.Abs(piv.X - 1.0f);
-                        pY = piv.Y;
-                        _mx += (mousePadding - ((mousePadding * 2) * pX)) * (1 - (2 * Math.Abs(pY - 0.5f)));
-                        _my += -(mousePadding * 2) * (pY - 0.5f);
+                        if (!vertical)
+                        {
+                            if (_mx < window.X / 3)
+                                pX = 0.0f;
+                            else if (_mx < window.X * 2 / 3)
+                                pX = 0.5f;
+                            else
+                                pX = 1.0f;
+
+                            if (_my < window.Y / 3)
+                            {
+                                pY = 0.0f;
+                                _my += mousePadding;
+                            }
+                            else
+                            {
+                                pY = 1.0f;
+                                _my -= mousePadding;
+                            }
+                        }
+                        else
+                        {
+                            if (_mx < window.X * 2 / 3)
+                            {
+                                pX = 0.0f;
+                                _mx += mousePadding;
+                            }
+                            else
+                            {
+                                pX = 1.0f;
+                                _mx -= mousePadding;
+                            }
+
+                            if (_my < window.Y / 3)
+                                pY = 0.0f;
+                            else if (_my < window.Y * 2 / 3)
+                                pY = 0.5f;
+                            else
+                                pY = 1.0f;
+                        }
                     }
                     _catpiv = new Vector2(pX, pY);
                     _catpos = new Vector2(_mx, _my);
@@ -561,14 +638,14 @@ namespace QoLBar
                 var _dock = (int)barConfig.DockSide;
                 ImGui.Text("Bar Side");
                 ImGui.SameLine();
-                if (ImGui.Combo("##Dock", ref _dock, "Top\0Left\0Bottom\0Right"))
+                if (ImGui.Combo("##Dock", ref _dock, "Top\0Left\0Bottom\0Right\0Undocked\0Undocked (Vertical)"))
                 {
                     barConfig.DockSide = (BarDock)_dock;
                     config.Save();
                     SetupPosition();
                 }
 
-                if (barConfig.DockSide != BarDock.UndockedH && barConfig.DockSide != BarDock.UndockedV)
+                if (docked)
                 {
                     var _align = (int)barConfig.Alignment;
                     ImGui.Text("Bar Alignment");
@@ -588,6 +665,13 @@ namespace QoLBar
                         barConfig.Visibility = (VisibilityMode)_visibility;
                         config.Save();
                     }
+                }
+                else
+                {
+                    ImGui.Text("Lock Position");
+                    ImGui.SameLine();
+                    if (ImGui.Checkbox("##LockPosition", ref barConfig.LockedPosition))
+                        config.Save();
                 }
 
                 if (!vertical)

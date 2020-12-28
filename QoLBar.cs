@@ -1,4 +1,5 @@
 using System;
+using System.Numerics;
 using System.Text;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
@@ -40,6 +41,8 @@ namespace QoLBar
         public int ButtonWidth = 100;
         public bool AutoButtonWidth = false;
         public bool HideAdd = false;
+        public Vector2 Position = new Vector2();
+        public bool LockedPosition = false;
 
         public BarConfig()
         {
