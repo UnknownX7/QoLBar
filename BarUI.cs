@@ -39,7 +39,7 @@ namespace QoLBar
         private Vector2 revealPos = new Vector2();
         private bool vertical = false;
 
-        private bool _reveal = true;
+        private bool _reveal = false;
         private void Reveal() => _reveal = true;
         private void Hide() => _reveal = false;
 
