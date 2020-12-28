@@ -68,7 +68,6 @@ namespace QoLBar
                     config.Save();
 
                 textsize = ImGui.GetItemRectSize();
-                
 
                 ImGui.NextColumn();
 

@@ -260,8 +260,10 @@ namespace QoLBar
                 var command = _sh.Command;
                 var hideadd = _sh.HideAdd;
 
-                if ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button($"{name}##{i}") : ImGui.Button($"{name}##{i}", new Vector2(barConfig.ButtonWidth, 23)))
-                    ItemClicked(type, command, $"{name}{i}Category");
+                ImGui.PushID(i);
+
+                if ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button(name) : ImGui.Button(name, new Vector2(barConfig.ButtonWidth, 23)))
+                    ItemClicked(type, command, $"{name}Category");
                 if (ImGui.IsItemHovered())
                 {
                     Reveal();
@@ -277,12 +279,14 @@ namespace QoLBar
                 if (type == Shortcut.ShortcutType.Category)
                     CategoryPopup(i);
 
-                ImGui.OpenPopupOnItemClick($"editItem{i}", 1);
+                ImGui.OpenPopupOnItemClick("editItem", 1);
 
-                ItemConfigPopup($"editItem{i}", barConfig.ShortcutList, i);
+                ItemConfigPopup("editItem", barConfig.ShortcutList, i);
 
                 if (!vertical && i != barConfig.ShortcutList.Count - 1)
                     ImGui.SameLine();
+
+                ImGui.PopID();
             }
         }
 
@@ -366,7 +370,7 @@ namespace QoLBar
             //var buttonPos = ImGui.GetCursorPos(); // I give up... just place the popup above the mouse
             //PluginLog.Log($"{buttonPos.X} {buttonPos.Y} {ImGui.GetItemRectSize().X} {ImGui.GetItemRectSize().Y}");
             ImGui.SetNextWindowPos(_catpos, ImGuiCond.Always, _catpiv);
-            if (ImGui.BeginPopup($"{name}{i}Category"))
+            if (ImGui.BeginPopup($"{name}Category"))
             {
                 Reveal();
 
@@ -378,7 +382,9 @@ namespace QoLBar
                     var _type = sublist[j].Type;
                     var _command = sublist[j].Command;
 
-                    if (ImGui.Selectable($"{_name}##{name} {i} {j}", false, ImGuiSelectableFlags.None, new Vector2(140, 20)))
+                    ImGui.PushID(j);
+
+                    if (ImGui.Selectable(_name, false, ImGuiSelectableFlags.None, new Vector2(140, 20)))
                         ItemClicked(_type, _command);
                     if (ImGui.IsItemHovered())
                     {
@@ -388,9 +394,11 @@ namespace QoLBar
                         _hideadd = false;
                     }
 
-                    ImGui.OpenPopupOnItemClick($"{name}{i}editItem{j}", 1);
+                    ImGui.OpenPopupOnItemClick("editItem", 1);
 
-                    ItemConfigPopup($"{name}{i}editItem{j}", sublist, j);
+                    ItemConfigPopup("editItem", sublist, j);
+
+                    ImGui.PopID();
                 }
 
                 if (!sh.HideAdd)
@@ -402,13 +410,13 @@ namespace QoLBar
                         _inputcommand = string.Empty;
                         _hideadd = false;
 
-                        ImGui.OpenPopup($"{name}{i}addItem");
+                        ImGui.OpenPopup("addItem");
                     }
                     if (ImGui.IsItemHovered())
                         ImGui.SetTooltip("Add a new button.");
                 }
 
-                ItemConfigPopup($"{name}{i}addItem", sublist, -1);
+                ItemConfigPopup("addItem", sublist, -1);
 
                 ImGui.EndPopup();
             }
