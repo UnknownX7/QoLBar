@@ -118,7 +118,7 @@ namespace QoLBar
                         plugin.ExecuteCommand("/echo <se> Right click to delete!");
                     if (ImGui.IsItemHovered())
                     {
-                        ImGui.SetTooltip("Right click this button to delete the bar!");
+                        ImGui.SetTooltip($"Right click this button to delete bar #{i + 1}!");
 
                         if (ImGui.IsMouseReleased(1))
                         {
