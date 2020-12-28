@@ -505,13 +505,10 @@ namespace QoLBar
             {
                 Reveal();
 
-                ImGui.Text("Name");
-                ImGui.SameLine();
-                ImGui.SetNextItemWidth(230);
-                ImGui.InputText("##NameInput", ref _inputname, 256);
+                ImGui.InputText("Name          ", ref _inputname, 256); // Not a bug... just ImGui not extending the window to fit multiline's name...
 
                 // No nested categories
-                if (ImGui.Combo("##TypeInput", ref _inputtype, (shortcuts == barConfig.ShortcutList) ? "Single\0Multiline\0Category" : "Single\0Multiline"))
+                if (ImGui.Combo("Type", ref _inputtype, (shortcuts == barConfig.ShortcutList) ? "Single\0Multiline\0Category" : "Single\0Multiline"))
                 {
                     if (_inputtype == (int)Shortcut.ShortcutType.Single)
                         _inputcommand = _inputcommand.Split('\n')[0];
@@ -520,25 +517,14 @@ namespace QoLBar
                 switch ((Shortcut.ShortcutType)_inputtype)
                 {
                     case Shortcut.ShortcutType.Single:
-                        ImGui.Text("Command");
-                        ImGui.SameLine();
-                        ImGui.SetNextItemWidth(205);
-                        ImGui.InputText("##CommandInput", ref _inputcommand, (uint)maxCommandLength);
+                        ImGui.InputText("Command", ref _inputcommand, (uint)maxCommandLength);
                         break;
                     case Shortcut.ShortcutType.Multiline:
-                        ImGui.Text("Command");
-                        ImGui.SameLine();
-                        ImGui.InputTextMultiline("##MultiCommandInput", ref _inputcommand, (uint)maxCommandLength * 15, new Vector2(205, 124));
+                        ImGui.InputTextMultiline("Command##Multi", ref _inputcommand, (uint)maxCommandLength * 15, new Vector2(272, 124));
                         break;
                     case Shortcut.ShortcutType.Category:
-                        ImGui.Text("Tooltip");
-                        ImGui.SameLine();
-                        ImGui.SetNextItemWidth(223);
-                        ImGui.InputText("##CommandInput", ref _inputcommand, (uint)maxCommandLength);
-
-                        ImGui.Text("Hide + Button");
-                        ImGui.SameLine();
-                        ImGui.Checkbox("##Hide+", ref _hideadd);
+                        ImGui.InputText("Tooltip", ref _inputcommand, (uint)maxCommandLength);
+                        ImGui.Checkbox("Hide + Button", ref _hideadd);
                         break;
                     default:
                         break;
@@ -636,9 +622,7 @@ namespace QoLBar
                 Reveal();
 
                 var _dock = (int)barConfig.DockSide;
-                ImGui.Text("Bar Side");
-                ImGui.SameLine();
-                if (ImGui.Combo("##Dock", ref _dock, "Top\0Left\0Bottom\0Right\0Undocked\0Undocked (Vertical)"))
+                if (ImGui.Combo("Bar Side", ref _dock, "Top\0Left\0Bottom\0Right\0Undocked\0Undocked (Vertical)"))
                 {
                     barConfig.DockSide = (BarDock)_dock;
                     config.Save();
@@ -648,9 +632,7 @@ namespace QoLBar
                 if (docked)
                 {
                     var _align = (int)barConfig.Alignment;
-                    ImGui.Text("Bar Alignment");
-                    ImGui.SameLine();
-                    if (ImGui.Combo("##Alignment", ref _align, vertical ? "Top\0Center\0Bottom" : "Left\0Center\0Right"))
+                    if (ImGui.Combo("Bar Alignment", ref _align, vertical ? "Top\0Center\0Bottom" : "Left\0Center\0Right"))
                     {
                         barConfig.Alignment = (BarAlign)_align;
                         config.Save();
@@ -658,9 +640,7 @@ namespace QoLBar
                     }
 
                     var _visibility = (int)barConfig.Visibility;
-                    ImGui.Text("Bar Animation");
-                    ImGui.SameLine();
-                    if (ImGui.Combo("##Animation", ref _visibility, "Slide\0Immediate\0Always Visible"))
+                    if (ImGui.Combo("Bar Animation", ref _visibility, "Slide\0Immediate\0Always Visible"))
                     {
                         barConfig.Visibility = (VisibilityMode)_visibility;
                         config.Save();
@@ -668,33 +648,25 @@ namespace QoLBar
                 }
                 else
                 {
-                    ImGui.Text("Lock Position");
-                    ImGui.SameLine();
-                    if (ImGui.Checkbox("##LockPosition", ref barConfig.LockedPosition))
+                    if (ImGui.Checkbox("Lock Position", ref barConfig.LockedPosition))
                         config.Save();
                 }
 
                 if (!vertical)
                 {
-                    ImGui.Text("Automatic Button Width");
-                    ImGui.SameLine();
-                    if (ImGui.Checkbox("##AutoButtonWidth", ref barConfig.AutoButtonWidth))
+                    if (ImGui.Checkbox("Automatic Button Width", ref barConfig.AutoButtonWidth))
                         config.Save();
                 }
 
                 if (vertical || !barConfig.AutoButtonWidth)
                 {
-                    ImGui.Text("Button Width");
-                    ImGui.SameLine();
-                    if (ImGui.SliderInt("##ButtonWidth", ref barConfig.ButtonWidth, 16, 200))
+                    if (ImGui.SliderInt("Button Width", ref barConfig.ButtonWidth, 16, 200))
                         config.Save();
                 }
 
                 if (barConfig.ShortcutList.Count > 0)
                 {
-                    ImGui.Text("Hide + Button");
-                    ImGui.SameLine();
-                    if (ImGui.Checkbox("##Hide+", ref barConfig.HideAdd))
+                    if (ImGui.Checkbox("Hide + Button", ref barConfig.HideAdd))
                     {
                         if (barConfig.HideAdd)
                             plugin.ExecuteCommand("/echo <se> You can right click on the bar itself (the black background) to reopen this settings menu!");
