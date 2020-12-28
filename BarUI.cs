@@ -226,6 +226,7 @@ namespace QoLBar
             }
 
             SetBarPosition();
+            Hide(); // Allows other objects to reveal the bar
 
             _firstframe = false;
         }
@@ -242,7 +243,7 @@ namespace QoLBar
             ImGui.SetNextWindowPos(revealPos, ImGuiCond.Always, piv);
             ImGui.SetNextWindowSize(barSize);
             ImGui.Begin($"QoLBarMouseDetection##{barNumber}", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoBringToFrontOnFocus);
-            if (barConfig.Visibility == VisibilityMode.Always || ImGui.IsWindowHovered())
+            if (_reveal || barConfig.Visibility == VisibilityMode.Always || ImGui.IsWindowHovered())
                 Reveal();
             else
                 Hide();
@@ -543,7 +544,7 @@ namespace QoLBar
             }
         }
 
-        private void BarConfigPopup()
+        public void BarConfigPopup()
         {
             if (ImGui.BeginPopup($"BarConfig##{barNumber}"))
             {
@@ -609,6 +610,8 @@ namespace QoLBar
                     }
                 }
 
+                ImGui.Spacing();
+                ImGui.Spacing();
                 if (ImGui.Button("QoL Bar Config"))
                     plugin.ToggleConfig();
 

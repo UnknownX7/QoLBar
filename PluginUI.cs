@@ -72,6 +72,12 @@ namespace QoLBar
 
                 ImGui.NextColumn();
 
+                if (ImGui.Button("O"))
+                    ImGui.OpenPopup($"BarConfig##{i}");
+                if (ImGui.IsItemHovered())
+                    ImGui.SetTooltip("Options");
+                bars[i].BarConfigPopup();
+                ImGui.SameLine();
                 if (ImGui.Button(config.BarConfigs[i].Hidden ? "R" : "H"))
                     bars[i].ToggleVisible();
                 if (ImGui.IsItemHovered())
