@@ -104,14 +104,14 @@ namespace QoLBar
             {
                 case BarAlign.LeftOrTop:
                     pivX = 0.0f;
-                    offset = 10;
+                    offset = 39;
                     break;
                 case BarAlign.Center:
                     pivX = 0.5f;
                     break;
                 case BarAlign.RightOrBottom:
                     pivX = 1.0f;
-                    offset = -10;
+                    offset = -39;
                     break;
                 default:
                     break;
