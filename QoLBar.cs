@@ -80,6 +80,7 @@ namespace QoLBar
             ui = new PluginUI(this, config);
             pluginInterface.UiBuilder.OnOpenConfigUi += ToggleConfig;
             pluginInterface.UiBuilder.OnBuildUi += ui.Draw;
+            pluginInterface.ClientState.OnLogin += InitCommands;
         }
 
         public void ToggleConfig(object sender = null, EventArgs e = null) => ui.ToggleConfig();
@@ -94,19 +95,22 @@ namespace QoLBar
 
         private IntPtr uiModulePtr;
 
+        private void InitCommands(object sender = null, EventArgs e = null)
+        {
+            var getUIModulePtr = pluginInterface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? 48 83 7F ?? 00 48 8B F0");
+            var easierProcessChatBoxPtr = pluginInterface.TargetModuleScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9");
+            uiModulePtr = pluginInterface.TargetModuleScanner.GetStaticAddressFromSig("48 8B 0D ?? ?? ?? ?? 48 8D 54 24 ?? 48 83 C1 10 E8 ?? ?? ?? ??");
+
+            GetUIModule = Marshal.GetDelegateForFunctionPointer<GetUIModuleDelegate>(getUIModulePtr);
+            _EasierProcessChatBox = Marshal.GetDelegateForFunctionPointer<EasierProcessChatBoxDelegate>(easierProcessChatBoxPtr);
+        }
+
         public void ExecuteCommand(string command)
         {
             try
             {
                 if (uiModulePtr == null || uiModulePtr == IntPtr.Zero)
-                {
-                    var getUIModulePtr = pluginInterface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? 48 83 7F ?? 00 48 8B F0");
-                    var easierProcessChatBoxPtr = pluginInterface.TargetModuleScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9");
-                    uiModulePtr = pluginInterface.TargetModuleScanner.GetStaticAddressFromSig("48 8B 0D ?? ?? ?? ?? 48 8D 54 24 ?? 48 83 C1 10 E8 ?? ?? ?? ??");
-
-                    GetUIModule = Marshal.GetDelegateForFunctionPointer<GetUIModuleDelegate>(getUIModulePtr);
-                    _EasierProcessChatBox = Marshal.GetDelegateForFunctionPointer<EasierProcessChatBoxDelegate>(easierProcessChatBoxPtr);
-                }
+                    InitCommands();
 
                 var uiModule = GetUIModule(Marshal.ReadIntPtr(uiModulePtr));
 
@@ -148,8 +152,8 @@ namespace QoLBar
             pluginInterface.SavePluginConfig(config);
 
             pluginInterface.UiBuilder.OnOpenConfigUi -= ToggleConfig;
-
             pluginInterface.UiBuilder.OnBuildUi -= ui.Draw;
+            pluginInterface.ClientState.OnLogin -= InitCommands;
 
             pluginInterface.Dispose();
 
