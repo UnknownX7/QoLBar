@@ -177,6 +177,7 @@ namespace QoLBar
             flags |= ImGuiWindowFlags.NoMove;
             flags |= ImGuiWindowFlags.NoScrollWithMouse;
             flags |= ImGuiWindowFlags.NoSavedSettings;
+            flags |= ImGuiWindowFlags.NoFocusOnAppearing;
         }
 
         public void Draw()
@@ -240,7 +241,7 @@ namespace QoLBar
             // Invisible UI to check if the mouse is nearby
             ImGui.SetNextWindowPos(revealPos, ImGuiCond.Always, piv);
             ImGui.SetNextWindowSize(barSize);
-            ImGui.Begin($"QoLBarMouseDetection##{barNumber}", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoBringToFrontOnFocus);
+            ImGui.Begin($"QoLBarMouseDetection##{barNumber}", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoBringToFrontOnFocus);
             if (barConfig.Visibility == VisibilityMode.Always || ImGui.IsWindowHovered())
                 Reveal();
             else
