@@ -184,8 +184,19 @@ namespace QoLBar
                 bars[i].SetBarNumber(i);
         }
 
+        private void CleanBarConfig(BarConfig bar)
+        {
+            foreach (var sh in bar.ShortcutList)
+            {
+                if (sh.Type != Shortcut.ShortcutType.Category)
+                    sh.SubList = null;
+            }
+        }
+
         private string ExportBar(BarConfig bar)
         {
+            CleanBarConfig(bar);
+
             string jstring = JsonConvert.SerializeObject(bar, Formatting.None, new JsonSerializerSettings
             {
                 TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
