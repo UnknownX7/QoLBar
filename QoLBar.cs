@@ -58,6 +58,7 @@ namespace QoLBar
         public string Command = string.Empty;
         public List<Shortcut> SubList;
         public bool HideAdd = false;
+        public int CategoryWidth = 140;
     }
 
     public class QoLBar : IDalamudPlugin

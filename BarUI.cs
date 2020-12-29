@@ -454,7 +454,7 @@ namespace QoLBar
 
                     ImGui.PushID(j);
 
-                    if (ImGui.Selectable(_name, false, ImGuiSelectableFlags.None, new Vector2(140, 20)))
+                    if (ImGui.Selectable(_name, false, ImGuiSelectableFlags.None, new Vector2(sh.CategoryWidth, 20)))
                         ItemClicked(_type, _command);
 
                     ImGui.OpenPopupOnItemClick("editItem", 1);
@@ -466,13 +466,17 @@ namespace QoLBar
 
                 if (!sh.HideAdd)
                 {
-                    if (ImGui.Selectable("                         +", false, ImGuiSelectableFlags.DontClosePopups, new Vector2(140, 20)))
+                    ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.5f, 0.5f));
+
+                    if (ImGui.Selectable("+", false, ImGuiSelectableFlags.DontClosePopups, new Vector2(sh.CategoryWidth, 20)))
                     {
                         _sh = new Shortcut();
                         ImGui.OpenPopup("addItem");
                     }
                     if (ImGui.IsItemHovered())
                         ImGui.SetTooltip("Add a new button.");
+
+                    ImGui.PopStyleVar();
                 }
 
                 ItemCreatePopup(sublist);
@@ -551,6 +555,9 @@ namespace QoLBar
                 if (sh.Type == Shortcut.ShortcutType.Category)
                 {
                     if (ImGui.Checkbox("Hide + Button", ref sh.HideAdd))
+                        config.Save();
+
+                    if (ImGui.SliderInt("Category Width", ref sh.CategoryWidth, 8, 200))
                         config.Save();
                 }
 
