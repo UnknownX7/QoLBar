@@ -200,7 +200,7 @@ namespace QoLBar
             window = io.DisplaySize;
             mousePos = io.MousePos;
 
-            if (docked)
+            if (docked || barConfig.Visibility == VisibilityMode.Immediate)
             {
                 SetupRevealPosition();
 
@@ -209,7 +209,10 @@ namespace QoLBar
             else
                 Reveal();
 
-            if (_firstframe || _reveal || barPos != hidePos) // Don't bother to render when fully off screen
+            if (!docked && !_firstframe && !_reveal && !_lastReveal)
+                return;
+
+            if (_firstframe || _reveal || barPos != hidePos || (!docked && _lastReveal)) // Don't bother to render when fully off screen
             {
                 ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0);
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0);
@@ -218,8 +221,13 @@ namespace QoLBar
                     ImGui.SetNextWindowPos(barPos, ImGuiCond.Always, piv);
                 else if (_setPos)
                 {
-                    ImGui.SetNextWindowPos(barConfig.Position);
-                    _setPos = false;
+                    if (!_firstframe)
+                    {
+                        ImGui.SetNextWindowPos(barConfig.Position);
+                        _setPos = false;
+                    }
+                    else
+                        ImGui.SetNextWindowPos(new Vector2(window.X, window.Y));
                 }
                 ImGui.SetNextWindowSize(barSize);
 
@@ -239,7 +247,7 @@ namespace QoLBar
                 if (!barConfig.HideAdd || barConfig.ShortcutList.Count < 1)
                     DrawAddButton();
 
-                if (!docked && ImGui.GetWindowPos() != barConfig.Position)
+                if (!_firstframe && !docked && ImGui.GetWindowPos() != barConfig.Position)
                 {
                     barConfig.Position = ImGui.GetWindowPos();
                     config.Save();
@@ -259,6 +267,8 @@ namespace QoLBar
                 SetBarPosition();
                 Hide(); // Allows other objects to reveal the bar
             }
+            else
+                _lastReveal = _reveal;
 
             _firstframe = false;
         }
@@ -272,14 +282,31 @@ namespace QoLBar
                 Hide();*/
 
             // Invisible UI to check if the mouse is nearby
-            ImGui.SetNextWindowPos(revealPos, ImGuiCond.Always, piv);
-            ImGui.SetNextWindowSize(barSize);
-            ImGui.Begin($"QoLBarMouseDetection##{barNumber}", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoBringToFrontOnFocus);
-            if (_reveal || barConfig.Visibility == VisibilityMode.Always || ImGui.IsWindowHovered())
-                Reveal();
+            if (docked)
+            {
+                ImGui.SetNextWindowPos(revealPos, ImGuiCond.Always, piv);
+                ImGui.SetNextWindowSize(barSize);
+                ImGui.Begin($"QoLBarMouseDetection##{barNumber}", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoBringToFrontOnFocus);
+                if (_reveal || barConfig.Visibility == VisibilityMode.Always || ImGui.IsWindowHovered())
+                    Reveal();
+                else
+                    Hide();
+                ImGui.End();
+            }
             else
-                Hide();
-            ImGui.End();
+            {
+                var posX = barConfig.Position.X;
+                var posY = barConfig.Position.Y;
+                var mX = mousePos.X;
+                var mY = mousePos.Y;
+                var barW = barSize.X;
+                var barH = barSize.Y;
+
+                if (posX <= mX && mX < posX + barW && posY <= mY && mY < posY + barH)
+                    Reveal();
+                else
+                    Hide();
+            }
         }
 
         private void DrawItems()
@@ -608,6 +635,8 @@ namespace QoLBar
                 if (ImGui.Combo("Bar Side", ref _dock, "Top\0Left\0Bottom\0Right\0Undocked\0Undocked (Vertical)"))
                 {
                     barConfig.DockSide = (BarDock)_dock;
+                    if (barConfig.DockSide == BarDock.UndockedH || barConfig.DockSide == BarDock.UndockedV)
+                        barConfig.Visibility = VisibilityMode.Always;
                     config.Save();
                     SetupPosition();
                 }
@@ -631,6 +660,13 @@ namespace QoLBar
                 }
                 else
                 {
+                    var _visibility = (int)barConfig.Visibility - 1;
+                    if (ImGui.Combo("Bar Animation", ref _visibility, "Immediate\0Always Visible"))
+                    {
+                        barConfig.Visibility = (VisibilityMode)(_visibility + 1);
+                        config.Save();
+                    }
+
                     if (ImGui.Checkbox("Lock Position", ref barConfig.LockedPosition))
                         config.Save();
                 }
