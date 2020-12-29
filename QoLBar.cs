@@ -12,7 +12,7 @@ namespace QoLBar
     public class BarConfig
     {
         public string Title = string.Empty;
-        public List<Shortcut> ShortcutList;
+        public List<Shortcut> ShortcutList = new List<Shortcut>();
         public bool Hidden = false;
         public enum VisibilityMode
         {
@@ -43,26 +43,21 @@ namespace QoLBar
         public bool HideAdd = false;
         public Vector2 Position = new Vector2();
         public bool LockedPosition = false;
-
-        public BarConfig()
-        {
-            ShortcutList = new List<Shortcut>();
-        }
     }
 
     public class Shortcut
     {
-        public string Name;
+        public string Name = string.Empty;
         public enum ShortcutType
         {
             Single,
             Multiline,
             Category
         }
-        public ShortcutType Type;
-        public string Command;
+        public ShortcutType Type = ShortcutType.Single;
+        public string Command = string.Empty;
         public List<Shortcut> SubList;
-        public bool HideAdd;
+        public bool HideAdd = false;
     }
 
     public class QoLBar : IDalamudPlugin

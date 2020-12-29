@@ -29,10 +29,7 @@ namespace QoLBar
             config.Save();
         }
 
-        private string _inputname = string.Empty;
-        private int _inputtype = 0;
-        private string _inputcommand = string.Empty;
-        private bool _hideadd = false;
+        private Shortcut _sh;
         private static Vector2 window = ImGui.GetIO().DisplaySize;
         private static Vector2 mousePos = ImGui.GetIO().MousePos;
         private Vector2 barSize = new Vector2(200, 38);
@@ -289,11 +286,10 @@ namespace QoLBar
         {
             for (int i = 0; i < barConfig.ShortcutList.Count; i++)
             {
-                var _sh = barConfig.ShortcutList[i];
-                var name = _sh.Name;
-                var type = _sh.Type;
-                var command = _sh.Command;
-                var hideadd = _sh.HideAdd;
+                var sh = barConfig.ShortcutList[i];
+                var name = sh.Name;
+                var type = sh.Type;
+                var command = sh.Command;
 
                 ImGui.PushID(i);
 
@@ -302,10 +298,6 @@ namespace QoLBar
                 if (ImGui.IsItemHovered())
                 {
                     Reveal();
-                    _inputname = name;
-                    _inputtype = (int)type;
-                    _inputcommand = command;
-                    _hideadd = hideadd;
 
                     if (type == Shortcut.ShortcutType.Category && !string.IsNullOrEmpty(command))
                         ImGui.SetTooltip(command);
@@ -316,7 +308,7 @@ namespace QoLBar
 
                 ImGui.OpenPopupOnItemClick("editItem", 1);
 
-                ItemConfigPopup("editItem", barConfig.ShortcutList, i);
+                ItemConfigPopup(barConfig.ShortcutList, i);
 
                 if (!vertical && i != barConfig.ShortcutList.Count - 1)
                     ImGui.SameLine();
@@ -333,10 +325,7 @@ namespace QoLBar
             if ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button("+") : ImGui.Button("+", new Vector2(barConfig.ButtonWidth, 23)))
             {
                 Reveal();
-                _inputname = string.Empty;
-                _inputtype = 0;
-                _inputcommand = string.Empty;
-                _hideadd = false;
+                _sh = new Shortcut();
 
                 ImGui.OpenPopup("addItem");
             }
@@ -349,7 +338,7 @@ namespace QoLBar
 
             ImGui.OpenPopupOnItemClick($"BarConfig##{barNumber}", 1);
 
-            ItemConfigPopup("addItem", barConfig.ShortcutList, -1);
+            ItemCreatePopup(barConfig.ShortcutList);
         }
 
         private void ItemClicked(Shortcut.ShortcutType type, string command, string categoryid = "")
@@ -467,17 +456,10 @@ namespace QoLBar
 
                     if (ImGui.Selectable(_name, false, ImGuiSelectableFlags.None, new Vector2(140, 20)))
                         ItemClicked(_type, _command);
-                    if (ImGui.IsItemHovered())
-                    {
-                        _inputname = _name;
-                        _inputtype = (int)_type;
-                        _inputcommand = _command;
-                        _hideadd = false;
-                    }
 
                     ImGui.OpenPopupOnItemClick("editItem", 1);
 
-                    ItemConfigPopup("editItem", sublist, j);
+                    ItemConfigPopup(sublist, j);
 
                     ImGui.PopID();
                 }
@@ -486,130 +468,120 @@ namespace QoLBar
                 {
                     if (ImGui.Selectable("                         +", false, ImGuiSelectableFlags.DontClosePopups, new Vector2(140, 20)))
                     {
-                        _inputname = string.Empty;
-                        _inputtype = 0;
-                        _inputcommand = string.Empty;
-                        _hideadd = false;
-
+                        _sh = new Shortcut();
                         ImGui.OpenPopup("addItem");
                     }
                     if (ImGui.IsItemHovered())
                         ImGui.SetTooltip("Add a new button.");
                 }
 
-                ItemConfigPopup("addItem", sublist, -1);
+                ItemCreatePopup(sublist);
 
                 ImGui.EndPopup();
             }
         }
 
-        private void ItemConfigPopup(string id, List<Shortcut> shortcuts, int i)
+        private void ItemBaseUI(Shortcut sh, bool editing, bool notSubItem)
         {
-            if (ImGui.BeginPopup(id))
+            Reveal();
+
+            if (ImGui.InputText("Name          ", ref sh.Name, 256) && editing) // Not a bug... just ImGui not extending the window to fit multiline's name...
+                config.Save();
+
+            // No nested categories
+            var _t = (int)sh.Type;
+            if (ImGui.Combo("Type", ref _t, notSubItem ? "Single\0Multiline\0Category" : "Single\0Multiline"))
             {
-                Reveal();
+                sh.Type = (Shortcut.ShortcutType)_t;
+                if (sh.Type == Shortcut.ShortcutType.Single)
+                    sh.Command = sh.Command.Split('\n')[0];
+                else if (sh.Type == Shortcut.ShortcutType.Category)
+                    sh.SubList ??= new List<Shortcut>();
 
-                ImGui.InputText("Name          ", ref _inputname, 256); // Not a bug... just ImGui not extending the window to fit multiline's name...
+                if (editing)
+                    config.Save();
+            }
 
-                // No nested categories
-                if (ImGui.Combo("Type", ref _inputtype, (shortcuts == barConfig.ShortcutList) ? "Single\0Multiline\0Category" : "Single\0Multiline"))
-                {
-                    if (_inputtype == (int)Shortcut.ShortcutType.Single)
-                        _inputcommand = _inputcommand.Split('\n')[0];
-                }
-
-                switch ((Shortcut.ShortcutType)_inputtype)
-                {
-                    case Shortcut.ShortcutType.Single:
-                        ImGui.InputText("Command", ref _inputcommand, (uint)maxCommandLength);
-                        break;
-                    case Shortcut.ShortcutType.Multiline:
-                        ImGui.InputTextMultiline("Command##Multi", ref _inputcommand, (uint)maxCommandLength * 15, new Vector2(272, 124));
-                        break;
-                    case Shortcut.ShortcutType.Category:
-                        ImGui.InputText("Tooltip", ref _inputcommand, (uint)maxCommandLength);
-                        ImGui.Checkbox("Hide + Button", ref _hideadd);
-                        break;
-                    default:
-                        break;
-                }
-
-                if (i >= 0)
-                {
-                    if (ImGui.Button((shortcuts == barConfig.ShortcutList && !vertical) ? "←" : "↑") && i > 0)
-                    {
-                        var sh = shortcuts[i];
-                        shortcuts.RemoveAt(i);
-                        shortcuts.Insert(i - 1, sh);
+            switch (sh.Type)
+            {
+                case Shortcut.ShortcutType.Single:
+                    if (ImGui.InputText("Command", ref sh.Command, (uint)maxCommandLength) && editing)
                         config.Save();
-                        ImGui.CloseCurrentPopup(); // Sry its just simpler to close this than to deal with updating the menus without remaking them
-                    }
-                    ImGui.SameLine();
-                }
+                    break;
+                case Shortcut.ShortcutType.Multiline:
+                    if (ImGui.InputTextMultiline("Command##Multi", ref sh.Command, (uint)maxCommandLength * 15, new Vector2(272, 124)) && editing)
+                        config.Save();
+                    break;
+                case Shortcut.ShortcutType.Category:
+                    if (ImGui.InputText("Tooltip", ref sh.Command, (uint)maxCommandLength) && editing)
+                        config.Save();
+                    break;
+                default:
+                    break;
+            }
+        }
 
-                if (ImGui.Button("Save") && !string.IsNullOrEmpty(_inputname) && (_inputtype == (int)Shortcut.ShortcutType.Category || !string.IsNullOrEmpty(_inputcommand)))
+        private void ItemCreatePopup(List<Shortcut> shortcuts)
+        {
+            if (ImGui.BeginPopup("addItem"))
+            {
+                ItemBaseUI(_sh, false, shortcuts == barConfig.ShortcutList);
+
+                if (ImGui.Button("Create"))
                 {
-                    List<Shortcut> _sublist;
-                    if (_inputtype == (int)Shortcut.ShortcutType.Category)
-                    {
-                        if (i >= 0)
-                            _sublist = shortcuts[i].SubList ?? new List<Shortcut>();
-                        else
-                            _sublist = new List<Shortcut>();
-                    }
-                    else
-                    {
-                        _sublist = null;
-                        _hideadd = false;
-                    }
-
-                    var sh = new Shortcut {
-                        Name = _inputname,
-                        Type = (Shortcut.ShortcutType)_inputtype,
-                        Command = _inputcommand,
-                        SubList = _sublist,
-                        HideAdd = _hideadd
-                    };
-                    if (i >= 0)
-                        shortcuts[i] = sh;
-                    else
-                        shortcuts.Add(sh);
-                    
+                    shortcuts.Add(_sh);
                     config.Save();
                     ImGui.CloseCurrentPopup();
                 }
 
-                if (i >= 0)
+                ClampWindowPos();
+
+                ImGui.EndPopup();
+            }
+        }
+
+        private void ItemConfigPopup(List<Shortcut> shortcuts, int i)
+        {
+            if (ImGui.BeginPopup("editItem"))
+            {
+                var sh = shortcuts[i];
+
+                ItemBaseUI(sh, true, shortcuts == barConfig.ShortcutList);
+
+                if (sh.Type == Shortcut.ShortcutType.Category)
                 {
-                    ImGui.SameLine();
-                    if (ImGui.Button("Delete"))
-                        plugin.ExecuteCommand("/echo <se> Right click to delete!");
-                    /*if (ImGui.IsItemClicked(1)) // Jesus christ I hate ImGui who made this function activate on PRESS AND NOT RELEASE??? THIS ISN'T A CLICK
+                    if (ImGui.Checkbox("Hide + Button", ref sh.HideAdd))
+                        config.Save();
+                }
+
+                if (ImGui.Button((shortcuts == barConfig.ShortcutList && !vertical) ? "←" : "↑") && i > 0)
+                {
+                    shortcuts.RemoveAt(i);
+                    shortcuts.Insert(i - 1, sh);
+                    config.Save();
+                    ImGui.CloseCurrentPopup(); // Sry its just simpler to close this than to deal with updating the menus without remaking them
+                }
+                ImGui.SameLine();
+                if (ImGui.Button((shortcuts == barConfig.ShortcutList && !vertical) ? "→" : "↓") && i < (shortcuts.Count - 1))
+                {
+                    shortcuts.RemoveAt(i);
+                    shortcuts.Insert(i + 1, sh);
+                    config.Save();
+                    ImGui.CloseCurrentPopup(); // Sry its just simpler to close this than to deal with updating the menus without remaking them
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Delete"))
+                    plugin.ExecuteCommand("/echo <se> Right click to delete!");
+                //if (ImGui.IsItemClicked(1)) // Jesus christ I hate ImGui who made this function activate on PRESS AND NOT RELEASE??? THIS ISN'T A CLICK
+                if (ImGui.IsItemHovered())
+                {
+                    ImGui.SetTooltip("Right click this button to delete the shortcut!");
+
+                    if (ImGui.IsMouseReleased(1))
                     {
                         shortcuts.RemoveAt(i);
                         config.Save();
                         ImGui.CloseCurrentPopup();
-                    }*/
-                    if (ImGui.IsItemHovered())
-                    {
-                        ImGui.SetTooltip("Right click this button to delete the shortcut!");
-
-                        if (ImGui.IsMouseReleased(1))
-                        {
-                            shortcuts.RemoveAt(i);
-                            config.Save();
-                            ImGui.CloseCurrentPopup();
-                        }
-                    }
-
-                    ImGui.SameLine();
-                    if (ImGui.Button((shortcuts == barConfig.ShortcutList && !vertical) ? "→" : "↓") && i < (shortcuts.Count - 1))
-                    {
-                        var sh = shortcuts[i];
-                        shortcuts.RemoveAt(i);
-                        shortcuts.Insert(i + 1, sh);
-                        config.Save();
-                        ImGui.CloseCurrentPopup(); // Sry its just simpler to close this than to deal with updating the menus without remaking them
                     }
                 }
 
