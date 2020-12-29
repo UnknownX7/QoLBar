@@ -1,8 +1,11 @@
 using ImGuiNET;
 using System;
 using System.Numerics;
+using System.Text;
 using System.Collections.Generic;
-using static QoLBar.BarConfig;
+using System.IO;
+using System.IO.Compression;
+using Newtonsoft.Json;
 using Dalamud.Plugin;
 
 namespace QoLBar
@@ -49,6 +52,7 @@ namespace QoLBar
             ImGui.SameLine(30);
             ImGui.Text("Bar Manager");
             ImGui.Spacing();
+            ImGui.Separator();
 
             Vector2 textsize = new Vector2(-1, 0);
             float textx = 0.0f;
@@ -110,7 +114,10 @@ namespace QoLBar
                     RefreshBarIndexes();
                 }
                 ImGui.SameLine();
-                //if (ImGui.Button("Copy")) // Probably not needed
+                if (ImGui.Button("Export"))
+                    ImGui.SetClipboardText(ExportBar(config.BarConfigs[i]));
+                if (ImGui.IsItemHovered())
+                    ImGui.SetTooltip("Export to clipboard");
                 if (i > 0)
                 {
                     ImGui.SameLine();
@@ -135,7 +142,7 @@ namespace QoLBar
                 ImGui.PopID();
             }
 
-            //textsize.Y -= 6;
+            ImGui.Separator();
             ImGui.Spacing();
             ImGui.SameLine(textx);
             if (ImGui.Button("+", textsize))
@@ -144,6 +151,23 @@ namespace QoLBar
                 bars.Add(new BarUI(plugin, config, bars.Count));
                 config.Save();
             }
+            ImGui.NextColumn();
+            ImGui.NextColumn();
+            if (ImGui.Button("Import", textsize))
+            {
+                try
+                {
+                    config.BarConfigs.Add(ImportBar(ImGui.GetClipboardText()));
+                    bars.Add(new BarUI(plugin, config, bars.Count));
+                    config.Save();
+                }
+                catch
+                {
+                    PluginLog.LogError("[QoLBar] Invalid import string!");
+                }
+            }
+            if (ImGui.IsItemHovered())
+                ImGui.SetTooltip("Import from clipboard");
 
             ImGui.Columns(1); // I just wanna know who did this and where they live
 
@@ -154,6 +178,43 @@ namespace QoLBar
         {
             for (int i = 0; i < bars.Count; i++)
                 bars[i].SetBarNumber(i);
+        }
+
+        private string ExportBar(BarConfig bar)
+        {
+            string jstring = JsonConvert.SerializeObject(bar, Formatting.None, new JsonSerializerSettings
+            {
+                TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
+                TypeNameHandling = TypeNameHandling.Objects
+            });
+
+            var bytes = Encoding.UTF8.GetBytes(jstring);
+            using var mso = new MemoryStream();
+            using (var gs = new GZipStream(mso, CompressionMode.Compress))
+            {
+                gs.Write(bytes, 0, bytes.Length);
+            }
+            return Convert.ToBase64String(mso.ToArray());
+        }
+
+        private BarConfig ImportBar(string import)
+        {
+            var data = Convert.FromBase64String(import);
+            byte[] lengthBuffer = new byte[4];
+            Array.Copy(data, data.Length - 4, lengthBuffer, 0, 4);
+            int uncompressedSize = BitConverter.ToInt32(lengthBuffer, 0);
+
+            var buffer = new byte[uncompressedSize];
+            using (var ms = new MemoryStream(data))
+            {
+                using var gzip = new GZipStream(ms, CompressionMode.Decompress);
+                gzip.Read(buffer, 0, uncompressedSize);
+            }
+            return JsonConvert.DeserializeObject<BarConfig>(Encoding.UTF8.GetString(buffer), new JsonSerializerSettings
+            {
+                TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
+                TypeNameHandling = TypeNameHandling.Objects
+            });
         }
 
         public void Dispose()
