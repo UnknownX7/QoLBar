@@ -19,7 +19,11 @@ namespace QoLBar
         private readonly QoLBar plugin;
         private readonly Configuration config;
 
+#if DEBUG
+        private bool configOpen = true;
+#else
         private bool configOpen = false;
+#endif
         public void ToggleConfig() => configOpen = !configOpen;
 
         public PluginUI(QoLBar p, Configuration config)

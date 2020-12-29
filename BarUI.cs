@@ -18,7 +18,11 @@ namespace QoLBar
             _setPos = true;
         }
 
+#if DEBUG
+        public bool IsVisible => !barConfig.Hidden;
+#else
         public bool IsVisible => !barConfig.Hidden && plugin.pluginInterface.ClientState.LocalPlayer != null;
+#endif
         public void ToggleVisible()
         {
             barConfig.Hidden = !barConfig.Hidden;
