@@ -31,6 +31,7 @@ namespace QoLBar
         private Shortcut _sh;
         private static Vector2 window = ImGui.GetIO().DisplaySize;
         private static Vector2 mousePos = ImGui.GetIO().MousePos;
+        private static float globalSize;
         private Vector2 barSize = new Vector2(200, 38);
         private Vector2 barPos;
         private ImGuiWindowFlags flags;
@@ -200,6 +201,7 @@ namespace QoLBar
             var io = ImGui.GetIO();
             window = io.DisplaySize;
             mousePos = io.MousePos;
+            globalSize = io.FontGlobalScale;
 
             if (docked || barConfig.Visibility == VisibilityMode.Immediate)
             {
@@ -321,7 +323,7 @@ namespace QoLBar
 
                 ImGui.PushID(i);
 
-                if ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button(name) : ImGui.Button(name, new Vector2(barConfig.ButtonWidth, 23)))
+                if ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button(name) : ImGui.Button(name, new Vector2(barConfig.ButtonWidth * globalSize, 0)))
                     ItemClicked(type, command, $"{name}Category");
                 if (ImGui.IsItemHovered())
                 {
@@ -350,7 +352,7 @@ namespace QoLBar
             if (!vertical && barConfig.ShortcutList.Count > 0)
                 ImGui.SameLine();
 
-            if ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button("+") : ImGui.Button("+", new Vector2(barConfig.ButtonWidth, 23)))
+            if ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button("+") : ImGui.Button("+", new Vector2(barConfig.ButtonWidth * globalSize, 0)))
             {
                 Reveal();
 
@@ -481,7 +483,7 @@ namespace QoLBar
 
                     ImGui.PushID(j);
 
-                    if (ImGui.Selectable(_name, false, ImGuiSelectableFlags.None, new Vector2(sh.CategoryWidth, 20)))
+                    if (ImGui.Selectable(_name, false, ImGuiSelectableFlags.None, new Vector2(sh.CategoryWidth * globalSize, 0)))
                         ItemClicked(_type, _command);
 
                     ImGui.OpenPopupOnItemClick("editItem", 1);
@@ -495,7 +497,7 @@ namespace QoLBar
                 {
                     ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.5f, 0.5f));
 
-                    if (ImGui.Selectable("+", false, ImGuiSelectableFlags.DontClosePopups, new Vector2(sh.CategoryWidth, 20)))
+                    if (ImGui.Selectable("+", false, ImGuiSelectableFlags.DontClosePopups, new Vector2(sh.CategoryWidth * globalSize, 0)))
                         ImGui.OpenPopup("addItem");
                     if (ImGui.IsItemHovered())
                         ImGui.SetTooltip("Add a new button.");
@@ -537,7 +539,7 @@ namespace QoLBar
                         config.Save();
                     break;
                 case Shortcut.ShortcutType.Multiline:
-                    if (ImGui.InputTextMultiline("Command##Multi", ref sh.Command, (uint)maxCommandLength * 15, new Vector2(272, 124)) && editing)
+                    if (ImGui.InputTextMultiline("Command##Multi", ref sh.Command, (uint)maxCommandLength * 15, new Vector2(272 * globalSize, 124 * globalSize)) && editing)
                         config.Save();
                     break;
                 case Shortcut.ShortcutType.Category:
