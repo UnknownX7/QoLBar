@@ -15,7 +15,6 @@ namespace QoLBar
         {
             barNumber = i;
             SetupPosition();
-            _setPos = true;
         }
 
 #if DEBUG
@@ -102,10 +101,12 @@ namespace QoLBar
                 case BarDock.UndockedH:
                     vertical = false;
                     docked = false;
+                    _setPos = true;
                     return;
                 case BarDock.UndockedV:
                     vertical = true;
                     docked = false;
+                    _setPos = true;
                     return;
                 default:
                     break;
