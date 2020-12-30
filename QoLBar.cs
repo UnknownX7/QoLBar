@@ -61,6 +61,7 @@ namespace QoLBar
         public List<Shortcut> SubList;
         public bool HideAdd = false;
         public int CategoryWidth = 140;
+        public bool CategoryStaysOpen = false;
     }
 
     public class QoLBar : IDalamudPlugin

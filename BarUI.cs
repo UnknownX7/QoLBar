@@ -509,7 +509,7 @@ namespace QoLBar
 
                     ImGui.PushID(j);
 
-                    if (ImGui.Selectable(_name, false, ImGuiSelectableFlags.None, new Vector2(sh.CategoryWidth * globalSize * barConfig.Scale, 0)))
+                    if (ImGui.Selectable(_name, false, sh.CategoryStaysOpen ? ImGuiSelectableFlags.DontClosePopups : ImGuiSelectableFlags.None, new Vector2(sh.CategoryWidth * globalSize * barConfig.Scale, 0)))
                         ItemClicked(_type, _command);
 
                     ImGui.OpenPopupOnItemClick("editItem", 1);
@@ -618,6 +618,11 @@ namespace QoLBar
                 {
                     if (ImGui.Checkbox("Hide + Button", ref sh.HideAdd))
                         config.Save();
+
+                    if (ImGui.Checkbox("Stay Open on Selection", ref sh.CategoryStaysOpen))
+                        config.Save();
+                    if (ImGui.IsItemHovered())
+                        ImGui.SetTooltip("Keeps the category open when selecting buttons within it.\nMay not work if the button interacts with other plugins.");
 
                     if (ImGui.SliderInt("Category Width", ref sh.CategoryWidth, 8, 200))
                         config.Save();
