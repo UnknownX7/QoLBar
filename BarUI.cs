@@ -117,14 +117,14 @@ namespace QoLBar
             {
                 case BarAlign.LeftOrTop:
                     pivX = 0.0f;
-                    offset = 39;
+                    offset = 22 + ImGui.GetFontSize();
                     break;
                 case BarAlign.Center:
                     pivX = 0.5f;
                     break;
                 case BarAlign.RightOrBottom:
                     pivX = 1.0f;
-                    offset = -39;
+                    offset = -22 - ImGui.GetFontSize();
                     break;
                 default:
                     break;
@@ -400,7 +400,7 @@ namespace QoLBar
                     _my = mousePos.Y;
                     // I feel like I'm overcomplicating this...
                     float pX, pY;
-                    var mousePadding = 6.0f;
+                    var mousePadding = 6.0f * globalSize;
                     if (docked)
                     {
                         if (!vertical)
