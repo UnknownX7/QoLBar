@@ -352,7 +352,6 @@ namespace QoLBar
             if ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button("+") : ImGui.Button("+", new Vector2(barConfig.ButtonWidth, 23)))
             {
                 Reveal();
-                _sh = new Shortcut();
 
                 ImGui.OpenPopup("addItem");
             }
@@ -496,10 +495,7 @@ namespace QoLBar
                     ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.5f, 0.5f));
 
                     if (ImGui.Selectable("+", false, ImGuiSelectableFlags.DontClosePopups, new Vector2(sh.CategoryWidth, 20)))
-                    {
-                        _sh = new Shortcut();
                         ImGui.OpenPopup("addItem");
-                    }
                     if (ImGui.IsItemHovered())
                         ImGui.SetTooltip("Add a new button.");
 
@@ -556,12 +552,18 @@ namespace QoLBar
         {
             if (ImGui.BeginPopup("addItem"))
             {
+                _sh ??= new Shortcut();
+
+                if (shortcuts != barConfig.ShortcutList && _sh.Type == Shortcut.ShortcutType.Category)
+                    _sh.Type = Shortcut.ShortcutType.Single;
+
                 ItemBaseUI(_sh, false, shortcuts == barConfig.ShortcutList);
 
                 if (ImGui.Button("Create"))
                 {
                     shortcuts.Add(_sh);
                     config.Save();
+                    _sh = null;
                     ImGui.CloseCurrentPopup();
                 }
 
