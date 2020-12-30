@@ -44,6 +44,7 @@ namespace QoLBar
         public Vector2 Position = new Vector2();
         public bool LockedPosition = false;
         public float Scale = 1.0f;
+        public float RevealAreaScale = 1.0f;
     }
 
     public class Shortcut

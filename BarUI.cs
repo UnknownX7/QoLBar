@@ -291,7 +291,25 @@ namespace QoLBar
             // Invisible UI to check if the mouse is nearby
             if (docked)
             {
-                ImGui.SetNextWindowPos(revealPos, ImGuiCond.Always, piv);
+                Vector2 _p;
+                if (barConfig.DockSide == BarDock.Bottom || barConfig.DockSide == BarDock.Top)
+                {
+                    var _offset = Math.Min(barSize.Y * (1 - barConfig.RevealAreaScale), barSize.Y - 1);
+                    if (barConfig.DockSide == BarDock.Bottom)
+                        _p = new Vector2(revealPos.X, revealPos.Y + _offset);
+                    else
+                        _p = new Vector2(revealPos.X, revealPos.Y - _offset);
+                }
+                else
+                {
+                    var _offset = Math.Min(barSize.X * (1 - barConfig.RevealAreaScale), barSize.X - 1);
+                    if (barConfig.DockSide == BarDock.Right)
+                        _p = new Vector2(revealPos.X + _offset, revealPos.Y);
+                    else
+                        _p = new Vector2(revealPos.X - _offset, revealPos.Y);
+                }
+
+                ImGui.SetNextWindowPos(_p, ImGuiCond.Always, piv);
                 ImGui.SetNextWindowSize(barSize);
                 ImGui.Begin($"QoLBarMouseDetection##{barNumber}", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoBringToFrontOnFocus);
                 if (_reveal || barConfig.Visibility == VisibilityMode.Always || ImGui.IsWindowHovered())
@@ -610,7 +628,7 @@ namespace QoLBar
                     shortcuts.RemoveAt(i);
                     shortcuts.Insert(i - 1, sh);
                     config.Save();
-                    ImGui.CloseCurrentPopup(); // Sry its just simpler to close this than to deal with updating the menus without remaking them
+                    ImGui.CloseCurrentPopup();
                 }
                 ImGui.SameLine();
                 if (ImGui.Button((shortcuts == barConfig.ShortcutList && !vertical) ? "→" : "↓") && i < (shortcuts.Count - 1))
@@ -618,7 +636,7 @@ namespace QoLBar
                     shortcuts.RemoveAt(i);
                     shortcuts.Insert(i + 1, sh);
                     config.Save();
-                    ImGui.CloseCurrentPopup(); // Sry its just simpler to close this than to deal with updating the menus without remaking them
+                    ImGui.CloseCurrentPopup();
                 }
                 ImGui.SameLine();
                 if (ImGui.Button("Delete"))
@@ -673,6 +691,12 @@ namespace QoLBar
                     {
                         barConfig.Visibility = (VisibilityMode)_visibility;
                         config.Save();
+                    }
+
+                    if (barConfig.Visibility != VisibilityMode.Always)
+                    {
+                        if (ImGui.DragFloat("Reveal Area Scale", ref barConfig.RevealAreaScale, 0.01f, 0.0f, 1.0f, "%.2f"))
+                            config.Save();
                     }
                 }
                 else
