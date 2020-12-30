@@ -237,6 +237,8 @@ namespace QoLBar
                 SetupImGuiFlags();
                 ImGui.Begin($"QoLBar##{barNumber}", flags);
 
+                ImGui.SetWindowFontScale(barConfig.Scale);
+
                 if (ImGui.IsWindowHovered())
                 {
                     Reveal();
@@ -256,7 +258,9 @@ namespace QoLBar
                     config.Save();
                 }
 
+                ImGui.SetWindowFontScale(1);
                 BarConfigPopup();
+                ImGui.SetWindowFontScale(barConfig.Scale);
 
                 SetBarSize();
 
@@ -323,7 +327,7 @@ namespace QoLBar
 
                 ImGui.PushID(i);
 
-                if ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button(name) : ImGui.Button(name, new Vector2(barConfig.ButtonWidth * globalSize, 0)))
+                if ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button(name) : ImGui.Button(name, new Vector2(barConfig.ButtonWidth * globalSize * barConfig.Scale, 0)))
                     ItemClicked(type, command, $"{name}Category");
                 if (ImGui.IsItemHovered())
                 {
@@ -338,7 +342,9 @@ namespace QoLBar
 
                 ImGui.OpenPopupOnItemClick("editItem", 1);
 
+                ImGui.SetWindowFontScale(1);
                 ItemConfigPopup(barConfig.ShortcutList, i);
+                ImGui.SetWindowFontScale(barConfig.Scale);
 
                 if (!vertical && i != barConfig.ShortcutList.Count - 1)
                     ImGui.SameLine();
@@ -352,7 +358,7 @@ namespace QoLBar
             if (!vertical && barConfig.ShortcutList.Count > 0)
                 ImGui.SameLine();
 
-            if ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button("+") : ImGui.Button("+", new Vector2(barConfig.ButtonWidth * globalSize, 0)))
+            if ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button("+") : ImGui.Button("+", new Vector2(barConfig.ButtonWidth * globalSize * barConfig.Scale, 0)))
             {
                 Reveal();
 
@@ -367,7 +373,9 @@ namespace QoLBar
 
             ImGui.OpenPopupOnItemClick($"BarConfig##{barNumber}", 1);
 
+            ImGui.SetWindowFontScale(1);
             ItemCreatePopup(barConfig.ShortcutList);
+            ImGui.SetWindowFontScale(barConfig.Scale);
         }
 
         private void ItemClicked(Shortcut.ShortcutType type, string command, string categoryid = "")
@@ -483,12 +491,14 @@ namespace QoLBar
 
                     ImGui.PushID(j);
 
-                    if (ImGui.Selectable(_name, false, ImGuiSelectableFlags.None, new Vector2(sh.CategoryWidth * globalSize, 0)))
+                    if (ImGui.Selectable(_name, false, ImGuiSelectableFlags.None, new Vector2(sh.CategoryWidth * globalSize * barConfig.Scale, 0)))
                         ItemClicked(_type, _command);
 
                     ImGui.OpenPopupOnItemClick("editItem", 1);
 
+                    ImGui.SetWindowFontScale(1);
                     ItemConfigPopup(sublist, j);
+                    ImGui.SetWindowFontScale(barConfig.Scale);
 
                     ImGui.PopID();
                 }
@@ -497,7 +507,7 @@ namespace QoLBar
                 {
                     ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.5f, 0.5f));
 
-                    if (ImGui.Selectable("+", false, ImGuiSelectableFlags.DontClosePopups, new Vector2(sh.CategoryWidth * globalSize, 0)))
+                    if (ImGui.Selectable("+", false, ImGuiSelectableFlags.DontClosePopups, new Vector2(sh.CategoryWidth * globalSize * barConfig.Scale, 0)))
                         ImGui.OpenPopup("addItem");
                     if (ImGui.IsItemHovered())
                         ImGui.SetTooltip("Add a new button.");
@@ -505,7 +515,9 @@ namespace QoLBar
                     ImGui.PopStyleVar();
                 }
 
+                ImGui.SetWindowFontScale(1);
                 ItemCreatePopup(sublist);
+                ImGui.SetWindowFontScale(barConfig.Scale);
 
                 ImGui.EndPopup();
             }
@@ -675,6 +687,9 @@ namespace QoLBar
                     if (ImGui.Checkbox("Lock Position", ref barConfig.LockedPosition))
                         config.Save();
                 }
+
+                if (ImGui.DragFloat("Bar Scale", ref barConfig.Scale, 0.01f, 0.7f, 1.5f, "%.2f"))
+                    config.Save();
 
                 if (!vertical)
                 {
