@@ -1,7 +1,9 @@
 ﻿using Dalamud.Configuration;
+using Dalamud.Game.Chat;
 using Dalamud.Plugin;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.Text;
 
 namespace QoLBar
 {
@@ -21,9 +23,26 @@ namespace QoLBar
                 BarConfigs.Add(new BarConfig());
         }
 
-        public void Save()
+        public void Save(bool failed = false)
         {
-            pluginInterface.SavePluginConfig(this);
+            try
+            {
+                pluginInterface.SavePluginConfig(this);
+            }
+            catch
+            {
+                if (!failed)
+                {
+                    PluginLog.LogError("[QoLBar] Failed to save! Retrying...");
+                    Save(true);
+                }
+                else
+                {
+                    PluginLog.LogError("[QoLBar] Failed to save again :(");
+                    var chat = pluginInterface.Framework.Gui.Chat;
+                    chat.PrintChat(new XivChatEntry { MessageBytes = Encoding.UTF8.GetBytes("[QoLBar] Error saving config, is something else writing to it?") });
+                }
+            }
         }
     }
 }
