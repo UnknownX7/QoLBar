@@ -373,7 +373,11 @@ namespace QoLBar
                 }
 
                 if (type == Shortcut.ShortcutType.Category)
+                {
+                    ImGui.SetWindowFontScale(barConfig.CategoryScale);
                     CategoryPopup(i);
+                    ImGui.SetWindowFontScale(barConfig.Scale);
+                }
 
                 ImGui.OpenPopupOnItemClick("editItem", 1);
 
@@ -526,14 +530,14 @@ namespace QoLBar
 
                     ImGui.PushID(j);
 
-                    if (ImGui.Selectable(_name, false, sh.CategoryStaysOpen ? ImGuiSelectableFlags.DontClosePopups : ImGuiSelectableFlags.None, new Vector2(sh.CategoryWidth * globalSize * barConfig.Scale, 0)))
+                    if (ImGui.Selectable(_name, false, sh.CategoryStaysOpen ? ImGuiSelectableFlags.DontClosePopups : ImGuiSelectableFlags.None, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
                         ItemClicked(_type, _command);
 
                     ImGui.OpenPopupOnItemClick("editItem", 1);
 
                     ImGui.SetWindowFontScale(1);
                     ItemConfigPopup(sublist, j);
-                    ImGui.SetWindowFontScale(barConfig.Scale);
+                    ImGui.SetWindowFontScale(barConfig.CategoryScale);
 
                     ImGui.PopID();
                 }
@@ -542,7 +546,7 @@ namespace QoLBar
                 {
                     ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.5f, 0.5f));
 
-                    if (ImGui.Selectable("+", false, ImGuiSelectableFlags.DontClosePopups, new Vector2(sh.CategoryWidth * globalSize * barConfig.Scale, 0)))
+                    if (ImGui.Selectable("+", false, ImGuiSelectableFlags.DontClosePopups, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
                         ImGui.OpenPopup("addItem");
                     if (ImGui.IsItemHovered())
                         ImGui.SetTooltip("Add a new button.");
@@ -552,7 +556,7 @@ namespace QoLBar
 
                 ImGui.SetWindowFontScale(1);
                 ItemCreatePopup(sublist);
-                ImGui.SetWindowFontScale(barConfig.Scale);
+                ImGui.SetWindowFontScale(barConfig.CategoryScale);
 
                 ImGui.EndPopup();
             }
@@ -746,6 +750,9 @@ namespace QoLBar
                 }
 
                 if (ImGui.DragFloat("Bar Scale", ref barConfig.Scale, 0.01f, 0.7f, 2.0f, "%.2f"))
+                    config.Save();
+
+                if (ImGui.DragFloat("Category Scale", ref barConfig.CategoryScale, 0.01f, 0.7f, 2.0f, "%.2f"))
                     config.Save();
 
                 if (!vertical)
