@@ -223,7 +223,7 @@ namespace QoLBar
 
                 if (docked)
                     ImGui.SetNextWindowPos(barPos, ImGuiCond.Always, piv);
-                else if (_setPos)
+                else if (_setPos || barConfig.LockedPosition)
                 {
                     if (!_firstframe)
                     {
@@ -253,7 +253,7 @@ namespace QoLBar
                 if (!barConfig.HideAdd || barConfig.ShortcutList.Count < 1)
                     DrawAddButton();
 
-                if (!_firstframe && !docked && ImGui.GetWindowPos() != barConfig.Position)
+                if (!barConfig.LockedPosition && !_firstframe && !docked && ImGui.GetWindowPos() != barConfig.Position)
                 {
                     barConfig.Position = ImGui.GetWindowPos();
                     config.Save();
