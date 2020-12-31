@@ -20,13 +20,14 @@ namespace QoLBar
 #if DEBUG
         public bool IsVisible => !barConfig.Hidden;
 #else
-        public bool IsVisible => !barConfig.Hidden && plugin.pluginInterface.ClientState.LocalPlayer != null;
+        public bool IsVisible => !barConfig.Hidden && (plugin.pluginInterface.ClientState.LocalPlayer != null || _lastLocalPlayer < 3);
 #endif
         public void ToggleVisible()
         {
             barConfig.Hidden = !barConfig.Hidden;
             config.Save();
         }
+        private float _lastLocalPlayer = 9999;
 
         private Shortcut _sh;
         private static Vector2 window = ImGui.GetIO().DisplaySize;
@@ -197,7 +198,13 @@ namespace QoLBar
 
         public void Draw()
         {
-            if (!IsVisible) return;
+            if (!IsVisible)
+            {
+                _lastLocalPlayer += ImGui.GetIO().DeltaTime;
+                return;
+            }
+            else
+                _lastLocalPlayer = 0;
 
             var io = ImGui.GetIO();
             window = io.DisplaySize;
