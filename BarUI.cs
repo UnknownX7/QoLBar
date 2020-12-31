@@ -521,6 +521,7 @@ namespace QoLBar
                 Reveal();
 
                 var sublist = sh.SubList;
+                var cols = sh.CategoryColumns;
 
                 for (int j = 0; j < sublist.Count; j++)
                 {
@@ -530,8 +531,43 @@ namespace QoLBar
 
                     ImGui.PushID(j);
 
-                    if (ImGui.Selectable(_name, false, sh.CategoryStaysOpen ? ImGuiSelectableFlags.DontClosePopups : ImGuiSelectableFlags.None, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
-                        ItemClicked(_type, _command);
+                    if (cols < 1)
+                    {
+                        if (ImGui.Selectable(_name, false, sh.CategoryStaysOpen ? ImGuiSelectableFlags.DontClosePopups : ImGuiSelectableFlags.None, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
+                            ItemClicked(_type, _command);
+                    }
+                    else
+                    {
+                        bool useIcon = false;
+                        ushort icon = 0;
+                        if (_name.StartsWith("::"))
+                        {
+                            UInt16.TryParse(_name.Substring(2), out icon);
+                            useIcon = true;
+                        }
+
+                        if (useIcon)
+                        {
+                            if (DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2)))
+                            {
+                                ItemClicked(_type, _command);
+                                if (!sh.CategoryStaysOpen)
+                                    ImGui.CloseCurrentPopup();
+                            }
+                        }
+                        else
+                        {
+                            if (ImGui.Button(_name, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
+                            {
+                                ItemClicked(_type, _command);
+                                if (!sh.CategoryStaysOpen)
+                                    ImGui.CloseCurrentPopup();
+                            }
+                        }
+
+                        if (j % cols != cols - 1)
+                            ImGui.SameLine();
+                    }
 
                     ImGui.OpenPopupOnItemClick("editItem", 1);
 
@@ -546,8 +582,19 @@ namespace QoLBar
                 {
                     ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.5f, 0.5f));
 
-                    if (ImGui.Selectable("+", false, ImGuiSelectableFlags.DontClosePopups, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
-                        ImGui.OpenPopup("addItem");
+                    if (cols < 1)
+                    {
+                        if (ImGui.Selectable("+", false, ImGuiSelectableFlags.DontClosePopups, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
+                            ImGui.OpenPopup("addItem");
+                    }
+                    else
+                    {
+                        ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0));
+                        if (ImGui.Button("+", new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2)))
+                        //if (DrawIconButton(0, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2)))
+                            ImGui.OpenPopup("addItem");
+                        ImGui.PopStyleColor();
+                    }
                     if (ImGui.IsItemHovered())
                         ImGui.SetTooltip("Add a new button.");
 
@@ -640,6 +687,7 @@ namespace QoLBar
                     if (ImGui.Checkbox("Hide + Button", ref sh.HideAdd))
                         config.Save();
 
+                    ImGui.SameLine(ImGui.GetWindowWidth() / 2);
                     if (ImGui.Checkbox("Stay Open on Selection", ref sh.CategoryStaysOpen))
                         config.Save();
                     if (ImGui.IsItemHovered())
@@ -647,6 +695,11 @@ namespace QoLBar
 
                     if (ImGui.SliderInt("Category Width", ref sh.CategoryWidth, 8, 200))
                         config.Save();
+
+                    if (ImGui.SliderInt("Columns", ref sh.CategoryColumns, 0, 12))
+                        config.Save();
+                    if (ImGui.IsItemHovered())
+                        ImGui.SetTooltip("Number of columns to use for icons.\nThis option must be above 0 to use icons.");
                 }
 
                 if (ImGui.Button((shortcuts == barConfig.ShortcutList && !vertical) ? "←" : "↑") && i > 0)
@@ -752,7 +805,7 @@ namespace QoLBar
                 if (ImGui.DragFloat("Bar Scale", ref barConfig.Scale, 0.01f, 0.7f, 2.0f, "%.2f"))
                     config.Save();
 
-                if (ImGui.DragFloat("Category Scale", ref barConfig.CategoryScale, 0.01f, 0.7f, 2.0f, "%.2f"))
+                if (ImGui.DragFloat("Category Scale", ref barConfig.CategoryScale, 0.01f, 0.7f, 1.5f, "%.2f"))
                     config.Save();
 
                 if (!vertical)

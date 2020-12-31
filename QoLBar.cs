@@ -66,6 +66,7 @@ namespace QoLBar
         public bool HideAdd = false;
         public int CategoryWidth = 140;
         public bool CategoryStaysOpen = false;
+        public int CategoryColumns = 0;
     }
 
     public class QoLBar : IDalamudPlugin
