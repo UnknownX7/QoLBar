@@ -74,6 +74,8 @@ namespace QoLBar
         public DalamudPluginInterface pluginInterface;
         private Configuration config;
         private PluginUI ui;
+        private bool commandReady = true;
+        private readonly Queue<string> commandQueue = new Queue<string>();
 
         public readonly Dictionary<ushort, TextureWrap> textureDictionary = new Dictionary<ushort, TextureWrap>();
 
@@ -142,8 +144,23 @@ namespace QoLBar
             }
         }
 
+        public void ReadyCommand()
+        {
+            commandReady = true;
+            ExecuteCommand();
+        }
+
         public void ExecuteCommand(string command)
         {
+            commandQueue.Enqueue(command);
+            ExecuteCommand(); // Attempt to run immediately
+        }
+
+        public void ExecuteCommand()
+        {
+            if (!commandReady || commandQueue.Count == 0)
+                return;
+
             try
             {
                 if (uiModulePtr == null || uiModulePtr == IntPtr.Zero)
@@ -155,6 +172,9 @@ namespace QoLBar
                 {
                     throw new ApplicationException("uiModule was null");
                 }
+
+                commandReady = false;
+                var command = commandQueue.Dequeue();
 
                 var bytes = Encoding.UTF8.GetBytes(command);
 

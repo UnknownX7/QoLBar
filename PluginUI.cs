@@ -41,6 +41,8 @@ namespace QoLBar
 
         public void Draw()
         {
+            plugin.ReadyCommand();
+
             if (!IsVisible) return;
 
             if (configOpen)
