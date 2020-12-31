@@ -64,6 +64,7 @@ namespace QoLBar
             plugin = p;
             this.config = config;
             barNumber = nbar;
+            plugin.LoadIcon(46); // Magnifying glass / Search
             SetupPosition();
         }
 
@@ -345,8 +346,24 @@ namespace QoLBar
 
                 ImGui.PushID(i);
 
-                if ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button(name) : ImGui.Button(name, new Vector2(barConfig.ButtonWidth * globalSize * barConfig.Scale, 0)))
-                    ItemClicked(type, command, $"{name}Category");
+                bool useIcon = false;
+                ushort icon = 0;
+                if (name.StartsWith("::"))
+                {
+                    UInt16.TryParse(name.Substring(2), out icon);
+                    useIcon = true;
+                }
+
+                if (useIcon)
+                {
+                    if (DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2)))
+                        ItemClicked(type, command, $"{name}Category");
+                }
+                else
+                {
+                    if ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button(name) : ImGui.Button(name, new Vector2(barConfig.ButtonWidth * globalSize * barConfig.Scale, 0)))
+                        ItemClicked(type, command, $"{name}Category");
+                }
                 if (ImGui.IsItemHovered())
                 {
                     Reveal();
@@ -659,6 +676,17 @@ namespace QoLBar
                     }
                 }
 
+                var iconSize = ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2;
+                ImGui.SameLine(ImGui.GetWindowContentRegionWidth() + ImGui.GetStyle().FramePadding.X * 2 - iconSize);
+                if (DrawIconButton(46, new Vector2(iconSize)))
+                    plugin.ToggleIconBrowser();
+                if (ImGui.IsItemHovered())
+                    ImGui.SetTooltip("Opens up a list of all icons you can use instead of text.\n" +
+                        "Warning: This will load EVERY icon available so it will probably lag for a moment.\n" +
+                        "Clicking on one will copy a name you can paste into a button to use that icon.\n" +
+                        "Alternatively, you can manually name a button \"::0\" (up to 65535) to use that icon ID.\n" +
+                        "I.E. \"::405\" is the Cure icon. Also, beware of mounts/minions as they contain spoilers.");
+
                 ClampWindowPos();
 
                 ImGui.EndPopup();
@@ -717,7 +745,7 @@ namespace QoLBar
                         config.Save();
                 }
 
-                if (ImGui.DragFloat("Bar Scale", ref barConfig.Scale, 0.01f, 0.7f, 1.5f, "%.2f"))
+                if (ImGui.DragFloat("Bar Scale", ref barConfig.Scale, 0.01f, 0.7f, 2.0f, "%.2f"))
                     config.Save();
 
                 if (!vertical)
@@ -803,6 +831,41 @@ namespace QoLBar
                 barPos.X = _tweenStart.X + deltaX;
                 barPos.Y = _tweenStart.Y + deltaY;
             }
+        }
+
+        public bool DrawIconButton(ushort icon, Vector2 size, bool retExists = false)
+        {
+            bool ret = false;
+            var texd = plugin.textureDictionary;
+            if (texd.ContainsKey(icon))
+            {
+                var tex = texd[icon];
+                if (tex == null || tex.ImGuiHandle == IntPtr.Zero)
+                {
+                    if (!retExists)
+                    {
+                        if (icon == 0)
+                            ret = ImGui.Button("  X  ##FailedTexture");
+                        else
+                            ret = DrawIconButton(0, size);
+                    }
+                }
+                else
+                {
+                    ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0));
+                    ret = ImGui.ImageButton(texd[icon].ImGuiHandle, size, new Vector2(0), new Vector2(1), 0);
+                    ImGui.PopStyleColor();
+                    if (retExists)
+                        ret = true;
+                }
+            }
+            else
+            {
+                plugin.LoadIcon(icon);
+                if (!retExists)
+                    ret = ImGui.Button("  ?  ##WaitingTexture");
+            }
+            return ret;
         }
 
         public void Dispose()

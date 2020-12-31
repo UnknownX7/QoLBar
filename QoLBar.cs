@@ -3,8 +3,11 @@ using System.Numerics;
 using System.Text;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Dalamud.Plugin;
 using Dalamud.Game.Chat;
+using Dalamud.Data.LuminaExtensions;
+using ImGuiScene;
 
 // Disclaimer: I have no idea what I'm doing.
 namespace QoLBar
@@ -70,6 +73,8 @@ namespace QoLBar
         private Configuration config;
         private PluginUI ui;
 
+        public readonly Dictionary<ushort, TextureWrap> textureDictionary = new Dictionary<ushort, TextureWrap>();
+
         public string Name => "QoL Bar";
 
         public void Initialize(DalamudPluginInterface pInterface)
@@ -86,6 +91,26 @@ namespace QoLBar
         }
 
         public void ToggleConfig(object sender = null, EventArgs e = null) => ui.ToggleConfig();
+
+        public void ToggleIconBrowser() => ui.ToggleIconBrowser();
+
+        public void LoadIcon(ushort icon)
+        {
+            if (!textureDictionary.ContainsKey(icon))
+            {
+                textureDictionary[icon] = null;
+                Task.Run(() => {
+                    try
+                    {
+                        var iconTex = pluginInterface.Data.GetIcon(icon);
+                        var tex = pluginInterface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
+                        if (tex != null && tex.ImGuiHandle != IntPtr.Zero)
+                            textureDictionary[icon] = tex;
+                    }
+                    catch { }
+                });
+            }
+        }
 
         // I'm too dumb to do any of this so its (almost) all taken from here https://git.sr.ht/~jkcclemens/CCMM/tree/master/Custom%20Commands%20and%20Macro%20Macros/GameFunctions.cs
         #region Chat Injection
@@ -168,6 +193,9 @@ namespace QoLBar
             pluginInterface.Dispose();
 
             ui.Dispose();
+
+            foreach (var t in textureDictionary)
+                t.Value?.Dispose();
         }
 
         public void Dispose()

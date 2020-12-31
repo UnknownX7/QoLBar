@@ -26,6 +26,9 @@ namespace QoLBar
 #endif
         public void ToggleConfig() => configOpen = !configOpen;
 
+        bool iconBrowserOpen = false;
+        public void ToggleIconBrowser() => iconBrowserOpen = !iconBrowserOpen;
+
         public PluginUI(QoLBar p, Configuration config)
         {
             plugin = p;
@@ -42,6 +45,9 @@ namespace QoLBar
 
             if (configOpen)
                 DrawPluginConfigWindow();
+
+            if (iconBrowserOpen)
+                DrawIconBrowser();
 
             foreach (BarUI bar in bars)
                 bar.Draw();
@@ -230,6 +236,29 @@ namespace QoLBar
                 TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
                 TypeNameHandling = TypeNameHandling.Objects
             });
+        }
+
+        private void DrawIconBrowser()
+        {
+            var iconsize = 48 * ImGui.GetIO().FontGlobalScale;
+            ImGui.SetNextWindowSizeConstraints(new Vector2((iconsize + ImGui.GetStyle().FramePadding.X * 2) * 6 + ImGui.GetStyle().FramePadding.X * 2 + 16), ImGui.GetIO().DisplaySize); // whyyyyyyyyyyyyyyyyyyyy
+            ImGui.Begin("Icon Browser", ref iconBrowserOpen, ImGuiWindowFlags.None);
+            int i = 0;
+            int columns = (int)((ImGui.GetContentRegionAvail().X + ImGui.GetStyle().FramePadding.X * 2) / (iconsize + ImGui.GetStyle().FramePadding.X * 2)); // WHYYYYYYYYYYYYYYYYYYYYY
+            for (int icon = 0; icon <= UInt16.MaxValue; icon++)
+            {
+                if (bars[0].DrawIconButton((ushort)icon, new Vector2(iconsize), true))
+                {
+                    if (ImGui.IsItemClicked())
+                        ImGui.SetClipboardText($"::{icon}");
+                    if (ImGui.IsItemHovered())
+                        ImGui.SetTooltip($"{icon}");
+                    if (i % columns != columns - 1)
+                        ImGui.SameLine();
+                    i++;
+                }
+            }
+            ImGui.End();
         }
 
         public void Dispose()
