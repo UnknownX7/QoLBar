@@ -381,7 +381,7 @@ namespace QoLBar
                 if (type == Shortcut.ShortcutType.Category)
                 {
                     ImGui.SetWindowFontScale(barConfig.CategoryScale);
-                    CategoryPopup(i);
+                    CategoryPopup(i, sh);
                     ImGui.SetWindowFontScale(barConfig.Scale);
                 }
 
@@ -490,9 +490,8 @@ namespace QoLBar
             }
         }
 
-        private void CategoryPopup(int i)
+        private void CategoryPopup(int i, Shortcut sh)
         {
-            var sh = barConfig.ShortcutList[i];
             var name = sh.Name;
 
             ImGui.SetNextWindowPos(_catpos, ImGuiCond.Appearing, _catpiv);
@@ -505,9 +504,10 @@ namespace QoLBar
 
                 for (int j = 0; j < sublist.Count; j++)
                 {
-                    var _name = sublist[j].Name;
-                    var _type = sublist[j].Type;
-                    var _command = sublist[j].Command;
+                    var _sh = sublist[j];
+                    var _name = _sh.Name;
+                    var _type = _sh.Type;
+                    var _command = _sh.Command;
 
                     ImGui.PushID(j);
 
@@ -522,11 +522,14 @@ namespace QoLBar
                     ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0));
                     if (useIcon ? DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2)) : ImGui.Button(_name, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
                     {
-                        ItemClicked(_type, _command);
+                        ItemClicked(_type, _command, $"{_name}Category");
                         if (!sh.CategoryStaysOpen)
                             ImGui.CloseCurrentPopup();
                     }
                     ImGui.PopStyleColor();
+
+                    if (_type == Shortcut.ShortcutType.Category)
+                        CategoryPopup(j, _sh);
 
                     if (j % cols != cols - 1)
                         ImGui.SameLine();
