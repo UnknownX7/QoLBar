@@ -437,72 +437,52 @@ namespace QoLBar
                     }
                     break;
                 case Shortcut.ShortcutType.Category:
-                    var itemcenter = ImGui.GetItemRectMin() + (ImGui.GetItemRectSize() / 2);
-                    var _x = itemcenter.X;
-                    var _y = itemcenter.Y;
-                    // I feel like I'm overcomplicating this...
-                    float pX, pY;
-                    var mousePadding = 6.0f * globalSize;
-                    if (docked)
+                    var align = 0; // Align to button (possible user option later)
+                    var _pos = align switch
                     {
-                        if (!vertical)
+                        0 => ImGui.GetItemRectMin() + (ImGui.GetItemRectSize() / 2),
+                        1 => ImGui.GetWindowPos() + (ImGui.GetWindowSize() / 2),
+                        2 => mousePos,
+                        _ => new Vector2(0),
+                    };
+                    var _offset = align switch
+                    {
+                        2 => 6.0f * globalSize,
+                        _ => !vertical ? (ImGui.GetWindowHeight() / 2 - ImGui.GetStyle().FramePadding.Y) : (ImGui.GetWindowWidth() / 2 - ImGui.GetStyle().FramePadding.X),
+                    };
+                    var _x = _pos.X;
+                    var _y = _pos.Y;
+                    float _pX, _pY;
+
+                    if (!vertical)
+                    {
+                        _pX = 0.5f;
+                        if (_y < window.Y / 2)
                         {
-                            pX = piv.X;
-                            pY = Math.Abs(piv.Y - 1.0f);
-                            _y += mousePadding - ((mousePadding * 2) * pY);
+                            _pY = 0.0f;
+                            _y += _offset;
                         }
                         else
                         {
-                            pX = Math.Abs(piv.X - 1.0f);
-                            pY = piv.Y;
-                            _x += (mousePadding - ((mousePadding * 2) * pX)) * (1 - (2 * Math.Abs(pY - 0.5f)));
-                            _y += -(mousePadding * 2) * (pY - 0.5f);
+                            _pY = 1.0f;
+                            _y -= _offset;
                         }
                     }
                     else
                     {
-                        if (!vertical)
+                        _pY = 0.5f;
+                        if (_x < window.Y / 2)
                         {
-                            if (_x < window.X / 3)
-                                pX = 0.0f;
-                            else if (_x < window.X * 2 / 3)
-                                pX = 0.5f;
-                            else
-                                pX = 1.0f;
-
-                            if (_y < window.Y / 3)
-                            {
-                                pY = 0.0f;
-                                _y += mousePadding;
-                            }
-                            else
-                            {
-                                pY = 1.0f;
-                                _y -= mousePadding;
-                            }
+                            _pX = 0.0f;
+                            _x += _offset;
                         }
                         else
                         {
-                            if (_x < window.X * 2 / 3)
-                            {
-                                pX = 0.0f;
-                                _x += mousePadding;
-                            }
-                            else
-                            {
-                                pX = 1.0f;
-                                _x -= mousePadding;
-                            }
-
-                            if (_y < window.Y / 3)
-                                pY = 0.0f;
-                            else if (_y < window.Y * 2 / 3)
-                                pY = 0.5f;
-                            else
-                                pY = 1.0f;
+                            _pX = 1.0f;
+                            _x -= _offset;
                         }
                     }
-                    _catpiv = new Vector2(pX, pY);
+                    _catpiv = new Vector2(_pX, _pY);
                     _catpos = new Vector2(_x, _y);
                     ImGui.OpenPopup(categoryid);
                     break;
@@ -516,8 +496,8 @@ namespace QoLBar
             var sh = barConfig.ShortcutList[i];
             var name = sh.Name;
 
-            ImGui.SetNextWindowPos(_catpos, ImGuiCond.Always, _catpiv);
-            if (ImGui.BeginPopup($"{name}Category", barConfig.NoCategoryBackgrounds ? ImGuiWindowFlags.NoBackground : ImGuiWindowFlags.None))
+            ImGui.SetNextWindowPos(_catpos, ImGuiCond.Appearing, _catpiv);
+            if (ImGui.BeginPopup($"{name}Category", (barConfig.NoCategoryBackgrounds ? ImGuiWindowFlags.NoBackground : ImGuiWindowFlags.None) | ImGuiWindowFlags.NoMove))
             {
                 Reveal();
 
@@ -574,6 +554,8 @@ namespace QoLBar
                 ImGui.SetWindowFontScale(1);
                 ItemCreatePopup(sublist);
                 ImGui.SetWindowFontScale(barConfig.CategoryScale);
+
+                ClampWindowPos();
 
                 ImGui.EndPopup();
             }
