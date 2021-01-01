@@ -227,6 +227,7 @@ namespace QoLBar
             {
                 ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0);
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0);
+                ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.286f, 0.286f, 0.286f, 1f));
 
                 if (docked)
                     ImGui.SetNextWindowPos(barPos, ImGuiCond.Always, piv);
@@ -274,6 +275,7 @@ namespace QoLBar
 
                 ImGui.End();
 
+                ImGui.PopStyleColor();
                 ImGui.PopStyleVar(2);
             }
 
