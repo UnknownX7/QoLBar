@@ -344,6 +344,23 @@ namespace QoLBar
             }
         }
 
+        private bool ParseName(ref string name, out string tooltip, out ushort icon)
+        {
+            var args = name.Split(new[] { "##" }, 2, StringSplitOptions.None);
+            name = args[0];
+
+            tooltip = (args.Length > 1) ? args[1] : "";
+
+            icon = 0;
+            if (name.StartsWith("::"))
+            {
+                UInt16.TryParse(name.Substring(2), out icon);
+                return true;
+            }
+            else
+                return false;
+        }
+
         private void DrawItems()
         {
             for (int i = 0; i < barConfig.ShortcutList.Count; i++)
@@ -355,15 +372,7 @@ namespace QoLBar
 
                 ImGui.PushID(i);
 
-                bool useIcon = false;
-                ushort icon = 0;
-                if (name.StartsWith("::"))
-                {
-                    UInt16.TryParse(name.Substring(2), out icon);
-                    useIcon = true;
-                }
-
-                if (useIcon)
+                if (ParseName(ref name, out string tooltip, out ushort icon))
                     DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2));
                 else
                     ImGui.Button(name, new Vector2((!vertical && barConfig.AutoButtonWidth) ? 0 : (barConfig.ButtonWidth * globalSize * barConfig.Scale), 0));
@@ -372,16 +381,16 @@ namespace QoLBar
                     Reveal();
 
                     if (ImGui.IsMouseReleased(0))
-                        ItemClicked(type, command, $"{name}Category");
+                        ItemClicked(type, command);
 
-                    if (type == Shortcut.ShortcutType.Category && !string.IsNullOrEmpty(command))
-                        ImGui.SetTooltip(command);
+                    if (!string.IsNullOrEmpty(tooltip))
+                        ImGui.SetTooltip(tooltip);
                 }
 
                 if (type == Shortcut.ShortcutType.Category)
                 {
                     ImGui.SetWindowFontScale(barConfig.CategoryScale);
-                    CategoryPopup(i, sh);
+                    CategoryPopup(sh);
                     ImGui.SetWindowFontScale(barConfig.Scale);
                 }
 
@@ -418,7 +427,7 @@ namespace QoLBar
             ImGui.SetWindowFontScale(barConfig.Scale);
         }
 
-        private void ItemClicked(Shortcut.ShortcutType type, string command, string categoryid = "")
+        private void ItemClicked(Shortcut.ShortcutType type, string command)
         {
             Reveal();
 
@@ -483,19 +492,17 @@ namespace QoLBar
                     }
                     _catpiv = new Vector2(_pX, _pY);
                     _catpos = new Vector2(_x, _y);
-                    ImGui.OpenPopup(categoryid);
+                    ImGui.OpenPopup("ShortcutCategory");
                     break;
                 default:
                     break;
             }
         }
 
-        private void CategoryPopup(int i, Shortcut sh)
+        private void CategoryPopup(Shortcut sh)
         {
-            var name = sh.Name;
-
             ImGui.SetNextWindowPos(_catpos, ImGuiCond.Appearing, _catpiv);
-            if (ImGui.BeginPopup($"{name}Category", (barConfig.NoCategoryBackgrounds ? ImGuiWindowFlags.NoBackground : ImGuiWindowFlags.None) | ImGuiWindowFlags.NoMove))
+            if (ImGui.BeginPopup("ShortcutCategory", (barConfig.NoCategoryBackgrounds ? ImGuiWindowFlags.NoBackground : ImGuiWindowFlags.None) | ImGuiWindowFlags.NoMove))
             {
                 Reveal();
 
@@ -511,13 +518,7 @@ namespace QoLBar
 
                     ImGui.PushID(j);
 
-                    bool useIcon = false;
-                    ushort icon = 0;
-                    if (_name.StartsWith("::"))
-                    {
-                        UInt16.TryParse(_name.Substring(2), out icon);
-                        useIcon = true;
-                    }
+                    bool useIcon = ParseName(ref _name, out string tooltip, out ushort icon);
 
                     if (useIcon || !barConfig.NoCategoryBackgrounds)
                         ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0));
@@ -525,14 +526,16 @@ namespace QoLBar
                         ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.08f, 0.08f, 0.08f, 0.94f));
                     if (useIcon ? DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2)) : ImGui.Button(_name, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
                     {
-                        ItemClicked(_type, _command, $"{_name}Category");
+                        ItemClicked(_type, _command);
                         if (!sh.CategoryStaysOpen)
                             ImGui.CloseCurrentPopup();
                     }
                     ImGui.PopStyleColor();
+                    if (!string.IsNullOrEmpty(tooltip) && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
+                        ImGui.SetTooltip(tooltip);
 
                     if (_type == Shortcut.ShortcutType.Category)
-                        CategoryPopup(j, _sh);
+                        CategoryPopup(_sh);
 
                     if (j % cols != cols - 1)
                         ImGui.SameLine();
@@ -575,6 +578,9 @@ namespace QoLBar
 
             if (ImGui.InputText("Name          ", ref sh.Name, 256) && editing) // Not a bug... just ImGui not extending the window to fit multiline's name...
                 config.Save();
+            if (ImGui.IsItemHovered())
+                ImGui.SetTooltip("Start the name with ::x where x is a number to use icons, i.e. \"::2914\".\n" +
+                    "Use ## anywhere in the name to make the text afterwards into a tooltip,\ni.e. \"Name##This is a Tooltip\".");
 
             // No nested categories
             var _t = (int)sh.Type;
@@ -601,8 +607,6 @@ namespace QoLBar
                         config.Save();
                     break;
                 case Shortcut.ShortcutType.Category:
-                    if (ImGui.InputText("Tooltip", ref sh.Command, (uint)maxCommandLength) && editing)
-                        config.Save();
                     break;
                 default:
                     break;
