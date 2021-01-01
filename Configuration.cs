@@ -33,12 +33,12 @@ namespace QoLBar
             {
                 if (!failed)
                 {
-                    PluginLog.LogError("[QoLBar] Failed to save! Retrying...");
+                    PluginLog.LogError("Failed to save! Retrying...");
                     Save(true);
                 }
                 else
                 {
-                    PluginLog.LogError("[QoLBar] Failed to save again :(");
+                    PluginLog.LogError("Failed to save again :(");
                     var chat = pluginInterface.Framework.Gui.Chat;
                     chat.PrintChat(new XivChatEntry { MessageBytes = Encoding.UTF8.GetBytes("[QoLBar] Error saving config, is something else writing to it?") });
                 }
