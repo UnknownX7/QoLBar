@@ -470,7 +470,7 @@ namespace QoLBar
                     else
                     {
                         _pY = 0.5f;
-                        if (_x < window.Y / 2)
+                        if (_x < window.X / 2)
                         {
                             _pX = 0.0f;
                             _x += _offset;
