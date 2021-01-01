@@ -190,6 +190,8 @@ namespace QoLBar
             if (docked || barConfig.LockedPosition)
                 flags |= ImGuiWindowFlags.NoMove;
             flags |= ImGuiWindowFlags.NoScrollWithMouse;
+            if (barConfig.NoBackground)
+                flags |= ImGuiWindowFlags.NoBackground;
             flags |= ImGuiWindowFlags.NoSavedSettings;
             flags |= ImGuiWindowFlags.NoFocusOnAppearing;
         }
@@ -513,7 +515,7 @@ namespace QoLBar
             var name = sh.Name;
 
             ImGui.SetNextWindowPos(_catpos, ImGuiCond.Always, _catpiv);
-            if (ImGui.BeginPopup($"{name}Category"))
+            if (ImGui.BeginPopup($"{name}Category", barConfig.NoCategoryBackgrounds ? ImGuiWindowFlags.NoBackground : ImGuiWindowFlags.None))
             {
                 Reveal();
 
@@ -785,6 +787,12 @@ namespace QoLBar
                     if (ImGui.SliderInt("Button Width", ref barConfig.ButtonWidth, 16, 200))
                         config.Save();
                 }
+
+                if (ImGui.Checkbox("No Bar Background", ref barConfig.NoBackground))
+                    config.Save();
+                ImGui.SameLine(ImGui.GetWindowWidth() / 2);
+                if (ImGui.Checkbox("No Category Backgrounds", ref barConfig.NoCategoryBackgrounds))
+                    config.Save();
 
                 if (barConfig.ShortcutList.Count > 0)
                 {

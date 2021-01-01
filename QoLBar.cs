@@ -49,6 +49,8 @@ namespace QoLBar
         public float Scale = 1.0f;
         public float CategoryScale = 1.0f;
         public float RevealAreaScale = 1.0f;
+        public bool NoBackground = false;
+        public bool NoCategoryBackgrounds = false;
     }
 
     public class Shortcut
