@@ -519,7 +519,10 @@ namespace QoLBar
                         useIcon = true;
                     }
 
-                    ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0));
+                    if (useIcon || !barConfig.NoCategoryBackgrounds)
+                        ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0));
+                    else
+                        ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.08f, 0.08f, 0.08f, 0.94f));
                     if (useIcon ? DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2)) : ImGui.Button(_name, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
                     {
                         ItemClicked(_type, _command, $"{_name}Category");
@@ -545,7 +548,10 @@ namespace QoLBar
 
                 if (!sh.HideAdd)
                 {
-                    ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0));
+                    if (!barConfig.NoCategoryBackgrounds)
+                        ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0));
+                    else
+                        ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.08f, 0.08f, 0.08f, 0.94f));
                     if (ImGui.Button("+", new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
                         ImGui.OpenPopup("addItem");
                     ImGui.PopStyleColor();
