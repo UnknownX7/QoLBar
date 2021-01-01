@@ -52,8 +52,6 @@ namespace QoLBar
         private bool _lastReveal = true;
         private Vector2 _tweenStart;
         private float _tweenProgress = 1;
-        private float _mx = 0f;
-        private float _my = 0f;
         private Vector2 _catpiv = new Vector2();
         private Vector2 _catpos = new Vector2();
 
@@ -435,8 +433,9 @@ namespace QoLBar
                     }
                     break;
                 case Shortcut.ShortcutType.Category:
-                    _mx = mousePos.X;
-                    _my = mousePos.Y;
+                    var itemcenter = ImGui.GetItemRectMin() + (ImGui.GetItemRectSize() / 2);
+                    var _x = itemcenter.X;
+                    var _y = itemcenter.Y;
                     // I feel like I'm overcomplicating this...
                     float pX, pY;
                     var mousePadding = 6.0f * globalSize;
@@ -446,61 +445,61 @@ namespace QoLBar
                         {
                             pX = piv.X;
                             pY = Math.Abs(piv.Y - 1.0f);
-                            _my += mousePadding - ((mousePadding * 2) * pY);
+                            _y += mousePadding - ((mousePadding * 2) * pY);
                         }
                         else
                         {
                             pX = Math.Abs(piv.X - 1.0f);
                             pY = piv.Y;
-                            _mx += (mousePadding - ((mousePadding * 2) * pX)) * (1 - (2 * Math.Abs(pY - 0.5f)));
-                            _my += -(mousePadding * 2) * (pY - 0.5f);
+                            _x += (mousePadding - ((mousePadding * 2) * pX)) * (1 - (2 * Math.Abs(pY - 0.5f)));
+                            _y += -(mousePadding * 2) * (pY - 0.5f);
                         }
                     }
                     else
                     {
                         if (!vertical)
                         {
-                            if (_mx < window.X / 3)
+                            if (_x < window.X / 3)
                                 pX = 0.0f;
-                            else if (_mx < window.X * 2 / 3)
+                            else if (_x < window.X * 2 / 3)
                                 pX = 0.5f;
                             else
                                 pX = 1.0f;
 
-                            if (_my < window.Y / 3)
+                            if (_y < window.Y / 3)
                             {
                                 pY = 0.0f;
-                                _my += mousePadding;
+                                _y += mousePadding;
                             }
                             else
                             {
                                 pY = 1.0f;
-                                _my -= mousePadding;
+                                _y -= mousePadding;
                             }
                         }
                         else
                         {
-                            if (_mx < window.X * 2 / 3)
+                            if (_x < window.X * 2 / 3)
                             {
                                 pX = 0.0f;
-                                _mx += mousePadding;
+                                _x += mousePadding;
                             }
                             else
                             {
                                 pX = 1.0f;
-                                _mx -= mousePadding;
+                                _x -= mousePadding;
                             }
 
-                            if (_my < window.Y / 3)
+                            if (_y < window.Y / 3)
                                 pY = 0.0f;
-                            else if (_my < window.Y * 2 / 3)
+                            else if (_y < window.Y * 2 / 3)
                                 pY = 0.5f;
                             else
                                 pY = 1.0f;
                         }
                     }
                     _catpiv = new Vector2(pX, pY);
-                    _catpos = new Vector2(_mx, _my);
+                    _catpos = new Vector2(_x, _y);
                     ImGui.OpenPopup(categoryid);
                     break;
                 default:
@@ -513,8 +512,6 @@ namespace QoLBar
             var sh = barConfig.ShortcutList[i];
             var name = sh.Name;
 
-            //var buttonPos = ImGui.GetCursorPos(); // I give up... just place the popup above the mouse
-            //PluginLog.Log($"{buttonPos.X} {buttonPos.Y} {ImGui.GetItemRectSize().X} {ImGui.GetItemRectSize().Y}");
             ImGui.SetNextWindowPos(_catpos, ImGuiCond.Always, _catpiv);
             if (ImGui.BeginPopup($"{name}Category"))
             {
