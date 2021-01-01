@@ -528,7 +528,7 @@ namespace QoLBar
                 Reveal();
 
                 var sublist = sh.SubList;
-                var cols = sh.CategoryColumns;
+                var cols = Math.Max(sh.CategoryColumns, 1);
 
                 for (int j = 0; j < sublist.Count; j++)
                 {
@@ -538,43 +538,25 @@ namespace QoLBar
 
                     ImGui.PushID(j);
 
-                    if (cols < 1)
+                    bool useIcon = false;
+                    ushort icon = 0;
+                    if (_name.StartsWith("::"))
                     {
-                        if (ImGui.Selectable(_name, false, sh.CategoryStaysOpen ? ImGuiSelectableFlags.DontClosePopups : ImGuiSelectableFlags.None, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
-                            ItemClicked(_type, _command);
+                        UInt16.TryParse(_name.Substring(2), out icon);
+                        useIcon = true;
                     }
-                    else
+
+                    ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0));
+                    if (useIcon ? DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2)) : ImGui.Button(_name, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
                     {
-                        bool useIcon = false;
-                        ushort icon = 0;
-                        if (_name.StartsWith("::"))
-                        {
-                            UInt16.TryParse(_name.Substring(2), out icon);
-                            useIcon = true;
-                        }
-
-                        if (useIcon)
-                        {
-                            if (DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2)))
-                            {
-                                ItemClicked(_type, _command);
-                                if (!sh.CategoryStaysOpen)
-                                    ImGui.CloseCurrentPopup();
-                            }
-                        }
-                        else
-                        {
-                            if (ImGui.Button(_name, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
-                            {
-                                ItemClicked(_type, _command);
-                                if (!sh.CategoryStaysOpen)
-                                    ImGui.CloseCurrentPopup();
-                            }
-                        }
-
-                        if (j % cols != cols - 1)
-                            ImGui.SameLine();
+                        ItemClicked(_type, _command);
+                        if (!sh.CategoryStaysOpen)
+                            ImGui.CloseCurrentPopup();
                     }
+                    ImGui.PopStyleColor();
+
+                    if (j % cols != cols - 1)
+                        ImGui.SameLine();
 
                     ImGui.OpenPopupOnItemClick("editItem", 1);
 
@@ -587,25 +569,12 @@ namespace QoLBar
 
                 if (!sh.HideAdd)
                 {
-                    ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.5f, 0.5f));
-
-                    if (cols < 1)
-                    {
-                        if (ImGui.Selectable("+", false, ImGuiSelectableFlags.DontClosePopups, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
+                    ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0));
+                    if (ImGui.Button("+", new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
                             ImGui.OpenPopup("addItem");
-                    }
-                    else
-                    {
-                        ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0));
-                        if (ImGui.Button("+", new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2)))
-                        //if (DrawIconButton(0, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2)))
-                            ImGui.OpenPopup("addItem");
-                        ImGui.PopStyleColor();
-                    }
+                    ImGui.PopStyleColor();
                     if (ImGui.IsItemHovered())
                         ImGui.SetTooltip("Add a new button.");
-
-                    ImGui.PopStyleVar();
                 }
 
                 ImGui.SetWindowFontScale(1);
@@ -703,10 +672,10 @@ namespace QoLBar
                     if (ImGui.SliderInt("Category Width", ref sh.CategoryWidth, 8, 200))
                         config.Save();
 
-                    if (ImGui.SliderInt("Columns", ref sh.CategoryColumns, 0, 12))
+                    if (ImGui.SliderInt("Columns", ref sh.CategoryColumns, 1, 12))
                         config.Save();
                     if (ImGui.IsItemHovered())
-                        ImGui.SetTooltip("Number of columns to use for icons.\nThis option must be above 0 to use icons.");
+                        ImGui.SetTooltip("Number of buttons in each row before starting another.");
                 }
 
                 if (ImGui.Button((shortcuts == barConfig.ShortcutList && !vertical) ? "←" : "↑") && i > 0)
