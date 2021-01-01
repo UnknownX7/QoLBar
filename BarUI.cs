@@ -363,12 +363,16 @@ namespace QoLBar
                     useIcon = true;
                 }
 
-                if (useIcon ? DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2)) :
-                    ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button(name) : ImGui.Button(name, new Vector2(barConfig.ButtonWidth * globalSize * barConfig.Scale, 0))))
-                    ItemClicked(type, command, $"{name}Category");
-                if (ImGui.IsItemHovered())
+                if (useIcon)
+                    DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2));
+                else
+                    ImGui.Button(name, new Vector2((!vertical && barConfig.AutoButtonWidth) ? 0 : (barConfig.ButtonWidth * globalSize * barConfig.Scale), 0));
+                if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
                 {
                     Reveal();
+
+                    if (ImGui.IsMouseReleased(0))
+                        ItemClicked(type, command, $"{name}Category");
 
                     if (type == Shortcut.ShortcutType.Category && !string.IsNullOrEmpty(command))
                         ImGui.SetTooltip(command);
@@ -399,19 +403,14 @@ namespace QoLBar
             if (!vertical && barConfig.ShortcutList.Count > 0)
                 ImGui.SameLine();
 
-            if ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button("+") : ImGui.Button("+", new Vector2(barConfig.ButtonWidth * globalSize * barConfig.Scale, 0)))
+            ImGui.Button("+", new Vector2((!vertical && barConfig.AutoButtonWidth) ? 0 : (barConfig.ButtonWidth * globalSize * barConfig.Scale), 0));
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
             {
                 Reveal();
-
-                ImGui.OpenPopup("addItem");
-            }
-            if (ImGui.IsItemHovered())
-            {
-                Reveal();
-
                 ImGui.SetTooltip("Add a new button.\nRight click this (or the bar background) for options.\nRight click other buttons to edit them.");
             }
 
+            ImGui.OpenPopupOnItemClick("addItem", 0);
             ImGui.OpenPopupOnItemClick($"BarConfig##{barNumber}", 1);
 
             ImGui.SetWindowFontScale(1);
