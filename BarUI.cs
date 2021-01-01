@@ -361,16 +361,9 @@ namespace QoLBar
                     useIcon = true;
                 }
 
-                if (useIcon)
-                {
-                    if (DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2)))
-                        ItemClicked(type, command, $"{name}Category");
-                }
-                else
-                {
-                    if ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button(name) : ImGui.Button(name, new Vector2(barConfig.ButtonWidth * globalSize * barConfig.Scale, 0)))
-                        ItemClicked(type, command, $"{name}Category");
-                }
+                if (useIcon ? DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2)) :
+                    ((!vertical && barConfig.AutoButtonWidth) ? ImGui.Button(name) : ImGui.Button(name, new Vector2(barConfig.ButtonWidth * globalSize * barConfig.Scale, 0))))
+                    ItemClicked(type, command, $"{name}Category");
                 if (ImGui.IsItemHovered())
                 {
                     Reveal();
@@ -571,7 +564,7 @@ namespace QoLBar
                 {
                     ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0));
                     if (ImGui.Button("+", new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
-                            ImGui.OpenPopup("addItem");
+                        ImGui.OpenPopup("addItem");
                     ImGui.PopStyleColor();
                     if (ImGui.IsItemHovered())
                         ImGui.SetTooltip("Add a new button.");
