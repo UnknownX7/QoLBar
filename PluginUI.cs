@@ -173,9 +173,10 @@ namespace QoLBar
                     bars.Add(new BarUI(plugin, config, bars.Count));
                     config.Save();
                 }
-                catch
+                catch (Exception e)
                 {
-                    PluginLog.LogError("[QoLBar] Invalid import string!");
+                    PluginLog.LogError("Invalid import string!");
+                    PluginLog.LogError($"{e.GetType()}\n{e.Message}");
                 }
             }
             if (ImGui.IsItemHovered())
