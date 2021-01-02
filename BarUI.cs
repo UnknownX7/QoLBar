@@ -100,11 +100,13 @@ namespace QoLBar
                     docked = true;
                     break;
                 case BarDock.UndockedH:
+                    piv = new Vector2();
                     vertical = false;
                     docked = false;
                     _setPos = true;
                     return;
                 case BarDock.UndockedV:
+                    piv = new Vector2();
                     vertical = true;
                     docked = false;
                     _setPos = true;
@@ -292,56 +294,39 @@ namespace QoLBar
 
         private void CheckMouse()
         {
-            // Check if mouse is nearby
-            /*if (barConfig.Visibility == VisibilityMode.Always || (Math.Abs(mousePos.X - barPos.X) <= (barSize.X / 2) && (window.Y - mousePos.Y) <= barSize.Y))
-                Reveal();
-            else
-                Hide();*/
-
-            // Invisible UI to check if the mouse is nearby
+            Vector2 _pos;
             if (docked)
             {
-                Vector2 _p;
                 if (barConfig.DockSide == BarDock.Bottom || barConfig.DockSide == BarDock.Top)
                 {
                     var _offset = Math.Min(barSize.Y * (1 - barConfig.RevealAreaScale), barSize.Y - 1);
                     if (barConfig.DockSide == BarDock.Bottom)
-                        _p = new Vector2(revealPos.X, revealPos.Y + _offset);
+                        _pos = new Vector2(revealPos.X, revealPos.Y + _offset);
                     else
-                        _p = new Vector2(revealPos.X, revealPos.Y - _offset);
+                        _pos = new Vector2(revealPos.X, revealPos.Y - _offset);
                 }
                 else
                 {
                     var _offset = Math.Min(barSize.X * (1 - barConfig.RevealAreaScale), barSize.X - 1);
                     if (barConfig.DockSide == BarDock.Right)
-                        _p = new Vector2(revealPos.X + _offset, revealPos.Y);
+                        _pos = new Vector2(revealPos.X + _offset, revealPos.Y);
                     else
-                        _p = new Vector2(revealPos.X - _offset, revealPos.Y);
+                        _pos = new Vector2(revealPos.X - _offset, revealPos.Y);
                 }
-
-                ImGui.SetNextWindowPos(_p, ImGuiCond.Always, piv);
-                ImGui.SetNextWindowSize(barSize);
-                ImGui.Begin($"QoLBarMouseDetection##{barNumber}", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoBringToFrontOnFocus);
-                if (_reveal || barConfig.Visibility == VisibilityMode.Always || ImGui.IsWindowHovered())
-                    Reveal();
-                else
-                    Hide();
-                ImGui.End();
             }
             else
-            {
-                var posX = barConfig.Position.X;
-                var posY = barConfig.Position.Y;
-                var mX = mousePos.X;
-                var mY = mousePos.Y;
-                var barW = barSize.X;
-                var barH = barSize.Y;
+                _pos = barConfig.Position;
 
-                if (posX <= mX && mX < posX + barW && posY <= mY && mY < posY + barH)
-                    Reveal();
-                else
-                    Hide();
-            }
+            var _min = new Vector2(_pos.X - (barSize.X * piv.X), _pos.Y - (barSize.Y * piv.Y));
+            var _max = new Vector2(_pos.X + (barSize.X * (1 - piv.X)), _pos.Y + (barSize.Y * (1 - piv.Y)));
+            var mX = mousePos.X;
+            var mY = mousePos.Y;
+
+            //if (ImGui.IsMouseHoveringRect(_min, _max, true)) // This only works in the context of a window... thanks ImGui
+            if (barConfig.Visibility == VisibilityMode.Always || (_min.X <= mX && mX < _max.X && _min.Y <= mY && mY < _max.Y))
+                Reveal();
+            else
+                Hide();
         }
 
         private bool ParseName(ref string name, out string tooltip, out ushort icon)
