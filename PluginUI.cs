@@ -195,10 +195,17 @@ namespace QoLBar
 
         private void CleanBarConfig(BarConfig bar)
         {
-            foreach (var sh in bar.ShortcutList)
+            CleanShortcuts(bar.ShortcutList);
+        }
+
+        private void CleanShortcuts(List<Shortcut> shortcuts)
+        {
+            foreach (var sh in shortcuts)
             {
                 if (sh.Type != Shortcut.ShortcutType.Category)
                     sh.SubList = null;
+                else
+                    CleanShortcuts(sh.SubList);
             }
         }
 

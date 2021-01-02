@@ -557,7 +557,7 @@ namespace QoLBar
             }
         }
 
-        private void ItemBaseUI(Shortcut sh, bool editing, bool notSubItem)
+        private void ItemBaseUI(Shortcut sh, bool editing)
         {
             Reveal();
 
@@ -569,7 +569,7 @@ namespace QoLBar
 
             // No nested categories
             var _t = (int)sh.Type;
-            if (ImGui.Combo("Type", ref _t, notSubItem ? "Single\0Multiline\0Category" : "Single\0Multiline"))
+            if (ImGui.Combo("Type", ref _t, "Single\0Multiline\0Category"))
             {
                 sh.Type = (Shortcut.ShortcutType)_t;
                 if (sh.Type == Shortcut.ShortcutType.Single)
@@ -603,11 +603,7 @@ namespace QoLBar
             if (ImGui.BeginPopup("addItem"))
             {
                 _sh ??= new Shortcut();
-
-                if (shortcuts != barConfig.ShortcutList && _sh.Type == Shortcut.ShortcutType.Category)
-                    _sh.Type = Shortcut.ShortcutType.Single;
-
-                ItemBaseUI(_sh, false, shortcuts == barConfig.ShortcutList);
+                ItemBaseUI(_sh, false);
 
                 if (ImGui.Button("Create"))
                 {
@@ -628,8 +624,7 @@ namespace QoLBar
             if (ImGui.BeginPopup("editItem"))
             {
                 var sh = shortcuts[i];
-
-                ItemBaseUI(sh, true, shortcuts == barConfig.ShortcutList);
+                ItemBaseUI(sh, true);
 
                 if (sh.Type == Shortcut.ShortcutType.Category)
                 {
