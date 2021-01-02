@@ -704,9 +704,8 @@ namespace QoLBar
                 if (ImGui.IsItemHovered())
                     ImGui.SetTooltip("Opens up a list of all icons you can use instead of text.\n" +
                         "Warning: This will load EVERY icon available so it will probably lag for a moment.\n" +
-                        "Clicking on one will copy a name you can paste into a button to use that icon.\n" +
-                        "Alternatively, you can manually name a button \"::0\" (up to 65535) to use that icon ID.\n" +
-                        "I.E. \"::405\" is the Cure icon. Also, beware of mounts/minions as they contain spoilers.");
+                        "Clicking on one will copy text to be pasted into the \"Name\" field of a button.\n" +
+                        "Also, beware of mounts/minions as they contain spoilers.");
 
                 ClampWindowPos();
 
