@@ -420,7 +420,7 @@ namespace QoLBar
             ImGui.SetWindowFontScale(barConfig.Scale);
         }
 
-        private void ItemClicked(Shortcut.ShortcutType type, string command)
+        private void ItemClicked(Shortcut.ShortcutType type, string command, bool subItem = false)
         {
             Reveal();
 
@@ -446,27 +446,30 @@ namespace QoLBar
                         2 => mousePos,
                         _ => new Vector2(0),
                     };
-                    var _offset = align switch
+                    /*var _offset = align switch
                     {
                         2 => 6.0f * globalSize,
-                        _ => !vertical ? (ImGui.GetWindowHeight() / 2 - ImGui.GetStyle().FramePadding.Y) : (ImGui.GetWindowWidth() / 2 - ImGui.GetStyle().FramePadding.X),
-                    };
+                        //_ => (!vertical && !subItem) ? (ImGui.GetWindowHeight() / 2 - ImGui.GetStyle().FramePadding.Y) : (ImGui.GetWindowWidth() / 2 - ImGui.GetStyle().FramePadding.X),
+                        _ => (!vertical && !subItem) ? (ImGui.GetWindowHeight() / 2 - ImGui.GetStyle().FramePadding.Y) : (ImGui.GetWindowWidth() / 2 - ImGui.GetStyle().FramePadding.X),
+                    };*/
                     var _x = _pos.X;
                     var _y = _pos.Y;
                     float _pX, _pY;
 
-                    if (!vertical)
+                    if (!vertical && !subItem)
                     {
                         _pX = 0.5f;
                         if (_y < window.Y / 2)
                         {
                             _pY = 0.0f;
-                            _y += _offset;
+                            //_y += _offset;
+                            _y = ImGui.GetWindowPos().Y + ImGui.GetWindowHeight() - ImGui.GetStyle().FramePadding.Y;
                         }
                         else
                         {
                             _pY = 1.0f;
-                            _y -= _offset;
+                            //_y -= _offset;
+                            _y = ImGui.GetWindowPos().Y + ImGui.GetStyle().FramePadding.Y;
                         }
                     }
                     else
@@ -475,12 +478,14 @@ namespace QoLBar
                         if (_x < window.X / 2)
                         {
                             _pX = 0.0f;
-                            _x += _offset;
+                            //_x += _offset;
+                            _x = ImGui.GetWindowPos().X + ImGui.GetWindowWidth() - ImGui.GetStyle().FramePadding.X;
                         }
                         else
                         {
                             _pX = 1.0f;
-                            _x -= _offset;
+                            //_x -= _offset;
+                            _x = ImGui.GetWindowPos().X + ImGui.GetStyle().FramePadding.X;
                         }
                     }
                     _catpiv = new Vector2(_pX, _pY);
@@ -526,7 +531,7 @@ namespace QoLBar
                     }
                     else if (useIcon ? DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2), _sh.IconZoom) : ImGui.Button(_name, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
                     {
-                        ItemClicked(_type, _command);
+                        ItemClicked(_type, _command, true);
                         if (!sh.CategoryStaysOpen && _type != Shortcut.ShortcutType.Category)
                             ImGui.CloseCurrentPopup();
                     }
