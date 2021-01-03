@@ -60,7 +60,8 @@ namespace QoLBar
         {
             Single,
             Multiline,
-            Category
+            Category,
+            Spacer
         }
         public ShortcutType Type = ShortcutType.Single;
         public string Command = string.Empty;

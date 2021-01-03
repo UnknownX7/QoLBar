@@ -357,7 +357,16 @@ namespace QoLBar
 
                 ImGui.PushID(i);
 
-                if (ParseName(ref name, out string tooltip, out ushort icon))
+                var useIcon = ParseName(ref name, out string tooltip, out ushort icon);
+
+                if (type == Shortcut.ShortcutType.Spacer)
+                {
+                    ImGui.BeginChild("", new Vector2(barConfig.ButtonWidth * globalSize * barConfig.Scale, ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2));
+                    ImGui.SameLine(ImGui.GetContentRegionAvail().X / 2 - ImGui.CalcTextSize(name).X / 2);
+                    ImGui.Text(name);
+                    ImGui.EndChild();
+                }
+                else if (useIcon)
                     DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2));
                 else
                     ImGui.Button(name, new Vector2((!vertical && barConfig.AutoButtonWidth) ? 0 : (barConfig.ButtonWidth * globalSize * barConfig.Scale), 0));
@@ -509,7 +518,14 @@ namespace QoLBar
                         ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0));
                     else
                         ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.08f, 0.08f, 0.08f, 0.94f));
-                    if (useIcon ? DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2)) : ImGui.Button(_name, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
+                    if (_type == Shortcut.ShortcutType.Spacer)
+                    {
+                        ImGui.BeginChild("", new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2));
+                        ImGui.SameLine(ImGui.GetContentRegionAvail().X / 2 - ImGui.CalcTextSize(_name).X / 2);
+                        ImGui.Text(_name);
+                        ImGui.EndChild();
+                    }
+                    else if (useIcon ? DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2)) : ImGui.Button(_name, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
                     {
                         ItemClicked(_type, _command);
                         if (!sh.CategoryStaysOpen)
@@ -569,13 +585,16 @@ namespace QoLBar
 
             // No nested categories
             var _t = (int)sh.Type;
-            if (ImGui.Combo("Type", ref _t, "Single\0Multiline\0Category"))
+            if (ImGui.Combo("Type", ref _t, "Single\0Multiline\0Category")) // TODO: Fix spacers on categories to add them back
             {
                 sh.Type = (Shortcut.ShortcutType)_t;
+                if (sh.Type == Shortcut.ShortcutType.Category)
+                    sh.SubList ??= new List<Shortcut>();
+
                 if (sh.Type == Shortcut.ShortcutType.Single)
                     sh.Command = sh.Command.Split('\n')[0];
-                else if (sh.Type == Shortcut.ShortcutType.Category)
-                    sh.SubList ??= new List<Shortcut>();
+                //else if (sh.Type != Shortcut.ShortcutType.Multiline)
+                //    sh.Command = "";
 
                 if (editing)
                     config.Save();
@@ -590,8 +609,6 @@ namespace QoLBar
                 case Shortcut.ShortcutType.Multiline:
                     if (ImGui.InputTextMultiline("Command##Multi", ref sh.Command, (uint)maxCommandLength * 15, new Vector2(272 * globalSize, 124 * globalSize)) && editing)
                         config.Save();
-                    break;
-                case Shortcut.ShortcutType.Category:
                     break;
                 default:
                     break;
