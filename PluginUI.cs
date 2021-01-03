@@ -250,25 +250,161 @@ namespace QoLBar
 
         private void DrawIconBrowser()
         {
-            var iconsize = 48 * ImGui.GetIO().FontGlobalScale;
-            ImGui.SetNextWindowSizeConstraints(new Vector2((iconsize + ImGui.GetStyle().FramePadding.X * 2) * 6 + ImGui.GetStyle().FramePadding.X * 2 + 16), ImGui.GetIO().DisplaySize); // whyyyyyyyyyyyyyyyyyyyy
-            ImGui.Begin("Icon Browser", ref iconBrowserOpen, ImGuiWindowFlags.None);
-            int i = 0;
-            int columns = (int)((ImGui.GetContentRegionAvail().X + ImGui.GetStyle().FramePadding.X * 2) / (iconsize + ImGui.GetStyle().FramePadding.X * 2)); // WHYYYYYYYYYYYYYYYYYYYYY
-            for (int icon = 0; icon <= UInt16.MaxValue; icon++)
+            var iconSize = 48 * ImGui.GetIO().FontGlobalScale;
+            ImGui.SetNextWindowSizeConstraints(new Vector2((iconSize + ImGui.GetStyle().FramePadding.X * 2) * 11 + ImGui.GetStyle().FramePadding.X * 2 + 16), ImGui.GetIO().DisplaySize); // whyyyyyyyyyyyyyyyyyyyy
+            ImGui.Begin("Icon Browser", ref iconBrowserOpen);
+            if (ImGui.BeginTabBar("Icon Tabs", ImGuiTabBarFlags.NoTooltip)) // TODO: Actually categorize icons
             {
-                if (bars[0].DrawIconButton((ushort)icon, new Vector2(iconsize), true))
-                {
-                    if (ImGui.IsItemClicked())
-                        ImGui.SetClipboardText($"::{icon}");
-                    if (ImGui.IsItemHovered())
-                        ImGui.SetTooltip($"{icon}");
-                    if (i % columns != columns - 1)
-                        ImGui.SameLine();
-                    i++;
-                }
+                BeginIconList(" ★ ", iconSize);
+                AddIcons(0, 100, "System");
+                AddIcons(66000, 66400, "Macros");
+                AddIcons(90000, 100000, "FC Crests/Symbols");
+                AddIcons(114000, 114100, "New Game+ Icons");
+                EndIconList();
+
+                BeginIconList("Actions", iconSize);
+                AddIcons(100, 4000, "Classes/Jobs");
+                AddIcons(5100, 8000, "Traits");
+                AddIcons(8000, 9000, "Fashion");
+                AddIcons(9000, 10000, "PvP");
+                AddIcons(61100, 61200, "Event");
+                AddIcons(61250, 61290, "Duties/Trials");
+                AddIcons(64000, 64200, "Emotes");
+                AddIcons(64200, 64325, "FC");
+                AddIcons(64325, 64500, "Emotes 2");
+                AddIcons(64600, 64800, "Eureka");
+                AddIcons(64800, 65000, "NPC");
+                AddIcons(70000, 70200, "Chocobo Racing");
+                EndIconList();
+
+                BeginIconList("Mounts & Minions", iconSize);
+                AddIcons(4000, 4400, "Mounts");
+                AddIcons(4400, 5100, "Minions");
+                AddIcons(59000, 59400, "Mounts... again?");
+                AddIcons(59400, 60000, "Minion Items");
+                AddIcons(68000, 68400, "Mounts Menu");
+                AddIcons(68400, 69000, "Minions Menu");
+                EndIconList();
+
+                BeginIconList("Items", iconSize);
+                AddIcons(20000, 30000, "General");
+                AddIcons(50000, 54400, "Housing");
+                AddIcons(58000, 59000, "Fashion");
+                EndIconList();
+
+                BeginIconList("Equipment", iconSize);
+                AddIcons(30000, 50000, "Equipment");
+                AddIcons(54400, 58000, "Special Equipment");
+                EndIconList();
+
+                BeginIconList("Aesthetics", iconSize);
+                AddIcons(130000, 142000);
+                EndIconList();
+
+                BeginIconList("Statuses", iconSize);
+                AddIcons(10000, 20000);
+                EndIconList();
+
+                BeginIconList("Misc", iconSize);
+                AddIcons(60000, 61000, "UI");
+                AddIcons(61000, 61100, "Splash Logos");
+                AddIcons(61200, 61250, "Markers");
+                AddIcons(61290, 61390, "Markers 2");
+                AddIcons(61390, 64000, "UI 2");
+                AddIcons(64500, 64600, "Stamps");
+                AddIcons(65000, 65900, "Currencies");
+                AddIcons(72000, 72500, "BLU UI");
+                AddIcons(76300, 78000, "Group Pose");
+                AddIcons(180000, 180060, "Stamps/Chocobo Racing");
+                EndIconList();
+
+                BeginIconList("Misc 2", iconSize);
+                AddIcons(65900, 66000, "Fishing");
+                AddIcons(66400, 68000, "UI 3");
+                AddIcons(69000, 70000, "Mount/Minion Footprints");
+                AddIcons(70200, 71000, "DoH/DoL Logs");
+                AddIcons(71000, 71500, "Quests");
+                AddIcons(72500, 76000, "Eureka UI");
+                AddIcons(76000, 76300, "Mahjong");
+                AddIcons(78000, 80000, "Fishing Log");
+                EndIconList();
+
+                BeginIconList("Misc 3", iconSize);
+                AddIcons(80000, 82060, "Notebooks");
+                AddIcons(83000, 85000, "FC/Hunts");
+                AddIcons(85000, 90000, "UI 4");
+                AddIcons(150000, 180000, "Tutorials");
+                EndIconList();
+
+                BeginIconList("Spoilers", iconSize);
+                AddIcons(82100, 83000, "Triple Triad"); // Out of order because people might want to use these
+                AddIcons(71500, 72000, "Credits");
+                AddIcons(82060, 82100, "Trusts");
+                AddIcons(100000, 114000, "Quest Images");
+                AddIcons(114100, 120000, "New Game+");
+                AddIcons(120000, 130000, "Popup Texts (Unreadable spoilers)");
+                AddIcons(142000, 150000, "Japanese Popup Texts");
+                AddIcons(180060, 180100, "Trusts Names");
+                AddIcons(181000, 181500, "Boss Titles");
+                AddIcons(181500, 200000, "Placeholder");
+                EndIconList();
+
+                ImGui.EndTabBar();
             }
             ImGui.End();
+        }
+
+        private bool _tabExists = false;
+        private int _i, _columns;
+        private float _iconSize;
+        private string _tooltip;
+        private bool BeginIconList(string name, float iconSize)
+        {
+            _tooltip = "Contains:";
+            if (ImGui.BeginTabItem(name))
+            {
+                ImGui.BeginChild($"{name}##IconList");
+                _tabExists = true;
+                _i = 0;
+                _columns = (int)((ImGui.GetContentRegionAvail().X + ImGui.GetStyle().FramePadding.X * 2) / (iconSize + ImGui.GetStyle().FramePadding.X * 2)); // WHYYYYYYYYYYYYYYYYYYYYY
+                _iconSize = iconSize;
+            }
+            else
+                _tabExists = false;
+
+            return _tabExists;
+        }
+
+        private void EndIconList()
+        {
+            if (_tabExists)
+            {
+                ImGui.EndChild();
+                ImGui.EndTabItem();
+            }
+            else if (ImGui.IsItemHovered())
+                ImGui.SetTooltip(_tooltip);
+        }
+
+        private void AddIcons(int start, int end, string desc = "")
+        {
+            _tooltip += $"\n\t{start} -> {end - 1}{(!string.IsNullOrEmpty(desc) ? ("   " + desc) : "")}";
+            if (_tabExists)
+            {
+                for (int icon = start; icon < end; icon++)
+                {
+                    if (bars[0].DrawIconButton(icon, new Vector2(_iconSize), true))
+                    {
+                        if (ImGui.IsItemClicked())
+                            ImGui.SetClipboardText($"::{icon}");
+                        if (ImGui.IsItemHovered())
+                            ImGui.SetTooltip($"{icon}");
+                        if (_i % _columns != _columns - 1)
+                            ImGui.SameLine();
+                        _i++;
+                    }
+                }
+            }
         }
 
         public void Dispose()

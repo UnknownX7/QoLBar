@@ -80,7 +80,7 @@ namespace QoLBar
         private bool commandReady = true;
         private readonly Queue<string> commandQueue = new Queue<string>();
 
-        public readonly Dictionary<ushort, TextureWrap> textureDictionary = new Dictionary<ushort, TextureWrap>();
+        public readonly Dictionary<int, TextureWrap> textureDictionary = new Dictionary<int, TextureWrap>();
 
         public string Name => "QoL Bar";
 
@@ -101,7 +101,7 @@ namespace QoLBar
 
         public void ToggleIconBrowser() => ui.ToggleIconBrowser();
 
-        public void LoadIcon(ushort icon)
+        public void LoadIcon(int icon)
         {
             if (!textureDictionary.ContainsKey(icon))
             {

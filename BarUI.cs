@@ -329,7 +329,7 @@ namespace QoLBar
                 Hide();
         }
 
-        private bool ParseName(ref string name, out string tooltip, out ushort icon)
+        private bool ParseName(ref string name, out string tooltip, out int icon)
         {
             var args = name.Split(new[] { "##" }, 2, StringSplitOptions.None);
             name = args[0];
@@ -339,7 +339,7 @@ namespace QoLBar
             icon = 0;
             if (name.StartsWith("::"))
             {
-                UInt16.TryParse(name.Substring(2), out icon);
+                int.TryParse(name.Substring(2), out icon);
                 return true;
             }
             else
@@ -357,7 +357,7 @@ namespace QoLBar
 
                 ImGui.PushID(i);
 
-                var useIcon = ParseName(ref name, out string tooltip, out ushort icon);
+                var useIcon = ParseName(ref name, out string tooltip, out int icon);
 
                 if (type == Shortcut.ShortcutType.Spacer)
                 {
@@ -512,7 +512,7 @@ namespace QoLBar
 
                     ImGui.PushID(j);
 
-                    bool useIcon = ParseName(ref _name, out string tooltip, out ushort icon);
+                    bool useIcon = ParseName(ref _name, out string tooltip, out int icon);
 
                     if (useIcon || !barConfig.NoCategoryBackgrounds)
                         ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0));
@@ -701,8 +701,7 @@ namespace QoLBar
                 if (ImGui.IsItemHovered())
                     ImGui.SetTooltip("Opens up a list of all icons you can use instead of text.\n" +
                         "Warning: This will load EVERY icon available so it will probably lag for a moment.\n" +
-                        "Clicking on one will copy text to be pasted into the \"Name\" field of a button.\n" +
-                        "Also, beware of mounts/minions as they contain spoilers.");
+                        "Clicking on one will copy text to be pasted into the \"Name\" field of a button.");
 
                 ClampWindowPos();
 
@@ -812,7 +811,6 @@ namespace QoLBar
             barSize.Y = ImGui.GetCursorPosY() + 4;
             ImGui.SameLine();
             barSize.X = ImGui.GetCursorPosX();
-            //PluginLog.Log($"{ImGui.GetCursorPosX()} {ImGui.GetCursorPosY()}");
         }
 
         private void ClampWindowPos()
@@ -859,7 +857,7 @@ namespace QoLBar
             }
         }
 
-        public bool DrawIconButton(ushort icon, Vector2 size, bool retExists = false)
+        public bool DrawIconButton(int icon, Vector2 size, bool retExists = false)
         {
             bool ret = false;
             var texd = plugin.textureDictionary;
@@ -870,10 +868,10 @@ namespace QoLBar
                 {
                     if (!retExists)
                     {
-                        if (icon == 0)
+                        if (icon == 66001)
                             ret = ImGui.Button("  X  ##FailedTexture");
                         else
-                            ret = DrawIconButton(0, size);
+                            ret = DrawIconButton(66001, size);
                     }
                 }
                 else
