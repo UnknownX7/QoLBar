@@ -46,6 +46,7 @@ namespace QoLBar
         public bool HideAdd = false;
         public Vector2 Position = new Vector2();
         public bool LockedPosition = false;
+        public Vector2 Offset = new Vector2();
         public float Scale = 1.0f;
         public float CategoryScale = 1.0f;
         public float RevealAreaScale = 1.0f;

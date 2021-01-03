@@ -32,7 +32,7 @@ namespace QoLBar
         private Shortcut _sh;
         private static Vector2 window = ImGui.GetIO().DisplaySize;
         private static Vector2 mousePos = ImGui.GetIO().MousePos;
-        private static float globalSize;
+        private static float globalSize = ImGui.GetIO().FontGlobalScale;
         private Vector2 barSize = new Vector2(200, 38);
         private Vector2 barPos;
         private ImGuiWindowFlags flags;
@@ -50,6 +50,7 @@ namespace QoLBar
         private bool _firstframe = true;
         private bool _setPos = true;
         private bool _lastReveal = true;
+        private bool _mouseRevealed = false;
         private Vector2 _tweenStart;
         private float _tweenProgress = 1;
         private Vector2 _catpiv = new Vector2();
@@ -137,7 +138,7 @@ namespace QoLBar
                 piv.X = pivX;
                 piv.Y = pivY;
 
-                hidePos.X = window.X * pivX + offset;
+                hidePos.X = window.X * pivX + offset + (barConfig.Offset.X * globalSize);
                 hidePos.Y = defPos;
                 revealPos.X = hidePos.X;
             }
@@ -147,7 +148,7 @@ namespace QoLBar
                 piv.Y = pivX;
 
                 hidePos.X = defPos;
-                hidePos.Y = window.Y * pivX + offset;
+                hidePos.Y = window.Y * pivX + offset + (barConfig.Offset.Y * globalSize);
                 revealPos.Y = hidePos.Y;
             }
 
@@ -164,16 +165,16 @@ namespace QoLBar
             switch (barConfig.DockSide)
             {
                 case BarDock.Top:
-                    revealPos.Y = hidePos.Y + barSize.Y;
+                    revealPos.Y = Math.Max(hidePos.Y + barSize.Y + (barConfig.Offset.Y * globalSize), hidePos.Y + 1);
                     break;
                 case BarDock.Left:
-                    revealPos.X = hidePos.X + barSize.X;
+                    revealPos.X = Math.Max(hidePos.X + barSize.X + (barConfig.Offset.X * globalSize), hidePos.X + 1);
                     break;
                 case BarDock.Bottom:
-                    revealPos.Y = hidePos.Y - barSize.Y;
+                    revealPos.Y = Math.Min(hidePos.Y - barSize.Y + (barConfig.Offset.Y * globalSize), hidePos.Y - 1);
                     break;
                 case BarDock.Right:
-                    revealPos.X = hidePos.X - barSize.X;
+                    revealPos.X = Math.Min(hidePos.X - barSize.X + (barConfig.Offset.X * globalSize), hidePos.X - 1);
                     break;
                 case BarDock.UndockedH:
                     break;
@@ -250,13 +251,10 @@ namespace QoLBar
 
                 ImGui.SetWindowFontScale(barConfig.Scale);
 
-                if (ImGui.IsWindowHovered())
-                {
+                if (_mouseRevealed && ImGui.IsWindowHovered(ImGuiHoveredFlags.RectOnly))
                     Reveal();
-
-                    if (ImGui.IsMouseReleased(1))
+                if (ImGui.IsMouseReleased(1) && ImGui.IsWindowHovered())
                         ImGui.OpenPopup($"BarConfig##{barNumber}");
-                }
 
                 DrawItems();
 
@@ -281,6 +279,9 @@ namespace QoLBar
                 ImGui.PopStyleVar(2);
             }
 
+            if (!_reveal)
+                _mouseRevealed = false;
+
             if (docked)
             {
                 SetBarPosition();
@@ -294,37 +295,40 @@ namespace QoLBar
 
         private void CheckMouse()
         {
-            Vector2 _pos;
-            if (docked)
-            {
-                if (barConfig.DockSide == BarDock.Bottom || barConfig.DockSide == BarDock.Top)
-                {
-                    var _offset = Math.Min(barSize.Y * (1 - barConfig.RevealAreaScale), barSize.Y - 1);
-                    if (barConfig.DockSide == BarDock.Bottom)
-                        _pos = new Vector2(revealPos.X, revealPos.Y + _offset);
-                    else
-                        _pos = new Vector2(revealPos.X, revealPos.Y - _offset);
-                }
-                else
-                {
-                    var _offset = Math.Min(barSize.X * (1 - barConfig.RevealAreaScale), barSize.X - 1);
-                    if (barConfig.DockSide == BarDock.Right)
-                        _pos = new Vector2(revealPos.X + _offset, revealPos.Y);
-                    else
-                        _pos = new Vector2(revealPos.X - _offset, revealPos.Y);
-                }
-            }
-            else
-                _pos = barConfig.Position;
+            if (docked && _reveal)
+                return;
 
+            Vector2 _pos = docked ? revealPos : barConfig.Position;
             var _min = new Vector2(_pos.X - (barSize.X * piv.X), _pos.Y - (barSize.Y * piv.Y));
             var _max = new Vector2(_pos.X + (barSize.X * (1 - piv.X)), _pos.Y + (barSize.Y * (1 - piv.Y)));
+
+            switch (barConfig.DockSide)
+            {
+                case BarDock.Top:
+                    _max.Y = Math.Max(Math.Max(_max.Y - barSize.Y * (1 - barConfig.RevealAreaScale), _min.Y + 1), 1);
+                    break;
+                case BarDock.Left:
+                    _max.X = Math.Max(Math.Max(_max.X - barSize.X * (1 - barConfig.RevealAreaScale), _min.X + 1), 1);
+                    break;
+                case BarDock.Bottom:
+                    _min.Y = Math.Min(Math.Min(_min.Y + barSize.Y * (1 - barConfig.RevealAreaScale), _max.Y - 1), window.Y - 1);
+                    break;
+                case BarDock.Right:
+                    _min.X = Math.Min(Math.Min(_min.X + barSize.X * (1 - barConfig.RevealAreaScale), _max.X - 1), window.X - 1);
+                    break;
+                default:
+                    break;
+            }
+
             var mX = mousePos.X;
             var mY = mousePos.Y;
 
             //if (ImGui.IsMouseHoveringRect(_min, _max, true)) // This only works in the context of a window... thanks ImGui
             if (barConfig.Visibility == VisibilityMode.Always || (_min.X <= mX && mX < _max.X && _min.Y <= mY && mY < _max.Y))
+            {
+                _mouseRevealed = true;
                 Reveal();
+            }
             else
                 Hide();
         }
@@ -372,8 +376,6 @@ namespace QoLBar
                     ImGui.Button(name, new Vector2((!vertical && barConfig.AutoButtonWidth) ? 0 : (barConfig.ButtonWidth * globalSize * barConfig.Scale), 0));
                 if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
                 {
-                    Reveal();
-
                     if (ImGui.IsMouseReleased(0))
                         ItemClicked(type, command);
 
@@ -408,10 +410,7 @@ namespace QoLBar
 
             ImGui.Button("+", new Vector2((!vertical && barConfig.AutoButtonWidth) ? 0 : (barConfig.ButtonWidth * globalSize * barConfig.Scale), 0));
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
-            {
-                Reveal();
                 ImGui.SetTooltip("Add a new button.\nRight click this (or the bar background) for options.\nRight click other buttons to edit them.");
-            }
 
             ImGui.OpenPopupOnItemClick("addItem", 0);
             ImGui.OpenPopupOnItemClick($"BarConfig##{barNumber}", 1);
@@ -528,7 +527,7 @@ namespace QoLBar
                     else if (useIcon ? DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2), _sh.IconZoom) : ImGui.Button(_name, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
                     {
                         ItemClicked(_type, _command);
-                        if (!sh.CategoryStaysOpen)
+                        if (!sh.CategoryStaysOpen && _type != Shortcut.ShortcutType.Category)
                             ImGui.CloseCurrentPopup();
                     }
                     ImGui.PopStyleColor();
@@ -766,6 +765,12 @@ namespace QoLBar
 
                 if (ImGui.DragFloat("Bar Scale", ref barConfig.Scale, 0.01f, 0.7f, 2.0f, "%.2f"))
                     config.Save();
+
+                if (docked && ImGui.DragFloat2("Bar Offset", ref barConfig.Offset, 1, -500, 500))
+                {
+                    config.Save();
+                    SetupPosition();
+                }
 
                 if (ImGui.DragFloat("Category Scale", ref barConfig.CategoryScale, 0.01f, 0.7f, 1.5f, "%.2f"))
                     config.Save();
