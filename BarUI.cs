@@ -367,7 +367,7 @@ namespace QoLBar
                     ImGui.EndChild();
                 }
                 else if (useIcon)
-                    DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2));
+                    DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2), sh.IconZoom);
                 else
                     ImGui.Button(name, new Vector2((!vertical && barConfig.AutoButtonWidth) ? 0 : (barConfig.ButtonWidth * globalSize * barConfig.Scale), 0));
                 if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
@@ -525,7 +525,7 @@ namespace QoLBar
                         ImGui.Text(_name);
                         ImGui.EndChild();
                     }
-                    else if (useIcon ? DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2)) : ImGui.Button(_name, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
+                    else if (useIcon ? DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2), _sh.IconZoom) : ImGui.Button(_name, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
                     {
                         ItemClicked(_type, _command);
                         if (!sh.CategoryStaysOpen)
@@ -663,6 +663,9 @@ namespace QoLBar
                         ImGui.SetTooltip("Number of buttons in each row before starting another.");
                 }
 
+                if (ImGui.DragFloat("Icon Zoom", ref sh.IconZoom, 0.01f, 1.0f, 5.0f, "%.2f"))
+                    config.Save();
+
                 if (ImGui.Button((shortcuts == barConfig.ShortcutList && !vertical) ? "←" : "↑") && i > 0)
                 {
                     shortcuts.RemoveAt(i);
@@ -696,7 +699,7 @@ namespace QoLBar
 
                 var iconSize = ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2;
                 ImGui.SameLine(ImGui.GetWindowContentRegionWidth() + ImGui.GetStyle().FramePadding.X * 2 - iconSize);
-                if (DrawIconButton(46, new Vector2(iconSize)))
+                if (DrawIconButton(46, new Vector2(iconSize), 1.0f))
                     plugin.ToggleIconBrowser();
                 if (ImGui.IsItemHovered())
                     ImGui.SetTooltip("Opens up a list of all icons you can use instead of text.\n" +
@@ -857,7 +860,7 @@ namespace QoLBar
             }
         }
 
-        public bool DrawIconButton(int icon, Vector2 size, bool retExists = false)
+        public bool DrawIconButton(int icon, Vector2 size, float zoom, bool retExists = false)
         {
             bool ret = false;
             var texd = plugin.textureDictionary;
@@ -871,13 +874,14 @@ namespace QoLBar
                         if (icon == 66001)
                             ret = ImGui.Button("  X  ##FailedTexture");
                         else
-                            ret = DrawIconButton(66001, size);
+                            ret = DrawIconButton(66001, size, zoom);
                     }
                 }
                 else
                 {
+                    var z = 0.5f / zoom;
                     ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0));
-                    ret = ImGui.ImageButton(texd[icon].ImGuiHandle, size, new Vector2(0), new Vector2(1), 0);
+                    ret = ImGui.ImageButton(texd[icon].ImGuiHandle, size, new Vector2(0.5f - z), new Vector2(0.5f + z), 0);
                     ImGui.PopStyleColor();
                     if (retExists)
                         ret = true;

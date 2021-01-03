@@ -70,6 +70,7 @@ namespace QoLBar
         public int CategoryWidth = 140;
         public bool CategoryStaysOpen = false;
         public int CategoryColumns = 1;
+        public float IconZoom = 1.0f;
     }
 
     public class QoLBar : IDalamudPlugin
