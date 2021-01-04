@@ -3,9 +3,6 @@ using System;
 using System.Numerics;
 using System.Text;
 using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
-using Newtonsoft.Json;
 using Dalamud.Plugin;
 
 namespace QoLBar
@@ -127,9 +124,16 @@ namespace QoLBar
                 }
                 ImGui.SameLine();
                 if (ImGui.Button("Export"))
-                    ImGui.SetClipboardText(ExportBar(config.BarConfigs[i]));
+                    ImGui.SetClipboardText(plugin.ExportBar(config.BarConfigs[i], false));
                 if (ImGui.IsItemHovered())
-                    ImGui.SetTooltip("Export to clipboard");
+                {
+                    ImGui.SetTooltip("Export to clipboard without default settings (May change with updates).\n" +
+                        "Right click to export with every setting (Longer string, doesn't change).");
+
+                    if (ImGui.IsMouseReleased(1))
+                        ImGui.SetClipboardText(plugin.ExportBar(config.BarConfigs[i], true));
+                }
+
                 if (i > 0)
                 {
                     ImGui.SameLine();
@@ -169,18 +173,18 @@ namespace QoLBar
             {
                 try
                 {
-                    config.BarConfigs.Add(ImportBar(ImGui.GetClipboardText()));
+                    config.BarConfigs.Add(plugin.ImportBar(ImGui.GetClipboardText()));
                     bars.Add(new BarUI(plugin, config, bars.Count));
                     config.Save();
                 }
                 catch (Exception e)
                 {
-                    PluginLog.LogError("Invalid import string!");
+                    PluginLog.LogError("Invalid bar import string!");
                     PluginLog.LogError($"{e.GetType()}\n{e.Message}");
                 }
             }
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("Import from clipboard");
+                ImGui.SetTooltip("Import bar from clipboard");
 
             ImGui.Columns(1); // I just wanna know who did this and where they live
 
@@ -191,61 +195,6 @@ namespace QoLBar
         {
             for (int i = 0; i < bars.Count; i++)
                 bars[i].SetBarNumber(i);
-        }
-
-        private void CleanBarConfig(BarConfig bar)
-        {
-            CleanShortcuts(bar.ShortcutList);
-        }
-
-        private void CleanShortcuts(List<Shortcut> shortcuts)
-        {
-            foreach (var sh in shortcuts)
-            {
-                if (sh.Type != Shortcut.ShortcutType.Category)
-                    sh.SubList = null;
-                else
-                    CleanShortcuts(sh.SubList);
-            }
-        }
-
-        private string ExportBar(BarConfig bar)
-        {
-            CleanBarConfig(bar);
-
-            string jstring = JsonConvert.SerializeObject(bar, Formatting.None, new JsonSerializerSettings
-            {
-                TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
-                TypeNameHandling = TypeNameHandling.Objects
-            });
-
-            var bytes = Encoding.UTF8.GetBytes(jstring);
-            using var mso = new MemoryStream();
-            using (var gs = new GZipStream(mso, CompressionMode.Compress))
-            {
-                gs.Write(bytes, 0, bytes.Length);
-            }
-            return Convert.ToBase64String(mso.ToArray());
-        }
-
-        private BarConfig ImportBar(string import)
-        {
-            var data = Convert.FromBase64String(import);
-            byte[] lengthBuffer = new byte[4];
-            Array.Copy(data, data.Length - 4, lengthBuffer, 0, 4);
-            int uncompressedSize = BitConverter.ToInt32(lengthBuffer, 0);
-
-            var buffer = new byte[uncompressedSize];
-            using (var ms = new MemoryStream(data))
-            {
-                using var gzip = new GZipStream(ms, CompressionMode.Decompress);
-                gzip.Read(buffer, 0, uncompressedSize);
-            }
-            return JsonConvert.DeserializeObject<BarConfig>(Encoding.UTF8.GetString(buffer), new JsonSerializerSettings
-            {
-                TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
-                TypeNameHandling = TypeNameHandling.Objects
-            });
         }
 
         private void DrawIconBrowser()

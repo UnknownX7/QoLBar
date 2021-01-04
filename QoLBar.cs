@@ -4,6 +4,10 @@ using System.Text;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.IO;
+using System.IO.Compression;
+using System.ComponentModel;
+using Newtonsoft.Json;
 using Dalamud.Plugin;
 using Dalamud.Game.Chat;
 using Dalamud.Data.LuminaExtensions;
@@ -14,23 +18,23 @@ namespace QoLBar
 {
     public class BarConfig
     {
-        public string Title = string.Empty;
-        public List<Shortcut> ShortcutList = new List<Shortcut>();
-        public bool Hidden = false;
+        [DefaultValue("")] public string Title = string.Empty;
+        [DefaultValue(null)] public List<Shortcut> ShortcutList = new List<Shortcut>();
+        [DefaultValue(false)] public bool Hidden = false;
         public enum VisibilityMode
         {
             Slide,
             Immediate,
             Always
         }
-        public VisibilityMode Visibility = VisibilityMode.Always;
+        [DefaultValue(VisibilityMode.Always)] public VisibilityMode Visibility = VisibilityMode.Always;
         public enum BarAlign
         {
             LeftOrTop,
             Center,
             RightOrBottom
         }
-        public BarAlign Alignment = BarAlign.Center;
+        [DefaultValue(BarAlign.Center)] public BarAlign Alignment = BarAlign.Center;
         public enum BarDock
         {
             Top,
@@ -40,23 +44,23 @@ namespace QoLBar
             UndockedH,
             UndockedV
         }
-        public BarDock DockSide = BarDock.Bottom;
-        public int ButtonWidth = 100;
-        public bool AutoButtonWidth = false;
-        public bool HideAdd = false;
+        [DefaultValue(BarDock.Bottom)] public BarDock DockSide = BarDock.Bottom;
+        [DefaultValue(100)] public int ButtonWidth = 100;
+        [DefaultValue(false)] public bool AutoButtonWidth = false;
+        [DefaultValue(false)] public bool HideAdd = false;
         public Vector2 Position = new Vector2();
-        public bool LockedPosition = false;
+        [DefaultValue(false)] public bool LockedPosition = false;
         public Vector2 Offset = new Vector2();
-        public float Scale = 1.0f;
-        public float CategoryScale = 1.0f;
-        public float RevealAreaScale = 1.0f;
-        public bool NoBackground = false;
-        public bool NoCategoryBackgrounds = false;
+        [DefaultValue(1.0f)] public float Scale = 1.0f;
+        [DefaultValue(1.0f)] public float CategoryScale = 1.0f;
+        [DefaultValue(1.0f)] public float RevealAreaScale = 1.0f;
+        [DefaultValue(false)] public bool NoBackground = false;
+        [DefaultValue(false)] public bool NoCategoryBackgrounds = false;
     }
 
     public class Shortcut
     {
-        public string Name = string.Empty;
+        [DefaultValue("")] public string Name = string.Empty;
         public enum ShortcutType
         {
             Single,
@@ -64,14 +68,14 @@ namespace QoLBar
             Category,
             Spacer
         }
-        public ShortcutType Type = ShortcutType.Single;
-        public string Command = string.Empty;
-        public List<Shortcut> SubList;
-        public bool HideAdd = false;
-        public int CategoryWidth = 140;
-        public bool CategoryStaysOpen = false;
-        public int CategoryColumns = 1;
-        public float IconZoom = 1.0f;
+        [DefaultValue(ShortcutType.Single)] public ShortcutType Type = ShortcutType.Single;
+        [DefaultValue("")] public string Command = string.Empty;
+        [DefaultValue(null)] public List<Shortcut> SubList;
+        [DefaultValue(false)] public bool HideAdd = false;
+        [DefaultValue(140)] public int CategoryWidth = 140;
+        [DefaultValue(false)] public bool CategoryStaysOpen = false;
+        [DefaultValue(1)] public int CategoryColumns = 1;
+        [DefaultValue(1.0f)] public float IconZoom = 1.0f;
     }
 
     public class QoLBar : IDalamudPlugin
@@ -119,6 +123,93 @@ namespace QoLBar
                     catch { }
                 });
             }
+        }
+
+        private void CleanBarConfig(BarConfig bar)
+        {
+            CleanShortcuts(bar.ShortcutList);
+        }
+
+        private void CleanShortcuts(List<Shortcut> shortcuts)
+        {
+            foreach (var sh in shortcuts)
+            {
+                CleanShortcut(sh);
+            }
+        }
+
+        private void CleanShortcut(Shortcut sh)
+        {
+            if (sh.Type != Shortcut.ShortcutType.Category)
+                sh.SubList = null;
+            else
+                CleanShortcuts(sh.SubList);
+        }
+
+        public string ExportObject(object o, bool saveAllValues)
+        {
+            string jstring = !saveAllValues ? JsonConvert.SerializeObject(o, Formatting.None, new JsonSerializerSettings
+            {
+                TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
+                TypeNameHandling = TypeNameHandling.Objects,
+                NullValueHandling = NullValueHandling.Ignore,
+                DefaultValueHandling = DefaultValueHandling.Ignore
+            }) :
+            JsonConvert.SerializeObject(o, Formatting.Indented, new JsonSerializerSettings
+            {
+                TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
+                TypeNameHandling = TypeNameHandling.Objects,
+            });
+
+            var bytes = Encoding.UTF8.GetBytes(jstring);
+            using var mso = new MemoryStream();
+            using (var gs = new GZipStream(mso, CompressionMode.Compress))
+            {
+                gs.Write(bytes, 0, bytes.Length);
+            }
+            return Convert.ToBase64String(mso.ToArray());
+        }
+
+        public T ImportObject<T>(string import)
+        {
+            var data = Convert.FromBase64String(import);
+            byte[] lengthBuffer = new byte[4];
+            Array.Copy(data, data.Length - 4, lengthBuffer, 0, 4);
+            int uncompressedSize = BitConverter.ToInt32(lengthBuffer, 0);
+
+            var buffer = new byte[uncompressedSize];
+            using (var ms = new MemoryStream(data))
+            {
+                using var gzip = new GZipStream(ms, CompressionMode.Decompress);
+                gzip.Read(buffer, 0, uncompressedSize);
+            }
+            return JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(buffer), new JsonSerializerSettings
+            {
+                TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
+                TypeNameHandling = TypeNameHandling.Objects
+            });
+        }
+
+        public string ExportBar(BarConfig bar, bool saveAllValues)
+        {
+            CleanBarConfig(bar);
+            return ExportObject(bar, saveAllValues);
+        }
+
+        public BarConfig ImportBar(string import)
+        {
+            return ImportObject<BarConfig>(import);
+        }
+
+        public string ExportShortcut(Shortcut sh, bool saveAllValues)
+        {
+            CleanShortcut(sh);
+            return ExportObject(sh, saveAllValues);
+        }
+
+        public Shortcut ImportShortcut(string import)
+        {
+            return ImportObject<Shortcut>(import);
         }
 
         // I'm too dumb to do any of this so its (almost) all taken from here https://git.sr.ht/~jkcclemens/CCMM/tree/master/Custom%20Commands%20and%20Macro%20Macros/GameFunctions.cs

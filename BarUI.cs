@@ -254,7 +254,7 @@ namespace QoLBar
                 if (_mouseRevealed && ImGui.IsWindowHovered(ImGuiHoveredFlags.RectOnly))
                     Reveal();
                 if (ImGui.IsMouseReleased(1) && ImGui.IsWindowHovered())
-                        ImGui.OpenPopup($"BarConfig##{barNumber}");
+                    ImGui.OpenPopup($"BarConfig##{barNumber}");
 
                 DrawItems();
 
@@ -633,6 +633,23 @@ namespace QoLBar
                     _sh = null;
                     ImGui.CloseCurrentPopup();
                 }
+                ImGui.SameLine();
+                if (ImGui.Button("Import"))
+                {
+                    try
+                    {
+                        shortcuts.Add(plugin.ImportShortcut(ImGui.GetClipboardText()));
+                        config.Save();
+                        ImGui.CloseCurrentPopup();
+                    }
+                    catch (Exception e)
+                    {
+                        PluginLog.LogError("Invalid shortcut import string!");
+                        PluginLog.LogError($"{e.GetType()}\n{e.Message}");
+                    }
+                }
+                if (ImGui.IsItemHovered())
+                    ImGui.SetTooltip("Import shortcut from clipboard");
 
                 ClampWindowPos();
 
@@ -684,6 +701,17 @@ namespace QoLBar
                     shortcuts.Insert(i + 1, sh);
                     config.Save();
                     ImGui.CloseCurrentPopup();
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Export"))
+                    ImGui.SetClipboardText(plugin.ExportShortcut(sh, false));
+                if (ImGui.IsItemHovered())
+                {
+                    ImGui.SetTooltip("Export to clipboard without default settings (May change with updates).\n" +
+                        "Right click to export with every setting (Longer string, doesn't change).");
+
+                    if (ImGui.IsMouseReleased(1))
+                        ImGui.SetClipboardText(plugin.ExportShortcut(sh, true));
                 }
                 ImGui.SameLine();
                 if (ImGui.Button("Delete"))
