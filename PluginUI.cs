@@ -291,7 +291,7 @@ namespace QoLBar
                 AddIcons(82060, 82100, "Trusts");
                 AddIcons(100000, 114000, "Quest Images");
                 AddIcons(114100, 120000, "New Game+");
-                AddIcons(120000, 130000, "Popup Texts (Unreadable spoilers)");
+                AddIcons(120000, 130000, "Popup Texts");
                 AddIcons(142000, 150000, "Japanese Popup Texts");
                 AddIcons(180060, 180100, "Trusts Names");
                 AddIcons(181000, 181500, "Boss Titles");
