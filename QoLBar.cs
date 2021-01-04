@@ -56,6 +56,7 @@ namespace QoLBar
         [DefaultValue(1.0f)] public float RevealAreaScale = 1.0f;
         [DefaultValue(false)] public bool NoBackground = false;
         [DefaultValue(false)] public bool NoCategoryBackgrounds = false;
+        [DefaultValue(false)] public bool OpenCategoriesOnHover = false;
     }
 
     public class Shortcut

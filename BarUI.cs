@@ -376,7 +376,7 @@ namespace QoLBar
                     ImGui.Button(name, new Vector2((!vertical && barConfig.AutoButtonWidth) ? 0 : (barConfig.ButtonWidth * globalSize * barConfig.Scale), 0));
                 if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
                 {
-                    if (ImGui.IsMouseReleased(0))
+                    if (ImGui.IsMouseReleased(0) || (barConfig.OpenCategoriesOnHover && type == Shortcut.ShortcutType.Category))
                         ItemClicked(type, command);
 
                     if (!string.IsNullOrEmpty(tooltip))
@@ -834,7 +834,14 @@ namespace QoLBar
                             plugin.ExecuteCommand("/echo <se> You can right click on the bar itself (the black background) to reopen this settings menu!");
                         config.Save();
                     }
+
+                    ImGui.SameLine(ImGui.GetWindowWidth() / 2);
                 }
+
+                if (ImGui.Checkbox("Open Categories on Hover", ref barConfig.OpenCategoriesOnHover))
+                    config.Save();
+                if (ImGui.IsItemHovered())
+                    ImGui.SetTooltip("Does not work for subcategories!");
 
                 ImGui.Spacing();
                 ImGui.Spacing();
