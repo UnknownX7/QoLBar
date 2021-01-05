@@ -336,10 +336,17 @@ namespace QoLBar
 
         private bool ParseName(ref string name, out string tooltip, out int icon)
         {
+            if (name == string.Empty)
+            {
+                tooltip = string.Empty;
+                icon = 0;
+                return false;
+            }
+
             var args = name.Split(new[] { "##" }, 2, StringSplitOptions.None);
             name = args[0];
 
-            tooltip = (args.Length > 1) ? args[1] : "";
+            tooltip = (args.Length > 1) ? args[1] : string.Empty;
 
             icon = 0;
             if (name.StartsWith("::"))
@@ -365,9 +372,9 @@ namespace QoLBar
 
                 if (type == Shortcut.ShortcutType.Spacer)
                 {
-                    ImGui.BeginChild("", new Vector2(barConfig.ButtonWidth * globalSize * barConfig.Scale, ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2));
-                    ImGui.SameLine(ImGui.GetContentRegionAvail().X / 2 - ImGui.CalcTextSize(name).X / 2);
-                    ImGui.Text(name);
+                    ImGui.BeginChild((uint)i, new Vector2(barConfig.ButtonWidth * globalSize * barConfig.Scale, ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2));
+                    //ImGui.SameLine(ImGui.GetContentRegionAvail().X / 2 - ImGui.CalcTextSize(name).X / 2);
+                    //ImGui.Text(name);
                     ImGui.EndChild();
                 }
                 else if (useIcon)
@@ -527,9 +534,9 @@ namespace QoLBar
                         ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.08f, 0.08f, 0.08f, 0.94f));
                     if (_type == Shortcut.ShortcutType.Spacer)
                     {
-                        ImGui.BeginChild("", new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2));
-                        ImGui.SameLine(ImGui.GetContentRegionAvail().X / 2 - ImGui.CalcTextSize(_name).X / 2);
-                        ImGui.Text(_name);
+                        ImGui.BeginChild((uint)j, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2));
+                        //ImGui.SameLine(ImGui.GetContentRegionAvail().X / 2 - ImGui.CalcTextSize(_name).X / 2); // TODO: Fix this being smaller than normal buttons for whatever reason
+                        //ImGui.Text(_name);
                         ImGui.EndChild();
                     }
                     else if (useIcon ? DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2), _sh.IconZoom) : ImGui.Button(_name, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
@@ -584,15 +591,18 @@ namespace QoLBar
         {
             Reveal();
 
-            if (ImGui.InputText("Name          ", ref sh.Name, 256) && editing) // Not a bug... just ImGui not extending the window to fit multiline's name...
-                config.Save();
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("Start the name with ::x where x is a number to use icons, i.e. \"::2914\".\n" +
-                    "Use ## anywhere in the name to make the text afterwards into a tooltip,\ni.e. \"Name##This is a Tooltip\".");
+            if (sh.Type != Shortcut.ShortcutType.Spacer)
+            {
+                if (ImGui.InputText("Name          ", ref sh.Name, 256) && editing) // Not a bug... just ImGui not extending the window to fit multiline's name...
+                    config.Save();
+                if (ImGui.IsItemHovered())
+                    ImGui.SetTooltip("Start the name with ::x where x is a number to use icons, i.e. \"::2914\".\n" +
+                        "Use ## anywhere in the name to make the text afterwards into a tooltip,\ni.e. \"Name##This is a Tooltip\".");
+            }
 
             // No nested categories
             var _t = (int)sh.Type;
-            if (ImGui.Combo("Type", ref _t, "Single\0Multiline\0Category")) // TODO: Fix spacers on categories to add them back
+            if (ImGui.Combo("Type", ref _t, "Single\0Multiline\0Category\0Spacer"))
             {
                 sh.Type = (Shortcut.ShortcutType)_t;
                 if (sh.Type == Shortcut.ShortcutType.Category)
@@ -600,8 +610,11 @@ namespace QoLBar
 
                 if (sh.Type == Shortcut.ShortcutType.Single)
                     sh.Command = sh.Command.Split('\n')[0];
-                //else if (sh.Type != Shortcut.ShortcutType.Multiline)
-                //    sh.Command = "";
+                else if (sh.Type != Shortcut.ShortcutType.Multiline)
+                    sh.Command = string.Empty;
+
+                if (sh.Type == Shortcut.ShortcutType.Spacer)
+                    sh.Name = string.Empty;
 
                 if (editing)
                     config.Save();
@@ -687,7 +700,7 @@ namespace QoLBar
                         ImGui.SetTooltip("Number of buttons in each row before starting another.");
                 }
 
-                if (ImGui.DragFloat("Icon Zoom", ref sh.IconZoom, 0.01f, 1.0f, 5.0f, "%.2f"))
+                if ((sh.Type != Shortcut.ShortcutType.Spacer) && ImGui.DragFloat("Icon Zoom", ref sh.IconZoom, 0.01f, 1.0f, 5.0f, "%.2f"))
                     config.Save();
 
                 if (ImGui.Button((shortcuts == barConfig.ShortcutList && !vertical) ? "←" : "↑") && i > 0)
