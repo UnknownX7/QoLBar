@@ -305,18 +305,21 @@ namespace QoLBar
 
         private bool _tabExists = false;
         private int _i, _columns;
+        private string _name;
         private float _iconSize;
         private string _tooltip;
+        private List<(int, int)> _iconList;
         private bool BeginIconList(string name, float iconSize)
         {
             _tooltip = "Contains:";
             if (ImGui.BeginTabItem(name))
             {
-                ImGui.BeginChild($"{name}##IconList");
+                _name = name;
                 _tabExists = true;
                 _i = 0;
                 _columns = (int)((ImGui.GetContentRegionAvail().X + ImGui.GetStyle().FramePadding.X * 2) / (iconSize + ImGui.GetStyle().FramePadding.X * 2)); // WHYYYYYYYYYYYYYYYYYYYYY
                 _iconSize = iconSize;
+                _iconList = new List<(int, int)>();
             }
             else
                 _tabExists = false;
@@ -328,7 +331,9 @@ namespace QoLBar
         {
             if (_tabExists)
             {
-                ImGui.EndChild();
+                if (ImGui.IsItemHovered())
+                    ImGui.SetTooltip(_tooltip);
+                DrawIconList();
                 ImGui.EndTabItem();
             }
             else if (ImGui.IsItemHovered())
@@ -339,6 +344,13 @@ namespace QoLBar
         {
             _tooltip += $"\n\t{start} -> {end - 1}{(!string.IsNullOrEmpty(desc) ? ("   " + desc) : "")}";
             if (_tabExists)
+                _iconList.Add((start, end));
+        }
+
+        private void DrawIconList()
+        {
+            ImGui.BeginChild($"{_name}##IconList");
+            foreach ((int start, int end) in _iconList)
             {
                 for (int icon = start; icon < end; icon++)
                 {
@@ -354,6 +366,7 @@ namespace QoLBar
                     }
                 }
             }
+            ImGui.EndChild();
         }
 
         public void Dispose()
