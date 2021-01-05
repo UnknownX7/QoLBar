@@ -534,7 +534,7 @@ namespace QoLBar
                     }
                     else if (useIcon ? DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2), _sh.IconZoom) : ImGui.Button(_name, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
                     {
-                        ItemClicked(sh, sublist.Count >= (cols * (cols - 1) + 1), true);
+                        ItemClicked(_sh, sublist.Count >= (cols * (cols - 1) + 1), true);
                         if (!sh.CategoryStaysOpen && _type != Shortcut.ShortcutType.Category)
                             ImGui.CloseCurrentPopup();
                     }
