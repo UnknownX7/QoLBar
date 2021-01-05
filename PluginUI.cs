@@ -206,6 +206,8 @@ namespace QoLBar
             {
                 BeginIconList(" ★ ", iconSize);
                 AddIcons(0, 100, "System");
+                AddIcons(62000, 62600, "Class/Job Icons");
+                AddIcons(62800, 62900, "Gearsets");
                 AddIcons(66000, 66400, "Macros");
                 AddIcons(90000, 100000, "FC Crests/Symbols");
                 AddIcons(114000, 114100, "New Game+ Icons");
@@ -231,8 +233,8 @@ namespace QoLBar
                 AddIcons(4400, 5100, "Minions");
                 AddIcons(59000, 59400, "Mounts... again?");
                 AddIcons(59400, 60000, "Minion Items");
-                AddIcons(68000, 68400, "Mounts Menu");
-                AddIcons(68400, 69000, "Minions Menu");
+                AddIcons(68000, 68400, "Mounts Log");
+                AddIcons(68400, 69000, "Minions Log");
                 EndIconList();
 
                 BeginIconList("Items", iconSize);
@@ -256,32 +258,43 @@ namespace QoLBar
 
                 BeginIconList("Misc", iconSize);
                 AddIcons(60000, 61000, "UI");
-                AddIcons(61000, 61100, "Splash Logos");
                 AddIcons(61200, 61250, "Markers");
                 AddIcons(61290, 61390, "Markers 2");
-                AddIcons(61390, 64000, "UI 2");
+                AddIcons(61390, 62000, "UI 2");
+                AddIcons(62600, 62620, "HQ FC Banners");
+                AddIcons(63900, 64000, "Map Icons");
                 AddIcons(64500, 64600, "Stamps");
                 AddIcons(65000, 65900, "Currencies");
-                AddIcons(72000, 72500, "BLU UI");
                 AddIcons(76300, 78000, "Group Pose");
                 AddIcons(180000, 180060, "Stamps/Chocobo Racing");
                 EndIconList();
 
                 BeginIconList("Misc 2", iconSize);
+                AddIcons(62900, 63200, "Achievements/Hunting Log");
                 AddIcons(65900, 66000, "Fishing");
-                AddIcons(66400, 68000, "UI 3");
-                AddIcons(69000, 70000, "Mount/Minion Footprints");
-                AddIcons(70200, 71000, "DoH/DoL Logs");
+                AddIcons(66400, 66500, "Tags");
+                AddIcons(67000, 68000, "Fashion Log");
                 AddIcons(71000, 71500, "Quests");
+                AddIcons(72000, 72500, "BLU UI");
                 AddIcons(72500, 76000, "Eureka UI");
                 AddIcons(76000, 76300, "Mahjong");
-                AddIcons(78000, 80000, "Fishing Log");
+                AddIcons(80000, 80200, "Quest Log");
+                AddIcons(80730, 81000, "Relic Log");
+                AddIcons(83000, 84000, "FC Ranks");
                 EndIconList();
 
-                BeginIconList("Misc 3", iconSize);
-                AddIcons(80000, 82060, "Notebooks");
-                AddIcons(83000, 85000, "FC/Hunts");
-                AddIcons(85000, 90000, "UI 4");
+                BeginIconList("Garbage", iconSize);
+                AddIcons(61000, 61100, "Splash Logos");
+                AddIcons(62620, 62800, "World Map");
+                AddIcons(63200, 63900, "Zone Maps");
+                AddIcons(66500, 67000, "Gardening Log");
+                AddIcons(69000, 70000, "Mount/Minion Footprints");
+                AddIcons(70200, 71000, "DoH/DoL Logs");
+                AddIcons(78000, 80000, "Fishing Log");
+                AddIcons(80200, 80730, "Notebooks");
+                AddIcons(81000, 82060, "Notebooks 2");
+                AddIcons(84000, 85000, "Hunts");
+                AddIcons(85000, 90000, "UI 3");
                 AddIcons(150000, 180000, "Tutorials");
                 EndIconList();
 
