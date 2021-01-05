@@ -383,7 +383,7 @@ namespace QoLBar
                     ImGui.Button(name, new Vector2((!vertical && barConfig.AutoButtonWidth) ? 0 : (barConfig.ButtonWidth * globalSize * barConfig.Scale), 0));
                 if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
                 {
-                    if (ImGui.IsMouseReleased(0) || (barConfig.OpenCategoriesOnHover && type == Shortcut.ShortcutType.Category && (!docked || barPos == revealPos)))
+                    if (ImGui.IsMouseReleased(0) || (barConfig.OpenCategoriesOnHover && type == Shortcut.ShortcutType.Category && (!docked || barPos == revealPos) && !ImGui.IsPopupOpen("editItem")))
                         ItemClicked(sh, vertical, false);
 
                     if (!string.IsNullOrEmpty(tooltip))
