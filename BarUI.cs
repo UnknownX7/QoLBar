@@ -55,6 +55,7 @@ namespace QoLBar
         private float _tweenProgress = 1;
         private Vector2 _catpiv = new Vector2();
         private Vector2 _catpos = new Vector2();
+        private Vector2 _maincatpos = new Vector2();
 
         private readonly QoLBar plugin;
         private readonly Configuration config;
@@ -357,7 +358,6 @@ namespace QoLBar
                 var sh = barConfig.ShortcutList[i];
                 var name = sh.Name;
                 var type = sh.Type;
-                var command = sh.Command;
 
                 ImGui.PushID(i);
 
@@ -377,7 +377,7 @@ namespace QoLBar
                 if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
                 {
                     if (ImGui.IsMouseReleased(0) || (barConfig.OpenCategoriesOnHover && type == Shortcut.ShortcutType.Category))
-                        ItemClicked(type, command);
+                        ItemClicked(sh, vertical, false);
 
                     if (!string.IsNullOrEmpty(tooltip))
                         ImGui.SetTooltip(tooltip);
@@ -420,9 +420,12 @@ namespace QoLBar
             ImGui.SetWindowFontScale(barConfig.Scale);
         }
 
-        private void ItemClicked(Shortcut.ShortcutType type, string command, bool subItem = false)
+        private void ItemClicked(Shortcut sh, bool v, bool subItem)
         {
             Reveal();
+
+            var type = sh.Type;
+            var command = sh.Command;
 
             switch (type)
             {
@@ -438,7 +441,7 @@ namespace QoLBar
                     }
                     break;
                 case Shortcut.ShortcutType.Category:
-                    var align = 0; // Align to button (possible user option later)
+                    /*var align = 0; // Align to button (possible user option later)
                     var _pos = align switch
                     {
                         0 => ImGui.GetItemRectMin() + (ImGui.GetItemRectSize() / 2),
@@ -446,50 +449,51 @@ namespace QoLBar
                         2 => mousePos,
                         _ => new Vector2(0),
                     };
-                    /*var _offset = align switch
+                    var _offset = align switch
                     {
                         2 => 6.0f * globalSize,
                         //_ => (!vertical && !subItem) ? (ImGui.GetWindowHeight() / 2 - ImGui.GetStyle().FramePadding.Y) : (ImGui.GetWindowWidth() / 2 - ImGui.GetStyle().FramePadding.X),
                         _ => (!vertical && !subItem) ? (ImGui.GetWindowHeight() / 2 - ImGui.GetStyle().FramePadding.Y) : (ImGui.GetWindowWidth() / 2 - ImGui.GetStyle().FramePadding.X),
                     };*/
-                    var _x = _pos.X;
-                    var _y = _pos.Y;
-                    float _pX, _pY;
+                    var _pos = ImGui.GetItemRectMin() + (ImGui.GetItemRectSize() / 2);
+                    if (!subItem)
+                        _maincatpos = _pos; // Forces all subcategories to position based on the original category
+                    var _piv = new Vector2();
 
-                    if (!vertical && !subItem)
+                    if (!v)
                     {
-                        _pX = 0.5f;
-                        if (_y < window.Y / 2)
+                        _piv.X = 0.5f;
+                        if (_maincatpos.Y < window.Y / 2)
                         {
-                            _pY = 0.0f;
+                            _piv.Y = 0.0f;
                             //_y += _offset;
-                            _y = ImGui.GetWindowPos().Y + ImGui.GetWindowHeight() - ImGui.GetStyle().FramePadding.Y;
+                            _pos.Y = ImGui.GetWindowPos().Y + ImGui.GetWindowHeight() - ImGui.GetStyle().FramePadding.Y;
                         }
                         else
                         {
-                            _pY = 1.0f;
+                            _piv.Y = 1.0f;
                             //_y -= _offset;
-                            _y = ImGui.GetWindowPos().Y + ImGui.GetStyle().FramePadding.Y;
+                            _pos.Y = ImGui.GetWindowPos().Y + ImGui.GetStyle().FramePadding.Y;
                         }
                     }
                     else
                     {
-                        _pY = 0.5f;
-                        if (_x < window.X / 2)
+                        _piv.Y = 0.5f;
+                        if (_maincatpos.X < window.X / 2)
                         {
-                            _pX = 0.0f;
+                            _piv.X = 0.0f;
                             //_x += _offset;
-                            _x = ImGui.GetWindowPos().X + ImGui.GetWindowWidth() - ImGui.GetStyle().FramePadding.X;
+                            _pos.X = ImGui.GetWindowPos().X + ImGui.GetWindowWidth() - ImGui.GetStyle().FramePadding.X;
                         }
                         else
                         {
-                            _pX = 1.0f;
+                            _piv.X = 1.0f;
                             //_x -= _offset;
-                            _x = ImGui.GetWindowPos().X + ImGui.GetStyle().FramePadding.X;
+                            _pos.X = ImGui.GetWindowPos().X + ImGui.GetStyle().FramePadding.X;
                         }
                     }
-                    _catpiv = new Vector2(_pX, _pY);
-                    _catpos = new Vector2(_x, _y);
+                    _catpiv = _piv;
+                    _catpos = _pos;
                     ImGui.OpenPopup("ShortcutCategory");
                     break;
                 default:
@@ -512,7 +516,6 @@ namespace QoLBar
                     var _sh = sublist[j];
                     var _name = _sh.Name;
                     var _type = _sh.Type;
-                    var _command = _sh.Command;
 
                     ImGui.PushID(j);
 
@@ -531,7 +534,7 @@ namespace QoLBar
                     }
                     else if (useIcon ? DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2), _sh.IconZoom) : ImGui.Button(_name, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
                     {
-                        ItemClicked(_type, _command, true);
+                        ItemClicked(sh, sublist.Count >= (cols * (cols - 1) + 1), true);
                         if (!sh.CategoryStaysOpen && _type != Shortcut.ShortcutType.Category)
                             ImGui.CloseCurrentPopup();
                     }
