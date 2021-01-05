@@ -8,6 +8,7 @@ using System.IO;
 using System.IO.Compression;
 using System.ComponentModel;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using Dalamud.Plugin;
 using Dalamud.Game.Chat;
 using Dalamud.Data.LuminaExtensions;
@@ -79,6 +80,45 @@ namespace QoLBar
         [DefaultValue(1.0f)] public float IconZoom = 1.0f;
     }
 
+    public class QoLSerializer : ISerializationBinder
+    {
+        private readonly static Type barType = typeof(BarConfig);
+        private readonly static Type shortcutType = typeof(Shortcut);
+        private readonly static Type vectorType = typeof(Vector2);
+        private readonly static string barShortName = "b";
+        private readonly static string shortcutShortName = "s";
+        private readonly static string vectorShortName = "v";
+        private readonly static Dictionary<string, Type> types = new Dictionary<string, Type>
+        {
+            [barType.FullName] = barType,
+            [barShortName] = barType,
+            [shortcutType.FullName] = shortcutType,
+            [shortcutShortName] = shortcutType,
+            [vectorType.FullName] = vectorType,
+            [vectorShortName] = vectorType
+        };
+        private readonly static Dictionary<Type, string> typeNames = new Dictionary<Type, string>
+        {
+            [barType] = barShortName,
+            [shortcutType] = shortcutShortName,
+            [vectorType] = vectorShortName
+        };
+
+        public Type BindToType(string assemblyName, string typeName)
+        {
+            if (types.ContainsKey(typeName))
+                return types[typeName];
+            else
+                return null;
+        }
+
+        public void BindToName(Type serializedType, out string assemblyName, out string typeName)
+        {
+            assemblyName = null;
+            typeName = typeNames.ContainsKey(serializedType) ? typeNames[serializedType] : serializedType.FullName;
+        }
+    }
+
     public class QoLBar : IDalamudPlugin
     {
         public DalamudPluginInterface pluginInterface;
@@ -86,6 +126,7 @@ namespace QoLBar
         private PluginUI ui;
         private bool commandReady = true;
         private readonly Queue<string> commandQueue = new Queue<string>();
+        private readonly QoLSerializer qolSerializer = new QoLSerializer();
 
         public readonly Dictionary<int, TextureWrap> textureDictionary = new Dictionary<int, TextureWrap>();
 
@@ -149,17 +190,16 @@ namespace QoLBar
 
         public string ExportObject(object o, bool saveAllValues)
         {
-            string jstring = !saveAllValues ? JsonConvert.SerializeObject(o, Formatting.None, new JsonSerializerSettings
+            string jstring = !saveAllValues ? JsonConvert.SerializeObject(o, new JsonSerializerSettings
             {
-                TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
                 TypeNameHandling = TypeNameHandling.Objects,
                 NullValueHandling = NullValueHandling.Ignore,
-                DefaultValueHandling = DefaultValueHandling.Ignore
+                DefaultValueHandling = DefaultValueHandling.Ignore,
+                SerializationBinder = qolSerializer
             }) :
-            JsonConvert.SerializeObject(o, Formatting.Indented, new JsonSerializerSettings
+            JsonConvert.SerializeObject(o, new JsonSerializerSettings
             {
-                TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
-                TypeNameHandling = TypeNameHandling.Objects,
+                TypeNameHandling = TypeNameHandling.Objects
             });
 
             var bytes = Encoding.UTF8.GetBytes(jstring);
@@ -186,8 +226,8 @@ namespace QoLBar
             }
             return JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(buffer), new JsonSerializerSettings
             {
-                TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
-                TypeNameHandling = TypeNameHandling.Objects
+                TypeNameHandling = TypeNameHandling.Objects,
+                SerializationBinder = qolSerializer
             });
         }
 
