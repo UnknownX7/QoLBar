@@ -276,7 +276,7 @@ namespace QoLBar
                 AddIcons(67000, 68000, "Fashion Log");
                 AddIcons(71000, 71500, "Quests");
                 AddIcons(72000, 72500, "BLU UI");
-                AddIcons(72500, 76000, "Eureka UI");
+                AddIcons(72500, 76000, "Bozja UI");
                 AddIcons(76000, 76300, "Mahjong");
                 AddIcons(80000, 80200, "Quest Log");
                 AddIcons(80730, 81000, "Relic Log");
