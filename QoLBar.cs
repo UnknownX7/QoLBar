@@ -80,7 +80,7 @@ namespace QoLBar
         [DefaultValue(1.0f)] public float IconZoom = 1.0f;
     }
 
-    public class QoLSerializer : ISerializationBinder
+    public class QoLSerializer : DefaultSerializationBinder
     {
         private readonly static Type barType = typeof(BarConfig);
         private readonly static Type shortcutType = typeof(Shortcut);
@@ -104,15 +104,15 @@ namespace QoLBar
             [vectorType] = vectorShortName
         };
 
-        public Type BindToType(string assemblyName, string typeName)
+        public override Type BindToType(string assemblyName, string typeName)
         {
             if (types.ContainsKey(typeName))
                 return types[typeName];
             else
-                return null;
+                return base.BindToType(assemblyName, typeName);
         }
 
-        public void BindToName(Type serializedType, out string assemblyName, out string typeName)
+        public override void BindToName(Type serializedType, out string assemblyName, out string typeName)
         {
             assemblyName = null;
             typeName = typeNames.ContainsKey(serializedType) ? typeNames[serializedType] : serializedType.FullName;
