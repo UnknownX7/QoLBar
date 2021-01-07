@@ -37,6 +37,30 @@ namespace QoLBar
                 bars.Add(new BarUI(p, config, i));
         }
 
+        public bool ToggleBarVisibility(uint idx)
+        {
+            if (idx >= bars.Count)
+            {
+                plugin.ExecuteCommand($"/echo No QoL bar with given index {idx + 1} available.");
+                return false;
+            }
+            bars[(int)idx].ToggleVisible();
+            return true;
+        }
+
+        public void ToggleBarVisibility(string name)
+        {
+            var count = Math.Min(bars.Count, config.BarConfigs.Count);
+            bool found = false;
+            for (uint idx = 0; idx < count; ++idx)
+            {
+                if (config.BarConfigs[(int)idx].Title == name)
+                    found = ToggleBarVisibility(idx) || found;
+            }
+            if (!found)
+                plugin.ExecuteCommand($"/echo No QoL bar with given name {name} available.");
+        }
+
         public void Draw()
         {
             plugin.ReadyCommand();
