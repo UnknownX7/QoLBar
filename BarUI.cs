@@ -343,10 +343,10 @@ namespace QoLBar
                 return false;
             }
 
-            var args = name.Split(new[] { "##" }, 2, StringSplitOptions.None);
-            name = args[0];
+            var split = name.Split(new[] { "##" }, 2, StringSplitOptions.None);
+            name = split[0];
 
-            tooltip = (args.Length > 1) ? args[1] : string.Empty;
+            tooltip = (split.Length > 1) ? split[1] : string.Empty;
 
             icon = 0;
             if (name.StartsWith("::"))
@@ -417,7 +417,7 @@ namespace QoLBar
 
             ImGui.Button("+", new Vector2((!vertical && barConfig.AutoButtonWidth) ? 0 : (barConfig.ButtonWidth * globalSize * barConfig.Scale), 0));
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
-                ImGui.SetTooltip("Add a new button.\nRight click this (or the bar background) for options.\nRight click other buttons to edit them.");
+                ImGui.SetTooltip("Add a new shortcut.\nRight click this (or the bar background) for options.\nRight click other shortcuts to edit them.");
 
             ImGui.OpenPopupOnItemClick("addItem", 0);
             ImGui.OpenPopupOnItemClick($"BarConfig##{barNumber}", 1);
@@ -574,7 +574,7 @@ namespace QoLBar
                         ImGui.OpenPopup("addItem");
                     ImGui.PopStyleColor();
                     if (ImGui.IsItemHovered())
-                        ImGui.SetTooltip("Add a new button.");
+                        ImGui.SetTooltip("Add a new shortcut.");
                 }
 
                 ImGui.SetWindowFontScale(1);
@@ -593,6 +593,13 @@ namespace QoLBar
 
             if (sh.Type != Shortcut.ShortcutType.Spacer)
             {
+                if (plugin.ui.iconBrowserOpen && plugin.ui.pasteIcon >= 0)
+                {
+                    var split = sh.Name.Split(new[] { "##" }, 2, StringSplitOptions.None);
+                    sh.Name = $"::{plugin.ui.pasteIcon}" + (split.Length > 1 ? $"##{split[1]}" : "");
+                    config.Save();
+                    plugin.ui.pasteIcon = -1;
+                }
                 if (ImGui.InputText("Name          ", ref sh.Name, 256) && editing) // Not a bug... just ImGui not extending the window to fit multiline's name...
                     config.Save();
                 if (ImGui.IsItemHovered())
@@ -689,7 +696,7 @@ namespace QoLBar
                     if (ImGui.Checkbox("Stay Open on Selection", ref sh.CategoryStaysOpen))
                         config.Save();
                     if (ImGui.IsItemHovered())
-                        ImGui.SetTooltip("Keeps the category open when selecting buttons within it.\nMay not work if the button interacts with other plugins.");
+                        ImGui.SetTooltip("Keeps the category open when pressing shortcuts within it.\nMay not work if the shortcut interacts with other plugins.");
 
                     if (ImGui.SliderInt("Category Width", ref sh.CategoryWidth, 8, 200))
                         config.Save();
@@ -697,7 +704,7 @@ namespace QoLBar
                     if (ImGui.SliderInt("Columns", ref sh.CategoryColumns, 1, 12))
                         config.Save();
                     if (ImGui.IsItemHovered())
-                        ImGui.SetTooltip("Number of buttons in each row before starting another.");
+                        ImGui.SetTooltip("Number of shortcuts in each row before starting another.");
                 }
 
                 if ((sh.Type != Shortcut.ShortcutType.Spacer) && ImGui.DragFloat("Icon Zoom", ref sh.IconZoom, 0.01f, 1.0f, 5.0f, "%.2f"))
@@ -752,7 +759,8 @@ namespace QoLBar
                 if (ImGui.IsItemHovered())
                     ImGui.SetTooltip("Opens up a list of all icons you can use instead of text.\n" +
                         "Warning: This will load EVERY icon available so it will probably lag for a moment.\n" +
-                        "Clicking on one will copy text to be pasted into the \"Name\" field of a button.");
+                        "Clicking on one will copy text to be pasted into the \"Name\" field of a shortcut.\n" +
+                        "Additionally, while the browser is open it will autofill the \"Name\" of shortcuts.");
 
                 ClampWindowPos();
 

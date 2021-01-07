@@ -123,7 +123,7 @@ namespace QoLBar
     {
         public DalamudPluginInterface pluginInterface;
         private Configuration config;
-        private PluginUI ui;
+        public PluginUI ui;
         private bool commandReady = true;
         private readonly Queue<string> commandQueue = new Queue<string>();
         private readonly QoLSerializer qolSerializer = new QoLSerializer();

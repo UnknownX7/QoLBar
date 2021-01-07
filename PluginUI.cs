@@ -23,7 +23,8 @@ namespace QoLBar
 #endif
         public void ToggleConfig() => configOpen = !configOpen;
 
-        bool iconBrowserOpen = false;
+        public bool iconBrowserOpen = false;
+        public int pasteIcon = -1;
         public void ToggleIconBrowser() => iconBrowserOpen = !iconBrowserOpen;
 
         public PluginUI(QoLBar p, Configuration config)
@@ -47,6 +48,8 @@ namespace QoLBar
 
             if (iconBrowserOpen)
                 DrawIconBrowser();
+            else
+                pasteIcon = -1;
 
             foreach (BarUI bar in bars)
                 bar.Draw();
@@ -202,7 +205,7 @@ namespace QoLBar
             var iconSize = 48 * ImGui.GetIO().FontGlobalScale;
             ImGui.SetNextWindowSizeConstraints(new Vector2((iconSize + ImGui.GetStyle().FramePadding.X * 2) * 11 + ImGui.GetStyle().FramePadding.X * 2 + 16), ImGui.GetIO().DisplaySize); // whyyyyyyyyyyyyyyyyyyyy
             ImGui.Begin("Icon Browser", ref iconBrowserOpen);
-            if (ImGui.BeginTabBar("Icon Tabs", ImGuiTabBarFlags.NoTooltip)) // TODO: Actually categorize icons
+            if (ImGui.BeginTabBar("Icon Tabs", ImGuiTabBarFlags.NoTooltip))
             {
                 BeginIconList(" ★ ", iconSize);
                 AddIcons(0, 100, "System");
@@ -370,7 +373,10 @@ namespace QoLBar
                     if (bars[0].DrawIconButton(icon, new Vector2(_iconSize), 1.0f, true))
                     {
                         if (ImGui.IsItemClicked())
+                        {
+                            pasteIcon = icon;
                             ImGui.SetClipboardText($"::{icon}");
+                        }
                         if (ImGui.IsItemHovered())
                             ImGui.SetTooltip($"{icon}");
                         if (_i % _columns != _columns - 1)
