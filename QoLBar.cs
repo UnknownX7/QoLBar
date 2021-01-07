@@ -135,6 +135,7 @@ namespace QoLBar
         private const string toggleCommandName = "/qoltoggle";
 
         public DalamudPluginInterface pluginInterface;
+        private PluginCommandManager<QoLBar> commandManager;
         private Configuration config;
         public PluginUI ui;
         private bool commandReady = true;
@@ -156,6 +157,8 @@ namespace QoLBar
             pluginInterface.UiBuilder.OnOpenConfigUi += ToggleConfig;
             pluginInterface.UiBuilder.OnBuildUi += ui.Draw;
             pluginInterface.ClientState.OnLogin += InitCommands;
+
+            commandManager = new PluginCommandManager<QoLBar>(this, pluginInterface);
 
             pluginInterface.CommandManager.AddHandler(toggleCommandName, new Dalamud.Game.Command.CommandInfo(OnQoLToggle)
             {
@@ -286,6 +289,18 @@ namespace QoLBar
             return ImportObject<Shortcut>(import);
         }
 
+        /*[Command("/example1")]
+        [HelpMessage("Example help message.")]
+        public void ExampleCommand1(string command, string args)
+        {
+            // You may want to assign these references to private variables for convenience.
+            // Keep in mind that the local player does not exist until after logging in.
+            var chat = this.pluginInterface.Framework.Gui.Chat;
+            var world = this.pluginInterface.ClientState.LocalPlayer.CurrentWorld.GameData;
+            chat.Print($"Hello {world.Name}!");
+            PluginLog.Log("Message sent successfully.");
+        }*/
+
         // I'm too dumb to do any of this so its (almost) all taken from here https://git.sr.ht/~jkcclemens/CCMM/tree/master/Custom%20Commands%20and%20Macro%20Macros/GameFunctions.cs
         #region Chat Injection
         private delegate IntPtr GetUIModuleDelegate(IntPtr basePtr);
@@ -376,6 +391,7 @@ namespace QoLBar
         {
             if (!disposing) return;
 
+            commandManager.Dispose();
             pluginInterface.CommandManager.RemoveHandler(toggleCommandName);
             pluginInterface.SavePluginConfig(config);
 
