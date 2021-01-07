@@ -78,6 +78,7 @@ namespace QoLBar
         [DefaultValue(false)] public bool CategoryStaysOpen = false;
         [DefaultValue(1)] public int CategoryColumns = 1;
         [DefaultValue(1.0f)] public float IconZoom = 1.0f;
+        public Vector4 IconTint = new Vector4(1);
     }
 
     public class QoLSerializer : DefaultSerializationBinder
