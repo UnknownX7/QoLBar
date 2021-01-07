@@ -164,33 +164,45 @@ namespace QoLBar
             ImGui.Spacing();
             ImGui.SameLine(textx);
             if (ImGui.Button("+", textsize))
-            {
-                config.BarConfigs.Add(new BarConfig());
-                bars.Add(new BarUI(plugin, config, bars.Count));
-                config.Save();
-            }
+                AddBar(new BarConfig());
             ImGui.NextColumn();
             ImGui.NextColumn();
             if (ImGui.Button("Import", textsize))
             {
                 try
                 {
-                    config.BarConfigs.Add(plugin.ImportBar(ImGui.GetClipboardText()));
-                    bars.Add(new BarUI(plugin, config, bars.Count));
-                    config.Save();
+                    AddBar(plugin.ImportBar(ImGui.GetClipboardText()));
                 }
-                catch (Exception e)
+                catch // Try as a shortcut instead
                 {
-                    PluginLog.LogError("Invalid bar import string!");
-                    PluginLog.LogError($"{e.GetType()}\n{e.Message}");
+                    try
+                    {
+                        var sh = plugin.ImportShortcut(ImGui.GetClipboardText());
+                        var bar = new BarConfig();
+                        bar.ShortcutList.Add(sh);
+                        AddBar(bar);
+                    }
+                    catch (Exception e)
+                    {
+                        PluginLog.LogError("Invalid import string!");
+                        PluginLog.LogError($"{e.GetType()}\n{e.Message}");
+                    }
                 }
             }
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("Import bar from clipboard");
+                ImGui.SetTooltip("Import a bar from the clipboard,\n" +
+                    "or import a single shortcut as a new bar.");
 
             ImGui.Columns(1); // I just wanna know who did this and where they live
 
             ImGui.End();
+        }
+
+        private void AddBar(BarConfig bar)
+        {
+            config.BarConfigs.Add(bar);
+            bars.Add(new BarUI(plugin, config, bars.Count));
+            config.Save();
         }
 
         private void RefreshBarIndexes()

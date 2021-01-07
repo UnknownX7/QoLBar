@@ -665,14 +665,26 @@ namespace QoLBar
                         config.Save();
                         ImGui.CloseCurrentPopup();
                     }
-                    catch (Exception e)
+                    catch
                     {
-                        PluginLog.LogError("Invalid shortcut import string!");
-                        PluginLog.LogError($"{e.GetType()}\n{e.Message}");
+                        try
+                        {
+                            var bar = plugin.ImportBar(ImGui.GetClipboardText());
+                            foreach (var sh in bar.ShortcutList)
+                                shortcuts.Add(sh);
+                            config.Save();
+                            ImGui.CloseCurrentPopup();
+                        }
+                        catch (Exception e)
+                        {
+                            PluginLog.LogError("Invalid import string!");
+                            PluginLog.LogError($"{e.GetType()}\n{e.Message}");
+                        }
                     }
                 }
                 if (ImGui.IsItemHovered())
-                    ImGui.SetTooltip("Import shortcut from clipboard");
+                    ImGui.SetTooltip("Import a shortcut from the clipboard,\n" +
+                        "or import all of another bar's shortcuts.");
 
                 ClampWindowPos();
 
