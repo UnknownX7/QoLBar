@@ -161,20 +161,13 @@ namespace QoLBar
         }
 
         [Command("/qoltoggle")]
-        [HelpMessage("Toggle the Hidden status of a QoL bar.")]
+        [HelpMessage("Hide or reveal a bar using its name or index.")]
         private void OnQoLToggle(string command, string argument)
         {
-            var args = argument.Split(' ');
-            if (args.Length < 1 || args[0].Length < 1)
-            {
-                pluginInterface.Framework.Gui.Chat.PrintError($"ID or name of QoL bar missing.");
-                return;
-            }
-
-            if (Int32.TryParse(args[0], out int id))
-                ui.ToggleBarVisibility((uint)(id - 1));
+            if (int.TryParse(argument, out int id))
+                ui.ToggleBarVisible(id - 1);
             else
-                ui.ToggleBarVisibility(args[0]);
+                ui.ToggleBarVisible(argument);
         }
 
         public void ToggleConfig(object sender = null, EventArgs e = null) => ui.ToggleConfig();
