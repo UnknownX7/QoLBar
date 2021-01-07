@@ -160,6 +160,16 @@ namespace QoLBar
             commandManager = new PluginCommandManager<QoLBar>(this, pluginInterface);
         }
 
+        public void ToggleConfig(object sender, EventArgs e) => ui.ToggleConfig();
+
+        [Command("/qolbar")]
+        [HelpMessage("Open the configuration menu.")]
+        public void ToggleConfig(string command = null, string argument = null) => ui.ToggleConfig();
+
+        [Command("/qolicons")]
+        [HelpMessage("Open the icon browser.")]
+        public void ToggleIconBrowser(string command = null, string argument = null) => ui.ToggleIconBrowser();
+
         [Command("/qoltoggle")]
         [HelpMessage("Hide or reveal a bar using its name or index.")]
         private void OnQoLToggle(string command, string argument)
@@ -169,10 +179,6 @@ namespace QoLBar
             else
                 ui.ToggleBarVisible(argument);
         }
-
-        public void ToggleConfig(object sender = null, EventArgs e = null) => ui.ToggleConfig();
-
-        public void ToggleIconBrowser() => ui.ToggleIconBrowser();
 
         public void LoadIcon(int icon)
         {
