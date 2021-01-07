@@ -173,7 +173,7 @@ namespace QoLBar
                 {
                     AddBar(plugin.ImportBar(ImGui.GetClipboardText()));
                 }
-                catch // Try as a shortcut instead
+                catch (Exception e) // Try as a shortcut instead
                 {
                     try
                     {
@@ -182,10 +182,11 @@ namespace QoLBar
                         bar.ShortcutList.Add(sh);
                         AddBar(bar);
                     }
-                    catch (Exception e)
+                    catch (Exception e2)
                     {
                         PluginLog.LogError("Invalid import string!");
                         PluginLog.LogError($"{e.GetType()}\n{e.Message}");
+                        PluginLog.LogError($"{e2.GetType()}\n{e2.Message}");
                     }
                 }
             }

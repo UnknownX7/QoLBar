@@ -665,7 +665,7 @@ namespace QoLBar
                         config.Save();
                         ImGui.CloseCurrentPopup();
                     }
-                    catch
+                    catch (Exception e) // Try as a bar instead
                     {
                         try
                         {
@@ -675,10 +675,11 @@ namespace QoLBar
                             config.Save();
                             ImGui.CloseCurrentPopup();
                         }
-                        catch (Exception e)
+                        catch (Exception e2)
                         {
                             PluginLog.LogError("Invalid import string!");
                             PluginLog.LogError($"{e.GetType()}\n{e.Message}");
+                            PluginLog.LogError($"{e2.GetType()}\n{e2.Message}");
                         }
                     }
                 }

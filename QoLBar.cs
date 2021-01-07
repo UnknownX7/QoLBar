@@ -85,24 +85,29 @@ namespace QoLBar
     {
         private readonly static Type barType = typeof(BarConfig);
         private readonly static Type shortcutType = typeof(Shortcut);
-        private readonly static Type vectorType = typeof(Vector2);
+        private readonly static Type vector2Type = typeof(Vector2);
+        private readonly static Type vector4Type = typeof(Vector4);
         private readonly static string barShortName = "b";
         private readonly static string shortcutShortName = "s";
-        private readonly static string vectorShortName = "v";
+        private readonly static string vector2ShortName = "2";
+        private readonly static string vector4ShortName = "4";
         private readonly static Dictionary<string, Type> types = new Dictionary<string, Type>
         {
             [barType.FullName] = barType,
             [barShortName] = barType,
             [shortcutType.FullName] = shortcutType,
             [shortcutShortName] = shortcutType,
-            [vectorType.FullName] = vectorType,
-            [vectorShortName] = vectorType
+            [vector2Type.FullName] = vector2Type,
+            [vector2ShortName] = vector2Type,
+            [vector4Type.FullName] = vector4Type,
+            [vector4ShortName] = vector4Type
         };
         private readonly static Dictionary<Type, string> typeNames = new Dictionary<Type, string>
         {
             [barType] = barShortName,
             [shortcutType] = shortcutShortName,
-            [vectorType] = vectorShortName
+            [vector2Type] = vector2ShortName,
+            [vector4Type] = vector4ShortName
         };
 
         public override Type BindToType(string assemblyName, string typeName)
@@ -115,8 +120,13 @@ namespace QoLBar
 
         public override void BindToName(Type serializedType, out string assemblyName, out string typeName)
         {
-            assemblyName = null;
-            typeName = typeNames.ContainsKey(serializedType) ? typeNames[serializedType] : serializedType.FullName;
+            if (typeNames.ContainsKey(serializedType))
+            {
+                assemblyName = null;
+                typeName = typeNames[serializedType];
+            }
+            else
+                base.BindToName(serializedType, out assemblyName, out typeName);
         }
     }
 
