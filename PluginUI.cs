@@ -57,8 +57,7 @@ namespace QoLBar
 
         private void DrawPluginConfigWindow()
         {
-            ImGui.SetNextWindowSize(new Vector2(600, 500), ImGuiCond.FirstUseEver);
-
+            ImGui.SetNextWindowSizeConstraints(new Vector2(588, 500), ImGui.GetIO().DisplaySize);
             ImGui.Begin("QoL Bar Configuration", ref configOpen);
 
             ImGui.SameLine(30);
