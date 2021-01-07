@@ -132,6 +132,8 @@ namespace QoLBar
 
     public class QoLBar : IDalamudPlugin
     {
+        private const string toggleCommandName = "/qoltoggle";
+
         public DalamudPluginInterface pluginInterface;
         private Configuration config;
         public PluginUI ui;
@@ -154,6 +156,26 @@ namespace QoLBar
             pluginInterface.UiBuilder.OnOpenConfigUi += ToggleConfig;
             pluginInterface.UiBuilder.OnBuildUi += ui.Draw;
             pluginInterface.ClientState.OnLogin += InitCommands;
+
+            pluginInterface.CommandManager.AddHandler(toggleCommandName, new Dalamud.Game.Command.CommandInfo(OnQoLToggle)
+            {
+                HelpMessage = "Toggle the Hidden status of a QoL bar."
+            });
+        }
+
+        private void OnQoLToggle(string command, string argument)
+        {
+            var args = argument.Split(' ');
+            if (args.Length < 1 || args[0].Length < 1)
+            {
+                pluginInterface.Framework.Gui.Chat.PrintError($"ID or name of QoL bar missing.");
+                return;
+            }
+
+            if (Int32.TryParse(args[0], out int id))
+                ui.ToggleBarVisibility((uint)(id - 1));
+            else
+                ui.ToggleBarVisibility(args[0]);
         }
 
         public void ToggleConfig(object sender = null, EventArgs e = null) => ui.ToggleConfig();
@@ -354,6 +376,7 @@ namespace QoLBar
         {
             if (!disposing) return;
 
+            pluginInterface.CommandManager.RemoveHandler(toggleCommandName);
             pluginInterface.SavePluginConfig(config);
 
             pluginInterface.UiBuilder.OnOpenConfigUi -= ToggleConfig;
