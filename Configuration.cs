@@ -12,6 +12,7 @@ namespace QoLBar
         public int Version { get; set; } = 0;
 
         public List<BarConfig> BarConfigs = new List<BarConfig>();
+        public bool ExportOnDelete = true;
 
         [JsonIgnore] private DalamudPluginInterface pluginInterface;
 

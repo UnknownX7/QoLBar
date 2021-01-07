@@ -60,6 +60,13 @@ namespace QoLBar
             ImGui.SetNextWindowSizeConstraints(new Vector2(588, 500), ImGui.GetIO().DisplaySize);
             ImGui.Begin("QoL Bar Configuration", ref configOpen);
 
+            if (ImGui.Checkbox("Export on Delete", ref config.ExportOnDelete))
+                config.Save();
+
+            ImGui.Spacing();
+            ImGui.Spacing();
+            ImGui.Spacing();
+            ImGui.Spacing();
             ImGui.SameLine(30);
             ImGui.Text("Bar Manager");
             ImGui.Spacing();
@@ -139,14 +146,18 @@ namespace QoLBar
                 if (i > 0)
                 {
                     ImGui.SameLine();
-                    if (ImGui.Button("Delete"))
+                    if (ImGui.Button(config.ExportOnDelete ? "Cut" : "Delete"))
                         plugin.ExecuteCommand("/echo <se> Right click to delete!");
                     if (ImGui.IsItemHovered())
                     {
-                        ImGui.SetTooltip($"Right click this button to delete bar #{i + 1}!");
+                        ImGui.SetTooltip($"Right click this button to delete bar #{i + 1}!" +
+                            (config.ExportOnDelete ? "\nThe bar will be exported to clipboard first." : ""));
 
                         if (ImGui.IsMouseReleased(1))
                         {
+                            if (config.ExportOnDelete)
+                                ImGui.SetClipboardText(plugin.ExportBar(config.BarConfigs[i], false));
+
                             bars.RemoveAt(i);
                             config.BarConfigs.RemoveAt(i);
                             config.Save();

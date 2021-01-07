@@ -760,15 +760,19 @@ namespace QoLBar
                         ImGui.SetClipboardText(plugin.ExportShortcut(sh, true));
                 }
                 ImGui.SameLine();
-                if (ImGui.Button("Delete"))
+                if (ImGui.Button(config.ExportOnDelete ? "Cut" : "Delete"))
                     plugin.ExecuteCommand("/echo <se> Right click to delete!");
                 //if (ImGui.IsItemClicked(1)) // Jesus christ I hate ImGui who made this function activate on PRESS AND NOT RELEASE??? THIS ISN'T A CLICK
                 if (ImGui.IsItemHovered())
                 {
-                    ImGui.SetTooltip("Right click this button to delete the shortcut!");
+                    ImGui.SetTooltip("Right click this button to delete the shortcut!" +
+                        (config.ExportOnDelete ? "\nThe shortcut will be exported to clipboard first." : ""));
 
                     if (ImGui.IsMouseReleased(1))
                     {
+                        if (config.ExportOnDelete)
+                            ImGui.SetClipboardText(plugin.ExportShortcut(sh, false));
+
                         shortcuts.RemoveAt(i);
                         config.Save();
                         ImGui.CloseCurrentPopup();
