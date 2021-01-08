@@ -29,8 +29,8 @@ namespace QoLBar
         }
         private float _lastLocalPlayer = 9999;
 
-        private Shortcut _sh;
-        private static Vector2 window = ImGui.GetIO().DisplaySize;
+        private static Shortcut _sh;
+        private Vector2 window = ImGui.GetIO().DisplaySize;
         private static Vector2 mousePos = ImGui.GetIO().MousePos;
         private static float globalSize = ImGui.GetIO().FontGlobalScale;
         private Vector2 barSize = new Vector2(200, 38);
