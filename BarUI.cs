@@ -202,6 +202,27 @@ namespace QoLBar
 
         public void Draw()
         {
+            var io = ImGui.GetIO();
+            // Fix bar positions when the game is resized
+            if (io.DisplaySize != window)
+            {
+                if (docked)
+                {
+                    window = io.DisplaySize;
+                    SetupPosition();
+                }
+                else if (config.ResizeRepositionsBars)
+                {
+                    var x = io.DisplaySize / window;
+                    barConfig.Position *= x;
+                    config.Save();
+                    _setPos = true;
+                    window = io.DisplaySize;
+                }
+                else
+                    window = io.DisplaySize;
+            }
+
             if (!IsVisible)
             {
                 _lastLocalPlayer += ImGui.GetIO().DeltaTime;
@@ -210,8 +231,6 @@ namespace QoLBar
             else
                 _lastLocalPlayer = 0;
 
-            var io = ImGui.GetIO();
-            window = io.DisplaySize;
             mousePos = io.MousePos;
             globalSize = io.FontGlobalScale;
 

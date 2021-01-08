@@ -62,6 +62,11 @@ namespace QoLBar
 
             if (ImGui.Checkbox("Export on Delete", ref config.ExportOnDelete))
                 config.Save();
+            ImGui.SameLine(ImGui.GetWindowWidth() / 2);
+            if (ImGui.Checkbox("Resizing Repositions Bars", ref config.ResizeRepositionsBars))
+                config.Save();
+            if (ImGui.IsItemHovered())
+                ImGui.SetTooltip("Undocked bars will automatically readjust if you change resolutions.");
 
             ImGui.Spacing();
             ImGui.Spacing();
