@@ -177,10 +177,6 @@ namespace QoLBar
                 case BarDock.Right:
                     revealPos.X = Math.Min(hidePos.X - barSize.X + (barConfig.Offset.X * globalSize), hidePos.X - 1);
                     break;
-                case BarDock.UndockedH:
-                    break;
-                case BarDock.UndockedV:
-                    break;
                 default:
                     break;
             }
@@ -202,26 +198,7 @@ namespace QoLBar
 
         public void Draw()
         {
-            var io = ImGui.GetIO();
-            // Fix bar positions when the game is resized
-            if (io.DisplaySize != window)
-            {
-                if (docked)
-                {
-                    window = io.DisplaySize;
-                    SetupPosition();
-                }
-                else if (config.ResizeRepositionsBars)
-                {
-                    var x = io.DisplaySize / window;
-                    barConfig.Position *= x;
-                    config.Save();
-                    _setPos = true;
-                    window = io.DisplaySize;
-                }
-                else
-                    window = io.DisplaySize;
-            }
+            CheckGameResolution();
 
             if (!IsVisible)
             {
@@ -231,6 +208,7 @@ namespace QoLBar
             else
                 _lastLocalPlayer = 0;
 
+            var io = ImGui.GetIO();
             mousePos = io.MousePos;
             globalSize = io.FontGlobalScale;
 
@@ -238,7 +216,7 @@ namespace QoLBar
             {
                 SetupRevealPosition();
 
-                CheckMouse();
+                CheckMousePosition();
             }
             else
                 Reveal();
@@ -313,7 +291,31 @@ namespace QoLBar
             _firstframe = false;
         }
 
-        private void CheckMouse()
+        private void CheckGameResolution()
+        {
+            var io = ImGui.GetIO();
+            // Fix bar positions when the game is resized
+            if (io.DisplaySize != window)
+            {
+                if (docked)
+                {
+                    window = io.DisplaySize;
+                    SetupPosition();
+                }
+                else if (config.ResizeRepositionsBars)
+                {
+                    var x = io.DisplaySize / window;
+                    barConfig.Position *= x;
+                    config.Save();
+                    _setPos = true;
+                    window = io.DisplaySize;
+                }
+                else
+                    window = io.DisplaySize;
+            }
+        }
+
+        private void CheckMousePosition()
         {
             if (docked && _reveal)
                 return;
@@ -381,52 +383,75 @@ namespace QoLBar
         {
             for (int i = 0; i < barConfig.ShortcutList.Count; i++)
             {
-                var sh = barConfig.ShortcutList[i];
-                var name = sh.Name;
-                var type = sh.Type;
-
                 ImGui.PushID(i);
 
-                var useIcon = ParseName(ref name, out string tooltip, out int icon);
-
-                if (type == Shortcut.ShortcutType.Spacer)
-                {
-                    ImGui.BeginChild((uint)i, new Vector2(barConfig.ButtonWidth * globalSize * barConfig.Scale, ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2));
-                    //ImGui.SameLine(ImGui.GetContentRegionAvail().X / 2 - ImGui.CalcTextSize(name).X / 2);
-                    //ImGui.Text(name);
-                    ImGui.EndChild();
-                }
-                else if (useIcon)
-                    DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2), sh.IconZoom, sh.IconTint);
-                else
-                    ImGui.Button(name, new Vector2((!vertical && barConfig.AutoButtonWidth) ? 0 : (barConfig.ButtonWidth * globalSize * barConfig.Scale), 0));
-                if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
-                {
-                    if (ImGui.IsMouseReleased(0) || (barConfig.OpenCategoriesOnHover && type == Shortcut.ShortcutType.Category && (!docked || barPos == revealPos) && !ImGui.IsPopupOpen("editItem")))
-                        ItemClicked(sh, vertical, false);
-
-                    if (!string.IsNullOrEmpty(tooltip))
-                        ImGui.SetTooltip(tooltip);
-                }
-
-                if (type == Shortcut.ShortcutType.Category)
-                {
-                    ImGui.SetWindowFontScale(barConfig.CategoryScale);
-                    CategoryPopup(sh);
-                    ImGui.SetWindowFontScale(barConfig.Scale);
-                }
-
-                ImGui.OpenPopupOnItemClick("editItem", 1);
-
-                ImGui.SetWindowFontScale(1);
-                ItemConfigPopup(barConfig.ShortcutList, i, useIcon);
-                ImGui.SetWindowFontScale(barConfig.Scale);
+                if (DrawShortcut(i, barConfig.ShortcutList, barConfig.ButtonWidth * globalSize * barConfig.Scale))
+                    ItemClicked(barConfig.ShortcutList[i], vertical, false);
 
                 if (!vertical && i != barConfig.ShortcutList.Count - 1)
                     ImGui.SameLine();
 
                 ImGui.PopID();
             }
+        }
+
+        private bool DrawShortcut(int i, List<Shortcut> shortcuts, float width)
+        {
+            var inCategory = (shortcuts != barConfig.ShortcutList);
+            var sh = shortcuts[i];
+            var name = sh.Name;
+            var type = sh.Type;
+
+            var useIcon = ParseName(ref name, out string tooltip, out int icon);
+
+            if (inCategory)
+            {
+                if (useIcon || !barConfig.NoCategoryBackgrounds)
+                    ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0));
+                else
+                    ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.08f, 0.08f, 0.08f, 0.94f));
+            }
+
+            var clicked = false;
+            if (type == Shortcut.ShortcutType.Spacer)
+            {
+                ImGui.BeginChild((uint)i, new Vector2(width, ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2));
+                //ImGui.SameLine(ImGui.GetContentRegionAvail().X / 2 - ImGui.CalcTextSize(name).X / 2); // TODO: Fix this being smaller than normal buttons for whatever reason
+                //ImGui.Text(name);
+                ImGui.EndChild();
+            }
+            else if (useIcon)
+                clicked = DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2), sh.IconZoom, sh.IconTint);
+            else
+                clicked = ImGui.Button(name, new Vector2((!inCategory && !vertical && barConfig.AutoButtonWidth) ? 0 : width, 0));
+
+            if (inCategory)
+                ImGui.PopStyleColor();
+
+            ImGui.OpenPopupOnItemClick("editItem", 1);
+
+            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
+            {
+                if (!inCategory && (ImGui.IsMouseReleased(0) || (barConfig.OpenCategoriesOnHover && type == Shortcut.ShortcutType.Category && (!docked || barPos == revealPos) && !ImGui.IsPopupOpen("editItem"))))
+                    clicked = true;
+
+                if (!string.IsNullOrEmpty(tooltip))
+                    ImGui.SetTooltip(tooltip);
+            }
+
+            if (type == Shortcut.ShortcutType.Category)
+            {
+                ImGui.SetWindowFontScale(barConfig.CategoryScale);
+                CategoryPopup(sh);
+                if (!inCategory)
+                    ImGui.SetWindowFontScale(barConfig.Scale);
+            }
+
+            ImGui.SetWindowFontScale(1);
+            ItemConfigPopup(shortcuts, i, useIcon);
+            ImGui.SetWindowFontScale(!inCategory ? barConfig.Scale : barConfig.CategoryScale);
+
+            return clicked;
         }
 
         private void DrawAddButton()
@@ -467,64 +492,69 @@ namespace QoLBar
                     }
                     break;
                 case Shortcut.ShortcutType.Category:
-                    /*var align = 0; // Align to button (possible user option later)
-                    var _pos = align switch
-                    {
-                        0 => ImGui.GetItemRectMin() + (ImGui.GetItemRectSize() / 2),
-                        1 => ImGui.GetWindowPos() + (ImGui.GetWindowSize() / 2),
-                        2 => mousePos,
-                        _ => new Vector2(0),
-                    };
-                    var _offset = align switch
-                    {
-                        2 => 6.0f * globalSize,
-                        //_ => (!vertical && !subItem) ? (ImGui.GetWindowHeight() / 2 - ImGui.GetStyle().FramePadding.Y) : (ImGui.GetWindowWidth() / 2 - ImGui.GetStyle().FramePadding.X),
-                        _ => (!vertical && !subItem) ? (ImGui.GetWindowHeight() / 2 - ImGui.GetStyle().FramePadding.Y) : (ImGui.GetWindowWidth() / 2 - ImGui.GetStyle().FramePadding.X),
-                    };*/
-                    var _pos = ImGui.GetItemRectMin() + (ImGui.GetItemRectSize() / 2);
-                    if (!subItem)
-                        _maincatpos = _pos; // Forces all subcategories to position based on the original category
-                    var _piv = new Vector2();
-
-                    if (!v)
-                    {
-                        _piv.X = 0.5f;
-                        if (_maincatpos.Y < window.Y / 2)
-                        {
-                            _piv.Y = 0.0f;
-                            //_y += _offset;
-                            _pos.Y = ImGui.GetWindowPos().Y + ImGui.GetWindowHeight() - ImGui.GetStyle().FramePadding.Y;
-                        }
-                        else
-                        {
-                            _piv.Y = 1.0f;
-                            //_y -= _offset;
-                            _pos.Y = ImGui.GetWindowPos().Y + ImGui.GetStyle().FramePadding.Y;
-                        }
-                    }
-                    else
-                    {
-                        _piv.Y = 0.5f;
-                        if (_maincatpos.X < window.X / 2)
-                        {
-                            _piv.X = 0.0f;
-                            //_x += _offset;
-                            _pos.X = ImGui.GetWindowPos().X + ImGui.GetWindowWidth() - ImGui.GetStyle().FramePadding.X;
-                        }
-                        else
-                        {
-                            _piv.X = 1.0f;
-                            //_x -= _offset;
-                            _pos.X = ImGui.GetWindowPos().X + ImGui.GetStyle().FramePadding.X;
-                        }
-                    }
-                    _catpiv = _piv;
-                    _catpos = _pos;
+                    SetupCategoryPosition(v, subItem);
                     ImGui.OpenPopup("ShortcutCategory");
                     break;
                 default:
                     break;
             }
+        }
+
+        private void SetupCategoryPosition(bool v, bool subItem)
+        {
+            /*var align = 0; // Align to button (possible user option later)
+            var _pos = align switch
+            {
+                0 => ImGui.GetItemRectMin() + (ImGui.GetItemRectSize() / 2),
+                1 => ImGui.GetWindowPos() + (ImGui.GetWindowSize() / 2),
+                2 => mousePos,
+                _ => new Vector2(0),
+            };
+            var _offset = align switch
+            {
+                2 => 6.0f * globalSize,
+                //_ => (!vertical && !subItem) ? (ImGui.GetWindowHeight() / 2 - ImGui.GetStyle().FramePadding.Y) : (ImGui.GetWindowWidth() / 2 - ImGui.GetStyle().FramePadding.X),
+                _ => (!vertical && !subItem) ? (ImGui.GetWindowHeight() / 2 - ImGui.GetStyle().FramePadding.Y) : (ImGui.GetWindowWidth() / 2 - ImGui.GetStyle().FramePadding.X),
+            };*/
+            var _pos = ImGui.GetItemRectMin() + (ImGui.GetItemRectSize() / 2);
+            if (!subItem)
+                _maincatpos = _pos; // Forces all subcategories to position based on the original category
+            var _piv = new Vector2();
+
+            if (!v)
+            {
+                _piv.X = 0.5f;
+                if (_maincatpos.Y < window.Y / 2)
+                {
+                    _piv.Y = 0.0f;
+                    //_y += _offset;
+                    _pos.Y = ImGui.GetWindowPos().Y + ImGui.GetWindowHeight() - ImGui.GetStyle().FramePadding.Y;
+                }
+                else
+                {
+                    _piv.Y = 1.0f;
+                    //_y -= _offset;
+                    _pos.Y = ImGui.GetWindowPos().Y + ImGui.GetStyle().FramePadding.Y;
+                }
+            }
+            else
+            {
+                _piv.Y = 0.5f;
+                if (_maincatpos.X < window.X / 2)
+                {
+                    _piv.X = 0.0f;
+                    //_x += _offset;
+                    _pos.X = ImGui.GetWindowPos().X + ImGui.GetWindowWidth() - ImGui.GetStyle().FramePadding.X;
+                }
+                else
+                {
+                    _piv.X = 1.0f;
+                    //_x -= _offset;
+                    _pos.X = ImGui.GetWindowPos().X + ImGui.GetStyle().FramePadding.X;
+                }
+            }
+            _catpiv = _piv;
+            _catpos = _pos;
         }
 
         private void CategoryPopup(Shortcut sh)
@@ -536,49 +566,23 @@ namespace QoLBar
 
                 var sublist = sh.SubList;
                 var cols = Math.Max(sh.CategoryColumns, 1);
+                var width = sh.CategoryWidth * globalSize * barConfig.CategoryScale;
 
                 for (int j = 0; j < sublist.Count; j++)
                 {
-                    var _sh = sublist[j];
-                    var _name = _sh.Name;
-                    var _type = _sh.Type;
-
                     ImGui.PushID(j);
 
-                    bool useIcon = ParseName(ref _name, out string tooltip, out int icon);
+                    if (DrawShortcut(j, sublist, width))
+                    {
+                        var _sh = sublist[j];
 
-                    if (useIcon || !barConfig.NoCategoryBackgrounds)
-                        ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0));
-                    else
-                        ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.08f, 0.08f, 0.08f, 0.94f));
-                    if (_type == Shortcut.ShortcutType.Spacer)
-                    {
-                        ImGui.BeginChild((uint)j, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2));
-                        //ImGui.SameLine(ImGui.GetContentRegionAvail().X / 2 - ImGui.CalcTextSize(_name).X / 2); // TODO: Fix this being smaller than normal buttons for whatever reason
-                        //ImGui.Text(_name);
-                        ImGui.EndChild();
-                    }
-                    else if (useIcon ? DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2), _sh.IconZoom, _sh.IconTint) : ImGui.Button(_name, new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
-                    {
                         ItemClicked(_sh, sublist.Count >= (cols * (cols - 1) + 1), true);
-                        if (!sh.CategoryStaysOpen && _type != Shortcut.ShortcutType.Category)
+                        if (!sh.CategoryStaysOpen && _sh.Type != Shortcut.ShortcutType.Category)
                             ImGui.CloseCurrentPopup();
                     }
-                    ImGui.PopStyleColor();
-                    if (!string.IsNullOrEmpty(tooltip) && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
-                        ImGui.SetTooltip(tooltip);
-
-                    if (_type == Shortcut.ShortcutType.Category)
-                        CategoryPopup(_sh);
 
                     if (j % cols != cols - 1)
                         ImGui.SameLine();
-
-                    ImGui.OpenPopupOnItemClick("editItem", 1);
-
-                    ImGui.SetWindowFontScale(1);
-                    ItemConfigPopup(sublist, j, useIcon);
-                    ImGui.SetWindowFontScale(barConfig.CategoryScale);
 
                     ImGui.PopID();
                 }
@@ -589,7 +593,7 @@ namespace QoLBar
                         ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0));
                     else
                         ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.08f, 0.08f, 0.08f, 0.94f));
-                    if (ImGui.Button("+", new Vector2(sh.CategoryWidth * globalSize * barConfig.CategoryScale, 0)))
+                    if (ImGui.Button("+", new Vector2(width, 0)))
                         ImGui.OpenPopup("addItem");
                     ImGui.PopStyleColor();
                     if (ImGui.IsItemHovered())
