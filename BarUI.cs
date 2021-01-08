@@ -387,8 +387,10 @@ namespace QoLBar
             {
                 ImGui.PushID(i);
 
-                if (DrawShortcut(i, barConfig.ShortcutList, barConfig.ButtonWidth * globalSize * barConfig.Scale))
+                DrawShortcut(i, barConfig.ShortcutList, barConfig.ButtonWidth * globalSize * barConfig.Scale, () =>
+                {
                     ItemClicked(barConfig.ShortcutList[i], vertical, false);
+                });
 
                 if (!vertical && i != barConfig.ShortcutList.Count - 1)
                     ImGui.SameLine();
@@ -397,7 +399,7 @@ namespace QoLBar
             }
         }
 
-        private bool DrawShortcut(int i, List<Shortcut> shortcuts, float width)
+        private void DrawShortcut(int i, List<Shortcut> shortcuts, float width, Action callback)
         {
             var inCategory = (shortcuts != barConfig.ShortcutList);
             var sh = shortcuts[i];
@@ -434,8 +436,6 @@ namespace QoLBar
             if (inCategory)
                 ImGui.PopStyleColor();
 
-            ImGui.OpenPopupOnItemClick("editItem", 1);
-
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
             {
                 if (!inCategory && (ImGui.IsMouseReleased(0) || (barConfig.OpenCategoriesOnHover && type == Shortcut.ShortcutType.Category && (!docked || barPos == revealPos) && !ImGui.IsPopupOpen("editItem"))))
@@ -444,6 +444,11 @@ namespace QoLBar
                 if (!string.IsNullOrEmpty(tooltip))
                     ImGui.SetTooltip(tooltip);
             }
+
+            if (clicked)
+                callback();
+
+            ImGui.OpenPopupOnItemClick("editItem", 1);
 
             if (type == Shortcut.ShortcutType.Category)
             {
@@ -455,8 +460,6 @@ namespace QoLBar
             PushFontScale(1);
             ItemConfigPopup(shortcuts, i, useIcon);
             PopFontScale();
-
-            return clicked;
         }
 
         private void DrawAddButton()
@@ -580,14 +583,14 @@ namespace QoLBar
                 {
                     ImGui.PushID(j);
 
-                    if (DrawShortcut(j, sublist, width))
+                    DrawShortcut(j, sublist, width, () =>
                     {
                         var _sh = sublist[j];
 
                         ItemClicked(_sh, sublist.Count >= (cols * (cols - 1) + 1), true);
                         if (!sh.CategoryStaysOpen && _sh.Type != Shortcut.ShortcutType.Category)
                             ImGui.CloseCurrentPopup();
-                    }
+                    });
 
                     if (j % cols != cols - 1)
                         ImGui.SameLine();
