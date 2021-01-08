@@ -247,7 +247,7 @@ namespace QoLBar
                 SetupImGuiFlags();
                 ImGui.Begin($"QoLBar##{barNumber}", flags);
 
-                ImGui.SetWindowFontScale(barConfig.Scale);
+                PushFontScale(barConfig.Scale);
 
                 if (_mouseRevealed && ImGui.IsWindowHovered(ImGuiHoveredFlags.RectOnly))
                     Reveal();
@@ -265,11 +265,13 @@ namespace QoLBar
                     config.Save();
                 }
 
-                ImGui.SetWindowFontScale(1);
+                PushFontScale(1);
                 BarConfigPopup();
-                ImGui.SetWindowFontScale(barConfig.Scale);
+                PopFontScale();
 
                 SetBarSize();
+
+                PopFontScale();
 
                 ImGui.End();
 
@@ -412,18 +414,19 @@ namespace QoLBar
                     ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.08f, 0.08f, 0.08f, 0.94f));
             }
 
+            var height = ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2;
             var clicked = false;
             if (type == Shortcut.ShortcutType.Spacer)
             {
-                ImGui.BeginChild((uint)i, new Vector2(width, ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2));
+                ImGui.BeginChild((uint)i, new Vector2(width, height));
                 //ImGui.SameLine(ImGui.GetContentRegionAvail().X / 2 - ImGui.CalcTextSize(name).X / 2); // TODO: Fix this being smaller than normal buttons for whatever reason
                 //ImGui.Text(name);
                 ImGui.EndChild();
             }
             else if (useIcon)
-                clicked = DrawIconButton(icon, new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2), sh.IconZoom, sh.IconTint);
+                clicked = DrawIconButton(icon, new Vector2(height), sh.IconZoom, sh.IconTint);
             else
-                clicked = ImGui.Button(name, new Vector2((!inCategory && !vertical && barConfig.AutoButtonWidth) ? 0 : width, 0));
+                clicked = ImGui.Button(name, new Vector2((!inCategory && !vertical && barConfig.AutoButtonWidth) ? 0 : width, height));
 
             if (inCategory)
                 ImGui.PopStyleColor();
@@ -441,15 +444,14 @@ namespace QoLBar
 
             if (type == Shortcut.ShortcutType.Category)
             {
-                ImGui.SetWindowFontScale(barConfig.CategoryScale);
+                PushFontScale(barConfig.CategoryScale);
                 CategoryPopup(sh);
-                if (!inCategory)
-                    ImGui.SetWindowFontScale(barConfig.Scale);
+                PopFontScale();
             }
 
-            ImGui.SetWindowFontScale(1);
+            PushFontScale(1);
             ItemConfigPopup(shortcuts, i, useIcon);
-            ImGui.SetWindowFontScale(!inCategory ? barConfig.Scale : barConfig.CategoryScale);
+            PopFontScale();
 
             return clicked;
         }
@@ -466,9 +468,9 @@ namespace QoLBar
             ImGui.OpenPopupOnItemClick("addItem", 0);
             ImGui.OpenPopupOnItemClick($"BarConfig##{barNumber}", 1);
 
-            ImGui.SetWindowFontScale(1);
+            PushFontScale(1);
             ItemCreatePopup(barConfig.ShortcutList);
-            ImGui.SetWindowFontScale(barConfig.Scale);
+            PopFontScale();
         }
 
         private void ItemClicked(Shortcut sh, bool v, bool subItem)
@@ -600,9 +602,9 @@ namespace QoLBar
                         ImGui.SetTooltip("Add a new shortcut.");
                 }
 
-                ImGui.SetWindowFontScale(1);
+                PushFontScale(1);
                 ItemCreatePopup(sublist);
-                ImGui.SetWindowFontScale(barConfig.CategoryScale);
+                PopFontScale();
 
                 ClampWindowPos();
 
@@ -1013,6 +1015,22 @@ namespace QoLBar
                     ret = ImGui.Button("  ?  ##WaitingTexture");
             }
             return ret;
+        }
+
+        // Why is this not a basic feature of ImGui...
+        private Stack<float> _fontScaleStack = new Stack<float>();
+        private float _curScale = 1;
+        public void PushFontScale(float scale)
+        {
+            _fontScaleStack.Push(_curScale);
+            _curScale = scale;
+            ImGui.SetWindowFontScale(_curScale);
+        }
+
+        public void PopFontScale()
+        {
+            _curScale = _fontScaleStack.Pop();
+            ImGui.SetWindowFontScale(_curScale);
         }
 
         public void Dispose()
