@@ -35,6 +35,8 @@ namespace QoLBar
             bars = new List<BarUI>();
             for (int i = 0; i < config.BarConfigs.Count; i++)
                 bars.Add(new BarUI(p, config, i));
+
+            plugin.LoadIcon(46); // Magnifying glass / Search
         }
 
         public void Draw()

@@ -65,7 +65,6 @@ namespace QoLBar
             plugin = p;
             this.config = config;
             barNumber = nbar;
-            plugin.LoadIcon(46); // Magnifying glass / Search
             SetupPosition();
         }
 

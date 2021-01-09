@@ -182,9 +182,9 @@ namespace QoLBar
                 ui.ToggleBarVisible(argument);
         }
 
-        public void LoadIcon(int icon)
+        public void LoadIcon(int icon, bool overwrite = false)
         {
-            if (!textureDictionary.ContainsKey(icon))
+            if (!textureDictionary.ContainsKey(icon) || overwrite)
             {
                 textureDictionary[icon] = null;
                 Task.Run(() => {
@@ -194,6 +194,25 @@ namespace QoLBar
                         var tex = pluginInterface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
                         if (tex != null && tex.ImGuiHandle != IntPtr.Zero)
                             textureDictionary[icon] = tex;
+                    }
+                    catch { }
+                });
+            }
+        }
+
+        public void LoadIcon(int iconSlot, string path, bool overwrite = false)
+        {
+            if (!textureDictionary.ContainsKey(iconSlot) || overwrite)
+            {
+                textureDictionary[iconSlot] = null;
+                Task.Run(() =>
+                {
+                    try
+                    {
+                        var iconTex = pluginInterface.Data.GetFile<Lumina.Data.Files.TexFile>(path);
+                        var tex = pluginInterface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
+                        if (tex != null && tex.ImGuiHandle != IntPtr.Zero)
+                            textureDictionary[iconSlot] = tex;
                     }
                     catch { }
                 });
