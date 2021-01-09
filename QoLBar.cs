@@ -50,9 +50,9 @@ namespace QoLBar
         [DefaultValue(100)] public int ButtonWidth = 100;
         [DefaultValue(false)] public bool AutoButtonWidth = false;
         [DefaultValue(false)] public bool HideAdd = false;
-        public Vector2 Position = new Vector2();
+        public Vector2 Position = Vector2.Zero;
         [DefaultValue(false)] public bool LockedPosition = false;
-        public Vector2 Offset = new Vector2();
+        public Vector2 Offset = Vector2.Zero;
         [DefaultValue(1.0f)] public float Scale = 1.0f;
         [DefaultValue(1.0f)] public float CategoryScale = 1.0f;
         [DefaultValue(1.0f)] public float RevealAreaScale = 1.0f;
@@ -81,7 +81,7 @@ namespace QoLBar
         [DefaultValue(false)] public bool CategoryStaysOpen = false;
         [DefaultValue(1)] public int CategoryColumns = 1;
         [DefaultValue(1.0f)] public float IconZoom = 1.0f;
-        [DefaultValue(null)] public Vector4 IconTint = new Vector4(1);
+        [DefaultValue(null)] public Vector4 IconTint = Vector4.One;
     }
 
     public class QoLSerializer : DefaultSerializationBinder

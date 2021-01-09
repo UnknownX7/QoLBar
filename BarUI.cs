@@ -37,9 +37,9 @@ namespace QoLBar
         private Vector2 barPos;
         private ImGuiWindowFlags flags;
         private readonly int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
-        private Vector2 piv = new Vector2();
-        private Vector2 hidePos = new Vector2();
-        private Vector2 revealPos = new Vector2();
+        private Vector2 piv = Vector2.Zero;
+        private Vector2 hidePos = Vector2.Zero;
+        private Vector2 revealPos = Vector2.Zero;
         private bool vertical = false;
         private bool docked = true;
 
@@ -53,9 +53,9 @@ namespace QoLBar
         private bool _mouseRevealed = false;
         private Vector2 _tweenStart;
         private float _tweenProgress = 1;
-        private Vector2 _catpiv = new Vector2();
-        private Vector2 _catpos = new Vector2();
-        private Vector2 _maincatpos = new Vector2();
+        private Vector2 _catpiv = Vector2.Zero;
+        private Vector2 _catpos = Vector2.Zero;
+        private Vector2 _maincatpos = Vector2.Zero;
 
         private readonly QoLBar plugin;
         private readonly Configuration config;
@@ -101,13 +101,13 @@ namespace QoLBar
                     docked = true;
                     break;
                 case BarDock.UndockedH:
-                    piv = new Vector2();
+                    piv = Vector2.Zero;
                     vertical = false;
                     docked = false;
                     _setPos = true;
                     return;
                 case BarDock.UndockedV:
-                    piv = new Vector2();
+                    piv = Vector2.Zero;
                     vertical = true;
                     docked = false;
                     _setPos = true;
@@ -410,7 +410,7 @@ namespace QoLBar
             if (inCategory)
             {
                 if (useIcon || !barConfig.NoCategoryBackgrounds)
-                    ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0));
+                    ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
                 else
                     ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.08f, 0.08f, 0.08f, 0.94f));
             }
@@ -518,7 +518,7 @@ namespace QoLBar
                 0 => ImGui.GetItemRectMin() + (ImGui.GetItemRectSize() / 2),
                 1 => ImGui.GetWindowPos() + (ImGui.GetWindowSize() / 2),
                 2 => mousePos,
-                _ => new Vector2(0),
+                _ => Vector2.Zero,
             };
             var _offset = align switch
             {
@@ -529,7 +529,7 @@ namespace QoLBar
             var _pos = ImGui.GetItemRectMin() + (ImGui.GetItemRectSize() / 2);
             if (!subItem)
                 _maincatpos = _pos; // Forces all subcategories to position based on the original category
-            var _piv = new Vector2();
+            var _piv = Vector2.Zero;
 
             if (!v)
             {
@@ -600,7 +600,7 @@ namespace QoLBar
                 if (!sh.HideAdd)
                 {
                     if (!barConfig.NoCategoryBackgrounds)
-                        ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0));
+                        ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
                     else
                         ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.08f, 0.08f, 0.08f, 0.94f));
                     var height = ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2;
@@ -817,7 +817,7 @@ namespace QoLBar
 
                 var iconSize = ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2;
                 ImGui.SameLine(ImGui.GetWindowContentRegionWidth() + ImGui.GetStyle().FramePadding.X * 2 - iconSize);
-                if (DrawIconButton(46, new Vector2(iconSize), 1.0f, new Vector4(1)))
+                if (DrawIconButton(46, new Vector2(iconSize), 1.0f, Vector4.One))
                     plugin.ToggleIconBrowser();
                 if (ImGui.IsItemHovered())
                     ImGui.SetTooltip("Opens up a list of all icons you can use instead of text.\n" +
