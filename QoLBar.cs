@@ -145,6 +145,8 @@ namespace QoLBar
 
         public readonly Dictionary<int, TextureWrap> textureDictionary = new Dictionary<int, TextureWrap>();
 
+        public const int FrameIconID = 114000;
+
         public string Name => "QoL Bar";
 
         public void Initialize(DalamudPluginInterface pInterface)

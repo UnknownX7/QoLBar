@@ -37,6 +37,7 @@ namespace QoLBar
                 bars.Add(new BarUI(p, config, i));
 
             plugin.LoadIcon(46); // Magnifying glass / Search
+            plugin.LoadIcon(QoLBar.FrameIconID, "ui/uld/icona_frame.tex");
         }
 
         public void Draw()
@@ -69,6 +70,10 @@ namespace QoLBar
                 config.Save();
             if (ImGui.IsItemHovered())
                 ImGui.SetTooltip("Undocked bars will automatically readjust if you change resolutions.");
+            if (ImGui.Checkbox("Use Hotbar Frames on Icons", ref config.UseIconFrame))
+                config.Save();
+            if (ImGui.IsItemHovered())
+                ImGui.SetTooltip("Might cause lag.");
 
             ImGui.Spacing();
             ImGui.Spacing();

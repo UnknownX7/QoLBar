@@ -14,6 +14,7 @@ namespace QoLBar
         public List<BarConfig> BarConfigs = new List<BarConfig>();
         public bool ExportOnDelete = true;
         public bool ResizeRepositionsBars = false;
+        public bool UseIconFrame = false;
 
         [JsonIgnore] private DalamudPluginInterface pluginInterface;
 
