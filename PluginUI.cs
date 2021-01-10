@@ -279,6 +279,33 @@ namespace QoLBar
                 AddIcons(114000, 114100, "New Game+ Icons");
                 EndIconList();
 
+                BeginIconList("Misc", iconSize);
+                AddIcons(60000, 61000, "UI");
+                AddIcons(61200, 61250, "Markers");
+                AddIcons(61290, 61390, "Markers 2");
+                AddIcons(61390, 62000, "UI 2");
+                AddIcons(62600, 62620, "HQ FC Banners");
+                AddIcons(63900, 64000, "Map Icons");
+                AddIcons(64500, 64600, "Stamps");
+                AddIcons(65000, 65900, "Currencies");
+                AddIcons(76300, 78000, "Group Pose");
+                AddIcons(180000, 180060, "Stamps/Chocobo Racing");
+                EndIconList();
+
+                BeginIconList("Misc 2", iconSize);
+                AddIcons(62900, 63200, "Achievements/Hunting Log");
+                AddIcons(65900, 66000, "Fishing");
+                AddIcons(66400, 66500, "Tags");
+                AddIcons(67000, 68000, "Fashion Log");
+                AddIcons(71000, 71500, "Quests");
+                AddIcons(72000, 72500, "BLU UI");
+                AddIcons(72500, 76000, "Bozja UI");
+                AddIcons(76000, 76300, "Mahjong");
+                AddIcons(80000, 80200, "Quest Log");
+                AddIcons(80730, 81000, "Relic Log");
+                AddIcons(83000, 84000, "FC Ranks");
+                EndIconList();
+
                 BeginIconList("Actions", iconSize);
                 AddIcons(100, 4000, "Classes/Jobs");
                 AddIcons(5100, 8000, "Traits");
@@ -320,33 +347,6 @@ namespace QoLBar
 
                 BeginIconList("Statuses", iconSize);
                 AddIcons(10000, 20000);
-                EndIconList();
-
-                BeginIconList("Misc", iconSize);
-                AddIcons(60000, 61000, "UI");
-                AddIcons(61200, 61250, "Markers");
-                AddIcons(61290, 61390, "Markers 2");
-                AddIcons(61390, 62000, "UI 2");
-                AddIcons(62600, 62620, "HQ FC Banners");
-                AddIcons(63900, 64000, "Map Icons");
-                AddIcons(64500, 64600, "Stamps");
-                AddIcons(65000, 65900, "Currencies");
-                AddIcons(76300, 78000, "Group Pose");
-                AddIcons(180000, 180060, "Stamps/Chocobo Racing");
-                EndIconList();
-
-                BeginIconList("Misc 2", iconSize);
-                AddIcons(62900, 63200, "Achievements/Hunting Log");
-                AddIcons(65900, 66000, "Fishing");
-                AddIcons(66400, 66500, "Tags");
-                AddIcons(67000, 68000, "Fashion Log");
-                AddIcons(71000, 71500, "Quests");
-                AddIcons(72000, 72500, "BLU UI");
-                AddIcons(72500, 76000, "Bozja UI");
-                AddIcons(76000, 76300, "Mahjong");
-                AddIcons(80000, 80200, "Quest Log");
-                AddIcons(80730, 81000, "Relic Log");
-                AddIcons(83000, 84000, "FC Ranks");
                 EndIconList();
 
                 BeginIconList("Garbage", iconSize);
