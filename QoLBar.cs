@@ -307,6 +307,9 @@ namespace QoLBar
             return ImportObject<Shortcut>(import);
         }
 
+        public void PrintEcho(string message) => pluginInterface.Framework.Gui.Chat.Print($"[QoLBar] {message}");
+        public void PrintError(string message) => pluginInterface.Framework.Gui.Chat.PrintError($"[QoLBar] {message}");
+
         // I'm too dumb to do any of this so its (almost) all taken from here https://git.sr.ht/~jkcclemens/CCMM/tree/master/Custom%20Commands%20and%20Macro%20Macros/GameFunctions.cs
         #region Chat Injection
         private delegate IntPtr GetUIModuleDelegate(IntPtr basePtr);
@@ -330,8 +333,7 @@ namespace QoLBar
             }
             catch
             {
-                var chat = pluginInterface.Framework.Gui.Chat;
-                chat.PrintChat(new XivChatEntry { MessageBytes = Encoding.UTF8.GetBytes("[QoLBar] Error with loading signatures") });
+                PrintError("Error with loading signatures");
             }
         }
 
@@ -386,8 +388,7 @@ namespace QoLBar
             }
             catch
             {
-                var chat = pluginInterface.Framework.Gui.Chat;
-                chat.PrintChat(new XivChatEntry { MessageBytes = Encoding.UTF8.GetBytes("[QoLBar] Error with injecting command") });
+                PrintError("Error with injecting command");
             }
         }
         #endregion

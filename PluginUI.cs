@@ -239,7 +239,7 @@ namespace QoLBar
         {
             if (i < 0 || i >= bars.Count)
             {
-                plugin.pluginInterface.Framework.Gui.Chat.PrintError($"Bar #{i + 1} does not exist.");
+                plugin.PrintError($"Bar #{i + 1} does not exist.");
                 return false;
             }
             else
@@ -258,7 +258,7 @@ namespace QoLBar
                     found = ToggleBarVisible(i) || found;
             }
             if (!found)
-                plugin.pluginInterface.Framework.Gui.Chat.PrintError($"Bar \"{name}\" does not exist.");
+                plugin.PrintError($"Bar \"{name}\" does not exist.");
 
             return found;
         }

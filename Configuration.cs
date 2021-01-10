@@ -43,7 +43,7 @@ namespace QoLBar
                 {
                     PluginLog.LogError("Failed to save again :(");
                     var chat = pluginInterface.Framework.Gui.Chat;
-                    chat.PrintChat(new XivChatEntry { MessageBytes = Encoding.UTF8.GetBytes("[QoLBar] Error saving config, is something else writing to it?") });
+                    chat.PrintError("[QoLBar] Error saving config, is something else writing to it?");
                 }
             }
         }
