@@ -37,7 +37,7 @@ namespace QoLBar
                 bars.Add(new BarUI(p, config, i));
 
             plugin.LoadIcon(46); // Magnifying glass / Search
-            plugin.LoadIcon(QoLBar.FrameIconID, "ui/uld/icona_frame.tex");
+            plugin.LoadIcon(QoLBar.FrameIconID, "ui/uld/icona_frame.tex", true);
         }
 
         public void Draw()

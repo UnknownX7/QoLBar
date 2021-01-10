@@ -188,6 +188,8 @@ namespace QoLBar
         {
             if (!textureDictionary.ContainsKey(icon) || overwrite)
             {
+                if (overwrite && textureDictionary.ContainsKey(icon))
+                    textureDictionary[icon]?.Dispose();
                 textureDictionary[icon] = null;
                 Task.Run(() => {
                     try
@@ -206,6 +208,8 @@ namespace QoLBar
         {
             if (!textureDictionary.ContainsKey(iconSlot) || overwrite)
             {
+                if (overwrite && textureDictionary.ContainsKey(iconSlot))
+                    textureDictionary[iconSlot]?.Dispose();
                 textureDictionary[iconSlot] = null;
                 Task.Run(() =>
                 {
