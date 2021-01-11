@@ -10,7 +10,6 @@ using System.ComponentModel;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Dalamud.Plugin;
-using Dalamud.Game.Chat;
 using Dalamud.Data.LuminaExtensions;
 using ImGuiScene;
 using QoLBar.Attributes;
@@ -162,6 +161,21 @@ namespace QoLBar
             pluginInterface.ClientState.OnLogin += InitCommands;
 
             commandManager = new PluginCommandManager<QoLBar>(this, pluginInterface);
+
+#if DEBUG
+            LoadIcon(46); // Magnifying glass / Search
+            LoadIcon(FrameIconID, "ui/uld/icona_frame.tex", true);
+            LoadUserIcons();
+#else
+            Task.Run(async () =>
+            {
+                while (pluginInterface.ClientState.LocalPlayer == null)
+                    await Task.Delay(1000);
+                LoadIcon(46); // Magnifying glass / Search
+                LoadIcon(FrameIconID, "ui/uld/icona_frame.tex", true);
+                LoadUserIcons();
+            });
+#endif
         }
 
         public void ToggleConfig(object sender, EventArgs e) => ui.ToggleConfig();
@@ -184,44 +198,71 @@ namespace QoLBar
                 ui.ToggleBarVisible(argument);
         }
 
-        public void LoadIcon(int icon, bool overwrite = false)
+        private async void LoadTextureWrap(int i, bool overwrite, Func<TextureWrap> action)
         {
-            if (!textureDictionary.ContainsKey(icon) || overwrite)
+            if (!textureDictionary.ContainsKey(i) || overwrite)
             {
-                if (overwrite && textureDictionary.ContainsKey(icon))
-                    textureDictionary[icon]?.Dispose();
-                textureDictionary[icon] = null;
-                Task.Run(() => {
-                    try
-                    {
-                        var iconTex = pluginInterface.Data.GetIcon(icon);
-                        var tex = pluginInterface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
-                        if (tex != null && tex.ImGuiHandle != IntPtr.Zero)
-                            textureDictionary[icon] = tex;
-                    }
-                    catch { }
-                });
-            }
-        }
-
-        public void LoadIcon(int iconSlot, string path, bool overwrite = false)
-        {
-            if (!textureDictionary.ContainsKey(iconSlot) || overwrite)
-            {
-                if (overwrite && textureDictionary.ContainsKey(iconSlot))
-                    textureDictionary[iconSlot]?.Dispose();
-                textureDictionary[iconSlot] = null;
-                Task.Run(() =>
+                if (overwrite && textureDictionary.ContainsKey(i))
+                    textureDictionary[i]?.Dispose();
+                textureDictionary[i] = null;
+                var tex = await Task.Run(() =>
                 {
                     try
                     {
-                        var iconTex = pluginInterface.Data.GetFile<Lumina.Data.Files.TexFile>(path);
-                        var tex = pluginInterface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
-                        if (tex != null && tex.ImGuiHandle != IntPtr.Zero)
-                            textureDictionary[iconSlot] = tex;
+                        return action();
                     }
-                    catch { }
+                    catch
+                    {
+                        return null;
+                    }
                 });
+                if (tex != null && tex.ImGuiHandle != IntPtr.Zero)
+                    textureDictionary[i] = tex;
+            }
+        }
+
+        public void LoadIcon(int icon, bool overwrite = false) => LoadTextureWrap(icon, overwrite, () =>
+        {
+            var iconTex = pluginInterface.Data.GetIcon(icon);
+            return pluginInterface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
+        });
+
+        public void LoadIcon(int iconSlot, string path, bool overwrite = false) => LoadTextureWrap(iconSlot, overwrite, () =>
+        {
+            var iconTex = pluginInterface.Data.GetFile<Lumina.Data.Files.TexFile>(path);
+            return pluginInterface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
+        });
+
+        // Seems to cause a nvwgf2umx.dll crash if spammed enough?
+        public void LoadImage(int iconSlot, string path, bool overwrite = false) => LoadTextureWrap(iconSlot, overwrite, () => pluginInterface.UiBuilder.LoadImage(path));
+
+        public List<int> userIcons = new List<int>();
+        public void LoadUserIcons()
+        {
+            if (userIcons != null)
+            {
+                foreach (var icon in userIcons)
+                    textureDictionary[icon]?.Dispose();
+            }
+            userIcons = new List<int>();
+            var path = config.GetPluginIconPath();
+            if (!string.IsNullOrEmpty(path))
+            {
+                var directory = new DirectoryInfo(path);
+                foreach (var file in directory.GetFiles())
+                {
+                    int.TryParse(Path.GetFileNameWithoutExtension(file.Name), out int i);
+                    if (i > 0)
+                    {
+                        if (userIcons.Contains(-i))
+                            PluginLog.Error($"Attempted to load {file.Name} into index {-i} but it already exists!");
+                        else
+                        {
+                            userIcons.Add(-i);
+                            LoadImage(-i, directory.FullName + "\\" + file.Name, true);
+                        }
+                    }
+                }
             }
         }
 

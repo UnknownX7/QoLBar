@@ -629,12 +629,12 @@ namespace QoLBar
 
             if (sh.Type != Shortcut.ShortcutType.Spacer)
             {
-                if (plugin.ui.iconBrowserOpen && plugin.ui.pasteIcon >= 0)
+                if (plugin.ui.iconBrowserOpen && plugin.ui.doPasteIcon)
                 {
                     var split = sh.Name.Split(new[] { "##" }, 2, StringSplitOptions.None);
                     sh.Name = $"::{plugin.ui.pasteIcon}" + (split.Length > 1 ? $"##{split[1]}" : "");
                     config.Save();
-                    plugin.ui.pasteIcon = -1;
+                    plugin.ui.doPasteIcon = false;
                 }
                 if (ImGui.InputText("Name          ", ref sh.Name, 256) && editing) // Not a bug... just ImGui not extending the window to fit multiline's name...
                     config.Save();

@@ -1,9 +1,10 @@
 using ImGuiNET;
 using System;
 using System.Numerics;
-using System.Text;
 using System.Collections.Generic;
 using Dalamud.Plugin;
+using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace QoLBar
 {
@@ -24,7 +25,8 @@ namespace QoLBar
         public void ToggleConfig() => configOpen = !configOpen;
 
         public bool iconBrowserOpen = false;
-        public int pasteIcon = -1;
+        public bool doPasteIcon = false;
+        public int pasteIcon = 0;
         public void ToggleIconBrowser() => iconBrowserOpen = !iconBrowserOpen;
 
         public PluginUI(QoLBar p, Configuration config)
@@ -35,9 +37,6 @@ namespace QoLBar
             bars = new List<BarUI>();
             for (int i = 0; i < config.BarConfigs.Count; i++)
                 bars.Add(new BarUI(p, config, i));
-
-            plugin.LoadIcon(46); // Magnifying glass / Search
-            plugin.LoadIcon(QoLBar.FrameIconID, "ui/uld/icona_frame.tex", true);
         }
 
         public void Draw()
@@ -52,7 +51,7 @@ namespace QoLBar
             if (iconBrowserOpen)
                 DrawIconBrowser();
             else
-                pasteIcon = -1;
+                doPasteIcon = false;
 
             foreach (BarUI bar in bars)
                 bar.Draw();
@@ -279,6 +278,24 @@ namespace QoLBar
                 AddIcons(114000, 114100, "New Game+ Icons");
                 EndIconList();
 
+                BeginIconList("Custom", iconSize);
+                if (ImGui.IsItemHovered())
+                    ImGui.SetTooltip("Place images inside \"%AppData%\\XIVLauncher\\pluginConfigs\\QoLBar\\icons\"\n" +
+                        "to load them as usable icons, the file names must be in the format \"#.img\" (# > 0).\n" +
+                        "I.E. \"1.jpg\" \"2.png\" \"3.png\" \"732487.jpg\" and so on.");
+                foreach (var i in plugin.userIcons)
+                    AddIcons(i, i + 1);
+                if (_tabExists)
+                {
+                    if (ImGui.Button("Refresh custom icons"))
+                        plugin.LoadUserIcons();
+                    ImGui.SameLine();
+                    if (ImGui.Button("Open Icon Folder"))
+                        Process.Start(config.GetPluginIconPath());
+                }
+                _tooltip = "";
+                EndIconList();
+
                 BeginIconList("Misc", iconSize);
                 AddIcons(60000, 61000, "UI");
                 AddIcons(61200, 61250, "Markers");
@@ -410,12 +427,12 @@ namespace QoLBar
         {
             if (_tabExists)
             {
-                if (ImGui.IsItemHovered())
+                if (ImGui.IsItemHovered() && !string.IsNullOrEmpty(_tooltip))
                     ImGui.SetTooltip(_tooltip);
                 DrawIconList();
                 ImGui.EndTabItem();
             }
-            else if (ImGui.IsItemHovered())
+            else if (ImGui.IsItemHovered() && !string.IsNullOrEmpty(_tooltip))
                 ImGui.SetTooltip(_tooltip);
         }
 
@@ -437,6 +454,7 @@ namespace QoLBar
                     {
                         if (ImGui.IsItemClicked())
                         {
+                            doPasteIcon = true;
                             pasteIcon = icon;
                             ImGui.SetClipboardText($"::{icon}");
                         }
