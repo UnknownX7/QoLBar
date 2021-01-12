@@ -221,11 +221,23 @@ namespace QoLBar
             }
         }
 
-        public void LoadIcon(int icon, bool overwrite = false) => LoadTextureWrap(icon, overwrite, () =>
+        public void LoadIcon(int icon, bool overwrite = false)
         {
-            var iconTex = pluginInterface.Data.GetIcon(icon);
-            return pluginInterface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
-        });
+            if (icon < 0 && userIcons.ContainsKey(icon))
+                LoadImage(icon, userIcons[icon], overwrite);
+            else
+            {
+                LoadTextureWrap(icon, overwrite, () =>
+                {
+                    var iconTex = pluginInterface.Data.GetIcon(icon);
+                    return pluginInterface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
+                });
+
+                // Exists to allow reloading user icons if their index was loaded before the image
+                if (icon < 0)
+                    userIcons.Add(icon, string.Empty);
+            }
+        }
 
         public void LoadIcon(int iconSlot, string path, bool overwrite = false) => LoadTextureWrap(iconSlot, overwrite, () =>
         {
@@ -236,15 +248,18 @@ namespace QoLBar
         // Seems to cause a nvwgf2umx.dll crash if spammed enough?
         public void LoadImage(int iconSlot, string path, bool overwrite = false) => LoadTextureWrap(iconSlot, overwrite, () => pluginInterface.UiBuilder.LoadImage(path));
 
-        public List<int> userIcons = new List<int>();
+        public Dictionary<int, string> userIcons = new Dictionary<int, string>();
         public void LoadUserIcons()
         {
             if (userIcons != null)
             {
-                foreach (var icon in userIcons)
-                    textureDictionary[icon]?.Dispose();
+                foreach (var kv in userIcons)
+                {
+                    textureDictionary[kv.Key]?.Dispose();
+                    textureDictionary.Remove(kv.Key);
+                }
             }
-            userIcons = new List<int>();
+            userIcons.Clear();
             var path = config.GetPluginIconPath();
             if (!string.IsNullOrEmpty(path))
             {
@@ -254,13 +269,10 @@ namespace QoLBar
                     int.TryParse(Path.GetFileNameWithoutExtension(file.Name), out int i);
                     if (i > 0)
                     {
-                        if (userIcons.Contains(-i))
+                        if (userIcons.ContainsKey(-i))
                             PluginLog.Error($"Attempted to load {file.Name} into index {-i} but it already exists!");
                         else
-                        {
-                            userIcons.Add(-i);
-                            LoadImage(-i, directory.FullName + "\\" + file.Name, true);
-                        }
+                            userIcons.Add(-i, directory.FullName + "\\" + file.Name);
                     }
                 }
             }
