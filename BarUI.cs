@@ -38,7 +38,7 @@ namespace QoLBar
         private Vector2 barSize = new Vector2(200, 38);
         private Vector2 barPos;
         private ImGuiWindowFlags flags;
-        private readonly int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
+        private static readonly int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
         private Vector2 piv = Vector2.Zero;
         private Vector2 hidePos = Vector2.Zero;
         private Vector2 revealPos = Vector2.Zero;
@@ -58,6 +58,7 @@ namespace QoLBar
         private Vector2 _catpiv = Vector2.Zero;
         private Vector2 _catpos = Vector2.Zero;
         private Vector2 _maincatpos = Vector2.Zero;
+        private static readonly Vector2 _defaultSpacing = new Vector2(8, 4);
 
         private readonly QoLBar plugin;
         private readonly Configuration config;
@@ -227,6 +228,7 @@ namespace QoLBar
             {
                 ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0);
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0);
+                ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(barConfig.Spacing));
                 ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.286f, 0.286f, 0.286f, 0.9f));
 
                 if (docked)
@@ -264,9 +266,11 @@ namespace QoLBar
                     config.Save();
                 }
 
+                ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, _defaultSpacing);
                 PushFontScale(1);
                 BarConfigPopup();
                 PopFontScale();
+                ImGui.PopStyleVar();
 
                 SetBarSize();
 
@@ -275,7 +279,7 @@ namespace QoLBar
                 ImGui.End();
 
                 ImGui.PopStyleColor();
-                ImGui.PopStyleVar(2);
+                ImGui.PopStyleVar(3);
             }
 
             if (!_reveal)
@@ -481,14 +485,18 @@ namespace QoLBar
 
             if (type == Shortcut.ShortcutType.Category)
             {
+                ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, barConfig.CategorySpacing);
                 PushFontScale(barConfig.CategoryScale);
                 CategoryPopup(sh);
                 PopFontScale();
+                ImGui.PopStyleVar();
             }
 
+            ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, _defaultSpacing);
             PushFontScale(1);
             ItemConfigPopup(shortcuts, i, useIcon);
             PopFontScale();
+            ImGui.PopStyleVar();
         }
 
         private void DrawAddButton()
@@ -506,9 +514,11 @@ namespace QoLBar
             ImGui.OpenPopupOnItemClick("addItem", 0);
             ImGui.OpenPopupOnItemClick($"BarConfig##{barNumber}", 1);
 
+            ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, _defaultSpacing);
             PushFontScale(1);
             ItemCreatePopup(barConfig.ShortcutList);
             PopFontScale();
+            ImGui.PopStyleVar();
         }
 
         private void ItemClicked(Shortcut sh, bool v, bool subItem)
@@ -643,9 +653,11 @@ namespace QoLBar
                         ImGui.SetTooltip("Add a new shortcut.");
                 }
 
+                ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, _defaultSpacing);
                 PushFontScale(1);
                 ItemCreatePopup(sublist);
                 PopFontScale();
+                ImGui.PopStyleVar();
 
                 ClampWindowPos();
 
@@ -940,6 +952,12 @@ namespace QoLBar
                     config.Save();
 
                 if (ImGui.DragFloat("Category Font Scale", ref barConfig.CategoryFontScale, 0.01f, 0.5f, 1.0f, "%.2f"))
+                    config.Save();
+
+                if (ImGui.SliderInt("Bar Spacing", ref barConfig.Spacing, 0, 32))
+                    config.Save();
+
+                if (ImGui.DragFloat2("Category Spacing", ref barConfig.CategorySpacing, 0.12f, 0, 32, "%.f"))
                     config.Save();
 
                 if (ImGui.Checkbox("No Bar Background", ref barConfig.NoBackground))

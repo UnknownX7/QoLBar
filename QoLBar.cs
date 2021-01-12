@@ -57,6 +57,8 @@ namespace QoLBar
         [DefaultValue(1.0f)] public float RevealAreaScale = 1.0f;
         [DefaultValue(1.0f)] public float FontScale = 1.0f;
         [DefaultValue(1.0f)] public float CategoryFontScale = 1.0f;
+        [DefaultValue(8)] public int Spacing = 8;
+        [DefaultValue(null)] public Vector2 CategorySpacing = new Vector2(8, 4);
         [DefaultValue(false)] public bool NoBackground = false;
         [DefaultValue(false)] public bool NoCategoryBackgrounds = false;
         [DefaultValue(false)] public bool OpenCategoriesOnHover = false;
