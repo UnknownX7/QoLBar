@@ -667,8 +667,6 @@ namespace QoLBar
 
         private void ItemBaseUI(Shortcut sh, bool editing)
         {
-            Reveal();
-
             if (sh.Type != Shortcut.ShortcutType.Spacer)
             {
                 if (plugin.ui.iconBrowserOpen && plugin.ui.doPasteIcon)
@@ -724,6 +722,8 @@ namespace QoLBar
         {
             if (ImGui.BeginPopup("addItem"))
             {
+                Reveal();
+
                 _sh ??= new Shortcut();
                 ItemBaseUI(_sh, false);
 
@@ -775,36 +775,64 @@ namespace QoLBar
         {
             if (ImGui.BeginPopup("editItem"))
             {
+                Reveal();
+
                 var sh = shortcuts[i];
-                ItemBaseUI(sh, true);
-
-                if (sh.Type == Shortcut.ShortcutType.Category)
+                if (ImGui.BeginTabBar("Config Tabs", ImGuiTabBarFlags.NoTooltip))
                 {
-                    if (ImGui.Checkbox("Hide + Button", ref sh.HideAdd))
-                        config.Save();
+                    if (ImGui.BeginTabItem("Shortcut"))
+                    {
+                        ItemBaseUI(sh, true);
 
-                    ImGui.SameLine(ImGui.GetWindowWidth() / 2);
-                    if (ImGui.Checkbox("Stay Open on Selection", ref sh.CategoryStaysOpen))
-                        config.Save();
-                    if (ImGui.IsItemHovered())
-                        ImGui.SetTooltip("Keeps the category open when pressing shortcuts within it.\nMay not work if the shortcut interacts with other plugins.");
+                        if (sh.Type == Shortcut.ShortcutType.Category)
+                        {
+                            if (ImGui.Checkbox("Hide + Button", ref sh.HideAdd))
+                                config.Save();
+                            ImGui.SameLine(ImGui.GetWindowWidth() / 2);
+                            if (ImGui.Checkbox("Stay Open on Selection", ref sh.CategoryStaysOpen))
+                                config.Save();
+                            if (ImGui.IsItemHovered())
+                                ImGui.SetTooltip("Keeps the category open when pressing shortcuts within it.\nMay not work if the shortcut interacts with other plugins.");
 
-                    if (ImGui.SliderInt("Category Width", ref sh.CategoryWidth, 8, 200))
-                        config.Save();
+                            if (ImGui.SliderInt("Category Width", ref sh.CategoryWidth, 8, 200))
+                                config.Save();
 
-                    if (ImGui.SliderInt("Columns", ref sh.CategoryColumns, 1, 12))
-                        config.Save();
-                    if (ImGui.IsItemHovered())
-                        ImGui.SetTooltip("Number of shortcuts in each row before starting another.");
-                }
+                            if (ImGui.SliderInt("Columns", ref sh.CategoryColumns, 1, 12))
+                                config.Save();
+                            if (ImGui.IsItemHovered())
+                                ImGui.SetTooltip("Number of shortcuts in each row before starting another.");
+                        }
 
-                if (hasIcon)
-                {
-                    if (ImGui.DragFloat("Icon Zoom", ref sh.IconZoom, 0.01f, 1.0f, 5.0f, "%.2f"))
-                        config.Save();
+                        ImGui.EndTabItem();
+                    }
 
-                    if (ImGui.ColorEdit4("Icon Tint", ref sh.IconTint, ImGuiColorEditFlags.NoDragDrop | ImGuiColorEditFlags.AlphaPreviewHalf))
-                        config.Save();
+                    if (hasIcon && ImGui.BeginTabItem("Icon"))
+                    {
+                        // Name is available here for ease of access since it pertains to the icon as well
+                        if (plugin.ui.iconBrowserOpen && plugin.ui.doPasteIcon)
+                        {
+                            var split = sh.Name.Split(new[] { "##" }, 2, StringSplitOptions.None);
+                            sh.Name = $"::{plugin.ui.pasteIcon}" + (split.Length > 1 ? $"##{split[1]}" : "");
+                            config.Save();
+                            plugin.ui.doPasteIcon = false;
+                        }
+                        if (ImGui.InputText("Name", ref sh.Name, 256))
+                            config.Save();
+                        if (ImGui.IsItemHovered())
+                            ImGui.SetTooltip("Icons accept arguments between \"::\" and their ID. I.e. \"::f21\".\n" +
+                                "\t' f ' - Applies the hotbar frame (or removes it if applied globally).\n" +
+                                "\t' _ ' - Disables arguments, including implicit ones. Cannot be used with others.");
+
+                        if (ImGui.DragFloat("Zoom", ref sh.IconZoom, 0.005f, 1.0f, 5.0f, "%.2f"))
+                            config.Save();
+
+                        if (ImGui.ColorEdit4("Tint", ref sh.IconTint, ImGuiColorEditFlags.NoDragDrop | ImGuiColorEditFlags.AlphaPreviewHalf))
+                            config.Save();
+
+                        ImGui.EndTabItem();
+                    }
+
+                    ImGui.EndTabBar();
                 }
 
                 if (ImGui.Button((shortcuts == barConfig.ShortcutList && !vertical) ? "←" : "↑") && i > 0)
@@ -875,113 +903,148 @@ namespace QoLBar
             {
                 Reveal();
 
-                var _dock = (int)barConfig.DockSide;
-                if (ImGui.Combo("Bar Side", ref _dock, "Top\0Left\0Bottom\0Right\0Undocked\0Undocked (Vertical)"))
+                if (ImGui.BeginTabBar("Config Tabs", ImGuiTabBarFlags.NoTooltip))
                 {
-                    barConfig.DockSide = (BarDock)_dock;
-                    if (barConfig.DockSide == BarDock.UndockedH || barConfig.DockSide == BarDock.UndockedV)
-                        barConfig.Visibility = VisibilityMode.Always;
-                    config.Save();
-                    SetupPosition();
-                }
-
-                if (docked)
-                {
-                    var _align = (int)barConfig.Alignment;
-                    if (ImGui.Combo("Bar Alignment", ref _align, vertical ? "Top\0Center\0Bottom" : "Left\0Center\0Right"))
+                    if (ImGui.BeginTabItem("General"))
                     {
-                        barConfig.Alignment = (BarAlign)_align;
-                        config.Save();
-                        SetupPosition();
-                    }
-
-                    var _visibility = (int)barConfig.Visibility;
-                    if (ImGui.Combo("Bar Animation", ref _visibility, "Slide\0Immediate\0Always Visible"))
-                    {
-                        barConfig.Visibility = (VisibilityMode)_visibility;
-                        config.Save();
-                    }
-
-                    if (barConfig.Visibility != VisibilityMode.Always)
-                    {
-                        if (ImGui.DragFloat("Reveal Area Scale", ref barConfig.RevealAreaScale, 0.01f, 0.0f, 1.0f, "%.2f"))
+                        var _dock = (int)barConfig.DockSide;
+                        if (ImGui.Combo("Side", ref _dock, "Top\0Left\0Bottom\0Right\0Undocked\0Undocked (Vertical)"))
+                        {
+                            barConfig.DockSide = (BarDock)_dock;
+                            if (barConfig.DockSide == BarDock.UndockedH || barConfig.DockSide == BarDock.UndockedV)
+                                barConfig.Visibility = VisibilityMode.Always;
                             config.Save();
+                            SetupPosition();
+                        }
+
+                        if (docked)
+                        {
+                            var _align = (int)barConfig.Alignment;
+                            ImGui.Text("Alignment");
+                            ImGui.Indent();
+                            ImGui.RadioButton(vertical ? "Top" : "Left", ref _align, 0);
+                            ImGui.SameLine(ImGui.GetWindowWidth() / 3);
+                            ImGui.RadioButton("Center", ref _align, 1);
+                            ImGui.SameLine(ImGui.GetWindowWidth() / 3 * 2);
+                            ImGui.RadioButton(vertical ? "Bottom" : "Right", ref _align, 2);
+                            ImGui.Unindent();
+                            if (_align != (int)barConfig.Alignment)
+                            {
+                                barConfig.Alignment = (BarAlign)_align;
+                                config.Save();
+                                SetupPosition();
+                            }
+
+                            var _visibility = (int)barConfig.Visibility;
+                            ImGui.Text("Animation");
+                            ImGui.Indent();
+                            ImGui.RadioButton("Slide", ref _visibility, 0);
+                            ImGui.SameLine(ImGui.GetWindowWidth() / 3);
+                            ImGui.RadioButton("Immediate", ref _visibility, 1);
+                            ImGui.SameLine(ImGui.GetWindowWidth() / 3 * 2);
+                            ImGui.RadioButton("Always Visible", ref _visibility, 2);
+                            ImGui.Unindent();
+                            if (_visibility != (int)barConfig.Visibility)
+                            {
+                                barConfig.Visibility = (VisibilityMode)_visibility;
+                                config.Save();
+                            }
+
+                            if ((barConfig.Visibility != VisibilityMode.Always) && ImGui.DragFloat("Reveal Area Scale", ref barConfig.RevealAreaScale, 0.01f, 0.0f, 1.0f, "%.2f"))
+                                config.Save();
+
+                            if (docked && ImGui.DragFloat2("Offset", ref barConfig.Offset, 0.2f, -300, 300, "%.f"))
+                            {
+                                config.Save();
+                                SetupPosition();
+                            }
+                        }
+                        else
+                        {
+                            var _visibility = (int)barConfig.Visibility;
+                            ImGui.Text("Animation");
+                            ImGui.Indent();
+                            ImGui.RadioButton("Immediate", ref _visibility, 1);
+                            ImGui.SameLine(ImGui.GetWindowWidth() / 2);
+                            ImGui.RadioButton("Always Visible", ref _visibility, 2);
+                            ImGui.Unindent();
+                            if (_visibility != (int)barConfig.Visibility)
+                            {
+                                barConfig.Visibility = (VisibilityMode)_visibility;
+                                config.Save();
+                            }
+
+                            if (ImGui.Checkbox("Lock Position", ref barConfig.LockedPosition))
+                                config.Save();
+
+                            if (!barConfig.LockedPosition && ImGui.DragFloat2("Position", ref barConfig.Position, 1, -Style.WindowPadding.X, (window.X > window.Y) ? window.X : window.Y, "%.f"))
+                            {
+                                config.Save();
+                                _setPos = true;
+                            }
+                        }
+
+                        ImGui.EndTabItem();
                     }
-                }
-                else
-                {
-                    var _visibility = (int)barConfig.Visibility - 1;
-                    if (ImGui.Combo("Bar Animation", ref _visibility, "Immediate\0Always Visible"))
+
+                    if (ImGui.BeginTabItem("Style"))
                     {
-                        barConfig.Visibility = (VisibilityMode)(_visibility + 1);
-                        config.Save();
+                        if (ImGui.DragFloat("Scale", ref barConfig.Scale, 0.002f, 0.7f, 2.0f, "%.2f"))
+                            config.Save();
+
+                        if (!vertical && ImGui.Checkbox("Automatic Button Width", ref barConfig.AutoButtonWidth))
+                            config.Save();
+
+                        if ((vertical || !barConfig.AutoButtonWidth) && ImGui.SliderInt("Button Width", ref barConfig.ButtonWidth, 16, 200))
+                            config.Save();
+
+                        if (ImGui.DragFloat("Font Scale", ref barConfig.FontScale, 0.0018f, 0.5f, 1.0f, "%.2f"))
+                            config.Save();
+
+                        if (ImGui.SliderInt("Spacing", ref barConfig.Spacing, 0, 32))
+                            config.Save();
+
+                        if (ImGui.Checkbox("No Background", ref barConfig.NoBackground))
+                            config.Save();
+
+                        if (barConfig.ShortcutList.Count > 0)
+                        {
+                            ImGui.SameLine(ImGui.GetWindowWidth() / 2);
+                            if (ImGui.Checkbox("Hide + Button", ref barConfig.HideAdd))
+                            {
+                                if (barConfig.HideAdd)
+                                    plugin.ExecuteCommand("/echo <se> You can right click on the bar itself (the black background) to reopen this settings menu!");
+                                config.Save();
+                            }
+                        }
+
+                        ImGui.EndTabItem();
                     }
 
-                    if (ImGui.Checkbox("Lock Position", ref barConfig.LockedPosition))
-                        config.Save();
-                }
-
-                if (ImGui.DragFloat("Bar Scale", ref barConfig.Scale, 0.01f, 0.7f, 2.0f, "%.2f"))
-                    config.Save();
-
-                if (docked && ImGui.DragFloat2("Bar Offset", ref barConfig.Offset, 1, -500, 500, "%.f"))
-                {
-                    config.Save();
-                    SetupPosition();
-                }
-
-                if (ImGui.DragFloat("Category Scale", ref barConfig.CategoryScale, 0.01f, 0.7f, 1.5f, "%.2f"))
-                    config.Save();
-
-                if (!vertical)
-                {
-                    if (ImGui.Checkbox("Automatic Button Width", ref barConfig.AutoButtonWidth))
+                    if (ImGui.BeginTabItem("Categories"))
                     {
-                        //barConfig.FontScale = 1.0f;
-                        config.Save();
-                    }
-                }
+                        if (ImGui.DragFloat("Scale", ref barConfig.CategoryScale, 0.002f, 0.7f, 1.5f, "%.2f"))
+                            config.Save();
 
-                if (vertical || !barConfig.AutoButtonWidth)
-                {
-                    if (ImGui.SliderInt("Button Width", ref barConfig.ButtonWidth, 16, 200))
-                        config.Save();
-                }
+                        if (ImGui.DragFloat("Font Scale", ref barConfig.CategoryFontScale, 0.0018f, 0.5f, 1.0f, "%.2f"))
+                            config.Save();
 
-                if (ImGui.DragFloat("Font Scale", ref barConfig.FontScale, 0.01f, 0.5f, 1.0f, "%.2f"))
-                    config.Save();
+                        if (ImGui.DragFloat2("Spacing", ref barConfig.CategorySpacing, 0.12f, 0, 32, "%.f"))
+                            config.Save();
 
-                if (ImGui.DragFloat("Category Font Scale", ref barConfig.CategoryFontScale, 0.01f, 0.5f, 1.0f, "%.2f"))
-                    config.Save();
+                        if (ImGui.Checkbox("No Backgrounds", ref barConfig.NoCategoryBackgrounds))
+                            config.Save();
+                        ImGui.SameLine(ImGui.GetWindowWidth() / 2);
+                        if (ImGui.Checkbox("Open on Hover", ref barConfig.OpenCategoriesOnHover))
+                            config.Save();
+                        if (ImGui.IsItemHovered())
+                            ImGui.SetTooltip("Does not work for subcategories!");
 
-                if (ImGui.SliderInt("Bar Spacing", ref barConfig.Spacing, 0, 32))
-                    config.Save();
-
-                if (ImGui.DragFloat2("Category Spacing", ref barConfig.CategorySpacing, 0.12f, 0, 32, "%.f"))
-                    config.Save();
-
-                if (ImGui.Checkbox("No Bar Background", ref barConfig.NoBackground))
-                    config.Save();
-                ImGui.SameLine(ImGui.GetWindowWidth() / 2);
-                if (ImGui.Checkbox("No Category Backgrounds", ref barConfig.NoCategoryBackgrounds))
-                    config.Save();
-
-                if (barConfig.ShortcutList.Count > 0)
-                {
-                    if (ImGui.Checkbox("Hide + Button", ref barConfig.HideAdd))
-                    {
-                        if (barConfig.HideAdd)
-                            plugin.ExecuteCommand("/echo <se> You can right click on the bar itself (the black background) to reopen this settings menu!");
-                        config.Save();
+                        ImGui.EndTabItem();
                     }
 
-                    ImGui.SameLine(ImGui.GetWindowWidth() / 2);
+                    ImGui.EndTabBar();
                 }
-
-                if (ImGui.Checkbox("Open Categories on Hover", ref barConfig.OpenCategoriesOnHover))
-                    config.Save();
-                if (ImGui.IsItemHovered())
-                    ImGui.SetTooltip("Does not work for subcategories!");
 
                 ImGui.Spacing();
                 ImGui.Spacing();
