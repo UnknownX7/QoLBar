@@ -198,14 +198,14 @@ namespace QoLBar
                 ui.ToggleBarVisible(argument);
         }
 
-        private async void LoadTextureWrap(int i, bool overwrite, Func<TextureWrap> action)
+        private async void LoadTextureWrap(int i, bool overwrite, Func<TextureWrap> action, bool doSync = false)
         {
             if (!textureDictionary.ContainsKey(i) || overwrite)
             {
                 if (overwrite && textureDictionary.ContainsKey(i))
                     textureDictionary[i]?.Dispose();
                 textureDictionary[i] = null;
-                var tex = await Task.Run(() =>
+                Func<TextureWrap> t = () =>
                 {
                     try
                     {
@@ -215,7 +215,8 @@ namespace QoLBar
                     {
                         return null;
                     }
-                });
+                };
+                var tex = !doSync ? await Task.Run(t) : t();
                 if (tex != null && tex.ImGuiHandle != IntPtr.Zero)
                     textureDictionary[i] = tex;
             }
@@ -245,8 +246,8 @@ namespace QoLBar
             return pluginInterface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
         });
 
-        // Seems to cause a nvwgf2umx.dll crash if spammed enough?
-        public void LoadImage(int iconSlot, string path, bool overwrite = false) => LoadTextureWrap(iconSlot, overwrite, () => pluginInterface.UiBuilder.LoadImage(path));
+        // Seems to cause a nvwgf2umx.dll crash if spammed enough? Possibly not thread safe...
+        public void LoadImage(int iconSlot, string path, bool overwrite = false) => LoadTextureWrap(iconSlot, overwrite, () => pluginInterface.UiBuilder.LoadImage(path), true);
 
         public Dictionary<int, string> userIcons = new Dictionary<int, string>();
         public void LoadUserIcons()
