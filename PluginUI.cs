@@ -71,7 +71,7 @@ namespace QoLBar
             if (ImGui.Checkbox("Use Hotbar Frames on Icons", ref config.UseIconFrame))
                 config.Save();
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("This option will invert the 'f' argument for all icons.");
+                ImGui.SetTooltip("This option will invert the ' f ' argument for all icons.");
 
             ImGui.Spacing();
             ImGui.Spacing();
@@ -286,6 +286,8 @@ namespace QoLBar
                 {
                     if (ImGui.Button("Refresh Custom Icons"))
                         plugin.LoadUserIcons();
+                    if (ImGui.IsItemHovered())
+                        ImGui.SetTooltip("Can possibly cause a very rare crash!");
                     ImGui.SameLine();
                     if (ImGui.Button("Open Icon Folder"))
                         Process.Start(config.GetPluginIconPath());
