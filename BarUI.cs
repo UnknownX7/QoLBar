@@ -29,6 +29,8 @@ namespace QoLBar
         }
         private float _lastLocalPlayer = 9999;
 
+        private static ImGuiStylePtr Style => ImGui.GetStyle();
+
         private static Shortcut _sh;
         private Vector2 window = ImGui.GetIO().DisplaySize;
         private static Vector2 mousePos = ImGui.GetIO().MousePos;
@@ -151,8 +153,6 @@ namespace QoLBar
                 hidePos.Y = window.Y * pivX + offset + (barConfig.Offset.Y * globalSize);
                 revealPos.Y = hidePos.Y;
             }
-
-            //PluginLog.Log($"piv {piv.X} {piv.Y} hide {hidePos.X} {hidePos.Y} reveal {revealPos.X} {revealPos.Y}");
 
             SetupRevealPosition();
 
@@ -445,7 +445,7 @@ namespace QoLBar
                     ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.08f, 0.08f, 0.08f, 0.94f));
             }
 
-            var height = ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2;
+            var height = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
             var clicked = false;
 
             PushFontScale(GetFontScale() * (!inCategory ? barConfig.FontScale : barConfig.CategoryFontScale));
@@ -496,7 +496,7 @@ namespace QoLBar
             if (!vertical && barConfig.ShortcutList.Count > 0)
                 ImGui.SameLine();
 
-            var height = ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2;
+            var height = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
             PushFontScale(GetFontScale() * barConfig.FontScale);
             ImGui.Button("+", new Vector2((!vertical && barConfig.AutoButtonWidth) ? 0 : (barConfig.ButtonWidth * globalSize * barConfig.Scale), height));
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
@@ -553,8 +553,8 @@ namespace QoLBar
             var _offset = align switch
             {
                 2 => 6.0f * globalSize,
-                //_ => (!vertical && !subItem) ? (ImGui.GetWindowHeight() / 2 - ImGui.GetStyle().FramePadding.Y) : (ImGui.GetWindowWidth() / 2 - ImGui.GetStyle().FramePadding.X),
-                _ => (!vertical && !subItem) ? (ImGui.GetWindowHeight() / 2 - ImGui.GetStyle().FramePadding.Y) : (ImGui.GetWindowWidth() / 2 - ImGui.GetStyle().FramePadding.X),
+                //_ => (!vertical && !subItem) ? (ImGui.GetWindowHeight() / 2 - Style.WindowPadding.Y) : (ImGui.GetWindowWidth() / 2 - Style.WindowPadding.X),
+                _ => (!vertical && !subItem) ? (ImGui.GetWindowHeight() / 2 - Style.WindowPadding.Y) : (ImGui.GetWindowWidth() / 2 - Style.WindowPadding.X),
             };*/
             var _pos = ImGui.GetItemRectMin() + (ImGui.GetItemRectSize() / 2);
             if (!subItem)
@@ -568,13 +568,13 @@ namespace QoLBar
                 {
                     _piv.Y = 0.0f;
                     //_y += _offset;
-                    _pos.Y = ImGui.GetWindowPos().Y + ImGui.GetWindowHeight() - ImGui.GetStyle().FramePadding.Y;
+                    _pos.Y = ImGui.GetWindowPos().Y + ImGui.GetWindowHeight() - Style.WindowPadding.Y / 2;
                 }
                 else
                 {
                     _piv.Y = 1.0f;
                     //_y -= _offset;
-                    _pos.Y = ImGui.GetWindowPos().Y + ImGui.GetStyle().FramePadding.Y;
+                    _pos.Y = ImGui.GetWindowPos().Y + Style.WindowPadding.Y / 2;
                 }
             }
             else
@@ -584,13 +584,13 @@ namespace QoLBar
                 {
                     _piv.X = 0.0f;
                     //_x += _offset;
-                    _pos.X = ImGui.GetWindowPos().X + ImGui.GetWindowWidth() - ImGui.GetStyle().FramePadding.X;
+                    _pos.X = ImGui.GetWindowPos().X + ImGui.GetWindowWidth() - Style.WindowPadding.X / 2;
                 }
                 else
                 {
                     _piv.X = 1.0f;
                     //_x -= _offset;
-                    _pos.X = ImGui.GetWindowPos().X + ImGui.GetStyle().FramePadding.X;
+                    _pos.X = ImGui.GetWindowPos().X + Style.WindowPadding.X / 2;
                 }
             }
             _catpiv = _piv;
@@ -633,7 +633,7 @@ namespace QoLBar
                         ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
                     else
                         ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.08f, 0.08f, 0.08f, 0.94f));
-                    var height = ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2;
+                    var height = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
                     PushFontScale(GetFontScale() * barConfig.CategoryFontScale);
                     if (ImGui.Button("+", new Vector2(width, height)))
                         ImGui.OpenPopup("addItem");
@@ -841,8 +841,8 @@ namespace QoLBar
                     }
                 }
 
-                var iconSize = ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2;
-                ImGui.SameLine(ImGui.GetWindowContentRegionWidth() + ImGui.GetStyle().FramePadding.X * 2 - iconSize);
+                var iconSize = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
+                ImGui.SameLine(ImGui.GetWindowContentRegionWidth() + Style.WindowPadding.X - iconSize);
                 if (DrawIconButton(46, new Vector2(iconSize), 1.0f, Vector4.One))
                     plugin.ToggleIconBrowser();
                 if (ImGui.IsItemHovered())
@@ -978,9 +978,9 @@ namespace QoLBar
 
         private void SetBarSize()
         {
-            barSize.Y = ImGui.GetCursorPosY() + 4;
+            barSize.Y = ImGui.GetCursorPosY() + Style.WindowPadding.Y - Style.ItemSpacing.Y;
             ImGui.SameLine();
-            barSize.X = ImGui.GetCursorPosX();
+            barSize.X = ImGui.GetCursorPosX() + Style.WindowPadding.X - Style.ItemSpacing.X;
         }
 
         private void ClampWindowPos()

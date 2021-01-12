@@ -264,7 +264,7 @@ namespace QoLBar
         private void DrawIconBrowser()
         {
             var iconSize = 48 * ImGui.GetIO().FontGlobalScale;
-            ImGui.SetNextWindowSizeConstraints(new Vector2((iconSize + ImGui.GetStyle().FramePadding.X * 2) * 11 + ImGui.GetStyle().FramePadding.X * 2 + 16), ImGui.GetIO().DisplaySize); // whyyyyyyyyyyyyyyyyyyyy
+            ImGui.SetNextWindowSizeConstraints(new Vector2((iconSize + ImGui.GetStyle().ItemSpacing.X) * 11 + ImGui.GetStyle().WindowPadding.X * 2 + 8), ImGui.GetIO().DisplaySize); // whyyyyyyyyyyyyyyyyyyyy
             ImGui.Begin("Icon Browser", ref iconBrowserOpen);
             if (ImGui.BeginTabBar("Icon Tabs", ImGuiTabBarFlags.NoTooltip))
             {
@@ -412,7 +412,7 @@ namespace QoLBar
                 _name = name;
                 _tabExists = true;
                 _i = 0;
-                _columns = (int)((ImGui.GetContentRegionAvail().X + ImGui.GetStyle().FramePadding.X * 2) / (iconSize + ImGui.GetStyle().FramePadding.X * 2)); // WHYYYYYYYYYYYYYYYYYYYYY
+                _columns = (int)((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / (iconSize + ImGui.GetStyle().ItemSpacing.X)); // WHYYYYYYYYYYYYYYYYYYYYY
                 _iconSize = iconSize;
                 _iconList = new List<(int, int)>();
             }
