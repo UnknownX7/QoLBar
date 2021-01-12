@@ -761,12 +761,8 @@ namespace QoLBar
                     if (ImGui.DragFloat("Icon Zoom", ref sh.IconZoom, 0.01f, 1.0f, 5.0f, "%.2f"))
                         config.Save();
 
-                    var tint = sh.IconTint * 255;
-                    if (ImGui.DragFloat4("Icon Tint", ref tint, 1, 0, 255, "%.f"))
-                    {
-                        sh.IconTint = tint / 255;
+                    if (ImGui.ColorEdit4("Icon Tint", ref sh.IconTint, ImGuiColorEditFlags.NoDragDrop | ImGuiColorEditFlags.AlphaPreviewHalf))
                         config.Save();
-                    }
                 }
 
                 if (ImGui.Button((shortcuts == barConfig.ShortcutList && !vertical) ? "←" : "↑") && i > 0)
