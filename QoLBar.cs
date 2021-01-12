@@ -208,7 +208,8 @@ namespace QoLBar
                 if (overwrite && textureDictionary.ContainsKey(i))
                     textureDictionary[i]?.Dispose();
                 textureDictionary[i] = null;
-                Func<TextureWrap> t = () =>
+
+                TextureWrap t()
                 {
                     try
                     {
@@ -218,7 +219,8 @@ namespace QoLBar
                     {
                         return null;
                     }
-                };
+                }
+
                 var tex = !doSync ? await Task.Run(t) : t();
                 if (tex != null && tex.ImGuiHandle != IntPtr.Zero)
                     textureDictionary[i] = tex;
