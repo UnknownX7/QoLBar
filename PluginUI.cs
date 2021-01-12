@@ -71,7 +71,7 @@ namespace QoLBar
             if (ImGui.Checkbox("Use Hotbar Frames on Icons", ref config.UseIconFrame))
                 config.Save();
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("Might cause lag.");
+                ImGui.SetTooltip("This option will invert the 'f' argument for all icons.");
 
             ImGui.Spacing();
             ImGui.Spacing();
@@ -449,7 +449,7 @@ namespace QoLBar
             {
                 for (int icon = start; icon < end; icon++)
                 {
-                    if (bars[0].DrawIconButton(icon, new Vector2(_iconSize), 1.0f, Vector4.One, true))
+                    if (bars[0].DrawIconButton(icon, new Vector2(_iconSize), 1.0f, Vector4.One, "_", true))
                     {
                         if (ImGui.IsItemClicked())
                         {

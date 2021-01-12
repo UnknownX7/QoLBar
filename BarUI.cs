@@ -356,8 +356,9 @@ namespace QoLBar
                 Hide();
         }
 
-        private bool ParseName(ref string name, out string tooltip, out int icon)
+        private bool ParseName(ref string name, out string tooltip, out int icon, out string args)
         {
+            args = string.Empty;
             if (name == string.Empty)
             {
                 tooltip = string.Empty;
@@ -373,7 +374,36 @@ namespace QoLBar
             icon = 0;
             if (name.StartsWith("::"))
             {
-                int.TryParse(name.Substring(2), out icon);
+                var substart = 2;
+
+                // Parse icon arguments
+                var done = false;
+                while (!done)
+                {
+                    if (name.Length > substart)
+                    {
+                        var arg = name[substart];
+                        switch (arg)
+                        {
+                            case '_': // Disable all args
+                                args = "_";
+                                substart = 3;
+                                done = true;
+                                break;
+                            case 'f': // Use game icon frame
+                                args += arg;
+                                substart++;
+                                break;
+                            default:
+                                done = true;
+                                break;
+                        }
+                    }
+                    else
+                        done = true;
+                }
+                
+                int.TryParse(name.Substring(substart), out icon);
                 return true;
             }
             else
@@ -405,7 +435,7 @@ namespace QoLBar
             var name = sh.Name;
             var type = sh.Type;
 
-            var useIcon = ParseName(ref name, out string tooltip, out int icon);
+            var useIcon = ParseName(ref name, out string tooltip, out int icon, out string args);
 
             if (inCategory)
             {
@@ -427,7 +457,7 @@ namespace QoLBar
                 ImGui.EndChild();
             }
             else if (useIcon)
-                clicked = DrawIconButton(icon, new Vector2(height), sh.IconZoom, sh.IconTint);
+                clicked = DrawIconButton(icon, new Vector2(height), sh.IconZoom, sh.IconTint, args);
             else
                 clicked = ImGui.Button(name, new Vector2((!inCategory && !vertical && barConfig.AutoButtonWidth) ? 0 : width, height));
             PopFontScale();
@@ -1000,7 +1030,7 @@ namespace QoLBar
 
         private ImGuiScene.TextureWrap _buttonshine;
         private Vector2 _uvMin, _uvMax, _uvMinHover, _uvMaxHover;//, _uvMinHover2, _uvMaxHover2;
-        public bool DrawIconButton(int icon, Vector2 size, float zoom, Vector4 tint, bool retExists = false)
+        public bool DrawIconButton(int icon, Vector2 size, float zoom, Vector4 tint, string args = "_", bool retExists = false)
         {
             bool ret = false;
             var texd = plugin.textureDictionary;
@@ -1014,13 +1044,22 @@ namespace QoLBar
                         if (icon == 66001)
                             ret = ImGui.Button("  X  ##FailedTexture");
                         else
-                            ret = DrawIconButton(66001, size, zoom, tint);
+                            ret = DrawIconButton(66001, size, zoom, tint, args);
                     }
                 }
                 else
                 {
+                    var frameArg = false;
+                    if (args != "_")
+                    {
+                        frameArg = args.Contains("f");
+                        if (config.UseIconFrame)
+                            frameArg = !frameArg;
+                    }
+
                     ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
-                    if (config.UseIconFrame)
+
+                    if (frameArg)
                     {
                         ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Vector4.Zero);
                         ImGui.PushStyleColor(ImGuiCol.ButtonActive, Vector4.Zero);
@@ -1029,7 +1068,7 @@ namespace QoLBar
                     var z = 0.5f / zoom;
                     ret = ImGui.ImageButton(texd[icon].ImGuiHandle, size, new Vector2(0.5f - z), new Vector2(0.5f + z), 0, Vector4.Zero, tint);
 
-                    if (config.UseIconFrame)
+                    if (frameArg)
                     {
                         if (_buttonshine == null)
                         {
