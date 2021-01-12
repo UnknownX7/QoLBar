@@ -16,19 +16,15 @@ namespace QoLBar
         public bool ResizeRepositionsBars = false;
         public bool UseIconFrame = false;
 
-        [JsonIgnore] private DalamudPluginInterface pluginInterface;
-        // Temporary
-        [JsonIgnore] private static readonly DirectoryInfo configFolder = new DirectoryInfo(Path.Combine(new[] {
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "XIVLauncher",
-            "pluginConfigs",
-            "QoLBar",
-        }));
-        [JsonIgnore] private static readonly DirectoryInfo iconFolder = new DirectoryInfo(Path.Combine(configFolder.FullName, "icons"));
+        [JsonIgnore] private static DalamudPluginInterface pluginInterface;
+        [JsonIgnore] private static string ConfigFolder => pluginInterface.GetPluginConfigDirectory();
+        [JsonIgnore] private static DirectoryInfo iconFolder;
 
         public void Initialize(DalamudPluginInterface pInterface)
         {
             pluginInterface = pInterface;
+            if (ConfigFolder != "")
+                iconFolder = new DirectoryInfo(Path.Combine(ConfigFolder, "icons"));
 
             if (BarConfigs.Count < 1)
                 BarConfigs.Add(new BarConfig());
@@ -56,27 +52,12 @@ namespace QoLBar
             }
         }
 
-        public string GetPluginConfigPath()
-        {
-            try
-            {
-                if (!configFolder.Exists)
-                    configFolder.Create();
-                return configFolder.FullName;
-            }
-            catch (Exception e)
-            {
-                PluginLog.Error(e, "Failed to create config folder");
-                return "";
-            }
-        }
+        public string GetPluginConfigPath() => ConfigFolder;
 
         public string GetPluginIconPath()
         {
             try
             {
-                if (!configFolder.Exists)
-                    configFolder.Create();
                 if (!iconFolder.Exists)
                     iconFolder.Create();
                 return iconFolder.FullName;
