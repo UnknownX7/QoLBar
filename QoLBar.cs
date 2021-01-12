@@ -143,8 +143,11 @@ namespace QoLBar
         private readonly QoLSerializer qolSerializer = new QoLSerializer();
 
         public readonly Dictionary<int, TextureWrap> textureDictionary = new Dictionary<int, TextureWrap>();
+        public Dictionary<int, string> userIcons = new Dictionary<int, string>();
 
-        public const int FrameIconID = 114000;
+        public const int FrameIconID = 114_000;
+        private const int SafeIconID = 1_000_000;
+        public int GetSafeIconID(byte i) => SafeIconID + i;
 
         public string Name => "QoL Bar";
 
@@ -246,10 +249,9 @@ namespace QoLBar
             return pluginInterface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
         });
 
-        // Seems to cause a nvwgf2umx.dll crash if spammed enough? Possibly not thread safe...
+        // Seems to cause a nvwgf2umx.dll (System Access Violation Exception) crash if spammed enough? Possibly not thread safe...
         public void LoadImage(int iconSlot, string path, bool overwrite = false) => LoadTextureWrap(iconSlot, overwrite, () => pluginInterface.UiBuilder.LoadImage(path), true);
 
-        public Dictionary<int, string> userIcons = new Dictionary<int, string>();
         public void LoadUserIcons()
         {
             if (userIcons != null)
