@@ -483,10 +483,22 @@ namespace QoLBar
             PushFontScale(GetFontScale() * (!inCategory ? barConfig.FontScale : barConfig.CategoryFontScale));
             if (type == Shortcut.ShortcutType.Spacer)
             {
-                ImGui.BeginChild((uint)i, new Vector2(width, height));
-                //ImGui.SameLine(ImGui.GetContentRegionAvail().X / 2 - ImGui.CalcTextSize(name).X / 2); // TODO: Fix this being smaller than normal buttons for whatever reason
-                //ImGui.Text(name);
-                ImGui.EndChild();
+                if (useIcon)
+                    DrawIconButton(icon, new Vector2(height), sh.IconZoom, sh.IconTint, args, true, true);
+                else
+                {
+                    ImGui.BeginChild((uint)i, new Vector2(width, height));
+                    // What the fuck ImGui
+                    if (inCategory)
+                        ImGui.SetWindowFontScale(GetFontScale());
+                    else
+                        ImGui.SetWindowFontScale(1);
+                    var textSize = ImGui.CalcTextSize(name);
+                    ImGui.SameLine((ImGui.GetContentRegionAvail().X - textSize.X) / 2);
+                    ImGui.SetCursorPosY((ImGui.GetContentRegionAvail().Y - textSize.Y) / 2);
+                    ImGui.TextUnformatted(name);
+                    ImGui.EndChild();
+                }
             }
             else if (useIcon)
                 clicked = DrawIconButton(icon, new Vector2(height), sh.IconZoom, sh.IconTint, args);
@@ -696,23 +708,19 @@ namespace QoLBar
 
         private void ItemBaseUI(Shortcut sh, bool editing)
         {
-            if (sh.Type != Shortcut.ShortcutType.Spacer)
+            if (plugin.ui.iconBrowserOpen && plugin.ui.doPasteIcon)
             {
-                if (plugin.ui.iconBrowserOpen && plugin.ui.doPasteIcon)
-                {
-                    var split = sh.Name.Split(new[] { "##" }, 2, StringSplitOptions.None);
-                    sh.Name = $"::{plugin.ui.pasteIcon}" + (split.Length > 1 ? $"##{split[1]}" : "");
-                    config.Save();
-                    plugin.ui.doPasteIcon = false;
-                }
-                if (ImGui.InputText("Name          ", ref sh.Name, 256) && editing) // Not a bug... just ImGui not extending the window to fit multiline's name...
-                    config.Save();
-                if (ImGui.IsItemHovered())
-                    ImGui.SetTooltip("Start the name with ::x where x is a number to use icons, i.e. \"::2914\".\n" +
-                        "Use ## anywhere in the name to make the text afterwards into a tooltip,\ni.e. \"Name##This is a Tooltip\".");
+                var split = sh.Name.Split(new[] { "##" }, 2, StringSplitOptions.None);
+                sh.Name = $"::{plugin.ui.pasteIcon}" + (split.Length > 1 ? $"##{split[1]}" : "");
+                config.Save();
+                plugin.ui.doPasteIcon = false;
             }
+            if (ImGui.InputText("Name          ", ref sh.Name, 256) && editing) // Not a bug... just ImGui not extending the window to fit multiline's name...
+                config.Save();
+            if (ImGui.IsItemHovered())
+                ImGui.SetTooltip("Start the name with ::x where x is a number to use icons, i.e. \"::2914\".\n" +
+                    "Use ## anywhere in the name to make the text afterwards into a tooltip,\ni.e. \"Name##This is a Tooltip\".");
 
-            // No nested categories
             var _t = (int)sh.Type;
             if (ImGui.Combo("Type", ref _t, "Single\0Multiline\0Category\0Spacer"))
             {
@@ -724,9 +732,6 @@ namespace QoLBar
                     sh.Command = sh.Command.Split('\n')[0];
                 else if (sh.Type != Shortcut.ShortcutType.Multiline)
                     sh.Command = string.Empty;
-
-                if (sh.Type == Shortcut.ShortcutType.Spacer)
-                    sh.Name = string.Empty;
 
                 if (editing)
                     config.Save();
@@ -1147,7 +1152,7 @@ namespace QoLBar
 
         private ImGuiScene.TextureWrap _buttonshine;
         private Vector2 _uvMin, _uvMax, _uvMinHover, _uvMaxHover;//, _uvMinHover2, _uvMaxHover2;
-        public bool DrawIconButton(int icon, Vector2 size, float zoom, Vector4 tint, string args = "_", bool retExists = false)
+        public bool DrawIconButton(int icon, Vector2 size, float zoom, Vector4 tint, string args = "_", bool retExists = false, bool noButton = false)
         {
             bool ret = false;
             var texd = plugin.textureDictionary;
@@ -1183,7 +1188,10 @@ namespace QoLBar
                     }
 
                     var z = 0.5f / zoom;
-                    ret = ImGui.ImageButton(texd[icon].ImGuiHandle, size, new Vector2(0.5f - z), new Vector2(0.5f + z), 0, Vector4.Zero, tint);
+                    if (!noButton)
+                        ret = ImGui.ImageButton(texd[icon].ImGuiHandle, size, new Vector2(0.5f - z), new Vector2(0.5f + z), 0, Vector4.Zero, tint);
+                    else
+                        ImGui.Image(texd[icon].ImGuiHandle, size, new Vector2(0.5f - z), new Vector2(0.5f + z), tint);
 
                     if (frameArg)
                     {
@@ -1201,7 +1209,7 @@ namespace QoLBar
                         var _rMin = ImGui.GetItemRectMin() - _sizeInc;
                         var _rMax = ImGui.GetItemRectMax() + _sizeInc;
                         ImGui.GetWindowDrawList().AddImage(_buttonshine.ImGuiHandle, _rMin, _rMax, _uvMin, _uvMax); // Frame
-                        if (ImGui.IsItemHovered(ImGuiHoveredFlags.RectOnly))
+                        if (!noButton && ImGui.IsItemHovered(ImGuiHoveredFlags.RectOnly))
                         {
                             ImGui.GetWindowDrawList().AddImage(_buttonshine.ImGuiHandle, _rMin, _rMax, _uvMinHover, _uvMaxHover, 0x85FFFFFF); // Frame Center Glow
                             //ImGui.GetWindowDrawList().AddImage(_buttonshine.ImGuiHandle, _rMin - (_sizeInc * 1.5f), _rMax + (_sizeInc * 1.5f), _uvMinHover2, _uvMaxHover2); // Edge glow // TODO: Probably somewhat impossible as is, but fix glow being clipped
