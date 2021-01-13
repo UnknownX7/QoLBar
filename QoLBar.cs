@@ -167,6 +167,8 @@ namespace QoLBar
             pluginInterface.UiBuilder.OnBuildUi += ui.Draw;
             pluginInterface.ClientState.OnLogin += InitCommands;
 
+            CheckHideOptOuts();
+
             commandManager = new PluginCommandManager<QoLBar>(this, pluginInterface);
 
 #if DEBUG
@@ -203,6 +205,14 @@ namespace QoLBar
                 ui.ToggleBarVisible(id - 1);
             else
                 ui.ToggleBarVisible(argument);
+        }
+
+        public void CheckHideOptOuts()
+        {
+            //pluginInterface.UiBuilder.DisableAutomaticUiHide = false;
+            pluginInterface.UiBuilder.DisableUserUiHide = config.OptOutGameUIOffHide;
+            pluginInterface.UiBuilder.DisableCutsceneUiHide = config.OptOutCutsceneHide;
+            pluginInterface.UiBuilder.DisableGposeUiHide = config.OptOutGPoseHide;
         }
 
         private async void LoadTextureWrap(int i, bool overwrite, Func<TextureWrap> action, bool doSync = false)

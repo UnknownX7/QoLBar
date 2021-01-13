@@ -15,6 +15,9 @@ namespace QoLBar
         public bool ExportOnDelete = true;
         public bool ResizeRepositionsBars = false;
         public bool UseIconFrame = false;
+        public bool OptOutGameUIOffHide = false;
+        public bool OptOutCutsceneHide = false;
+        public bool OptOutGPoseHide = false;
 
         [JsonIgnore] private static DalamudPluginInterface pluginInterface;
         [JsonIgnore] private static string ConfigFolder => pluginInterface.GetPluginConfigDirectory();

@@ -75,6 +75,27 @@ namespace QoLBar
 
             ImGui.Spacing();
             ImGui.Spacing();
+            ImGui.TextUnformatted("Opt out of Dalamud settings for hiding UI");
+            if (ImGui.Checkbox("Game UI Toggled", ref config.OptOutGameUIOffHide))
+            {
+                config.Save();
+                plugin.CheckHideOptOuts();
+            }
+            ImGui.SameLine(ImGui.GetWindowWidth() / 3);
+            if (ImGui.Checkbox("In Cutscene", ref config.OptOutCutsceneHide))
+            {
+                config.Save();
+                plugin.CheckHideOptOuts();
+            }
+            ImGui.SameLine(ImGui.GetWindowWidth() / 3 * 2);
+            if (ImGui.Checkbox("In /gpose", ref config.OptOutGPoseHide))
+            {
+                config.Save();
+                plugin.CheckHideOptOuts();
+            }
+
+            ImGui.Spacing();
+            ImGui.Spacing();
             ImGui.Spacing();
             ImGui.Spacing();
             ImGui.SameLine(30);
