@@ -171,12 +171,12 @@ namespace QoLBar
                             }
                         }
 
+                        ImGui.Separator();
                         ImGui.NextColumn();
 
                         ImGui.PopID();
                     }
 
-                    ImGui.Separator();
                     ImGui.Spacing();
                     ImGui.SameLine(textx);
                     if (ImGui.Button("+", textsize))
