@@ -484,7 +484,7 @@ namespace QoLBar
             if (type == Shortcut.ShortcutType.Spacer)
             {
                 if (useIcon)
-                    DrawIconButton(icon, new Vector2(height), sh.IconZoom, sh.IconTint, args, true, true);
+                    DrawIconButton(icon, new Vector2(height), sh.IconZoom, sh.IconOffset, sh.IconTint, args, true, true);
                 else
                 {
                     ImGui.BeginChild((uint)i, new Vector2(width, height));
@@ -501,7 +501,7 @@ namespace QoLBar
                 }
             }
             else if (useIcon)
-                clicked = DrawIconButton(icon, new Vector2(height), sh.IconZoom, sh.IconTint, args);
+                clicked = DrawIconButton(icon, new Vector2(height), sh.IconZoom, sh.IconOffset, sh.IconTint, args);
             else
                 clicked = ImGui.Button(name, new Vector2((!inCategory && !vertical && barConfig.AutoButtonWidth) ? 0 : width, height));
             PopFontScale();
@@ -860,6 +860,9 @@ namespace QoLBar
                         if (ImGui.DragFloat("Zoom", ref sh.IconZoom, 0.005f, 1.0f, 5.0f, "%.2f"))
                             config.Save();
 
+                        if (ImGui.DragFloat2("Offset", ref sh.IconOffset, 0.002f, -0.5f, 0.5f, "%.2f"))
+                            config.Save();
+
                         if (ImGui.ColorEdit4("Tint", ref sh.IconTint, ImGuiColorEditFlags.NoDragDrop | ImGuiColorEditFlags.AlphaPreviewHalf))
                             config.Save();
 
@@ -917,7 +920,7 @@ namespace QoLBar
 
                 var iconSize = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
                 ImGui.SameLine(ImGui.GetWindowContentRegionWidth() + Style.WindowPadding.X - iconSize);
-                if (DrawIconButton(46, new Vector2(iconSize), 1.0f, Vector4.One))
+                if (DrawIconButton(46, new Vector2(iconSize), 1.0f, Vector2.Zero, Vector4.One))
                     plugin.ToggleIconBrowser();
                 if (ImGui.IsItemHovered())
                     ImGui.SetTooltip("Opens up a list of all icons you can use instead of text.\n" +
@@ -1152,7 +1155,7 @@ namespace QoLBar
 
         private ImGuiScene.TextureWrap _buttonshine;
         private Vector2 _uvMin, _uvMax, _uvMinHover, _uvMaxHover;//, _uvMinHover2, _uvMaxHover2;
-        public bool DrawIconButton(int icon, Vector2 size, float zoom, Vector4 tint, string args = "_", bool retExists = false, bool noButton = false)
+        public bool DrawIconButton(int icon, Vector2 size, float zoom, Vector2 offset, Vector4 tint, string args = "_", bool retExists = false, bool noButton = false)
         {
             bool ret = false;
             var texd = plugin.textureDictionary;
@@ -1166,7 +1169,7 @@ namespace QoLBar
                         if (icon == 66001)
                             ret = ImGui.Button("  X  ##FailedTexture");
                         else
-                            ret = DrawIconButton(66001, size, zoom, tint, args);
+                            ret = DrawIconButton(66001, size, zoom, offset, tint, args);
                     }
                 }
                 else
@@ -1188,10 +1191,12 @@ namespace QoLBar
                     }
 
                     var z = 0.5f / zoom;
+                    var uv0 = new Vector2(0.5f - z + offset.X, 0.5f - z + offset.Y);
+                    var uv1 = new Vector2(0.5f + z + offset.X, 0.5f + z + offset.Y);
                     if (!noButton)
-                        ret = ImGui.ImageButton(texd[icon].ImGuiHandle, size, new Vector2(0.5f - z), new Vector2(0.5f + z), 0, Vector4.Zero, tint);
+                        ret = ImGui.ImageButton(texd[icon].ImGuiHandle, size, uv0, uv1, 0, Vector4.Zero, tint);
                     else
-                        ImGui.Image(texd[icon].ImGuiHandle, size, new Vector2(0.5f - z), new Vector2(0.5f + z), tint);
+                        ImGui.Image(texd[icon].ImGuiHandle, size, uv0, uv1, tint);
 
                     if (frameArg)
                     {

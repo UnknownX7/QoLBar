@@ -89,6 +89,7 @@ namespace QoLBar
         [DefaultValue(false)] public bool CategoryStaysOpen = false;
         [DefaultValue(1)] public int CategoryColumns = 1;
         [DefaultValue(1.0f)] public float IconZoom = 1.0f;
+        public Vector2 IconOffset = Vector2.Zero;
         [DefaultValue(null)] public Vector4 IconTint = Vector4.One;
     }
 

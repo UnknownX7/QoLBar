@@ -587,7 +587,7 @@ namespace QoLBar
             {
                 for (int icon = start; icon < end; icon++)
                 {
-                    if (bars[0].DrawIconButton(icon, new Vector2(_iconSize), 1.0f, Vector4.One, "_", true))
+                    if (bars[0].DrawIconButton(icon, new Vector2(_iconSize), 1.0f, Vector2.Zero, Vector4.One, "_", true))
                     {
                         if (ImGui.IsItemClicked())
                         {
