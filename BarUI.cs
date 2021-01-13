@@ -166,16 +166,16 @@ namespace QoLBar
             switch (barConfig.DockSide)
             {
                 case BarDock.Top:
-                    revealPos.Y = Math.Max(hidePos.Y + barSize.Y + (barConfig.Offset.Y * globalSize), hidePos.Y + 1);
+                    revealPos.Y = Math.Max(hidePos.Y + barSize.Y + (barConfig.Offset.Y * globalSize), GetHidePosition().Y + 1);
                     break;
                 case BarDock.Left:
-                    revealPos.X = Math.Max(hidePos.X + barSize.X + (barConfig.Offset.X * globalSize), hidePos.X + 1);
+                    revealPos.X = Math.Max(hidePos.X + barSize.X + (barConfig.Offset.X * globalSize), GetHidePosition().X + 1);
                     break;
                 case BarDock.Bottom:
-                    revealPos.Y = Math.Min(hidePos.Y - barSize.Y + (barConfig.Offset.Y * globalSize), hidePos.Y - 1);
+                    revealPos.Y = Math.Min(hidePos.Y - barSize.Y + (barConfig.Offset.Y * globalSize), GetHidePosition().Y - 1);
                     break;
                 case BarDock.Right:
-                    revealPos.X = Math.Min(hidePos.X - barSize.X + (barConfig.Offset.X * globalSize), hidePos.X - 1);
+                    revealPos.X = Math.Min(hidePos.X - barSize.X + (barConfig.Offset.X * globalSize), GetHidePosition().X - 1);
                     break;
                 default:
                     break;
@@ -194,6 +194,34 @@ namespace QoLBar
                 flags |= ImGuiWindowFlags.NoBackground;
             flags |= ImGuiWindowFlags.NoSavedSettings;
             flags |= ImGuiWindowFlags.NoFocusOnAppearing;
+        }
+
+        private Vector2 GetHidePosition()
+        {
+            var _hidePos = hidePos;
+            if (barConfig.Hint)
+            {
+                var _winPad = Style.WindowPadding * 2;
+
+                switch (barConfig.DockSide)
+                {
+                    case BarDock.Top:
+                        _hidePos.Y += _winPad.Y;
+                        break;
+                    case BarDock.Left:
+                        _hidePos.X += _winPad.X;
+                        break;
+                    case BarDock.Bottom:
+                        _hidePos.Y -= _winPad.Y;
+                        break;
+                    case BarDock.Right:
+                        _hidePos.X -= _winPad.X;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            return _hidePos;
         }
 
         public void Draw()
@@ -224,7 +252,7 @@ namespace QoLBar
             if (!docked && !_firstframe && !_reveal && !_lastReveal)
                 return;
 
-            if (_firstframe || _reveal || barPos != hidePos || (!docked && _lastReveal)) // Don't bother to render when fully off screen
+            if (_firstframe || _reveal || (barPos != hidePos) || (!docked && _lastReveal)) // Don't bother to render when fully off screen
             {
                 ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0);
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0);
@@ -332,16 +360,16 @@ namespace QoLBar
             switch (barConfig.DockSide)
             {
                 case BarDock.Top:
-                    _max.Y = Math.Max(Math.Max(_max.Y - barSize.Y * (1 - barConfig.RevealAreaScale), _min.Y + 1), 1);
+                    _max.Y = Math.Max(Math.Max(_max.Y - barSize.Y * (1 - barConfig.RevealAreaScale), _min.Y + 1), GetHidePosition().Y + 1);
                     break;
                 case BarDock.Left:
-                    _max.X = Math.Max(Math.Max(_max.X - barSize.X * (1 - barConfig.RevealAreaScale), _min.X + 1), 1);
+                    _max.X = Math.Max(Math.Max(_max.X - barSize.X * (1 - barConfig.RevealAreaScale), _min.X + 1), GetHidePosition().X + 1);
                     break;
                 case BarDock.Bottom:
-                    _min.Y = Math.Min(Math.Min(_min.Y + barSize.Y * (1 - barConfig.RevealAreaScale), _max.Y - 1), window.Y - 1);
+                    _min.Y = Math.Min(Math.Min(_min.Y + barSize.Y * (1 - barConfig.RevealAreaScale), _max.Y - 1), GetHidePosition().Y - 1);
                     break;
                 case BarDock.Right:
-                    _min.X = Math.Min(Math.Min(_min.X + barSize.X * (1 - barConfig.RevealAreaScale), _max.X - 1), window.X - 1);
+                    _min.X = Math.Min(Math.Min(_min.X + barSize.X * (1 - barConfig.RevealAreaScale), _max.X - 1), GetHidePosition().X - 1);
                     break;
                 default:
                     break;
@@ -954,11 +982,16 @@ namespace QoLBar
                             if ((barConfig.Visibility != VisibilityMode.Always) && ImGui.DragFloat("Reveal Area Scale", ref barConfig.RevealAreaScale, 0.01f, 0.0f, 1.0f, "%.2f"))
                                 config.Save();
 
-                            if (docked && ImGui.DragFloat2("Offset", ref barConfig.Offset, 0.2f, -300, 300, "%.f"))
+                            if (ImGui.DragFloat2("Offset", ref barConfig.Offset, 0.2f, -300, 300, "%.f"))
                             {
                                 config.Save();
                                 SetupPosition();
                             }
+
+                            if ((barConfig.Visibility != VisibilityMode.Always) && ImGui.Checkbox("Hint", ref barConfig.Hint))
+                                config.Save();
+                            if (ImGui.IsItemHovered())
+                                ImGui.SetTooltip("Will prevent the bar from sleeping, increasing CPU load.");
                         }
                         else
                         {
@@ -1080,11 +1113,13 @@ namespace QoLBar
             if (barConfig.Visibility == VisibilityMode.Slide)
                 TweenBarPosition();
             else
-                barPos = _reveal ? revealPos : hidePos;
+                barPos = _reveal ? revealPos : GetHidePosition();
         }
 
         private void TweenBarPosition()
         {
+            var _hidePos = GetHidePosition();
+
             if (_reveal != _lastReveal)
             {
                 _lastReveal = _reveal;
@@ -1094,7 +1129,7 @@ namespace QoLBar
 
             if (_tweenProgress >= 1)
             {
-                barPos = _reveal ? revealPos : hidePos;
+                barPos = _reveal ? revealPos : _hidePos;
             }
             else
             {
@@ -1102,14 +1137,13 @@ namespace QoLBar
                 _tweenProgress = Math.Min(_tweenProgress + dt, 1);
 
                 var x = -1 * ((float)Math.Pow(_tweenProgress - 1, 4) - 1); // Quartic ease out
-                var deltaX = ((_reveal ? revealPos.X : hidePos.X) - _tweenStart.X) * x;
-                var deltaY = ((_reveal ? revealPos.Y : hidePos.Y) - _tweenStart.Y) * x;
+                var deltaX = ((_reveal ? revealPos.X : _hidePos.X) - _tweenStart.X) * x;
+                var deltaY = ((_reveal ? revealPos.Y : _hidePos.Y) - _tweenStart.Y) * x;
 
                 barPos.X = _tweenStart.X + deltaX;
                 barPos.Y = _tweenStart.Y + deltaY;
             }
         }
-
 
         private ImGuiScene.TextureWrap _buttonshine;
         private Vector2 _uvMin, _uvMax, _uvMinHover, _uvMaxHover;//, _uvMinHover2, _uvMaxHover2;
