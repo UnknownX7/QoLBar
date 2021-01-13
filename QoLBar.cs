@@ -165,7 +165,8 @@ namespace QoLBar
             pluginInterface = pInterface;
 
             config = (Configuration)pluginInterface.GetPluginConfig() ?? new Configuration();
-            config.Initialize(pluginInterface);
+            config.Initialize(this);
+            config.TryBackup(); // Backup on version change
 
             ui = new PluginUI(this, config);
             pluginInterface.UiBuilder.OnOpenConfigUi += ToggleConfig;
@@ -190,6 +191,14 @@ namespace QoLBar
                 LoadUserIcons();
             });
 #endif
+        }
+
+        public void Reload()
+        {
+            config = (Configuration)pluginInterface.GetPluginConfig() ?? new Configuration();
+            config.Initialize(this);
+            ui.Reload(config);
+            CheckHideOptOuts();
         }
 
         public void ToggleConfig(object sender, EventArgs e) => ui.ToggleConfig();
@@ -474,7 +483,8 @@ namespace QoLBar
             if (!disposing) return;
 
             commandManager.Dispose();
-            pluginInterface.SavePluginConfig(config);
+            config.Save();
+            config.SaveTempConfig();
 
             pluginInterface.UiBuilder.OnOpenConfigUi -= ToggleConfig;
             pluginInterface.UiBuilder.OnBuildUi -= ui.Draw;

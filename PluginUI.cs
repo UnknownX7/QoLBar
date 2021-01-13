@@ -1,9 +1,10 @@
 using ImGuiNET;
 using System;
+using System.Diagnostics;
+using System.IO;
 using System.Numerics;
 using System.Collections.Generic;
 using Dalamud.Plugin;
-using System.Diagnostics;
 
 namespace QoLBar
 {
@@ -11,10 +12,10 @@ namespace QoLBar
     {
         public bool IsVisible => true;
 
-        private readonly List<BarUI> bars;
+        private List<BarUI> bars;
 
         private readonly QoLBar plugin;
-        private readonly Configuration config;
+        private Configuration config;
 
 #if DEBUG
         private bool configOpen = true;
@@ -36,6 +37,17 @@ namespace QoLBar
             bars = new List<BarUI>();
             for (int i = 0; i < config.BarConfigs.Count; i++)
                 bars.Add(new BarUI(p, config, i));
+        }
+
+        public void Reload(Configuration config)
+        {
+            Dispose();
+
+            this.config = config;
+
+            bars.Clear();
+            for (int i = 0; i < config.BarConfigs.Count; i++)
+                bars.Add(new BarUI(plugin, config, i));
         }
 
         public void Draw()
@@ -61,182 +73,249 @@ namespace QoLBar
             ImGui.SetNextWindowSizeConstraints(new Vector2(588, 500), ImGui.GetIO().DisplaySize);
             ImGui.Begin("QoL Bar Configuration", ref configOpen);
 
-            if (ImGui.Checkbox("Export on Delete", ref config.ExportOnDelete))
-                config.Save();
-            ImGui.SameLine(ImGui.GetWindowWidth() / 2);
-            if (ImGui.Checkbox("Resizing Repositions Bars", ref config.ResizeRepositionsBars))
-                config.Save();
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("Undocked bars will automatically readjust if you change resolutions.");
-            if (ImGui.Checkbox("Use Hotbar Frames on Icons", ref config.UseIconFrame))
-                config.Save();
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("This option will invert the ' f ' argument for all icons.");
-
-            ImGui.Spacing();
-            ImGui.Spacing();
-            ImGui.TextUnformatted("Opt out of Dalamud settings for hiding UI");
-            if (ImGui.Checkbox("Game UI Toggled", ref config.OptOutGameUIOffHide))
+            if (ImGui.BeginTabBar("Config Tabs"))
             {
-                config.Save();
-                plugin.CheckHideOptOuts();
-            }
-            ImGui.SameLine(ImGui.GetWindowWidth() / 3);
-            if (ImGui.Checkbox("In Cutscene", ref config.OptOutCutsceneHide))
-            {
-                config.Save();
-                plugin.CheckHideOptOuts();
-            }
-            ImGui.SameLine(ImGui.GetWindowWidth() / 3 * 2);
-            if (ImGui.Checkbox("In /gpose", ref config.OptOutGPoseHide))
-            {
-                config.Save();
-                plugin.CheckHideOptOuts();
-            }
-
-            ImGui.Spacing();
-            ImGui.Spacing();
-            ImGui.Spacing();
-            ImGui.Spacing();
-            ImGui.SameLine(30);
-            ImGui.Text("Bar Manager");
-            ImGui.Spacing();
-            ImGui.Separator();
-
-            Vector2 textsize = new Vector2(-1, 0);
-            float textx = 0.0f;
-
-            ImGui.Columns(3, "QoLBarsList", false);
-            for (int i = 0; i < bars.Count; i++)
-            {
-                ImGui.PushID(i);
-
-                ImGui.Text($"#{i + 1}");
-                ImGui.SameLine();
-
-                textx = ImGui.GetCursorPosX();
-
-                ImGui.SetNextItemWidth(-1);
-                if (ImGui.InputText("##Title", ref config.BarConfigs[i].Title, 32))
-                    config.Save();
-
-                textsize = ImGui.GetItemRectSize();
-
-                ImGui.NextColumn();
-
-                if (ImGui.Button("O"))
-                    ImGui.OpenPopup($"BarConfig##{i}");
-                if (ImGui.IsItemHovered())
-                    ImGui.SetTooltip("Options");
-                bars[i].BarConfigPopup();
-                ImGui.SameLine();
-                if (ImGui.Button(config.BarConfigs[i].Hidden ? "R" : "H"))
-                    bars[i].ToggleVisible();
-                if (ImGui.IsItemHovered())
-                    ImGui.SetTooltip(config.BarConfigs[i].Hidden ? "Reveal" : "Hide");
-
-                ImGui.NextColumn();
-
-                if (ImGui.Button("↑") && i > 0)
+                if (ImGui.BeginTabItem("Bar Manager"))
                 {
-                    var b = bars[i];
-                    bars.RemoveAt(i);
-                    bars.Insert(i - 1, b);
+                    Vector2 textsize = new Vector2(-1, 0);
+                    float textx = 0.0f;
 
-                    var b2 = config.BarConfigs[i];
-                    config.BarConfigs.RemoveAt(i);
-                    config.BarConfigs.Insert(i - 1, b2);
-                    config.Save();
-                    RefreshBarIndexes();
-                }
-                ImGui.SameLine();
-                if (ImGui.Button("↓") && i < (bars.Count - 1))
-                {
-                    var b = bars[i];
-                    bars.RemoveAt(i);
-                    bars.Insert(i + 1, b);
-
-                    var b2 = config.BarConfigs[i];
-                    config.BarConfigs.RemoveAt(i);
-                    config.BarConfigs.Insert(i + 1, b2);
-                    config.Save();
-                    RefreshBarIndexes();
-                }
-                ImGui.SameLine();
-                if (ImGui.Button("Export"))
-                    ImGui.SetClipboardText(plugin.ExportBar(config.BarConfigs[i], false));
-                if (ImGui.IsItemHovered())
-                {
-                    ImGui.SetTooltip("Export to clipboard without default settings (May change with updates).\n" +
-                        "Right click to export with every setting (Longer string, doesn't change).");
-
-                    if (ImGui.IsMouseReleased(1))
-                        ImGui.SetClipboardText(plugin.ExportBar(config.BarConfigs[i], true));
-                }
-
-                if (i > 0)
-                {
-                    ImGui.SameLine();
-                    if (ImGui.Button(config.ExportOnDelete ? "Cut" : "Delete"))
-                        plugin.ExecuteCommand("/echo <se> Right click to delete!");
-                    if (ImGui.IsItemHovered())
+                    ImGui.Columns(3, "QoLBarsList", false);
+                    for (int i = 0; i < bars.Count; i++)
                     {
-                        ImGui.SetTooltip($"Right click this button to delete bar #{i + 1}!" +
-                            (config.ExportOnDelete ? "\nThe bar will be exported to clipboard first." : ""));
+                        ImGui.PushID(i);
 
-                        if (ImGui.IsMouseReleased(1))
+                        ImGui.Text($"#{i + 1}");
+                        ImGui.SameLine();
+
+                        textx = ImGui.GetCursorPosX();
+
+                        ImGui.SetNextItemWidth(-1);
+                        if (ImGui.InputText("##Title", ref config.BarConfigs[i].Title, 32))
+                            config.Save();
+
+                        textsize = ImGui.GetItemRectSize();
+
+                        ImGui.NextColumn();
+
+                        if (ImGui.Button("O"))
+                            ImGui.OpenPopup($"BarConfig##{i}");
+                        if (ImGui.IsItemHovered())
+                            ImGui.SetTooltip("Options");
+                        bars[i].BarConfigPopup();
+                        ImGui.SameLine();
+                        if (ImGui.Button(config.BarConfigs[i].Hidden ? "R" : "H"))
+                            bars[i].ToggleVisible();
+                        if (ImGui.IsItemHovered())
+                            ImGui.SetTooltip(config.BarConfigs[i].Hidden ? "Reveal" : "Hide");
+
+                        ImGui.NextColumn();
+
+                        if (ImGui.Button("↑") && i > 0)
                         {
-                            if (config.ExportOnDelete)
-                                ImGui.SetClipboardText(plugin.ExportBar(config.BarConfigs[i], false));
-
+                            var b = bars[i];
                             bars.RemoveAt(i);
+                            bars.Insert(i - 1, b);
+
+                            var b2 = config.BarConfigs[i];
                             config.BarConfigs.RemoveAt(i);
+                            config.BarConfigs.Insert(i - 1, b2);
                             config.Save();
                             RefreshBarIndexes();
                         }
+                        ImGui.SameLine();
+                        if (ImGui.Button("↓") && i < (bars.Count - 1))
+                        {
+                            var b = bars[i];
+                            bars.RemoveAt(i);
+                            bars.Insert(i + 1, b);
+
+                            var b2 = config.BarConfigs[i];
+                            config.BarConfigs.RemoveAt(i);
+                            config.BarConfigs.Insert(i + 1, b2);
+                            config.Save();
+                            RefreshBarIndexes();
+                        }
+                        ImGui.SameLine();
+                        if (ImGui.Button("Export"))
+                            ImGui.SetClipboardText(plugin.ExportBar(config.BarConfigs[i], false));
+                        if (ImGui.IsItemHovered())
+                        {
+                            ImGui.SetTooltip("Export to clipboard without default settings (May change with updates).\n" +
+                                "Right click to export with every setting (Longer string, doesn't change).");
+
+                            if (ImGui.IsMouseReleased(1))
+                                ImGui.SetClipboardText(plugin.ExportBar(config.BarConfigs[i], true));
+                        }
+
+                        if (i > 0)
+                        {
+                            ImGui.SameLine();
+                            if (ImGui.Button(config.ExportOnDelete ? "Cut" : "Delete"))
+                                plugin.ExecuteCommand("/echo <se> Right click to delete!");
+                            if (ImGui.IsItemHovered())
+                            {
+                                ImGui.SetTooltip($"Right click this button to delete bar #{i + 1}!" +
+                                    (config.ExportOnDelete ? "\nThe bar will be exported to clipboard first." : ""));
+
+                                if (ImGui.IsMouseReleased(1))
+                                {
+                                    if (config.ExportOnDelete)
+                                        ImGui.SetClipboardText(plugin.ExportBar(config.BarConfigs[i], false));
+
+                                    bars.RemoveAt(i);
+                                    config.BarConfigs.RemoveAt(i);
+                                    config.Save();
+                                    RefreshBarIndexes();
+                                }
+                            }
+                        }
+
+                        ImGui.NextColumn();
+
+                        ImGui.PopID();
                     }
-                }
 
-                ImGui.NextColumn();
-
-                ImGui.PopID();
-            }
-
-            ImGui.Separator();
-            ImGui.Spacing();
-            ImGui.SameLine(textx);
-            if (ImGui.Button("+", textsize))
-                AddBar(new BarConfig());
-            ImGui.NextColumn();
-            ImGui.NextColumn();
-            if (ImGui.Button("Import", textsize))
-            {
-                try
-                {
-                    AddBar(plugin.ImportBar(ImGui.GetClipboardText()));
-                }
-                catch (Exception e) // Try as a shortcut instead
-                {
-                    try
+                    ImGui.Separator();
+                    ImGui.Spacing();
+                    ImGui.SameLine(textx);
+                    if (ImGui.Button("+", textsize))
+                        AddBar(new BarConfig());
+                    ImGui.NextColumn();
+                    ImGui.NextColumn();
+                    if (ImGui.Button("Import", textsize))
                     {
-                        var sh = plugin.ImportShortcut(ImGui.GetClipboardText());
-                        var bar = new BarConfig();
-                        bar.ShortcutList.Add(sh);
-                        AddBar(bar);
+                        try
+                        {
+                            AddBar(plugin.ImportBar(ImGui.GetClipboardText()));
+                        }
+                        catch (Exception e) // Try as a shortcut instead
+                        {
+                            try
+                            {
+                                var sh = plugin.ImportShortcut(ImGui.GetClipboardText());
+                                var bar = new BarConfig();
+                                bar.ShortcutList.Add(sh);
+                                AddBar(bar);
+                            }
+                            catch (Exception e2)
+                            {
+                                PluginLog.LogError("Invalid import string!");
+                                PluginLog.LogError($"{e.GetType()}\n{e.Message}");
+                                PluginLog.LogError($"{e2.GetType()}\n{e2.Message}");
+                            }
+                        }
                     }
-                    catch (Exception e2)
-                    {
-                        PluginLog.LogError("Invalid import string!");
-                        PluginLog.LogError($"{e.GetType()}\n{e.Message}");
-                        PluginLog.LogError($"{e2.GetType()}\n{e2.Message}");
-                    }
-                }
-            }
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("Import a bar from the clipboard,\n" +
-                    "or import a single shortcut as a new bar.");
+                    if (ImGui.IsItemHovered())
+                        ImGui.SetTooltip("Import a bar from the clipboard,\n" +
+                            "or import a single shortcut as a new bar.");
 
-            ImGui.Columns(1); // I just wanna know who did this and where they live
+                    ImGui.Columns(1); // I just wanna know who did this and where they live
+
+                    ImGui.EndTabItem();
+                }
+
+                if (ImGui.BeginTabItem("Settings"))
+                {
+                    if (ImGui.Checkbox("Export on Delete", ref config.ExportOnDelete))
+                        config.Save();
+                    ImGui.SameLine(ImGui.GetWindowWidth() / 2);
+                    if (ImGui.Checkbox("Resizing Repositions Bars", ref config.ResizeRepositionsBars))
+                        config.Save();
+                    if (ImGui.IsItemHovered())
+                        ImGui.SetTooltip("Undocked bars will automatically readjust if you change resolutions.");
+                    if (ImGui.Checkbox("Use Hotbar Frames on Icons", ref config.UseIconFrame))
+                        config.Save();
+                    if (ImGui.IsItemHovered())
+                        ImGui.SetTooltip("This option will invert the ' f ' argument for all icons.");
+
+                    ImGui.Spacing();
+                    ImGui.Spacing();
+                    ImGui.TextUnformatted("Opt out of Dalamud settings for hiding UI");
+                    if (ImGui.Checkbox("Game UI Toggled", ref config.OptOutGameUIOffHide))
+                    {
+                        config.Save();
+                        plugin.CheckHideOptOuts();
+                    }
+                    ImGui.SameLine(ImGui.GetWindowWidth() / 3);
+                    if (ImGui.Checkbox("In Cutscene", ref config.OptOutCutsceneHide))
+                    {
+                        config.Save();
+                        plugin.CheckHideOptOuts();
+                    }
+                    ImGui.SameLine(ImGui.GetWindowWidth() / 3 * 2);
+                    if (ImGui.Checkbox("In /gpose", ref config.OptOutGPoseHide))
+                    {
+                        config.Save();
+                        plugin.CheckHideOptOuts();
+                    }
+
+                    ImGui.EndTabItem();
+                }
+
+                if (ImGui.BeginTabItem("Backups"))
+                {
+                    var path = config.GetPluginBackupPath();
+                    var configFile = new FileInfo(config.GetPath());
+
+                    if (ImGui.Button("Open Folder"))
+                        Process.Start(path);
+                    ImGui.SameLine();
+                    if (ImGui.Button("Create Backup"))
+                        BackupFile(configFile);
+
+                    ImGui.Separator();
+                    ImGui.Columns(3, "QoLBarBackups", false);
+                    if (!string.IsNullOrEmpty(path))
+                    {
+                        var i = 0;
+                        var directory = new DirectoryInfo(path);
+                        foreach (var file in directory.GetFiles())
+                        {
+                            if (file.Extension == ".json")
+                            {
+                                ImGui.PushID(i);
+
+                                ImGui.TextUnformatted(file.Name);
+                                ImGui.NextColumn();
+                                ImGui.TextUnformatted(file.LastWriteTime.ToString());
+                                ImGui.NextColumn();
+                                ImGui.SmallButton("Load");
+                                if (ImGui.IsItemHovered())
+                                {
+                                    ImGui.SetTooltip($"Double click this button to overwrite and\n" +
+                                        $"reload the current config with {file.Name}");
+
+                                    if (ImGui.IsMouseDoubleClicked(0))
+                                        config.LoadConfig(file);
+                                }
+
+                                ImGui.SameLine();
+                                if (ImGui.SmallButton("Delete"))
+                                    plugin.ExecuteCommand("/echo <se> Double right click to delete!");
+                                if (ImGui.IsItemHovered())
+                                {
+                                    ImGui.SetTooltip($"Double right click this button to delete {file.Name}");
+
+                                    if (ImGui.IsMouseDoubleClicked(1))
+                                        DeleteFile(file);
+                                }
+
+                                ImGui.Separator();
+                                ImGui.NextColumn();
+
+                                ImGui.PopID();
+                                i++;
+                            }
+                        }
+                    }
+                    ImGui.Columns(1);
+
+                    ImGui.EndTabItem();
+                }
+
+                ImGui.EndTabBar();
+            }
 
             ImGui.End();
         }
@@ -280,6 +359,42 @@ namespace QoLBar
                 plugin.PrintError($"Bar \"{name}\" does not exist.");
 
             return found;
+        }
+
+        private void BackupFile(FileInfo file, string name = "", bool overwrite = false)
+        {
+            try
+            {
+                if (file.Extension != ".json")
+                    throw new InvalidOperationException("File must be json!");
+
+                if (string.IsNullOrEmpty(name))
+                    name = DateTime.Now.ToString("yyyy-MM-dd HH.mm.ss");
+
+                var path = config.GetPluginBackupPath() + $"\\{name}.json";
+                file.CopyTo(path, overwrite);
+                PluginLog.LogInformation($"Saved file to {path}");
+            }
+            catch (Exception e)
+            {
+                plugin.PrintError($"Failed to save: {e.Message}");
+            }
+        }
+
+        private void DeleteFile(FileInfo file)
+        {
+            try
+            {
+                if (file.Extension != ".json")
+                    throw new InvalidOperationException("File must be json!");
+
+                file.Delete();
+                PluginLog.LogInformation($"Deleted file {file.FullName}");
+            }
+            catch (Exception e)
+            {
+                plugin.PrintError($"Failed to delete: {e.Message}");
+            }
         }
 
         private void DrawIconBrowser()
