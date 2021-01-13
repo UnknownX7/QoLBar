@@ -7,12 +7,17 @@ using System.Threading.Tasks;
 using System.IO;
 using System.IO.Compression;
 using System.ComponentModel;
+using System.Reflection;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Dalamud.Plugin;
 using Dalamud.Data.LuminaExtensions;
 using ImGuiScene;
 using QoLBar.Attributes;
+
+// I'm too lazy to make a file just for this
+[assembly: AssemblyTitle("QoLBar")]
+[assembly: AssemblyVersion("1.2.2.1")]
 
 // Disclaimer: I have no idea what I'm doing.
 namespace QoLBar

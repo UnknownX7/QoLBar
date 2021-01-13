@@ -3,8 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
     <LangVersion>8.0</LangVersion>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -67,7 +66,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="cd $(ProjectDir)$(OutDir)&#xD;&#xA;if $(ConfigurationName) == Release (&#xD;&#xA;  powershell New-Item -ItemType Directory -Force -Path '$(ProjectDir)Publish'&#xD;&#xA;  powershell Compress-Archive -Path '$(TargetPath)','$(ProjectDir)$(ProjectName).json','$(ProjectDir)$(OutDir)$(TargetName).pdb' -DestinationPath '$(ProjectDir)Publish\latest.zip' -Force&#xD;&#xA;  echo F|xcopy &quot;$(ProjectDir)$(ProjectName).json&quot; &quot;$(ProjectDir)Publish\$(ProjectName).json&quot; /Y /F&#xD;&#xA;)" />
+    <Exec Command="cd $(ProjectDir)$(OutDir)&#xD;&#xA;if $(ConfigurationName) == Release (&#xD;&#xA;  powershell -Command &quot;New-Item -ItemType Directory -Force -Path '$(ProjectDir)Publish'; $a=Get-Item '$(TargetDir)$(ProjectName).dll';$jsonTemplate=Get-Content '$(ProjectDir)$(ProjectName).json' | ConvertFrom-Json; $jsonTemplate.AssemblyVersion=$a.VersionInfo.FileVersion;($jsonTemplate | ConvertTo-Json) | Out-File '$(ProjectDir)Publish\$(ProjectName).json' -Encoding utf8;Compress-Archive -Path '$(TargetPath)','$(TargetDir)$(TargetName).pdb','$(ProjectDir)Publish\$(ProjectName).json' -DestinationPath '$(ProjectDir)Publish\latest.zip' -Force&quot;&#xD;&#xA;)&#xD;&#xA;&#xD;&#xA;" />
   </Target>
 
 </Project>
