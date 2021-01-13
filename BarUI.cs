@@ -471,7 +471,8 @@ namespace QoLBar
 
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
             {
-                if (!inCategory && (ImGui.IsMouseReleased(0) || (barConfig.OpenCategoriesOnHover && type == Shortcut.ShortcutType.Category && (!docked || barPos == revealPos) && !ImGui.IsPopupOpen("editItem"))))
+                var onHover = (!inCategory ? barConfig.OpenCategoriesOnHover : barConfig.OpenSubcategoriesOnHover) && type == Shortcut.ShortcutType.Category;
+                if (ImGui.IsMouseReleased(0) || (onHover && (!docked || barPos == revealPos) && !ImGui.IsPopupOpen("editItem")))
                     clicked = true;
 
                 if (!string.IsNullOrEmpty(tooltip))
@@ -1032,13 +1033,14 @@ namespace QoLBar
                         if (ImGui.DragFloat2("Spacing", ref barConfig.CategorySpacing, 0.12f, 0, 32, "%.f"))
                             config.Save();
 
-                        if (ImGui.Checkbox("No Backgrounds", ref barConfig.NoCategoryBackgrounds))
-                            config.Save();
-                        ImGui.SameLine(ImGui.GetWindowWidth() / 2);
                         if (ImGui.Checkbox("Open on Hover", ref barConfig.OpenCategoriesOnHover))
                             config.Save();
-                        if (ImGui.IsItemHovered())
-                            ImGui.SetTooltip("Does not work for subcategories!");
+                        ImGui.SameLine(ImGui.GetWindowWidth() / 2);
+                        if (ImGui.Checkbox("Open Subcategories on Hover", ref barConfig.OpenSubcategoriesOnHover))
+                            config.Save();
+
+                        if (ImGui.Checkbox("No Backgrounds", ref barConfig.NoCategoryBackgrounds))
+                            config.Save();
 
                         ImGui.EndTabItem();
                     }

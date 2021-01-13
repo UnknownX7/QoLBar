@@ -62,6 +62,7 @@ namespace QoLBar
         [DefaultValue(false)] public bool NoBackground = false;
         [DefaultValue(false)] public bool NoCategoryBackgrounds = false;
         [DefaultValue(false)] public bool OpenCategoriesOnHover = false;
+        [DefaultValue(false)] public bool OpenSubcategoriesOnHover = false;
     }
 
     public class Shortcut
@@ -355,10 +356,7 @@ namespace QoLBar
             return ExportObject(bar, saveAllValues);
         }
 
-        public BarConfig ImportBar(string import)
-        {
-            return ImportObject<BarConfig>(import);
-        }
+        public BarConfig ImportBar(string import) => ImportObject<BarConfig>(import);
 
         public string ExportShortcut(Shortcut sh, bool saveAllValues)
         {
@@ -366,10 +364,7 @@ namespace QoLBar
             return ExportObject(sh, saveAllValues);
         }
 
-        public Shortcut ImportShortcut(string import)
-        {
-            return ImportObject<Shortcut>(import);
-        }
+        public Shortcut ImportShortcut(string import) => ImportObject<Shortcut>(import);
 
         public void PrintEcho(string message) => pluginInterface.Framework.Gui.Chat.Print($"[QoLBar] {message}");
         public void PrintError(string message) => pluginInterface.Framework.Gui.Chat.PrintError($"[QoLBar] {message}");
