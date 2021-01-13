@@ -258,9 +258,9 @@ namespace QoLBar
 
         public void LoadUserIcons()
         {
-            if (userIcons != null)
+            foreach (var kv in userIcons)
             {
-                foreach (var kv in userIcons)
+                if (textureDictionary.ContainsKey(kv.Key))
                 {
                     textureDictionary[kv.Key]?.Dispose();
                     textureDictionary.Remove(kv.Key);
