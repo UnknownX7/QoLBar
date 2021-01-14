@@ -29,6 +29,8 @@ namespace QoLBar
         public int pasteIcon = 0;
         public void ToggleIconBrowser() => iconBrowserOpen = !iconBrowserOpen;
 
+        private bool _loadUserIcons = false;
+
         public PluginUI(QoLBar p, Configuration config)
         {
             plugin = p;
@@ -63,6 +65,9 @@ namespace QoLBar
                 DrawIconBrowser();
             else
                 doPasteIcon = false;
+
+            if (_loadUserIcons)
+                _loadUserIcons = !plugin.LoadUserIcons();
 
             foreach (BarUI bar in bars)
                 bar.Draw();
@@ -426,9 +431,7 @@ namespace QoLBar
                 if (_tabExists)
                 {
                     if (ImGui.Button("Refresh Custom Icons"))
-                        plugin.LoadUserIcons();
-                    if (ImGui.IsItemHovered())
-                        ImGui.SetTooltip("Can possibly cause a very rare crash!");
+                        _loadUserIcons = true;
                     ImGui.SameLine();
                     if (ImGui.Button("Open Icon Folder"))
                         Process.Start(config.GetPluginIconPath());

@@ -3,6 +3,7 @@ using System.Numerics;
 using System.Text;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using System.IO;
 using System.IO.Compression;
@@ -233,6 +234,9 @@ namespace QoLBar
             pluginInterface.UiBuilder.DisableGposeUiHide = config.OptOutGPoseHide;
         }
 
+        private int _loadingThreads = 0;
+        bool IsTextureLoading() => _loadingThreads > 0;
+
         private async void LoadTextureWrap(int i, bool overwrite, Func<TextureWrap> action, bool doSync = false)
         {
             if (!textureDictionary.ContainsKey(i) || overwrite)
@@ -253,9 +257,13 @@ namespace QoLBar
                     }
                 }
 
+                Interlocked.Increment(ref _loadingThreads);
+
                 var tex = !doSync ? await Task.Run(t) : t();
                 if (tex != null && tex.ImGuiHandle != IntPtr.Zero)
                     textureDictionary[i] = tex;
+
+                Interlocked.Decrement(ref _loadingThreads);
             }
         }
 
@@ -286,8 +294,10 @@ namespace QoLBar
         // Seems to cause a nvwgf2umx.dll (System Access Violation Exception) crash if spammed enough? Possibly not thread safe...
         public void LoadImage(int iconSlot, string path, bool overwrite = false) => LoadTextureWrap(iconSlot, overwrite, () => pluginInterface.UiBuilder.LoadImage(path), true);
 
-        public void LoadUserIcons()
+        public bool LoadUserIcons()
         {
+            if (IsTextureLoading() && userIcons.Count > 0) return false;
+
             foreach (var kv in userIcons)
             {
                 if (textureDictionary.ContainsKey(kv.Key))
@@ -313,6 +323,8 @@ namespace QoLBar
                     }
                 }
             }
+
+            return true;
         }
 
         private void CleanBarConfig(BarConfig bar)
