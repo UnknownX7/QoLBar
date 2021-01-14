@@ -180,7 +180,7 @@ namespace QoLBar
 
             commandManager = new PluginCommandManager<QoLBar>(this, pluginInterface);
 
-            pluginInterface.SubscribeAny(ReceiveMessage);
+            SetupIPC();
 
 #if DEBUG
             LoadIcon(46); // Magnifying glass / Search
@@ -410,7 +410,17 @@ namespace QoLBar
         public void PrintEcho(string message) => pluginInterface.Framework.Gui.Chat.Print($"[QoLBar] {message}");
         public void PrintError(string message) => pluginInterface.Framework.Gui.Chat.PrintError($"[QoLBar] {message}");
 
-        private void ReceiveMessage(string pluginName, dynamic msg)
+        private void SetupIPC()
+        {
+            pluginInterface.SubscribeAny(OnReceiveMessage);
+            dynamic msg = new ExpandoObject();
+            msg.Sender = "QoLBar";
+            msg.Action = "Loaded";
+            msg.Version = config.PluginVersion;
+            pluginInterface.SendMessage(msg);
+        }
+
+        private void OnReceiveMessage(string pluginName, dynamic msg)
         {
             try
             {
@@ -435,6 +445,15 @@ namespace QoLBar
             {
                 PluginLog.LogError(e, $"Received message from {pluginName}, but it was invalid!");
             }
+        }
+
+        private void DisposeIPC()
+        {
+            dynamic msg = new ExpandoObject();
+            msg.Sender = "QoLBar";
+            msg.Action = "Unloaded";
+            pluginInterface.SendMessage(msg);
+            pluginInterface.UnsubscribeAny();
         }
 
         // I'm too dumb to do any of this so its (almost) all taken from here https://git.sr.ht/~jkcclemens/CCMM/tree/master/Custom%20Commands%20and%20Macro%20Macros/GameFunctions.cs
@@ -525,7 +544,7 @@ namespace QoLBar
         {
             if (!disposing) return;
 
-            pluginInterface.UnsubscribeAny();
+            DisposeIPC();
 
             commandManager.Dispose();
             config.Save();
