@@ -138,14 +138,14 @@ namespace QoLBar
                         }
                         ImGui.SameLine();
                         if (ImGui.Button("Export"))
-                            ImGui.SetClipboardText(plugin.ExportBar(config.BarConfigs[i], false));
+                            ImGui.SetClipboardText(ExportBar(i, false));
                         if (ImGui.IsItemHovered())
                         {
                             ImGui.SetTooltip("Export to clipboard without default settings (May change with updates).\n" +
                                 "Right click to export with every setting (Longer string, doesn't change).");
 
                             if (ImGui.IsMouseReleased(1))
-                                ImGui.SetClipboardText(plugin.ExportBar(config.BarConfigs[i], true));
+                                ImGui.SetClipboardText(ExportBar(i, true));
                         }
 
                         if (i > 0)
@@ -184,28 +184,7 @@ namespace QoLBar
                     ImGui.NextColumn();
                     ImGui.NextColumn();
                     if (ImGui.Button("Import", textsize))
-                    {
-                        try
-                        {
-                            AddBar(plugin.ImportBar(ImGui.GetClipboardText()));
-                        }
-                        catch (Exception e) // Try as a shortcut instead
-                        {
-                            try
-                            {
-                                var sh = plugin.ImportShortcut(ImGui.GetClipboardText());
-                                var bar = new BarConfig();
-                                bar.ShortcutList.Add(sh);
-                                AddBar(bar);
-                            }
-                            catch (Exception e2)
-                            {
-                                PluginLog.LogError("Invalid import string!");
-                                PluginLog.LogError($"{e.GetType()}\n{e.Message}");
-                                PluginLog.LogError($"{e2.GetType()}\n{e2.Message}");
-                            }
-                        }
-                    }
+                        ImportBar(ImGui.GetClipboardText());
                     if (ImGui.IsItemHovered())
                         ImGui.SetTooltip("Import a bar from the clipboard,\n" +
                             "or import a single shortcut as a new bar.");
@@ -325,6 +304,32 @@ namespace QoLBar
             config.BarConfigs.Add(bar);
             bars.Add(new BarUI(plugin, config, bars.Count));
             config.Save();
+        }
+
+        public string ExportBar(int i, bool saveAllValues) => plugin.ExportBar(config.BarConfigs[i], saveAllValues);
+
+        public void ImportBar(string import)
+        {
+            try
+            {
+                AddBar(plugin.ImportBar(import));
+            }
+            catch (Exception e) // Try as a shortcut instead
+            {
+                try
+                {
+                    var sh = plugin.ImportShortcut(ImGui.GetClipboardText());
+                    var bar = new BarConfig();
+                    bar.ShortcutList.Add(sh);
+                    AddBar(bar);
+                }
+                catch (Exception e2)
+                {
+                    PluginLog.LogError("Invalid import string!");
+                    PluginLog.LogError($"{e.GetType()}\n{e.Message}");
+                    PluginLog.LogError($"{e2.GetType()}\n{e2.Message}");
+                }
+            }
         }
 
         private void RefreshBarIndexes()

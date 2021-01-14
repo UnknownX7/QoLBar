@@ -8,6 +8,7 @@ using System.IO;
 using System.IO.Compression;
 using System.ComponentModel;
 using System.Reflection;
+using System.Dynamic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Dalamud.Plugin;
@@ -177,6 +178,8 @@ namespace QoLBar
             CheckHideOptOuts();
 
             commandManager = new PluginCommandManager<QoLBar>(this, pluginInterface);
+
+            pluginInterface.SubscribeAny(ReceiveMessage);
 
 #if DEBUG
             LoadIcon(46); // Magnifying glass / Search
@@ -395,6 +398,33 @@ namespace QoLBar
         public void PrintEcho(string message) => pluginInterface.Framework.Gui.Chat.Print($"[QoLBar] {message}");
         public void PrintError(string message) => pluginInterface.Framework.Gui.Chat.PrintError($"[QoLBar] {message}");
 
+        private void ReceiveMessage(string pluginName, dynamic msg)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(msg.Action))
+                {
+                    PluginLog.LogInformation($"Received message from {pluginName} for: {msg.Action}");
+                    if (msg.Action == "Import")
+                        ui.ImportBar(msg.Import);
+                    else if (msg.Action == "ping")
+                    {
+                        dynamic response = new ExpandoObject();
+                        response.Sender = "QoLBar";
+                        response.Receiver = pluginName;
+                        response.Action = "pong";
+                        response.Version = config.PluginVersion;
+                        if (!pluginInterface.SendMessage(pluginName, response))
+                            pluginInterface.SendMessage(response);
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                PluginLog.LogError(e, $"Received message from {pluginName}, but it was invalid!");
+            }
+        }
+
         // I'm too dumb to do any of this so its (almost) all taken from here https://git.sr.ht/~jkcclemens/CCMM/tree/master/Custom%20Commands%20and%20Macro%20Macros/GameFunctions.cs
         #region Chat Injection
         private delegate IntPtr GetUIModuleDelegate(IntPtr basePtr);
@@ -482,6 +512,8 @@ namespace QoLBar
         protected virtual void Dispose(bool disposing)
         {
             if (!disposing) return;
+
+            pluginInterface.UnsubscribeAny();
 
             commandManager.Dispose();
             config.Save();
