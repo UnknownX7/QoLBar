@@ -1194,11 +1194,11 @@ namespace QoLBar
                     var uv0 = new Vector2(0.5f - z + offset.X, 0.5f - z + offset.Y);
                     var uv1 = new Vector2(0.5f + z + offset.X, 0.5f + z + offset.Y);
                     if (!noButton)
-                        ret = ImGui.ImageButton(texd[icon].ImGuiHandle, size, uv0, uv1, 0, Vector4.Zero, tint);
+                        ret = ImGui.ImageButton(tex.ImGuiHandle, size, uv0, uv1, 0, Vector4.Zero, tint);
                     else
-                        ImGui.Image(texd[icon].ImGuiHandle, size, uv0, uv1, tint);
+                        ImGui.Image(tex.ImGuiHandle, size, uv0, uv1, tint);
 
-                    if (frameArg)
+                    if (frameArg && texd.ContainsKey(QoLBar.FrameIconID))
                     {
                         if (_buttonshine == null)
                         {

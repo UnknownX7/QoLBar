@@ -10,7 +10,7 @@ namespace QoLBar
 {
     public class PluginUI : IDisposable
     {
-        public bool IsVisible => true;
+        public bool IsVisible => plugin.pluginReady;
 
         private List<BarUI> bars;
 
@@ -18,9 +18,9 @@ namespace QoLBar
         private Configuration config;
 
 #if DEBUG
-        private bool configOpen = true;
+        public bool configOpen = true;
 #else
-        private bool configOpen = false;
+        public bool configOpen = false;
 #endif
         public void ToggleConfig() => configOpen = !configOpen;
 

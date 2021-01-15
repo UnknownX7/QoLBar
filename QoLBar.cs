@@ -19,7 +19,7 @@ using QoLBar.Attributes;
 
 // I'm too lazy to make a file just for this
 [assembly: AssemblyTitle("QoLBar")]
-[assembly: AssemblyVersion("1.2.3.0")]
+[assembly: AssemblyVersion("1.2.3.1")]
 
 // Disclaimer: I have no idea what I'm doing.
 namespace QoLBar
@@ -151,6 +151,7 @@ namespace QoLBar
         private Configuration config;
         public PluginUI ui;
         private bool commandReady = true;
+        public bool pluginReady = false;
         private readonly Queue<string> commandQueue = new Queue<string>();
         private readonly QoLSerializer qolSerializer = new QoLSerializer();
 
@@ -174,7 +175,6 @@ namespace QoLBar
             ui = new PluginUI(this, config);
             pluginInterface.UiBuilder.OnOpenConfigUi += ToggleConfig;
             pluginInterface.UiBuilder.OnBuildUi += ui.Draw;
-            pluginInterface.ClientState.OnLogin += InitCommands;
 
             CheckHideOptOuts();
 
@@ -183,19 +183,24 @@ namespace QoLBar
             SetupIPC();
 
 #if DEBUG
-            LoadIcon(46); // Magnifying glass / Search
-            LoadIcon(FrameIconID, "ui/uld/icona_frame.tex", true);
-            LoadUserIcons();
+            ReadyPlugin();
 #else
             Task.Run(async () =>
             {
-                while (pluginInterface.ClientState.LocalPlayer == null)
+                while (pluginInterface.ClientState.LocalPlayer == null && !ui.configOpen)
                     await Task.Delay(1000);
-                LoadIcon(46); // Magnifying glass / Search
-                LoadIcon(FrameIconID, "ui/uld/icona_frame.tex", true);
-                LoadUserIcons();
+                ReadyPlugin();
             });
 #endif
+        }
+
+        public void ReadyPlugin()
+        {
+            LoadIcon(46); // Magnifying glass / Search
+            LoadIcon(FrameIconID, "ui/uld/icona_frame.tex", true);
+            LoadUserIcons();
+            InitCommands();
+            pluginReady = true;
         }
 
         public void Reload()
@@ -466,7 +471,7 @@ namespace QoLBar
 
         private IntPtr uiModulePtr;
 
-        private void InitCommands(object sender = null, EventArgs e = null)
+        private void InitCommands()
         {
             try
             {
@@ -552,7 +557,6 @@ namespace QoLBar
 
             pluginInterface.UiBuilder.OnOpenConfigUi -= ToggleConfig;
             pluginInterface.UiBuilder.OnBuildUi -= ui.Draw;
-            pluginInterface.ClientState.OnLogin -= InitCommands;
 
             pluginInterface.Dispose();
 
