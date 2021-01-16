@@ -207,6 +207,8 @@ namespace QoLBar
         {
             config = (Configuration)pluginInterface.GetPluginConfig() ?? new Configuration();
             config.Initialize(this);
+            config.UpdateVersion();
+            config.Save();
             ui.Reload(config);
             CheckHideOptOuts();
         }
