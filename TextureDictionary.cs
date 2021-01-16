@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
@@ -7,20 +8,49 @@ using Dalamud.Data.LuminaExtensions;
 using Dalamud.Plugin;
 using ImGuiScene;
 
-public class TextureDictionary : Dictionary<int, TextureWrap>, IDisposable
+public class TextureDictionary : ConcurrentDictionary<int, TextureWrap>, IDisposable
 {
-    public DalamudPluginInterface pluginInterface;
-
-    private const int DefaultKey = 66001;
+    private DalamudPluginInterface pluginInterface;
     private readonly Dictionary<int, string> userIcons = new Dictionary<int, string>();
     private readonly Dictionary<int, string> textureOverrides = new Dictionary<int, string>();
-    private int _loadingThreads = 0;
+    private int _loadingTasks = 0;
     private static readonly TextureWrap disposedTexture = new GLTextureWrap(0, 0, 0);
+    private readonly ConcurrentQueue<(bool, Task)> loadQueue = new ConcurrentQueue<(bool, Task)>();
+    private Task loadTask;
 
-    public TextureDictionary(DalamudPluginInterface p)
+    public void Initialize(DalamudPluginInterface p)
     {
         pluginInterface = p;
-        LoadTexture(DefaultKey);
+
+        loadTask = Task.Run(async () =>
+        {
+            while (true)
+            {
+                if (loadQueue.TryDequeue(out var t))
+                {
+                    if (!t.Item1)
+                    {
+                        Interlocked.Increment(ref _loadingTasks);
+                        _ = t.Item2.ContinueWith((_) => Interlocked.Decrement(ref _loadingTasks));
+                        t.Item2.Start();
+                    }
+                    else
+                    {
+                        Task.Run(() =>
+                        {
+                            while (_loadingTasks > 0) { }
+                        }).Wait();
+                        t.Item2.Start();
+                        t.Item2.Wait();
+                    }
+                }
+                else
+                {
+                    PluginLog.Error($"{_loadingTasks}");
+                    await Task.Delay(1000);
+                }
+            }
+        });
     }
 
     public new TextureWrap this[int k]
@@ -32,16 +62,13 @@ public class TextureDictionary : Dictionary<int, TextureWrap>, IDisposable
             else
             {
                 if (LoadTexture(k))
-                    return ((Dictionary<int, TextureWrap>)this)[k];
-
-                if (k != DefaultKey)
-                    return this[DefaultKey];
+                    return ((ConcurrentDictionary<int, TextureWrap>)this)[k];
                 else
                     return null;
             }
         }
 
-        set => ((Dictionary<int, TextureWrap>)this)[k] = value;
+        set => ((ConcurrentDictionary<int, TextureWrap>)this)[k] = value;
     }
 
     public void TryDispose(int k)
@@ -49,28 +76,11 @@ public class TextureDictionary : Dictionary<int, TextureWrap>, IDisposable
         if (TryGetValue(k, out var tex))
         {
             tex?.Dispose();
-            this[k] = disposedTexture;
+            TryUpdate(k, disposedTexture, null);
         }
     }
 
-    private bool IsTextureLoading() => _loadingThreads > 0;
-
-    private Func<TextureWrap> WrapFunc(Func<TextureWrap> func)
-    {
-        return () =>
-        {
-            try
-            {
-                return func();
-            }
-            catch
-            {
-                return null;
-            }
-        };
-    }
-
-    private async void LoadTextureWrap(int i, bool overwrite, bool doSync, Func<TextureWrap> func)
+    private void LoadTextureWrap(int i, bool overwrite, bool doSync, Func<TextureWrap> loadFunc)
     {
         var contains = TryGetValue(i, out var _tex);
         if (!contains || overwrite || _tex?.ImGuiHandle == IntPtr.Zero)
@@ -78,15 +88,18 @@ public class TextureDictionary : Dictionary<int, TextureWrap>, IDisposable
             _tex?.Dispose();
             this[i] = null;
 
-            var t = WrapFunc(func);
-
-            Interlocked.Increment(ref _loadingThreads);
+            var t = new Task(() =>
             {
-                var tex = !doSync ? await Task.Run(t) : t();
-                if (tex != null && tex.ImGuiHandle != IntPtr.Zero)
-                    this[i] = tex;
-            }
-            Interlocked.Decrement(ref _loadingThreads);
+                try
+                {
+                    var tex = loadFunc();
+                    if (tex != null && tex.ImGuiHandle != IntPtr.Zero)
+                        TryUpdate(i, tex, null);
+                }
+                catch { }
+            });
+
+            loadQueue.Enqueue((doSync, t));
         }
     }
 
@@ -138,10 +151,10 @@ public class TextureDictionary : Dictionary<int, TextureWrap>, IDisposable
     // Seems to cause a nvwgf2umx.dll crash (System Access Violation Exception) if used async
     private void LoadImage(int iconSlot, string path, bool overwrite) => LoadTextureWrap(iconSlot, overwrite, true, () => pluginInterface.UiBuilder.LoadImage(path));
 
+    public Dictionary<int, string> GetUserIcons() => userIcons;
+
     public bool AddUserIcons(string path)
     {
-        //if (IsTextureLoading() && userIcons.Count > 0) return false;
-
         foreach (var kv in userIcons)
             TryDispose(kv.Key);
 
@@ -167,6 +180,7 @@ public class TextureDictionary : Dictionary<int, TextureWrap>, IDisposable
 
     public void Dispose()
     {
+        loadTask.Dispose();
         foreach (var t in this)
             t.Value?.Dispose();
     }
