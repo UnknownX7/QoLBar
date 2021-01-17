@@ -1159,81 +1159,72 @@ namespace QoLBar
         {
             bool ret = false;
             var texd = plugin.textureDictionary;
-            if (texd.ContainsKey(icon))
+            var tex = texd[icon];
+            if (tex == null)
             {
-                var tex = texd[icon];
-                if (tex == null || tex.ImGuiHandle == IntPtr.Zero)
+                if (!retExists)
                 {
-                    if (!retExists)
-                    {
-                        if (icon == 66001)
-                            ret = ImGui.Button("  X  ##FailedTexture");
-                        else
-                            ret = DrawIconButton(66001, size, zoom, offset, tint, args);
-                    }
-                }
-                else
-                {
-                    var frameArg = false;
-                    if (args != "_")
-                    {
-                        frameArg = args.Contains("f");
-                        if (config.UseIconFrame)
-                            frameArg = !frameArg;
-                    }
-
-                    ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
-
-                    if (frameArg)
-                    {
-                        ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Vector4.Zero);
-                        ImGui.PushStyleColor(ImGuiCol.ButtonActive, Vector4.Zero);
-                    }
-
-                    var z = 0.5f / zoom;
-                    var uv0 = new Vector2(0.5f - z + offset.X, 0.5f - z + offset.Y);
-                    var uv1 = new Vector2(0.5f + z + offset.X, 0.5f + z + offset.Y);
-                    if (!noButton)
-                        ret = ImGui.ImageButton(tex.ImGuiHandle, size, uv0, uv1, 0, Vector4.Zero, tint);
+                    if (icon == 66001)
+                        ret = ImGui.Button("  X  ##FailedTexture");
                     else
-                        ImGui.Image(tex.ImGuiHandle, size, uv0, uv1, tint);
-
-                    if (frameArg && texd.ContainsKey(QoLBar.FrameIconID))
-                    {
-                        if (_buttonshine == null)
-                        {
-                            _buttonshine = texd[QoLBar.FrameIconID];
-                            _uvMin = new Vector2(1f / _buttonshine.Width, 0f / _buttonshine.Height);
-                            _uvMax = new Vector2(47f / _buttonshine.Width, 46f / _buttonshine.Height);
-                            _uvMinHover = new Vector2(49f / _buttonshine.Width, 97f / _buttonshine.Height);
-                            _uvMaxHover = new Vector2(95f / _buttonshine.Width, 143f / _buttonshine.Height);
-                            //_uvMinHover2 = new Vector2(248f / _buttonshine.Width, 8f / _buttonshine.Height);
-                            //_uvMaxHover2 = new Vector2(304f / _buttonshine.Width, 64f / _buttonshine.Height);
-                        }
-                        var _sizeInc = size * 0.075f;
-                        var _rMin = ImGui.GetItemRectMin() - _sizeInc;
-                        var _rMax = ImGui.GetItemRectMax() + _sizeInc;
-                        ImGui.GetWindowDrawList().AddImage(_buttonshine.ImGuiHandle, _rMin, _rMax, _uvMin, _uvMax); // Frame
-                        if (!noButton && ImGui.IsItemHovered(ImGuiHoveredFlags.RectOnly))
-                        {
-                            ImGui.GetWindowDrawList().AddImage(_buttonshine.ImGuiHandle, _rMin, _rMax, _uvMinHover, _uvMaxHover, 0x85FFFFFF); // Frame Center Glow
-                            //ImGui.GetWindowDrawList().AddImage(_buttonshine.ImGuiHandle, _rMin - (_sizeInc * 1.5f), _rMax + (_sizeInc * 1.5f), _uvMinHover2, _uvMaxHover2); // Edge glow // TODO: Probably somewhat impossible as is, but fix glow being clipped
-                        }
-                        // TODO: Find a way to do the click animation
-
-                        ImGui.PopStyleColor(2);
-                    }
-
-                    ImGui.PopStyleColor();
-                    if (retExists)
-                        ret = true;
+                        ret = DrawIconButton(66001, size, zoom, offset, tint, args);
                 }
             }
             else
             {
-                plugin.LoadIcon(icon);
-                if (!retExists)
-                    ret = ImGui.Button("  ?  ##WaitingTexture");
+                var frameArg = false;
+                if (args != "_")
+                {
+                    frameArg = args.Contains("f");
+                    if (config.UseIconFrame)
+                        frameArg = !frameArg;
+                }
+
+                ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
+
+                if (frameArg)
+                {
+                    ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Vector4.Zero);
+                    ImGui.PushStyleColor(ImGuiCol.ButtonActive, Vector4.Zero);
+                }
+
+                var z = 0.5f / zoom;
+                var uv0 = new Vector2(0.5f - z + offset.X, 0.5f - z + offset.Y);
+                var uv1 = new Vector2(0.5f + z + offset.X, 0.5f + z + offset.Y);
+                if (!noButton)
+                    ret = ImGui.ImageButton(tex.ImGuiHandle, size, uv0, uv1, 0, Vector4.Zero, tint);
+                else
+                    ImGui.Image(tex.ImGuiHandle, size, uv0, uv1, tint);
+
+                if (frameArg && texd[QoLBar.FrameIconID] != null)
+                {
+                    if (_buttonshine == null)
+                    {
+                        _buttonshine = texd[QoLBar.FrameIconID];
+                        _uvMin = new Vector2(1f / _buttonshine.Width, 0f / _buttonshine.Height);
+                        _uvMax = new Vector2(47f / _buttonshine.Width, 46f / _buttonshine.Height);
+                        _uvMinHover = new Vector2(49f / _buttonshine.Width, 97f / _buttonshine.Height);
+                        _uvMaxHover = new Vector2(95f / _buttonshine.Width, 143f / _buttonshine.Height);
+                        //_uvMinHover2 = new Vector2(248f / _buttonshine.Width, 8f / _buttonshine.Height);
+                        //_uvMaxHover2 = new Vector2(304f / _buttonshine.Width, 64f / _buttonshine.Height);
+                    }
+                    var _sizeInc = size * 0.075f;
+                    var _rMin = ImGui.GetItemRectMin() - _sizeInc;
+                    var _rMax = ImGui.GetItemRectMax() + _sizeInc;
+                    ImGui.GetWindowDrawList().AddImage(_buttonshine.ImGuiHandle, _rMin, _rMax, _uvMin, _uvMax); // Frame
+                    if (!noButton && ImGui.IsItemHovered(ImGuiHoveredFlags.RectOnly))
+                    {
+                        ImGui.GetWindowDrawList().AddImage(_buttonshine.ImGuiHandle, _rMin, _rMax, _uvMinHover, _uvMaxHover, 0x85FFFFFF); // Frame Center Glow
+                        //ImGui.GetWindowDrawList().AddImage(_buttonshine.ImGuiHandle, _rMin - (_sizeInc * 1.5f), _rMax + (_sizeInc * 1.5f), _uvMinHover2, _uvMaxHover2); // Edge glow // TODO: Probably somewhat impossible as is, but fix glow being clipped
+                    }
+                    // TODO: Find a way to do the click animation
+
+                    ImGui.PopStyleColor(2);
+                }
+
+                ImGui.PopStyleColor();
+                if (retExists)
+                    ret = true;
             }
             return ret;
         }

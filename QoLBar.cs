@@ -151,12 +151,11 @@ namespace QoLBar
         private Configuration config;
         public PluginUI ui;
         private bool commandReady = true;
-        public bool pluginReady = false;
+        private bool pluginReady = false;
         private readonly Queue<string> commandQueue = new Queue<string>();
         private readonly QoLSerializer qolSerializer = new QoLSerializer();
 
-        public readonly Dictionary<int, TextureWrap> textureDictionary = new Dictionary<int, TextureWrap>();
-        public Dictionary<int, string> userIcons = new Dictionary<int, string>();
+        public readonly TextureDictionary textureDictionary = new TextureDictionary();
 
         public const int FrameIconID = 114_000;
         private const int SafeIconID = 1_000_000;
@@ -172,9 +171,11 @@ namespace QoLBar
             config.Initialize(this);
             config.TryBackup(); // Backup on version change
 
+            textureDictionary.Initialize(pluginInterface);
+
             ui = new PluginUI(this, config);
             pluginInterface.UiBuilder.OnOpenConfigUi += ToggleConfig;
-            pluginInterface.UiBuilder.OnBuildUi += ui.Draw;
+            pluginInterface.UiBuilder.OnBuildUi += Draw;
 
             CheckHideOptOuts();
 
@@ -196,9 +197,10 @@ namespace QoLBar
 
         public void ReadyPlugin()
         {
-            LoadIcon(46); // Magnifying glass / Search
-            LoadIcon(FrameIconID, "ui/uld/icona_frame.tex", true);
-            LoadUserIcons();
+            textureDictionary.LoadTexture(46); // Magnifying glass / Search
+            textureDictionary.AddTex(FrameIconID, "ui/uld/icona_frame.tex");
+            textureDictionary.LoadTexture(FrameIconID);
+            AddUserIcons();
             InitCommands();
             pluginReady = true;
         }
@@ -211,6 +213,17 @@ namespace QoLBar
             config.Save();
             ui.Reload(config);
             CheckHideOptOuts();
+        }
+
+        public void Draw()
+        {
+            ReadyCommand();
+
+            if (_addUserIcons)
+                AddUserIcons(ref _addUserIcons);
+
+            if (pluginReady)
+                ui.Draw();
         }
 
         public void ToggleConfig(object sender, EventArgs e) => ui.ToggleConfig();
@@ -241,98 +254,11 @@ namespace QoLBar
             pluginInterface.UiBuilder.DisableGposeUiHide = config.OptOutGPoseHide;
         }
 
-        private int _loadingThreads = 0;
-        bool IsTextureLoading() => _loadingThreads > 0;
+        public Dictionary<int, string> GetUserIcons() => textureDictionary.GetUserIcons();
 
-        private async void LoadTextureWrap(int i, bool overwrite, Func<TextureWrap> action, bool doSync = false)
-        {
-            if (!textureDictionary.ContainsKey(i) || overwrite)
-            {
-                if (overwrite && textureDictionary.ContainsKey(i))
-                    textureDictionary[i]?.Dispose();
-                textureDictionary[i] = null;
-
-                TextureWrap t()
-                {
-                    try
-                    {
-                        return action();
-                    }
-                    catch
-                    {
-                        return null;
-                    }
-                }
-
-                Interlocked.Increment(ref _loadingThreads);
-
-                var tex = !doSync ? await Task.Run(t) : t();
-                if (tex != null && tex.ImGuiHandle != IntPtr.Zero)
-                    textureDictionary[i] = tex;
-
-                Interlocked.Decrement(ref _loadingThreads);
-            }
-        }
-
-        public void LoadIcon(int icon, bool overwrite = false)
-        {
-            if (icon < 0 && userIcons.ContainsKey(icon))
-                LoadImage(icon, userIcons[icon], overwrite);
-            else
-            {
-                LoadTextureWrap(icon, overwrite, () =>
-                {
-                    var iconTex = pluginInterface.Data.GetIcon(icon);
-                    return pluginInterface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
-                });
-
-                // Exists to allow reloading user icons if their index was loaded before the image
-                if (icon < 0)
-                    userIcons.Add(icon, string.Empty);
-            }
-        }
-
-        public void LoadIcon(int iconSlot, string path, bool overwrite = false) => LoadTextureWrap(iconSlot, overwrite, () =>
-        {
-            var iconTex = pluginInterface.Data.GetFile<Lumina.Data.Files.TexFile>(path);
-            return pluginInterface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
-        });
-
-        // Seems to cause a nvwgf2umx.dll (System Access Violation Exception) crash if spammed enough? Possibly not thread safe...
-        public void LoadImage(int iconSlot, string path, bool overwrite = false) => LoadTextureWrap(iconSlot, overwrite, () => pluginInterface.UiBuilder.LoadImage(path), true);
-
-        public bool LoadUserIcons()
-        {
-            if (IsTextureLoading() && userIcons.Count > 0) return false;
-
-            foreach (var kv in userIcons)
-            {
-                if (textureDictionary.ContainsKey(kv.Key))
-                {
-                    textureDictionary[kv.Key]?.Dispose();
-                    textureDictionary.Remove(kv.Key);
-                }
-            }
-            userIcons.Clear();
-            var path = config.GetPluginIconPath();
-            if (!string.IsNullOrEmpty(path))
-            {
-                var directory = new DirectoryInfo(path);
-                foreach (var file in directory.GetFiles())
-                {
-                    int.TryParse(Path.GetFileNameWithoutExtension(file.Name), out int i);
-                    if (i > 0)
-                    {
-                        if (userIcons.ContainsKey(-i))
-                            PluginLog.Error($"Attempted to load {file.Name} into index {-i} but it already exists!");
-                        else
-                            userIcons.Add(-i, directory.FullName + "\\" + file.Name);
-                    }
-                }
-            }
-
-            return true;
-        }
+        bool _addUserIcons = false;
+        private bool AddUserIcons(ref bool b) => b = !textureDictionary.AddUserIcons(config.GetPluginIconPath());
+        public void AddUserIcons() => _addUserIcons = true;
 
         private void CleanBarConfig(BarConfig bar)
         {
@@ -490,7 +416,7 @@ namespace QoLBar
             }
         }
 
-        public void ReadyCommand()
+        private void ReadyCommand()
         {
             commandReady = true;
             ExecuteCommand();
@@ -502,7 +428,7 @@ namespace QoLBar
             ExecuteCommand(); // Attempt to run immediately
         }
 
-        public void ExecuteCommand()
+        private void ExecuteCommand()
         {
             if (!commandReady || commandQueue.Count == 0)
                 return;
@@ -558,7 +484,7 @@ namespace QoLBar
             config.SaveTempConfig();
 
             pluginInterface.UiBuilder.OnOpenConfigUi -= ToggleConfig;
-            pluginInterface.UiBuilder.OnBuildUi -= ui.Draw;
+            pluginInterface.UiBuilder.OnBuildUi -= Draw;
 
             pluginInterface.Dispose();
 

@@ -10,7 +10,7 @@ namespace QoLBar
 {
     public class PluginUI : IDisposable
     {
-        public bool IsVisible => plugin.pluginReady;
+        public bool IsVisible => true;
 
         private List<BarUI> bars;
 
@@ -28,8 +28,6 @@ namespace QoLBar
         public bool doPasteIcon = false;
         public int pasteIcon = 0;
         public void ToggleIconBrowser() => iconBrowserOpen = !iconBrowserOpen;
-
-        private bool _loadUserIcons = false;
 
         public PluginUI(QoLBar p, Configuration config)
         {
@@ -54,8 +52,6 @@ namespace QoLBar
 
         public void Draw()
         {
-            plugin.ReadyCommand();
-
             if (!IsVisible) return;
 
             if (configOpen)
@@ -65,9 +61,6 @@ namespace QoLBar
                 DrawIconBrowser();
             else
                 doPasteIcon = false;
-
-            if (_loadUserIcons)
-                _loadUserIcons = !plugin.LoadUserIcons();
 
             foreach (BarUI bar in bars)
                 bar.Draw();
@@ -431,12 +424,12 @@ namespace QoLBar
                 if (_tabExists)
                 {
                     if (ImGui.Button("Refresh Custom Icons"))
-                        _loadUserIcons = true;
+                        plugin.AddUserIcons();
                     ImGui.SameLine();
                     if (ImGui.Button("Open Icon Folder"))
                         Process.Start(config.GetPluginIconPath());
                 }
-                foreach (var kv in plugin.userIcons)
+                foreach (var kv in plugin.GetUserIcons())
                     AddIcons(kv.Key, kv.Key + 1);
                 _tooltip = "";
                 EndIconList();
