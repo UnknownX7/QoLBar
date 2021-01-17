@@ -136,6 +136,8 @@ namespace QoLBar
         {
             try
             {
+                if (!backupFolder.Exists)
+                    backupFolder.Create();
                 var file = new FileInfo(filePath);
                 file.CopyTo(tempConfig.FullName, true);
             }
