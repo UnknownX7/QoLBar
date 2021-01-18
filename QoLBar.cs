@@ -3,18 +3,15 @@ using System.Numerics;
 using System.Text;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using System.IO;
 using System.IO.Compression;
 using System.ComponentModel;
 using System.Reflection;
 using System.Dynamic;
+using System.Linq.Expressions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Dalamud.Plugin;
-using Dalamud.Data.LuminaExtensions;
-using ImGuiScene;
 using QoLBar.Attributes;
 
 // I'm too lazy to make a file just for this
@@ -65,7 +62,7 @@ namespace QoLBar
         [DefaultValue(1.0f)] public float FontScale = 1.0f;
         [DefaultValue(1.0f)] public float CategoryFontScale = 1.0f;
         [DefaultValue(8)] public int Spacing = 8;
-        [DefaultValue(null)] public Vector2 CategorySpacing = new Vector2(8, 4);
+        public Vector2 CategorySpacing = new Vector2(8, 4);
         [DefaultValue(false)] public bool NoBackground = false;
         [DefaultValue(false)] public bool NoCategoryBackgrounds = false;
         [DefaultValue(false)] public bool OpenCategoriesOnHover = false;
@@ -91,7 +88,7 @@ namespace QoLBar
         [DefaultValue(1)] public int CategoryColumns = 1;
         [DefaultValue(1.0f)] public float IconZoom = 1.0f;
         public Vector2 IconOffset = Vector2.Zero;
-        [DefaultValue(null)] public Vector4 IconTint = Vector4.One;
+        public Vector4 IconTint = Vector4.One;
     }
 
     public class QoLSerializer : DefaultSerializationBinder
@@ -261,23 +258,64 @@ namespace QoLBar
 
         private void CleanBarConfig(BarConfig bar)
         {
-            CleanShortcuts(bar.ShortcutList);
+            // Cursed optimization...
+            if (bar.CategorySpacing.X == 8 && bar.CategorySpacing.Y == 4)
+                bar.CategorySpacing = Vector2.Zero;
+            else if (bar.CategorySpacing == Vector2.Zero)
+                bar.CategorySpacing = new Vector2(0.1f);
+
+            CleanShortcut(bar.ShortcutList);
         }
 
-        private void CleanShortcuts(List<Shortcut> shortcuts)
+        private void CleanShortcut(List<Shortcut> shortcuts)
         {
             foreach (var sh in shortcuts)
-            {
                 CleanShortcut(sh);
-            }
         }
 
         private void CleanShortcut(Shortcut sh)
         {
             if (sh.Type != Shortcut.ShortcutType.Category)
-                sh.SubList = null;
+            {
+                sh.SubList = sh.GetDefaultValue(x => x.SubList);
+                sh.HideAdd = sh.GetDefaultValue(x => x.HideAdd);
+                sh.CategoryColumns = sh.GetDefaultValue(x => x.CategoryColumns);
+                sh.CategoryStaysOpen = sh.GetDefaultValue(x => x.CategoryStaysOpen);
+                sh.CategoryWidth = sh.GetDefaultValue(x => x.CategoryWidth);
+            }
             else
-                CleanShortcuts(sh.SubList);
+            {
+                sh.Command = sh.GetDefaultValue(x => x.Command);
+                sh.CategoryColumns = Math.Max(sh.CategoryColumns, 1);
+                CleanShortcut(sh.SubList);
+            }
+
+            if (sh.Type == Shortcut.ShortcutType.Spacer)
+                sh.Command = sh.GetDefaultValue(x => x.Command);
+
+            if (!sh.Name.StartsWith("::"))
+            {
+                sh.IconZoom = sh.GetDefaultValue(x => x.IconZoom);
+                sh.IconOffset = sh.GetDefaultValue(x => x.IconOffset);
+                sh.IconTint = sh.GetDefaultValue(x => x.IconTint);
+            }
+            else
+            {
+                sh.IconTint.X = Math.Min(Math.Max(sh.IconTint.X, 0), 1);
+                sh.IconTint.Y = Math.Min(Math.Max(sh.IconTint.Y, 0), 1);
+                sh.IconTint.Z = Math.Min(Math.Max(sh.IconTint.Z, 0), 1);
+                sh.IconTint.W = Math.Min(Math.Max(sh.IconTint.W, 0), 1);
+                if (sh.IconTint == Vector4.One)
+                    sh.IconTint = sh.GetDefaultValue(x => x.IconTint);
+                else if (sh.IconTint.W == 0)
+                    sh.IconTint = new Vector4(1, 1, 1, 0);
+            }
+        }
+
+        public T CopyObject<T>(T o)
+        {
+            var settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Objects, SerializationBinder = qolSerializer };
+            return JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(o, settings), settings);
         }
 
         public string ExportObject(object o, bool saveAllValues)
@@ -325,6 +363,7 @@ namespace QoLBar
 
         public string ExportBar(BarConfig bar, bool saveAllValues)
         {
+            bar = CopyObject(bar);
             CleanBarConfig(bar);
             return ExportObject(bar, saveAllValues);
         }
@@ -333,6 +372,7 @@ namespace QoLBar
 
         public string ExportShortcut(Shortcut sh, bool saveAllValues)
         {
+            sh = CopyObject(sh);
             CleanShortcut(sh);
             return ExportObject(sh, saveAllValues);
         }
@@ -499,5 +539,16 @@ namespace QoLBar
             GC.SuppressFinalize(this);
         }
         #endregion
+    }
+
+    public static class Extensions
+    {
+        public static T2 GetDefaultValue<T, T2>(this T _, Expression<Func<T, T2>> expression)
+        {
+            if (((MemberExpression)expression.Body).Member.GetCustomAttribute(typeof(DefaultValueAttribute)) is DefaultValueAttribute attribute)
+                return (T2)attribute.Value;
+            else
+                return default;
+        }
     }
 }
