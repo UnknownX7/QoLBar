@@ -9,6 +9,7 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Dynamic;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Dalamud.Plugin;
@@ -16,7 +17,7 @@ using QoLBar.Attributes;
 
 // I'm too lazy to make a file just for this
 [assembly: AssemblyTitle("QoLBar")]
-[assembly: AssemblyVersion("1.2.3.2")]
+[assembly: AssemblyVersion("1.2.3.3")]
 
 // Disclaimer: I have no idea what I'm doing.
 namespace QoLBar
