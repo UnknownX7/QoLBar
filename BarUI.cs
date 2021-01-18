@@ -487,13 +487,13 @@ namespace QoLBar
                     DrawIconButton(icon, new Vector2(height), sh.IconZoom, sh.IconOffset, sh.IconTint, args, true, true);
                 else
                 {
-                    ImGui.BeginChild((uint)i, new Vector2(width, height));
+                    var textSize = ImGui.CalcTextSize(name);
+                    ImGui.BeginChild((uint)i, new Vector2((width == 0) ? (textSize.X + Style.FramePadding.X * 2) : width, height));
                     // What the fuck ImGui
                     if (inCategory)
                         ImGui.SetWindowFontScale(GetFontScale());
                     else
                         ImGui.SetWindowFontScale(1);
-                    var textSize = ImGui.CalcTextSize(name);
                     ImGui.SameLine((ImGui.GetContentRegionAvail().X - textSize.X) / 2);
                     ImGui.SetCursorPosY((ImGui.GetContentRegionAvail().Y - textSize.Y) / 2);
                     ImGui.TextUnformatted(name);
