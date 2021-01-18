@@ -2,8 +2,8 @@ using ImGuiNET;
 using System;
 using System.Numerics;
 using System.Collections.Generic;
-using static QoLBar.BarConfig;
 using Dalamud.Plugin;
+using static QoLBar.BarConfig;
 
 namespace QoLBar
 {
@@ -838,7 +838,7 @@ namespace QoLBar
                             if (ImGui.SliderInt("Category Width", ref sh.CategoryWidth, 0, 200))
                                 config.Save();
                             if (ImGui.IsItemHovered())
-                                ImGui.SetTooltip("Set to 0 to use text width");
+                                ImGui.SetTooltip("Set to 0 to use text width.");
 
                             if (ImGui.SliderInt("Columns", ref sh.CategoryColumns, 1, 12))
                                 config.Save();
@@ -901,7 +901,7 @@ namespace QoLBar
                     ImGui.SetClipboardText(plugin.ExportShortcut(sh, false));
                 if (ImGui.IsItemHovered())
                 {
-                    ImGui.SetTooltip("Export to clipboard without default settings (May change with updates).\n" +
+                    ImGui.SetTooltip("Export to clipboard with minimal settings (May change with updates).\n" +
                         "Right click to export with every setting (Longer string, doesn't change).");
 
                     if (ImGui.IsMouseReleased(1))
@@ -1049,7 +1049,7 @@ namespace QoLBar
                         if (ImGui.SliderInt("Button Width", ref barConfig.ButtonWidth, 0, 200))
                             config.Save();
                         if (ImGui.IsItemHovered())
-                            ImGui.SetTooltip("Set to 0 to use text width");
+                            ImGui.SetTooltip("Set to 0 to use text width.");
 
                         if (ImGui.DragFloat("Font Scale", ref barConfig.FontScale, 0.0018f, 0.5f, 1.0f, "%.2f"))
                             config.Save();
@@ -1106,7 +1106,7 @@ namespace QoLBar
                     ImGui.SetClipboardText(plugin.ExportBar(barConfig, false));
                 if (ImGui.IsItemHovered())
                 {
-                    ImGui.SetTooltip("Export to clipboard without default settings (May change with updates).\n" +
+                    ImGui.SetTooltip("Export to clipboard with minimal settings (May change with updates).\n" +
                         "Right click to export with every setting (Longer string, doesn't change).");
 
                     if (ImGui.IsMouseReleased(1))

@@ -139,7 +139,7 @@ namespace QoLBar
                             ImGui.SetClipboardText(ExportBar(i, false));
                         if (ImGui.IsItemHovered())
                         {
-                            ImGui.SetTooltip("Export to clipboard without default settings (May change with updates).\n" +
+                            ImGui.SetTooltip("Export to clipboard with minimal settings (May change with updates).\n" +
                                 "Right click to export with every setting (Longer string, doesn't change).");
 
                             if (ImGui.IsMouseReleased(1))
