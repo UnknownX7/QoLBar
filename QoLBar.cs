@@ -55,7 +55,6 @@ namespace QoLBar
         [DefaultValue(BarDock.Bottom)] public BarDock DockSide = BarDock.Bottom;
         [DefaultValue(false)] public bool Hint = false;
         [DefaultValue(100)] public int ButtonWidth = 100;
-        [DefaultValue(false)] public bool AutoButtonWidth = false;
         [DefaultValue(false)] public bool HideAdd = false;
         public Vector2 Position = Vector2.Zero;
         [DefaultValue(false)] public bool LockedPosition = false;

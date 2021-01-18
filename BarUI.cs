@@ -53,6 +53,7 @@ namespace QoLBar
         private bool _setPos = true;
         private bool _lastReveal = true;
         private bool _mouseRevealed = false;
+        private float _maxW = 0;
         private Vector2 _tweenStart;
         private float _tweenProgress = 1;
         private Vector2 _catpiv = Vector2.Zero;
@@ -503,8 +504,11 @@ namespace QoLBar
             else if (useIcon)
                 clicked = DrawIconButton(icon, new Vector2(height), sh.IconZoom, sh.IconOffset, sh.IconTint, args);
             else
-                clicked = ImGui.Button(name, new Vector2((!inCategory && !vertical && barConfig.AutoButtonWidth) ? 0 : width, height));
+                clicked = ImGui.Button(name, new Vector2(width, height));
             PopFontScale();
+
+            if (!inCategory && _maxW < ImGui.GetItemRectSize().X)
+                _maxW = ImGui.GetItemRectSize().X;
 
             if (inCategory)
                 ImGui.PopStyleColor();
@@ -547,10 +551,13 @@ namespace QoLBar
 
             var height = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
             PushFontScale(GetFontScale() * barConfig.FontScale);
-            ImGui.Button("+", new Vector2((!vertical && barConfig.AutoButtonWidth) ? 0 : (barConfig.ButtonWidth * globalSize * barConfig.Scale), height));
+            ImGui.Button("+", new Vector2(barConfig.ButtonWidth * globalSize * barConfig.Scale, height));
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
                 ImGui.SetTooltip("Add a new shortcut.\nRight click this (or the bar background) for options.\nRight click other shortcuts to edit them.");
             PopFontScale();
+
+            if (_maxW < ImGui.GetItemRectSize().X)
+                _maxW = ImGui.GetItemRectSize().X;
 
             ImGui.OpenPopupOnItemClick("addItem", 0);
             ImGui.OpenPopupOnItemClick($"BarConfig##{barNumber}", 1);
@@ -828,8 +835,10 @@ namespace QoLBar
                             if (ImGui.IsItemHovered())
                                 ImGui.SetTooltip("Keeps the category open when pressing shortcuts within it.\nMay not work if the shortcut interacts with other plugins.");
 
-                            if (ImGui.SliderInt("Category Width", ref sh.CategoryWidth, 8, 200))
+                            if (ImGui.SliderInt("Category Width", ref sh.CategoryWidth, 0, 200))
                                 config.Save();
+                            if (ImGui.IsItemHovered())
+                                ImGui.SetTooltip("Set to 0 to use text width");
 
                             if (ImGui.SliderInt("Columns", ref sh.CategoryColumns, 1, 12))
                                 config.Save();
@@ -1034,11 +1043,10 @@ namespace QoLBar
                         if (ImGui.DragFloat("Scale", ref barConfig.Scale, 0.002f, 0.7f, 2.0f, "%.2f"))
                             config.Save();
 
-                        if (!vertical && ImGui.Checkbox("Automatic Button Width", ref barConfig.AutoButtonWidth))
+                        if (ImGui.SliderInt("Button Width", ref barConfig.ButtonWidth, 0, 200))
                             config.Save();
-
-                        if ((vertical || !barConfig.AutoButtonWidth) && ImGui.SliderInt("Button Width", ref barConfig.ButtonWidth, 16, 200))
-                            config.Save();
+                        if (ImGui.IsItemHovered())
+                            ImGui.SetTooltip("Set to 0 to use text width");
 
                         if (ImGui.DragFloat("Font Scale", ref barConfig.FontScale, 0.0018f, 0.5f, 1.0f, "%.2f"))
                             config.Save();
@@ -1103,8 +1111,16 @@ namespace QoLBar
         private void SetBarSize()
         {
             barSize.Y = ImGui.GetCursorPosY() + Style.WindowPadding.Y - Style.ItemSpacing.Y;
-            ImGui.SameLine();
-            barSize.X = ImGui.GetCursorPosX() + Style.WindowPadding.X - Style.ItemSpacing.X;
+            if (!vertical)
+            {
+                ImGui.SameLine();
+                barSize.X = ImGui.GetCursorPosX() + Style.WindowPadding.X - Style.ItemSpacing.X;
+            }
+            else
+            {
+                barSize.X = _maxW + (Style.WindowPadding.X * 2);
+                _maxW = 0;
+            }
         }
 
         private void ClampWindowPos()
@@ -1230,7 +1246,7 @@ namespace QoLBar
         }
 
         // Why is this not a basic feature of ImGui...
-        private Stack<float> _fontScaleStack = new Stack<float>();
+        private readonly Stack<float> _fontScaleStack = new Stack<float>();
         private float _curScale = 1;
         private void PushFontScale(float scale)
         {
