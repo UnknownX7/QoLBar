@@ -953,6 +953,9 @@ namespace QoLBar
                 {
                     if (ImGui.BeginTabItem("General"))
                     {
+                        if (ImGui.InputText("Title", ref barConfig.Title, 256))
+                            config.Save();
+
                         var _dock = (int)barConfig.DockSide;
                         if (ImGui.Combo("Side", ref _dock, "Top\0Left\0Bottom\0Right\0Undocked\0Undocked (Vertical)"))
                         {
@@ -1099,6 +1102,17 @@ namespace QoLBar
 
                 ImGui.Spacing();
                 ImGui.Spacing();
+                if (ImGui.Button("Export"))
+                    ImGui.SetClipboardText(plugin.ExportBar(barConfig, false));
+                if (ImGui.IsItemHovered())
+                {
+                    ImGui.SetTooltip("Export to clipboard without default settings (May change with updates).\n" +
+                        "Right click to export with every setting (Longer string, doesn't change).");
+
+                    if (ImGui.IsMouseReleased(1))
+                        ImGui.SetClipboardText(plugin.ExportBar(barConfig, true));
+                }
+                ImGui.SameLine();
                 if (ImGui.Button("QoL Bar Config"))
                     plugin.ToggleConfig();
 
@@ -1265,7 +1279,6 @@ namespace QoLBar
 
         public void Dispose()
         {
-
         }
     }
 }
