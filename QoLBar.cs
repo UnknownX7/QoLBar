@@ -363,8 +363,11 @@ namespace QoLBar
 
         public string ExportBar(BarConfig bar, bool saveAllValues)
         {
-            bar = CopyObject(bar);
-            CleanBarConfig(bar);
+            if (!saveAllValues)
+            {
+                bar = CopyObject(bar);
+                CleanBarConfig(bar);
+            }
             return ExportObject(bar, saveAllValues);
         }
 
@@ -372,8 +375,11 @@ namespace QoLBar
 
         public string ExportShortcut(Shortcut sh, bool saveAllValues)
         {
-            sh = CopyObject(sh);
-            CleanShortcut(sh);
+            if (!saveAllValues)
+            {
+                sh = CopyObject(sh);
+                CleanShortcut(sh);
+            }
             return ExportObject(sh, saveAllValues);
         }
 
