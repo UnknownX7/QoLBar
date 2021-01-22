@@ -1207,6 +1207,9 @@ namespace QoLBar
                     ImGui.PushStyleColor(ImGuiCol.ButtonActive, Vector4.Zero);
                 }
 
+                if (tint.W > 1)
+                    tint = AnimateColor(tint);
+
                 var z = 0.5f / zoom;
                 var uv0 = new Vector2(0.5f - z + offset.X, 0.5f - z + offset.Y);
                 var uv1 = new Vector2(0.5f + z + offset.X, 0.5f + z + offset.Y);
@@ -1246,6 +1249,89 @@ namespace QoLBar
                     ret = true;
             }
             return ret;
+        }
+
+        private Vector4 AnimateColor(Vector4 c)
+        {
+            float r, g, b, a, x;
+            r = g = b = a = 1;
+            var t = plugin.GetDrawTime();
+            var anim = Math.Round(c.W * 255) - 256;
+
+            switch (anim)
+            {
+                case 0: // Slow Rainbow
+                    ImGui.ColorConvertHSVtoRGB(((t * 15) % 360) / 360, 1, 1, out r, out g, out b);
+                    break;
+                case 1: // Rainbow
+                    ImGui.ColorConvertHSVtoRGB(((t * 30) % 360) / 360, 1, 1, out r, out g, out b);
+                    break;
+                case 2: // Fast Rainbow
+                    ImGui.ColorConvertHSVtoRGB(((t * 60) % 360) / 360, 1, 1, out r, out g, out b);
+                    break;
+                case 3: // Slow Fade
+                    r = c.X; g = c.Y; b = c.Z;
+                    a = (float)(Math.Sin(((t * 30) % 360) * Math.PI / 180) + 1) / 2;
+                    break;
+                case 4: // Fade
+                    r = c.X; g = c.Y; b = c.Z;
+                    a = (float)(Math.Sin(((t * 60) % 360) * Math.PI / 180) + 1) / 2;
+                    break;
+                case 5: // Fast Fade
+                    r = c.X; g = c.Y; b = c.Z;
+                    a = (float)(Math.Sin(((t * 120) % 360) * Math.PI / 180) + 1) / 2;
+                    break;
+                case 6: // Red Transition
+                    x = Math.Abs(((t * 60) % 360) - 180) / 180;
+                    r = c.X + (1 - c.X) * x;
+                    g = c.Y + (0 - c.Y) * x;
+                    b = c.Z + (0 - c.Z) * x;
+                    break;
+                case 7: // Yellow Transition
+                    x = Math.Abs(((t * 60) % 360) - 180) / 180;
+                    r = c.X + (1 - c.X) * x;
+                    g = c.Y + (1 - c.Y) * x;
+                    b = c.Z + (0 - c.Z) * x;
+                    break;
+                case 8: // Green Transition
+                    x = Math.Abs(((t * 60) % 360) - 180) / 180;
+                    r = c.X + (0 - c.X) * x;
+                    g = c.Y + (1 - c.Y) * x;
+                    b = c.Z + (0 - c.Z) * x;
+                    break;
+                case 9: // Cyan Transition
+                    x = Math.Abs(((t * 60) % 360) - 180) / 180;
+                    r = c.X + (0 - c.X) * x;
+                    g = c.Y + (1 - c.Y) * x;
+                    b = c.Z + (1 - c.Z) * x;
+                    break;
+                case 10: // Blue Transition
+                    x = Math.Abs(((t * 60) % 360) - 180) / 180;
+                    r = c.X + (0 - c.X) * x;
+                    g = c.Y + (0 - c.Y) * x;
+                    b = c.Z + (1 - c.Z) * x;
+                    break;
+                case 11: // Purple Transition
+                    x = Math.Abs(((t * 60) % 360) - 180) / 180;
+                    r = c.X + (1 - c.X) * x;
+                    g = c.Y + (0 - c.Y) * x;
+                    b = c.Z + (1 - c.Z) * x;
+                    break;
+                case 12: // White Transition
+                    x = Math.Abs(((t * 60) % 360) - 180) / 180;
+                    r = c.X + (1 - c.X) * x;
+                    g = c.Y + (1 - c.Y) * x;
+                    b = c.Z + (1 - c.Z) * x;
+                    break;
+                case 13: // Black Transition
+                    x = Math.Abs(((t * 60) % 360) - 180) / 180;
+                    r = c.X + (0 - c.X) * x;
+                    g = c.Y + (0 - c.Y) * x;
+                    b = c.Z + (0 - c.Z) * x;
+                    break;
+            }
+
+            return new Vector4(r, g, b, a);
         }
 
         // Why is this not a basic feature of ImGui...

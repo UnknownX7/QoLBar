@@ -13,11 +13,12 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Dalamud.Plugin;
+using ImGuiNET;
 using QoLBar.Attributes;
 
 // I'm too lazy to make a file just for this
 [assembly: AssemblyTitle("QoLBar")]
-[assembly: AssemblyVersion("1.2.3.3")]
+[assembly: AssemblyVersion("1.2.3.4")]
 
 // Disclaimer: I have no idea what I'm doing.
 namespace QoLBar
@@ -230,12 +231,16 @@ namespace QoLBar
 
         public bool IsLoggedIn() => pluginInterface.ClientState.Condition.Any();
 
+        private float _drawTime = 0;
+        public float GetDrawTime() => _drawTime;
         public void Draw()
         {
             ReadyCommand();
 
             if (_addUserIcons)
                 AddUserIcons(ref _addUserIcons);
+
+            _drawTime += ImGui.GetIO().DeltaTime;
 
             if (pluginReady)
                 ui.Draw();
@@ -322,7 +327,7 @@ namespace QoLBar
                 sh.IconTint.X = Math.Min(Math.Max(sh.IconTint.X, 0), 1);
                 sh.IconTint.Y = Math.Min(Math.Max(sh.IconTint.Y, 0), 1);
                 sh.IconTint.Z = Math.Min(Math.Max(sh.IconTint.Z, 0), 1);
-                sh.IconTint.W = Math.Min(Math.Max(sh.IconTint.W, 0), 1);
+                sh.IconTint.W = Math.Min(Math.Max(sh.IconTint.W, 0), 2);
                 if (sh.IconTint == Vector4.One)
                     sh.IconTint = sh.GetDefaultValue(x => x.IconTint);
                 else if (sh.IconTint.W == 0)
