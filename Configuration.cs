@@ -16,6 +16,7 @@ namespace QoLBar
         public bool ExportOnDelete = true;
         public bool ResizeRepositionsBars = false;
         public bool UseIconFrame = false;
+        public bool AlwaysDisplayBars = false;
         public bool OptOutGameUIOffHide = false;
         public bool OptOutCutsceneHide = false;
         public bool OptOutGPoseHide = false;

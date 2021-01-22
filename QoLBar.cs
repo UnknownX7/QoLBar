@@ -180,16 +180,12 @@ namespace QoLBar
 
             SetupIPC();
 
-#if DEBUG
-            ReadyPlugin();
-#else
             Task.Run(async () =>
             {
-                while (pluginInterface.ClientState.LocalPlayer == null && !ui.configOpen)
+                while (!config.AlwaysDisplayBars && !ui.configOpen && !IsLoggedIn())
                     await Task.Delay(1000);
                 ReadyPlugin();
             });
-#endif
         }
 
         public void ReadyPlugin()
@@ -212,17 +208,6 @@ namespace QoLBar
             CheckHideOptOuts();
         }
 
-        public void Draw()
-        {
-            ReadyCommand();
-
-            if (_addUserIcons)
-                AddUserIcons(ref _addUserIcons);
-
-            if (pluginReady)
-                ui.Draw();
-        }
-
         public void ToggleConfig(object sender, EventArgs e) => ui.ToggleConfig();
 
         [Command("/qolbar")]
@@ -241,6 +226,19 @@ namespace QoLBar
                 ui.ToggleBarVisible(id - 1);
             else
                 ui.ToggleBarVisible(argument);
+        }
+
+        public bool IsLoggedIn() => pluginInterface.ClientState.Condition.Any();
+
+        public void Draw()
+        {
+            ReadyCommand();
+
+            if (_addUserIcons)
+                AddUserIcons(ref _addUserIcons);
+
+            if (pluginReady)
+                ui.Draw();
         }
 
         public void CheckHideOptOuts()

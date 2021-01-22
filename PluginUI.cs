@@ -62,8 +62,11 @@ namespace QoLBar
             else
                 doPasteIcon = false;
 
-            foreach (BarUI bar in bars)
-                bar.Draw();
+            if (config.AlwaysDisplayBars || plugin.IsLoggedIn())
+            {
+                foreach (BarUI bar in bars)
+                    bar.Draw();
+            }
         }
 
         private void DrawPluginConfigWindow()
@@ -201,10 +204,16 @@ namespace QoLBar
                         config.Save();
                     if (ImGui.IsItemHovered())
                         ImGui.SetTooltip("Undocked bars will automatically readjust if you change resolutions.");
+
                     if (ImGui.Checkbox("Use Hotbar Frames on Icons", ref config.UseIconFrame))
                         config.Save();
                     if (ImGui.IsItemHovered())
                         ImGui.SetTooltip("This option will invert the ' f ' argument for all icons.");
+                    ImGui.SameLine(ImGui.GetWindowWidth() / 2);
+                    if (ImGui.Checkbox("Always Display Bars", ref config.AlwaysDisplayBars))
+                        config.Save();
+                    if (ImGui.IsItemHovered())
+                        ImGui.SetTooltip("Bars will remain visible even when logged out.");
 
                     ImGui.Spacing();
                     ImGui.Spacing();

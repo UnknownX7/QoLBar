@@ -17,17 +17,12 @@ namespace QoLBar
             SetupPosition();
         }
 
-#if DEBUG
         public bool IsVisible => !barConfig.Hidden;
-#else
-        public bool IsVisible => !barConfig.Hidden && (plugin.pluginInterface.ClientState.LocalPlayer != null || _lastLocalPlayer < 3);
-#endif
         public void ToggleVisible()
         {
             barConfig.Hidden = !barConfig.Hidden;
             config.Save();
         }
-        private float _lastLocalPlayer = 9999;
 
         private static ImGuiStylePtr Style => ImGui.GetStyle();
 
@@ -229,13 +224,7 @@ namespace QoLBar
         {
             CheckGameResolution();
 
-            if (!IsVisible)
-            {
-                _lastLocalPlayer += ImGui.GetIO().DeltaTime;
-                return;
-            }
-            else
-                _lastLocalPlayer = 0;
+            if (!IsVisible) return;
 
             var io = ImGui.GetIO();
             mousePos = io.MousePos;
