@@ -470,11 +470,15 @@ namespace QoLBar
             var height = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
             var clicked = false;
 
+            var c = sh.IconTint;
+            if (c.W > 1)
+                c = AnimateColor(c);
+
             PushFontScale(GetFontScale() * (!inCategory ? barConfig.FontScale : barConfig.CategoryFontScale));
             if (type == Shortcut.ShortcutType.Spacer)
             {
                 if (useIcon)
-                    DrawIconButton(icon, new Vector2(height), sh.IconZoom, sh.IconOffset, sh.IconTint, args, true, true);
+                    DrawIconButton(icon, new Vector2(height), sh.IconZoom, sh.IconOffset, c, args, true, true);
                 else
                 {
                     var textSize = ImGui.CalcTextSize(name);
@@ -486,14 +490,18 @@ namespace QoLBar
                         ImGui.SetWindowFontScale(1);
                     ImGui.SameLine((ImGui.GetContentRegionAvail().X - textSize.X) / 2);
                     ImGui.SetCursorPosY((ImGui.GetContentRegionAvail().Y - textSize.Y) / 2);
-                    ImGui.TextUnformatted(name);
+                    ImGui.TextColored(c, name);
                     ImGui.EndChild();
                 }
             }
             else if (useIcon)
-                clicked = DrawIconButton(icon, new Vector2(height), sh.IconZoom, sh.IconOffset, sh.IconTint, args);
+                clicked = DrawIconButton(icon, new Vector2(height), sh.IconZoom, sh.IconOffset, c, args);
             else
+            {
+                ImGui.PushStyleColor(ImGuiCol.Text, c);
                 clicked = ImGui.Button(name, new Vector2(width, height));
+                ImGui.PopStyleColor();
+            }
             PopFontScale();
 
             if (!inCategory && _maxW < ImGui.GetItemRectSize().X)
@@ -835,6 +843,9 @@ namespace QoLBar
                                 ImGui.SetTooltip("Number of shortcuts in each row before starting another.");
                         }
 
+                        if (ImGui.ColorEdit4("Color", ref sh.IconTint, ImGuiColorEditFlags.NoDragDrop | ImGuiColorEditFlags.AlphaPreviewHalf))
+                            config.Save();
+
                         ImGui.EndTabItem();
                     }
 
@@ -859,9 +870,6 @@ namespace QoLBar
                             config.Save();
 
                         if (ImGui.DragFloat2("Offset", ref sh.IconOffset, 0.002f, -0.5f, 0.5f, "%.2f"))
-                            config.Save();
-
-                        if (ImGui.ColorEdit4("Tint", ref sh.IconTint, ImGuiColorEditFlags.NoDragDrop | ImGuiColorEditFlags.AlphaPreviewHalf))
                             config.Save();
 
                         ImGui.EndTabItem();
@@ -1206,9 +1214,6 @@ namespace QoLBar
                     ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Vector4.Zero);
                     ImGui.PushStyleColor(ImGuiCol.ButtonActive, Vector4.Zero);
                 }
-
-                if (tint.W > 1)
-                    tint = AnimateColor(tint);
 
                 var z = 0.5f / zoom;
                 var uv0 = new Vector2(0.5f - z + offset.X, 0.5f - z + offset.Y);

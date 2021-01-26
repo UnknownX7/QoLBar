@@ -320,19 +320,16 @@ namespace QoLBar
             {
                 sh.IconZoom = sh.GetDefaultValue(x => x.IconZoom);
                 sh.IconOffset = sh.GetDefaultValue(x => x.IconOffset);
+            }
+
+            sh.IconTint.X = Math.Min(Math.Max(sh.IconTint.X, 0), 1);
+            sh.IconTint.Y = Math.Min(Math.Max(sh.IconTint.Y, 0), 1);
+            sh.IconTint.Z = Math.Min(Math.Max(sh.IconTint.Z, 0), 1);
+            sh.IconTint.W = Math.Min(Math.Max(sh.IconTint.W, 0), 2);
+            if (sh.IconTint == Vector4.One)
                 sh.IconTint = sh.GetDefaultValue(x => x.IconTint);
-            }
-            else
-            {
-                sh.IconTint.X = Math.Min(Math.Max(sh.IconTint.X, 0), 1);
-                sh.IconTint.Y = Math.Min(Math.Max(sh.IconTint.Y, 0), 1);
-                sh.IconTint.Z = Math.Min(Math.Max(sh.IconTint.Z, 0), 1);
-                sh.IconTint.W = Math.Min(Math.Max(sh.IconTint.W, 0), 2);
-                if (sh.IconTint == Vector4.One)
-                    sh.IconTint = sh.GetDefaultValue(x => x.IconTint);
-                else if (sh.IconTint.W == 0)
-                    sh.IconTint = new Vector4(1, 1, 1, 0);
-            }
+            else if (sh.IconTint.W == 0)
+                sh.IconTint = new Vector4(1, 1, 1, 0);
         }
 
         public T CopyObject<T>(T o)
