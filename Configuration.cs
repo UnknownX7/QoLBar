@@ -13,6 +13,7 @@ namespace QoLBar
         public int Version { get; set; } = 0;
 
         public List<BarConfig> BarConfigs = new List<BarConfig>();
+        public List<DisplayConditionSet> ConditionSets = new List<DisplayConditionSet>();
         public bool ExportOnDelete = true;
         public bool ResizeRepositionsBars = false;
         public bool UseIconFrame = false;

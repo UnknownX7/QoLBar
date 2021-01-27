@@ -29,6 +29,8 @@ namespace QoLBar
         public int pasteIcon = 0;
         public void ToggleIconBrowser() => iconBrowserOpen = !iconBrowserOpen;
 
+        private static readonly Array conditionFlags = Enum.GetValues(typeof(Dalamud.Game.ClientState.ConditionFlag));
+
         public PluginUI(QoLBar p, Configuration config)
         {
             plugin = p;
@@ -190,7 +192,158 @@ namespace QoLBar
                         ImGui.SetTooltip("Import a bar from the clipboard,\n" +
                             "or import a single shortcut as a new bar.");
 
-                    ImGui.Columns(1); // I just wanna know who did this and where they live
+                    ImGui.Columns(1);
+
+                    ImGui.EndTabItem();
+                }
+
+                if (ImGui.BeginTabItem("Condition Sets"))
+                {
+                    for (int i = 0; i < config.ConditionSets.Count; i++)
+                    {
+                        ImGui.PushID(i);
+
+                        var set = config.ConditionSets[i];
+
+                        var open = ImGui.TreeNodeEx("##Node", ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.AllowItemOverlap | ImGuiTreeNodeFlags.NoTreePushOnOpen);
+                        ImGui.SameLine();
+                        if (ImGui.InputText("##Name", ref set.Name, 32))
+                            config.Save();
+
+                        if (open)
+                        {
+                            ImGui.SameLine();
+                            if (ImGui.Button("   +   "))
+                            {
+                                set.Add();
+                                config.Save();
+                            }
+                        }
+                        ImGui.SameLine();
+                        if (ImGui.Button("Delete"))
+                            plugin.ExecuteCommand("/echo <se> Right click to delete!");
+                        if (ImGui.IsItemHovered())
+                        {
+                            ImGui.SetTooltip($"Right click this button to delete this set!");
+                            if (ImGui.IsMouseReleased(1))
+                            {
+                                config.ConditionSets.RemoveAt(i);
+                                config.Save();
+                            }
+                        }
+
+                        if (open)
+                        {
+                            ImGui.SameLine();
+                            ImGui.TextUnformatted($"{set.CheckConditions(plugin)}");
+
+                            ImGui.Indent();
+
+                            ImGui.Columns(3, $"QoLConditionSet{i}", false);
+
+                            for (int j = 0; j < set.Conditions.Count; j++)
+                            {
+                                ImGui.PushID(j);
+
+                                var cond = set.Conditions[j];
+
+                                var names = Enum.GetNames(typeof(DisplayCondition.ConditionType));
+                                ImGui.SetNextItemWidth(-1);
+                                if (ImGui.BeginCombo("##Type", names[(int)cond.Type]))
+                                {
+                                    for (int n = 0; n < names.Length; n++)
+                                    {
+                                        if (ImGui.Selectable(names[n], n == (int)cond.Type))
+                                        {
+                                            cond.Type = (DisplayCondition.ConditionType)n;
+                                            config.Save();
+                                        }
+                                    }
+
+                                    ImGui.EndCombo();
+                                }
+
+                                ImGui.NextColumn();
+
+                                ImGui.SetNextItemWidth(-1);
+                                switch (cond.Type)
+                                {
+                                    case DisplayCondition.ConditionType.Logic:
+                                        ImGui.Combo("##LogicOperator", ref cond.Condition, "OR\0XOR\0NOT\0EQUALS");
+                                        break;
+                                    case DisplayCondition.ConditionType.ConditionFlag:
+                                        if (ImGui.BeginCombo("##Flag", ((Dalamud.Game.ClientState.ConditionFlag)cond.Condition).ToString()))
+                                        {
+                                            foreach (Dalamud.Game.ClientState.ConditionFlag flag in conditionFlags)
+                                            {
+                                                if (ImGui.Selectable(flag.ToString(), (int)flag == cond.Condition))
+                                                {
+                                                    cond.Condition = (int)flag;
+                                                    config.Save();
+                                                }
+                                            }
+
+                                            ImGui.EndCombo();
+                                        }
+                                        break;
+                                    case DisplayCondition.ConditionType.Job:
+                                        ImGui.Combo("##LogicOperator", ref cond.Condition, "job");
+                                        break;
+                                }
+
+                                ImGui.NextColumn();
+
+                                if (ImGui.Button("↑") && i > 0)
+                                {
+                                    set.Remove(j);
+                                    set.Insert(j - 1, cond);
+                                    config.Save();
+                                }
+                                ImGui.SameLine();
+                                if (ImGui.Button("↓") && i < (bars.Count - 1))
+                                {
+                                    set.Remove(j);
+                                    set.Insert(j + 1, cond);
+                                    config.Save();
+                                }
+                                ImGui.SameLine();
+                                if (ImGui.Button("Delete"))
+                                    plugin.ExecuteCommand("/echo <se> Right click to delete!");
+                                if (ImGui.IsItemHovered())
+                                {
+                                    ImGui.SetTooltip($"Right click this button to delete this condition!");
+                                    if (ImGui.IsMouseReleased(1))
+                                    {
+                                        set.Remove(j);
+                                        config.Save();
+                                    }
+                                }
+                                if (cond.Type != DisplayCondition.ConditionType.Logic)
+                                {
+                                    ImGui.SameLine();
+                                    ImGui.TextUnformatted($"{cond.CheckCondition(plugin)}");
+                                }
+
+                                ImGui.NextColumn();
+
+                                ImGui.PopID();
+                            }
+
+                            ImGui.Columns(1); // I just wanna know who did this and where they live
+
+                            ImGui.Unindent();
+                        }
+
+                        ImGui.Separator();
+
+                        ImGui.PopID();
+                    }
+
+                    if (ImGui.Button("+", new Vector2(-1, 0)))
+                    {
+                        config.ConditionSets.Add(new DisplayConditionSet());
+                        config.Save();
+                    }
 
                     ImGui.EndTabItem();
                 }

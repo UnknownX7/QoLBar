@@ -229,7 +229,7 @@ namespace QoLBar
                 ui.ToggleBarVisible(argument);
         }
 
-        public bool IsLoggedIn() => pluginInterface.ClientState.Condition.Any();
+        public bool IsLoggedIn() => ConditionCache.GetCondition(this, 1000);
 
         private float _drawTime = 0;
         public float GetDrawTime() => _drawTime;
