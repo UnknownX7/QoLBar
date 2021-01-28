@@ -258,14 +258,22 @@ namespace QoLBar
                         if (ImGui.InputText("##Name", ref set.Name, 32))
                             config.Save();
 
+                        ImGui.SameLine();
                         if (open)
                         {
-                            ImGui.SameLine();
                             if (ImGui.Button("   +   "))
                             {
                                 set.Add();
                                 config.Save();
                             }
+                        }
+                        else
+                        {
+                            if (ImGui.Button("↑") && i > 0)
+                                SwapConditionSet(i, i - 1);
+                            ImGui.SameLine();
+                            if (ImGui.Button("↓") && i < (config.ConditionSets.Count - 1))
+                                SwapConditionSet(i, i + 1);
                         }
                         ImGui.SameLine();
                         if (ImGui.Button("Delete"))
@@ -636,6 +644,21 @@ namespace QoLBar
             {
                 plugin.PrintError($"Failed to delete: {e.Message}");
             }
+        }
+
+        private void SwapConditionSet(int from, int to)
+        {
+            var set = config.ConditionSets[from];
+            foreach (var bar in config.BarConfigs)
+            {
+                if (bar.ConditionSet == from)
+                    bar.ConditionSet = to;
+                else if (bar.ConditionSet == to)
+                    bar.ConditionSet = from;
+            }
+            config.ConditionSets.RemoveAt(from);
+            config.ConditionSets.Insert(to, set);
+            config.Save();
         }
 
         private void RemoveConditionSet(int i)
