@@ -4,6 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Numerics;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Dalamud.Plugin;
 
 namespace QoLBar
@@ -31,6 +33,20 @@ namespace QoLBar
 
         private static readonly Array conditionFlags = Enum.GetValues(typeof(Dalamud.Game.ClientState.ConditionFlag));
 
+        private Dictionary<uint, Lumina.Excel.GeneratedSheets.ClassJob> classDictionary;
+        private static readonly Dictionary<int, string> roleDictionary = new Dictionary<int, string>
+        {
+            [0] = "No role",
+            [1] = "Tank",
+            [2] = "Melee DPS",
+            [3] = "Ranged DPS",
+            [4] = "Healer",
+            [30] = "DoW",
+            [31] = "DoM",
+            [32] = "DoL",
+            [33] = "DoH"
+        };
+
         public PluginUI(QoLBar p, Configuration config)
         {
             plugin = p;
@@ -39,6 +55,13 @@ namespace QoLBar
             bars = new List<BarUI>();
             for (int i = 0; i < config.BarConfigs.Count; i++)
                 bars.Add(new BarUI(p, config, i));
+
+            Task.Run(async () =>
+            {
+                while (!p.pluginInterface.Data.IsDataReady)
+                    await Task.Delay(1000);
+                classDictionary = p.pluginInterface.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.ClassJob>(p.pluginInterface.ClientState.ClientLanguage).ToDictionary(i => i.RowId);
+            });
         }
 
         public void Reload(Configuration config)
@@ -287,20 +310,54 @@ namespace QoLBar
                                         }
                                         break;
                                     case DisplayCondition.ConditionType.Job:
-                                        ImGui.Combo("##LogicOperator", ref cond.Condition, "job");
+                                        classDictionary.TryGetValue((uint)cond.Condition, out var r);
+                                        if (ImGui.BeginCombo("##Job", r?.Abbreviation.ToString()))
+                                        {
+                                            foreach (var kv in classDictionary)
+                                            {
+                                                if (kv.Key == 0) continue;
+
+                                                if (ImGui.Selectable(kv.Value.Abbreviation.ToString(), (int)kv.Key == cond.Condition))
+                                                {
+                                                    cond.Condition = (int)kv.Key;
+                                                    config.Save();
+                                                }
+                                            }
+
+                                            ImGui.EndCombo();
+                                        }
+                                        break;
+                                    case DisplayCondition.ConditionType.Role:
+                                        roleDictionary.TryGetValue(cond.Condition, out var s);
+                                        if (ImGui.BeginCombo("##Role", s))
+                                        {
+                                            foreach (var kv in roleDictionary)
+                                            {
+                                                if (ImGui.Selectable(kv.Value, kv.Key == cond.Condition))
+                                                {
+                                                    cond.Condition = kv.Key;
+                                                    config.Save();
+                                                }
+                                            }
+
+                                            ImGui.EndCombo();
+                                        }
+                                        break;
+                                    case DisplayCondition.ConditionType.Misc:
+                                        ImGui.Combo("##Misc", ref cond.Condition, "Logged in");
                                         break;
                                 }
 
                                 ImGui.NextColumn();
 
-                                if (ImGui.Button("↑") && i > 0)
+                                if (ImGui.Button("↑") && j > 0)
                                 {
                                     set.Remove(j);
                                     set.Insert(j - 1, cond);
                                     config.Save();
                                 }
                                 ImGui.SameLine();
-                                if (ImGui.Button("↓") && i < (bars.Count - 1))
+                                if (ImGui.Button("↓") && j < (set.Conditions.Count - 1))
                                 {
                                     set.Remove(j);
                                     set.Insert(j + 1, cond);
@@ -321,7 +378,7 @@ namespace QoLBar
                                 if (cond.Type != DisplayCondition.ConditionType.Logic)
                                 {
                                     ImGui.SameLine();
-                                    ImGui.TextUnformatted($"{cond.CheckCondition(plugin)}");
+                                    ImGui.TextUnformatted($"{cond.CheckCondition()}");
                                 }
 
                                 ImGui.NextColumn();

@@ -10,18 +10,23 @@ namespace QoLBar
             Logic,
             ConditionFlag,
             Job,
+            Role,
             Misc
         }
 
         public ConditionType Type = ConditionType.ConditionFlag;
         public int Condition = 0;
 
-        public bool CheckCondition(QoLBar plugin)
+        public bool CheckCondition()
         {
-            if (Type == ConditionType.ConditionFlag)
-                return ConditionCache.GetCondition(plugin, Condition);
-            else
-                return false;
+            return Type switch
+            {
+                ConditionType.ConditionFlag => ConditionCache.GetCondition(Condition),
+                ConditionType.Job => ConditionCache.GetCondition(200 + Condition),
+                ConditionType.Role => ConditionCache.GetCondition(400 + Condition),
+                ConditionType.Misc => ConditionCache.GetCondition(1000 + Condition),
+                _ => false,
+            };
         }
 
         public bool IsLogic() => Type == ConditionType.Logic;
@@ -36,7 +41,6 @@ namespace QoLBar
         public string Name = string.Empty;
         public readonly List<DisplayCondition> Conditions = new List<DisplayCondition>();
 
-        private QoLBar _plugin;
         private bool _cached = false;
         private float _lastCache = 0;
         private int _currentPos = 0;
@@ -92,7 +96,7 @@ namespace QoLBar
 
         private bool ParseBool()
         {
-            var b = curCond.CheckCondition(_plugin);
+            var b = curCond.CheckCondition();
             _currentPos++;
             return b;
         }
@@ -103,7 +107,6 @@ namespace QoLBar
                 return _cached;
 
             _currentPos = 0;
-            _plugin = plugin;
             _cached = Parse();
             _lastCache = ConditionCache.GetLastCache();
             return _cached;
@@ -112,25 +115,34 @@ namespace QoLBar
 
     public static class ConditionCache
     {
+        private static QoLBar plugin;
         private static readonly Dictionary<int, bool> _conditionCache = new Dictionary<int, bool>();
         private static float _lastCache = 0;
         public static float GetLastCache() => _lastCache;
 
-        public static bool GetCondition(QoLBar plugin, int cond)
+        public static void Initialize(QoLBar p) => plugin = p;
+
+        public static bool GetCondition(int cond)
         {
-            CheckCache(plugin);
+            CheckCache();
 
             if (_conditionCache.TryGetValue(cond, out var b))
                 return b;
             else
             {
-                if (cond < 0)
-                {
-
-                }
-                else if (cond < 1000)
+                if (cond < 200)
                 {
                     b = plugin.pluginInterface.ClientState.Condition[(ConditionFlag)cond];
+                }
+                else if (cond < 400)
+                {
+                    var player = plugin.pluginInterface.ClientState.LocalPlayer;
+                    b = (player != null) && (player.ClassJob.Id == (cond - 200));
+                }
+                else if (cond < 600)
+                {
+                    var player = plugin.pluginInterface.ClientState.LocalPlayer;
+                    b = (player != null) && plugin.pluginInterface.Data.IsDataReady && (((cond < 30) ? player.ClassJob.GameData.Role : player.ClassJob.GameData.ClassJobCategory.Row) == (cond - 400));
                 }
                 else
                 {
@@ -146,7 +158,7 @@ namespace QoLBar
             }
         }
 
-        public static bool CheckCache(QoLBar plugin)
+        public static bool CheckCache()
         {
             if (plugin.GetDrawTime() >= (_lastCache + 0.1f)) // Somewhat expensive, only run 10x/sec
             {

@@ -69,6 +69,7 @@ namespace QoLBar
         [DefaultValue(false)] public bool NoCategoryBackgrounds = false;
         [DefaultValue(false)] public bool OpenCategoriesOnHover = false;
         [DefaultValue(false)] public bool OpenSubcategoriesOnHover = false;
+        [DefaultValue(-1)] public int ConditionSet = -1;
     }
 
     public class Shortcut
@@ -171,6 +172,8 @@ namespace QoLBar
 
             textureDictionary.Initialize(pluginInterface);
 
+            ConditionCache.Initialize(this);
+
             ui = new PluginUI(this, config);
             pluginInterface.UiBuilder.OnOpenConfigUi += ToggleConfig;
             pluginInterface.UiBuilder.OnBuildUi += Draw;
@@ -229,7 +232,7 @@ namespace QoLBar
                 ui.ToggleBarVisible(argument);
         }
 
-        public bool IsLoggedIn() => ConditionCache.GetCondition(this, 1000);
+        public bool IsLoggedIn() => ConditionCache.GetCondition(1000);
 
         private float _drawTime = 0;
         public float GetDrawTime() => _drawTime;
@@ -383,11 +386,10 @@ namespace QoLBar
 
         public string ExportBar(BarConfig bar, bool saveAllValues)
         {
+            bar = CopyObject(bar);
             if (!saveAllValues)
-            {
-                bar = CopyObject(bar);
                 CleanBarConfig(bar);
-            }
+            bar.ConditionSet = bar.GetDefaultValue(x => x.ConditionSet);
             return ExportObject(bar, saveAllValues);
         }
 
@@ -395,11 +397,9 @@ namespace QoLBar
 
         public string ExportShortcut(Shortcut sh, bool saveAllValues)
         {
+            sh = CopyObject(sh);
             if (!saveAllValues)
-            {
-                sh = CopyObject(sh);
                 CleanShortcut(sh);
-            }
             return ExportObject(sh, saveAllValues);
         }
 
