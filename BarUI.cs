@@ -17,7 +17,7 @@ namespace QoLBar
             SetupPosition();
         }
 
-        public bool IsVisible => !barConfig.Hidden;
+        public bool IsVisible => !barConfig.Hidden && CheckConditionSet();
         public void ToggleVisible()
         {
             barConfig.Hidden = !barConfig.Hidden;
@@ -65,6 +65,14 @@ namespace QoLBar
             this.config = config;
             barNumber = nbar;
             SetupPosition();
+        }
+
+        private bool CheckConditionSet()
+        {
+            if (barConfig.ConditionSet >= 0 && barConfig.ConditionSet < config.ConditionSets.Count)
+                return config.ConditionSets[barConfig.ConditionSet].CheckConditions();
+            else
+                return true;
         }
 
         private void SetupPosition()

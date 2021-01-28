@@ -101,8 +101,9 @@ namespace QoLBar
             return b;
         }
 
-        public bool CheckConditions(QoLBar plugin)
+        public bool CheckConditions()
         {
+            ConditionCache.CheckCache();
             if (ConditionCache.GetLastCache() == _lastCache)
                 return _cached;
 

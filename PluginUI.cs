@@ -111,13 +111,15 @@ namespace QoLBar
                     {
                         ImGui.PushID(i);
 
+                        var bar = config.BarConfigs[i];
+
                         ImGui.Text($"#{i + 1}");
                         ImGui.SameLine();
 
                         textx = ImGui.GetCursorPosX();
 
                         ImGui.SetNextItemWidth(-1);
-                        if (ImGui.InputText("##Title", ref config.BarConfigs[i].Title, 32))
+                        if (ImGui.InputText("##Title", ref bar.Title, 32))
                             config.Save();
 
                         textsize = ImGui.GetItemRectSize();
@@ -130,10 +132,33 @@ namespace QoLBar
                             ImGui.SetTooltip("Options");
                         bars[i].BarConfigPopup();
                         ImGui.SameLine();
-                        if (ImGui.Button(config.BarConfigs[i].Hidden ? "R" : "H"))
+                        if (ImGui.Button(bar.Hidden ? "R" : "H"))
                             bars[i].ToggleVisible();
                         if (ImGui.IsItemHovered())
-                            ImGui.SetTooltip(config.BarConfigs[i].Hidden ? "Reveal" : "Hide");
+                            ImGui.SetTooltip(bar.Hidden ? "Reveal" : "Hide");
+                        ImGui.SameLine();
+                        var preview = ((bar.ConditionSet >= 0) && (bar.ConditionSet < config.ConditionSets.Count)) ? $"[{bar.ConditionSet + 1}] {config.ConditionSets[bar.ConditionSet].Name}" : "Condition Set";
+                        if (ImGui.BeginCombo("##Condition", preview))
+                        {
+                            if (ImGui.Selectable("None", bar.ConditionSet == -1))
+                            {
+                                bar.ConditionSet = -1;
+                                config.Save();
+                            }
+                            for (int idx = 0; idx < config.ConditionSets.Count; idx++)
+                            {
+                                if (ImGui.Selectable($"[{idx + 1}] {config.ConditionSets[idx].Name}", idx == bar.ConditionSet))
+                                {
+                                    bar.ConditionSet = idx;
+                                    config.Save();
+                                }
+                            }
+                            ImGui.EndCombo();
+                        }
+                        if (ImGui.IsItemHovered())
+                            ImGui.SetTooltip("Applies a condition set to the bar that will control when it is shown.\n" +
+                                "Useful for making groups of bars that all display at the same time.\n" +
+                                "You can make these on the \"Condition Sets\" tab at the top of this window.");
 
                         ImGui.NextColumn();
 
@@ -143,7 +168,7 @@ namespace QoLBar
                             bars.RemoveAt(i);
                             bars.Insert(i - 1, b);
 
-                            var b2 = config.BarConfigs[i];
+                            var b2 = bar;
                             config.BarConfigs.RemoveAt(i);
                             config.BarConfigs.Insert(i - 1, b2);
                             config.Save();
@@ -156,7 +181,7 @@ namespace QoLBar
                             bars.RemoveAt(i);
                             bars.Insert(i + 1, b);
 
-                            var b2 = config.BarConfigs[i];
+                            var b2 = bar;
                             config.BarConfigs.RemoveAt(i);
                             config.BarConfigs.Insert(i + 1, b2);
                             config.Save();
@@ -187,7 +212,7 @@ namespace QoLBar
                                 if (ImGui.IsMouseReleased(1))
                                 {
                                     if (config.ExportOnDelete)
-                                        ImGui.SetClipboardText(plugin.ExportBar(config.BarConfigs[i], false));
+                                        ImGui.SetClipboardText(plugin.ExportBar(bar, false));
 
                                     bars.RemoveAt(i);
                                     config.BarConfigs.RemoveAt(i);
@@ -249,16 +274,13 @@ namespace QoLBar
                         {
                             ImGui.SetTooltip($"Right click this button to delete this set!");
                             if (ImGui.IsMouseReleased(1))
-                            {
-                                config.ConditionSets.RemoveAt(i);
-                                config.Save();
-                            }
+                                RemoveConditionSet(i);
                         }
 
                         if (open)
                         {
                             ImGui.SameLine();
-                            ImGui.TextUnformatted($"{set.CheckConditions(plugin)}");
+                            ImGui.TextUnformatted($"{set.CheckConditions()}");
 
                             ImGui.Indent();
 
@@ -305,7 +327,6 @@ namespace QoLBar
                                                     config.Save();
                                                 }
                                             }
-
                                             ImGui.EndCombo();
                                         }
                                         break;
@@ -323,7 +344,6 @@ namespace QoLBar
                                                     config.Save();
                                                 }
                                             }
-
                                             ImGui.EndCombo();
                                         }
                                         break;
@@ -339,7 +359,6 @@ namespace QoLBar
                                                     config.Save();
                                                 }
                                             }
-
                                             ImGui.EndCombo();
                                         }
                                         break;
@@ -617,6 +636,19 @@ namespace QoLBar
             {
                 plugin.PrintError($"Failed to delete: {e.Message}");
             }
+        }
+
+        private void RemoveConditionSet(int i)
+        {
+            foreach (var bar in config.BarConfigs)
+            {
+                if (bar.ConditionSet > i)
+                    bar.ConditionSet -= 1;
+                else if (bar.ConditionSet == i)
+                    bar.ConditionSet = -1;
+            }
+            config.ConditionSets.RemoveAt(i);
+            config.Save();
         }
 
         private void DrawIconBrowser()
