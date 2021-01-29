@@ -58,6 +58,7 @@
       <HintPath Condition="Exists('..\..\Dalamud\Dalamud\bin\Debug')">..\..\Dalamud\Dalamud\bin\Debug\Newtonsoft.Json.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="System.Windows.Forms" />
   </ItemGroup>
 
   <ItemGroup>

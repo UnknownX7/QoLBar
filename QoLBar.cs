@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Dynamic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Dalamud.Plugin;
@@ -84,6 +85,7 @@ namespace QoLBar
         }
         [DefaultValue(ShortcutType.Single)] public ShortcutType Type = ShortcutType.Single;
         [DefaultValue("")] public string Command = string.Empty;
+        [DefaultValue(0)] public int Hotkey = 0;
         [DefaultValue(null)] public List<Shortcut> SubList;
         [DefaultValue(false)] public bool HideAdd = false;
         [DefaultValue(140)] public int CategoryWidth = 140;
@@ -153,6 +155,7 @@ namespace QoLBar
         private bool pluginReady = false;
         private readonly Queue<string> commandQueue = new Queue<string>();
         private readonly QoLSerializer qolSerializer = new QoLSerializer();
+        private readonly List<(int, string)> hotkeys = new List<(int, string)>();
 
         public readonly TextureDictionary textureDictionary = new TextureDictionary();
 
@@ -240,6 +243,8 @@ namespace QoLBar
         {
             ReadyCommand();
 
+            DoHotkeys();
+
             if (_addUserIcons)
                 AddUserIcons(ref _addUserIcons);
 
@@ -248,6 +253,50 @@ namespace QoLBar
             if (pluginReady)
                 ui.Draw();
         }
+
+        private void DoHotkeys()
+        {
+            if (hotkeys.Count > 0)
+            {
+                var keysDown = pluginInterface.ClientState.KeyState;
+                var key = 0;
+                if (ImGui.GetIO().KeyShift)
+                    key |= (int)Keys.Shift;
+                if (ImGui.GetIO().KeyCtrl)
+                    key |= (int)Keys.Control;
+                if (ImGui.GetIO().KeyAlt)
+                    key |= (int)Keys.Alt;
+                var unmodKey = 0;
+                for (var k = 0; k < 160; k++)
+                {
+                    if (16 <= k && k <= 18) continue;
+
+                    if (keysDown[k])
+                    {
+                        unmodKey = k;
+                        key |= k;
+                        break;
+                    }
+                }
+
+                foreach ((var hotkey, var command) in hotkeys)
+                {
+                    if (hotkey == key)
+                    {
+                        keysDown[unmodKey] = false;
+                        foreach (string c in command.Split('\n'))
+                        {
+                            if (!string.IsNullOrEmpty(c))
+                                ExecuteCommand(c.Substring(0, Math.Min(c.Length, 180)));
+                        }
+                    }
+                }
+
+                hotkeys.Clear();
+            }
+        }
+
+        public void AddHotkey(int key, string command) => hotkeys.Add((key, command));
 
         public void CheckHideOptOuts()
         {
