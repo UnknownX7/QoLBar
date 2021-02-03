@@ -59,10 +59,10 @@ namespace QoLBar
         private readonly QoLBar plugin;
         private readonly Configuration config;
 
-        public BarUI(QoLBar p, Configuration config, int nbar)
+        public BarUI(QoLBar p, Configuration c, int nbar)
         {
             plugin = p;
-            this.config = config;
+            config = c;
             barNumber = nbar;
             SetupPosition();
         }

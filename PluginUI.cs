@@ -47,14 +47,14 @@ namespace QoLBar
             [33] = "DoH"
         };
 
-        public PluginUI(QoLBar p, Configuration config)
+        public PluginUI(QoLBar p, Configuration c)
         {
             plugin = p;
-            this.config = config;
+            config = c;
 
             bars = new List<BarUI>();
-            for (int i = 0; i < config.BarConfigs.Count; i++)
-                bars.Add(new BarUI(p, config, i));
+            for (int i = 0; i < c.BarConfigs.Count; i++)
+                bars.Add(new BarUI(p, c, i));
 
             Task.Run(async () =>
             {
@@ -64,15 +64,15 @@ namespace QoLBar
             });
         }
 
-        public void Reload(Configuration config)
+        public void Reload(Configuration c)
         {
             Dispose();
 
-            this.config = config;
+            config = c;
 
             bars.Clear();
-            for (int i = 0; i < config.BarConfigs.Count; i++)
-                bars.Add(new BarUI(plugin, config, i));
+            for (int i = 0; i < c.BarConfigs.Count; i++)
+                bars.Add(new BarUI(plugin, c, i));
         }
 
         public void Draw()
