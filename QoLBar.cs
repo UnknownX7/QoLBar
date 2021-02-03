@@ -153,6 +153,7 @@ namespace QoLBar
         public PluginUI ui;
         private bool commandReady = true;
         private bool pluginReady = false;
+        public readonly int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
         private readonly Queue<string> commandQueue = new Queue<string>();
         private readonly QoLSerializer qolSerializer = new QoLSerializer();
         private readonly List<(int, string)> hotkeys = new List<(int, string)>();
@@ -284,11 +285,7 @@ namespace QoLBar
                     if (hotkey == key)
                     {
                         keysDown[unmodKey] = false;
-                        foreach (string c in command.Split('\n'))
-                        {
-                            if (!string.IsNullOrEmpty(c))
-                                ExecuteCommand(c.Substring(0, Math.Min(c.Length, 180)));
-                        }
+                        ExecuteCommand(command);
                     }
                 }
 
@@ -538,7 +535,11 @@ namespace QoLBar
 
         public void ExecuteCommand(string command)
         {
-            commandQueue.Enqueue(command);
+            foreach (string c in command.Split('\n'))
+            {
+                if (!string.IsNullOrEmpty(c))
+                    commandQueue.Enqueue(c.Substring(0, Math.Min(c.Length, maxCommandLength)));
+            }
             ExecuteCommand(); // Attempt to run immediately
         }
 

@@ -34,7 +34,6 @@ namespace QoLBar
         private Vector2 barSize = new Vector2(200, 38);
         private Vector2 barPos;
         private ImGuiWindowFlags flags;
-        private static readonly int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
         private Vector2 piv = Vector2.Zero;
         private Vector2 hidePos = Vector2.Zero;
         private Vector2 revealPos = Vector2.Zero;
@@ -601,15 +600,8 @@ namespace QoLBar
             switch (type)
             {
                 case Shortcut.ShortcutType.Single:
-                    if (!string.IsNullOrEmpty(command))
-                        plugin.ExecuteCommand(command.Substring(0, Math.Min(command.Length, maxCommandLength)));
-                    break;
                 case Shortcut.ShortcutType.Multiline:
-                    foreach (string c in command.Split('\n'))
-                    {
-                        if (!string.IsNullOrEmpty(c))
-                            plugin.ExecuteCommand(c.Substring(0, Math.Min(c.Length, maxCommandLength)));
-                    }
+                    plugin.ExecuteCommand(command);
                     break;
                 case Shortcut.ShortcutType.Category:
                     SetupCategoryPosition(v, subItem);
@@ -769,11 +761,11 @@ namespace QoLBar
             switch (sh.Type)
             {
                 case Shortcut.ShortcutType.Single:
-                    if (ImGui.InputText("Command", ref sh.Command, (uint)maxCommandLength) && editing)
+                    if (ImGui.InputText("Command", ref sh.Command, (uint)plugin.maxCommandLength) && editing)
                         config.Save();
                     break;
                 case Shortcut.ShortcutType.Multiline:
-                    if (ImGui.InputTextMultiline("Command##Multi", ref sh.Command, (uint)maxCommandLength * 15, new Vector2(272 * globalSize, 124 * globalSize)) && editing)
+                    if (ImGui.InputTextMultiline("Command##Multi", ref sh.Command, (uint)plugin.maxCommandLength * 15, new Vector2(272 * globalSize, 124 * globalSize)) && editing)
                         config.Save();
                     break;
                 default:
