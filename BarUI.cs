@@ -232,13 +232,10 @@ namespace QoLBar
         {
             foreach (var sh in shortcuts)
             {
-                if (sh.Hotkey > 0)
-                {
-                    if (sh.Type == Shortcut.ShortcutType.Single || sh.Type == Shortcut.ShortcutType.Multiline)
-                        plugin.AddHotkey(sh.Hotkey, sh.Command);
-                    else if (sh.Type == Shortcut.ShortcutType.Category)
-                        SetupHotkeys(sh.SubList);
-                }
+                if (sh.Hotkey > 0 && (sh.Type == Shortcut.ShortcutType.Single || sh.Type == Shortcut.ShortcutType.Multiline))
+                    plugin.AddHotkey(sh.Hotkey, sh.Command);
+                else if (sh.Type == Shortcut.ShortcutType.Category)
+                    SetupHotkeys(sh.SubList);
             }
         }
 
@@ -863,38 +860,41 @@ namespace QoLBar
                         if (ImGui.ColorEdit4("Color", ref sh.IconTint, ImGuiColorEditFlags.NoDragDrop | ImGuiColorEditFlags.AlphaPreviewHalf))
                             config.Save();
 
-                        var dispKey = GetKeyName(sh.Hotkey);
-                        ImGui.InputText($"Hotkey##{sh.Hotkey}", ref dispKey, 200, ImGuiInputTextFlags.ReadOnly | ImGuiInputTextFlags.AllowTabInput); // delete the box to delete focus 4head
-                        if (ImGui.IsItemActive())
+                        if (sh.Type == Shortcut.ShortcutType.Single || sh.Type == Shortcut.ShortcutType.Multiline)
                         {
-                            var keysDown = ImGui.GetIO().KeysDown;
-                            var key = 0;
-                            if (ImGui.GetIO().KeyShift)
-                                key |= (int)Keys.Shift;
-                            if (ImGui.GetIO().KeyCtrl)
-                                key |= (int)Keys.Control;
-                            if (ImGui.GetIO().KeyAlt)
-                                key |= (int)Keys.Alt;
-                            for (var k = 0; k < 160; k++)
+                            var dispKey = GetKeyName(sh.Hotkey);
+                            ImGui.InputText($"Hotkey##{sh.Hotkey}", ref dispKey, 200, ImGuiInputTextFlags.ReadOnly | ImGuiInputTextFlags.AllowTabInput); // delete the box to delete focus 4head
+                            if (ImGui.IsItemActive())
                             {
-                                if (16 <= k && k <= 18) continue;
-
-                                if (keysDown[k] && ImGui.GetIO().KeysDownDuration[k] == 0)
+                                var keysDown = ImGui.GetIO().KeysDown;
+                                var key = 0;
+                                if (ImGui.GetIO().KeyShift)
+                                    key |= (int)Keys.Shift;
+                                if (ImGui.GetIO().KeyCtrl)
+                                    key |= (int)Keys.Control;
+                                if (ImGui.GetIO().KeyAlt)
+                                    key |= (int)Keys.Alt;
+                                for (var k = 0; k < 160; k++)
                                 {
-                                    key |= k;
-                                    sh.Hotkey = key;
-                                    config.Save();
-                                    break;
+                                    if (16 <= k && k <= 18) continue;
+
+                                    if (keysDown[k] && ImGui.GetIO().KeysDownDuration[k] == 0)
+                                    {
+                                        key |= k;
+                                        sh.Hotkey = key;
+                                        config.Save();
+                                        break;
+                                    }
                                 }
                             }
+                            if (ImGui.IsItemDeactivated() && ImGui.GetIO().KeysDown[(int)Keys.Escape])
+                            {
+                                sh.Hotkey = 0;
+                                config.Save();
+                            }
+                            if (ImGui.IsItemHovered())
+                                ImGui.SetTooltip("Press escape to clear the hotkey.");
                         }
-                        if (ImGui.IsItemDeactivated() && ImGui.GetIO().KeysDown[(int)Keys.Escape])
-                        {
-                            sh.Hotkey = 0;
-                            config.Save();
-                        }
-                        if (ImGui.IsItemHovered())
-                            ImGui.SetTooltip("Press escape to clear the hotkey.");
 
                         ImGui.EndTabItem();
                     }
