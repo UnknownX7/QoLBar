@@ -436,37 +436,59 @@ namespace QoLBar
 
         public string ExportBar(BarConfig bar, bool saveAllValues)
         {
-            bar = CopyObject(bar);
             if (!saveAllValues)
-                CleanBarConfig(bar);
-            bar.ConditionSet = bar.GetDefaultValue(x => x.ConditionSet);
-
-            static void removeHotkeys(List<Shortcut> shortcuts)
             {
-                foreach (var sh in shortcuts)
-                {
-                    sh.Hotkey = sh.GetDefaultValue(x => x.Hotkey);
-                    if (sh.SubList != null && sh.SubList.Count > 0)
-                        removeHotkeys(sh.SubList);
-                }
+                bar = CopyObject(bar);
+                CleanBarConfig(bar);
             }
-            removeHotkeys(bar.ShortcutList);
-
             return ExportObject(bar, saveAllValues);
         }
 
-        public BarConfig ImportBar(string import) => ImportObject<BarConfig>(import);
+        public bool allowImportConditions = false;
+        public bool allowImportHotkeys = false;
+        public BarConfig ImportBar(string import)
+        {
+            var bar = ImportObject<BarConfig>(import);
+
+            if (!allowImportConditions)
+                bar.ConditionSet = bar.GetDefaultValue(x => x.ConditionSet);
+
+            if (!allowImportHotkeys)
+            {
+                static void removeHotkeys(List<Shortcut> shortcuts)
+                {
+                    foreach (var sh in shortcuts)
+                    {
+                        sh.Hotkey = sh.GetDefaultValue(x => x.Hotkey);
+                        if (sh.SubList != null && sh.SubList.Count > 0)
+                            removeHotkeys(sh.SubList);
+                    }
+                }
+                removeHotkeys(bar.ShortcutList);
+            }
+
+            return bar;
+        }
 
         public string ExportShortcut(Shortcut sh, bool saveAllValues)
         {
-            sh = CopyObject(sh);
             if (!saveAllValues)
+            {
+                sh = CopyObject(sh);
                 CleanShortcut(sh);
-            sh.Hotkey = sh.GetDefaultValue(x => x.Hotkey);
+            }
             return ExportObject(sh, saveAllValues);
         }
 
-        public Shortcut ImportShortcut(string import) => ImportObject<Shortcut>(import);
+        public Shortcut ImportShortcut(string import)
+        {
+            var sh = ImportObject<Shortcut>(import);
+
+            if (!allowImportHotkeys)
+                sh.Hotkey = sh.GetDefaultValue(x => x.Hotkey);
+
+            return sh;
+        }
 
         public void PrintEcho(string message) => pluginInterface.Framework.Gui.Chat.Print($"[QoLBar] {message}");
         public void PrintError(string message) => pluginInterface.Framework.Gui.Chat.PrintError($"[QoLBar] {message}");

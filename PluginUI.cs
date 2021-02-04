@@ -15,7 +15,7 @@ namespace QoLBar
     {
         public bool IsVisible => true;
 
-        private List<BarUI> bars;
+        private readonly List<BarUI> bars;
 
         private readonly QoLBar plugin;
         private Configuration config;
@@ -473,6 +473,13 @@ namespace QoLBar
                         config.Save();
                         plugin.CheckHideOptOuts();
                     }
+
+                    ImGui.Spacing();
+                    ImGui.Spacing();
+                    ImGui.TextUnformatted("Temporary settings, ENABLE AT OWN RISK");
+                    ImGui.Checkbox("Allow importing conditions", ref plugin.allowImportConditions);
+                    ImGui.SameLine(ImGui.GetWindowWidth() / 2);
+                    ImGui.Checkbox("Allow importing hotkeys", ref plugin.allowImportHotkeys);
 
                     ImGui.EndTabItem();
                 }
