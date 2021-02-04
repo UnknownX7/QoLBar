@@ -6,6 +6,7 @@ using System.Numerics;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using Dalamud.Plugin;
 
 namespace QoLBar
@@ -79,9 +80,6 @@ namespace QoLBar
         {
             if (!IsVisible) return;
 
-            if (configOpen)
-                DrawPluginConfigWindow();
-
             if (iconBrowserOpen)
                 DrawIconBrowser();
             else
@@ -92,6 +90,9 @@ namespace QoLBar
                 foreach (BarUI bar in bars)
                     bar.Draw();
             }
+
+            if (configOpen)
+                DrawPluginConfigWindow();
         }
 
         private void DrawPluginConfigWindow()
@@ -534,6 +535,24 @@ namespace QoLBar
                     }
                     ImGui.Columns(1);
 
+                    ImGui.EndTabItem();
+                }
+
+                if (ImGui.BeginTabItem("Debug"))
+                {
+                    ImGui.TextUnformatted("Active Hotkeys");
+                    ImGui.Spacing();
+                    ImGui.Separator();
+                    ImGui.Columns(2);
+                    foreach ((var key, var command) in plugin.hotkeys)
+                    {
+                        ImGui.TextUnformatted(((Keys)key).ToString());
+                        ImGui.NextColumn();
+                        ImGui.TextUnformatted(command);
+                        ImGui.Separator();
+                        ImGui.NextColumn();
+                    }
+                    ImGui.Columns(1);
                     ImGui.EndTabItem();
                 }
 

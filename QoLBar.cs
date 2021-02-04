@@ -19,7 +19,7 @@ using QoLBar.Attributes;
 
 // I'm too lazy to make a file just for this
 [assembly: AssemblyTitle("QoLBar")]
-[assembly: AssemblyVersion("1.2.3.4")]
+[assembly: AssemblyVersion("1.2.3.5")]
 
 // Disclaimer: I have no idea what I'm doing.
 namespace QoLBar
@@ -156,7 +156,9 @@ namespace QoLBar
         public readonly int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
         private readonly Queue<string> commandQueue = new Queue<string>();
         private readonly QoLSerializer qolSerializer = new QoLSerializer();
-        private readonly List<(int, string)> hotkeys = new List<(int, string)>();
+        public readonly List<(int, string)> hotkeys = new List<(int, string)>();
+        private readonly bool[] prevKeyState = new bool[160];
+        private readonly bool[] keyPressed = new bool[160];
 
         public readonly TextureDictionary textureDictionary = new TextureDictionary();
 
@@ -244,6 +246,7 @@ namespace QoLBar
         {
             ReadyCommand();
 
+            GetKeyState();
             DoHotkeys();
 
             if (_addUserIcons)
@@ -255,11 +258,21 @@ namespace QoLBar
                 ui.Draw();
         }
 
+        private void GetKeyState()
+        {
+            var keyState = pluginInterface.ClientState.KeyState;
+            for (int i = 0; i < 160; i++)
+            {
+                var down = keyState[i];
+                keyPressed[i] = down && !prevKeyState[i];
+                prevKeyState[i] = down;
+            }
+        }
+
         private void DoHotkeys()
         {
             if (hotkeys.Count > 0)
             {
-                var keysDown = pluginInterface.ClientState.KeyState;
                 var key = 0;
                 if (ImGui.GetIO().KeyShift)
                     key |= (int)Keys.Shift;
@@ -267,28 +280,19 @@ namespace QoLBar
                     key |= (int)Keys.Control;
                 if (ImGui.GetIO().KeyAlt)
                     key |= (int)Keys.Alt;
-                var unmodKey = 0;
                 for (var k = 0; k < 160; k++)
                 {
                     if (16 <= k && k <= 18) continue;
 
-                    if (keysDown[k])
+                    if (keyPressed[k])
                     {
-                        unmodKey = k;
-                        key |= k;
-                        break;
+                        foreach ((var hotkey, var command) in hotkeys)
+                        {
+                            if (hotkey == (key | k))
+                                ExecuteCommand(command);
+                        }
                     }
                 }
-
-                foreach ((var hotkey, var command) in hotkeys)
-                {
-                    if (hotkey == key)
-                    {
-                        keysDown[unmodKey] = false;
-                        ExecuteCommand(command);
-                    }
-                }
-
                 hotkeys.Clear();
             }
         }
@@ -436,6 +440,18 @@ namespace QoLBar
             if (!saveAllValues)
                 CleanBarConfig(bar);
             bar.ConditionSet = bar.GetDefaultValue(x => x.ConditionSet);
+
+            static void removeHotkeys(List<Shortcut> shortcuts)
+            {
+                foreach (var sh in shortcuts)
+                {
+                    sh.Hotkey = sh.GetDefaultValue(x => x.Hotkey);
+                    if (sh.SubList != null && sh.SubList.Count > 0)
+                        removeHotkeys(sh.SubList);
+                }
+            }
+            removeHotkeys(bar.ShortcutList);
+
             return ExportObject(bar, saveAllValues);
         }
 
@@ -446,6 +462,7 @@ namespace QoLBar
             sh = CopyObject(sh);
             if (!saveAllValues)
                 CleanShortcut(sh);
+            sh.Hotkey = sh.GetDefaultValue(x => x.Hotkey);
             return ExportObject(sh, saveAllValues);
         }
 
