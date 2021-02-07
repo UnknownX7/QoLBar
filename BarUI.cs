@@ -65,6 +65,12 @@ namespace QoLBar
             config = c;
             barNumber = nbar;
             SetupPosition();
+
+            foreach (var sh in barConfig.ShortcutList)
+            {
+                if (sh.Mode == Shortcut.ShortcutMode.Random)
+                    sh._i = DateTime.Now.Millisecond % sh.Command.Split('\n').Length;
+            }
         }
 
         private bool CheckConditionSet()
@@ -603,14 +609,14 @@ namespace QoLBar
                         case Shortcut.ShortcutMode.Incremental:
                             {
                                 var lines = command.Split('\n');
-                                command = lines[sh._i];
+                                command = lines[Math.Min(sh._i, lines.Length - 1)];
                                 sh._i = (sh._i + 1) % lines.Length;
                                 break;
                             }
                         case Shortcut.ShortcutMode.Random:
                             {
                                 var lines = command.Split('\n');
-                                command = lines[sh._i];
+                                command = lines[Math.Min(sh._i, lines.Length - 1)];
                                 sh._i = plugin.GetFrameCount() % lines.Length; // With this game's FPS drops? Completely random.
                                 break;
                             }
@@ -877,6 +883,11 @@ namespace QoLBar
                             {
                                 sh.Mode = (Shortcut.ShortcutMode)_m;
                                 config.Save();
+
+                                if (sh.Mode == Shortcut.ShortcutMode.Random)
+                                    sh._i = plugin.GetFrameCount() % sh.Command.Split('\n').Length;
+                                else
+                                    sh._i = 0;
                             }
                         }
 
