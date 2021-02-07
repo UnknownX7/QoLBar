@@ -597,7 +597,26 @@ namespace QoLBar
             switch (type)
             {
                 case Shortcut.ShortcutType.Single:
+                    plugin.ExecuteCommand(command);
+                    break;
                 case Shortcut.ShortcutType.Multiline:
+                    switch (sh.Mode)
+                    {
+                        case Shortcut.ShortcutMode.Incremental:
+                            {
+                                var lines = command.Split('\n');
+                                command = lines[sh._i];
+                                sh._i = (sh._i + 1) % lines.Length;
+                                break;
+                            }
+                        case Shortcut.ShortcutMode.Random:
+                            {
+                                var lines = command.Split('\n');
+                                command = lines[sh._i];
+                                sh._i = plugin.GetFrameCount() % lines.Length; // With this game's FPS drops? Completely random.
+                                break;
+                            }
+                    }
                     plugin.ExecuteCommand(command);
                     break;
                 case Shortcut.ShortcutType.Category:
@@ -730,7 +749,8 @@ namespace QoLBar
             {
                 var split = sh.Name.Split(new[] { "##" }, 2, StringSplitOptions.None);
                 sh.Name = $"::{plugin.ui.pasteIcon}" + (split.Length > 1 ? $"##{split[1]}" : "");
-                config.Save();
+                if (editing)
+                    config.Save();
                 plugin.ui.doPasteIcon = false;
             }
             if (ImGui.InputText("Name          ", ref sh.Name, 256) && editing) // Not a bug... just ImGui not extending the window to fit multiline's name...
@@ -835,6 +855,32 @@ namespace QoLBar
                     if (ImGui.BeginTabItem("Shortcut"))
                     {
                         ItemBaseUI(sh, true);
+
+                        if (sh.Type == Shortcut.ShortcutType.Multiline || sh.Type == Shortcut.ShortcutType.Category)
+                        {
+                            var _m = (int)sh.Mode;
+                            ImGui.Text("Mode");
+                            if (ImGui.IsItemHovered())
+                                ImGui.SetTooltip("Changes the behavior when pressed.");
+                            ImGui.Indent();
+                            ImGui.RadioButton("Default", ref _m, 0);
+                            if (ImGui.IsItemHovered())
+                                ImGui.SetTooltip("Default behavior, categories must be set to this to edit their shortcuts!");
+                            ImGui.SameLine(ImGui.GetWindowWidth() / 3);
+                            ImGui.RadioButton("Incremental", ref _m, 1);
+                            if (ImGui.IsItemHovered())
+                                ImGui.SetTooltip("Executes each line/shortcut in order over multiple presses.");
+                            ImGui.SameLine(ImGui.GetWindowWidth() / 3 * 2);
+                            ImGui.RadioButton("Random", ref _m, 2);
+                            if (ImGui.IsItemHovered())
+                                ImGui.SetTooltip("Executes a random line/shortcut when pressed.");
+                            ImGui.Unindent();
+                            if (_m != (int)sh.Mode)
+                            {
+                                sh.Mode = (Shortcut.ShortcutMode)_m;
+                                config.Save();
+                            }
+                        }
 
                         if (sh.Type == Shortcut.ShortcutType.Category)
                         {

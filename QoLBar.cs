@@ -88,12 +88,21 @@ namespace QoLBar
         [DefaultValue(0)] public int Hotkey = 0;
         [DefaultValue(null)] public List<Shortcut> SubList;
         [DefaultValue(false)] public bool HideAdd = false;
+        public enum ShortcutMode
+        {
+            Default,
+            Incremental,
+            Random
+        }
+        [DefaultValue(ShortcutMode.Default)] public ShortcutMode Mode = ShortcutMode.Default;
         [DefaultValue(140)] public int CategoryWidth = 140;
         [DefaultValue(false)] public bool CategoryStaysOpen = false;
         [DefaultValue(1)] public int CategoryColumns = 1;
         [DefaultValue(1.0f)] public float IconZoom = 1.0f;
         public Vector2 IconOffset = Vector2.Zero;
         public Vector4 IconTint = Vector4.One;
+
+        [JsonIgnore] public int _i = 0;
     }
 
     public class QoLSerializer : DefaultSerializationBinder
@@ -240,6 +249,8 @@ namespace QoLBar
 
         public bool IsLoggedIn() => ConditionCache.GetCondition(1000);
 
+        private int _frameCount = 0;
+        public int GetFrameCount() => _frameCount;
         private float _drawTime = 0;
         public float GetDrawTime() => _drawTime;
         public void Draw()
@@ -252,6 +263,7 @@ namespace QoLBar
             if (_addUserIcons)
                 AddUserIcons(ref _addUserIcons);
 
+            _frameCount++;
             _drawTime += ImGui.GetIO().DeltaTime;
 
             if (pluginReady)
@@ -365,6 +377,9 @@ namespace QoLBar
                 sh.CategoryColumns = Math.Max(sh.CategoryColumns, 1);
                 CleanShortcut(sh.SubList);
             }
+
+            if (sh.Type != Shortcut.ShortcutType.Multiline && sh.Type != Shortcut.ShortcutType.Category)
+                sh.Mode = sh.GetDefaultValue(x => x.Mode);
 
             if (sh.Type == Shortcut.ShortcutType.Spacer)
                 sh.Command = sh.GetDefaultValue(x => x.Command);
