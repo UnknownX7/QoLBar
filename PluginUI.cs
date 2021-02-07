@@ -551,11 +551,11 @@ namespace QoLBar
                     ImGui.Spacing();
                     ImGui.Separator();
                     ImGui.Columns(2);
-                    foreach ((var key, var command) in plugin.hotkeys)
+                    foreach ((_, var sh) in plugin.hotkeys)
                     {
-                        ImGui.TextUnformatted(((Keys)key).ToString());
+                        ImGui.TextUnformatted(((Keys)sh.Hotkey).ToString());
                         ImGui.NextColumn();
-                        ImGui.TextUnformatted(command);
+                        ImGui.TextUnformatted(sh.Command);
                         ImGui.Separator();
                         ImGui.NextColumn();
                     }

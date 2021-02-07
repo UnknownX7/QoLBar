@@ -233,7 +233,7 @@ namespace QoLBar
             foreach (var sh in shortcuts)
             {
                 if (sh.Hotkey > 0 && (sh.Type == Shortcut.ShortcutType.Single || sh.Type == Shortcut.ShortcutType.Multiline))
-                    plugin.AddHotkey(sh.Hotkey, sh.Command);
+                    plugin.AddHotkey(this, sh);
                 else if (sh.Type == Shortcut.ShortcutType.Category)
                     SetupHotkeys(sh.SubList);
             }
@@ -587,10 +587,8 @@ namespace QoLBar
             ImGui.PopStyleVar();
         }
 
-        private void ItemClicked(Shortcut sh, bool v, bool subItem)
+        public void ItemClicked(Shortcut sh, bool v, bool subItem)
         {
-            Reveal();
-
             var type = sh.Type;
             var command = sh.Command;
 

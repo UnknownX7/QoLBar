@@ -165,7 +165,7 @@ namespace QoLBar
         public readonly int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
         private readonly Queue<string> commandQueue = new Queue<string>();
         private readonly QoLSerializer qolSerializer = new QoLSerializer();
-        public readonly List<(int, string)> hotkeys = new List<(int, string)>();
+        public readonly List<(BarUI, Shortcut)> hotkeys = new List<(BarUI, Shortcut)>();
         private readonly bool[] prevKeyState = new bool[160];
         private readonly bool[] keyPressed = new bool[160];
 
@@ -298,10 +298,10 @@ namespace QoLBar
 
                     if (keyPressed[k])
                     {
-                        foreach ((var hotkey, var command) in hotkeys)
+                        foreach ((var bar, var sh) in hotkeys)
                         {
-                            if (hotkey == (key | k))
-                                ExecuteCommand(command);
+                            if (sh.Hotkey == (key | k))
+                                bar.ItemClicked(sh, false, false);
                         }
                     }
                 }
@@ -309,7 +309,7 @@ namespace QoLBar
             }
         }
 
-        public void AddHotkey(int key, string command) => hotkeys.Add((key, command));
+        public void AddHotkey(BarUI bar, Shortcut sh) => hotkeys.Add((bar, sh));
 
         public void CheckHideOptOuts()
         {
