@@ -32,6 +32,11 @@ namespace QoLBar
         public int pasteIcon = 0;
         public void ToggleIconBrowser() => iconBrowserOpen = !iconBrowserOpen;
 
+        private bool lastConfigPopupOpen = false;
+        private bool configPopupOpen = false;
+        public bool IsConfigPopupOpen() => configPopupOpen || lastConfigPopupOpen;
+        public void SetConfigPopupOpen() => configPopupOpen = true;
+
         private static readonly Array conditionFlags = Enum.GetValues(typeof(Dalamud.Game.ClientState.ConditionFlag));
 
         private Dictionary<uint, Lumina.Excel.GeneratedSheets.ClassJob> classDictionary;
@@ -90,6 +95,8 @@ namespace QoLBar
                 foreach (BarUI bar in bars)
                     bar.Draw();
             }
+            lastConfigPopupOpen = configPopupOpen;
+            configPopupOpen = false;
 
             if (configOpen)
                 DrawPluginConfigWindow();

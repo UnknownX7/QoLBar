@@ -44,6 +44,9 @@ namespace QoLBar
         private void Reveal() => _reveal = true;
         private void Hide() => _reveal = false;
 
+        private bool IsConfigPopupOpen() => plugin.ui.IsConfigPopupOpen();
+        private void SetConfigPopupOpen() => plugin.ui.SetConfigPopupOpen();
+
         private bool _firstframe = true;
         private bool _setPos = true;
         private bool _lastReveal = true;
@@ -540,7 +543,7 @@ namespace QoLBar
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
             {
                 var onHover = (!inCategory ? barConfig.OpenCategoriesOnHover : barConfig.OpenSubcategoriesOnHover) && type == Shortcut.ShortcutType.Category;
-                if (ImGui.IsMouseReleased(0) || (onHover && (!docked || barPos == revealPos) && !ImGui.IsPopupOpen("editItem")))
+                if (ImGui.IsMouseReleased(0) || (onHover && (!docked || barPos == revealPos) && !IsConfigPopupOpen()))
                     clicked = true;
 
                 if (!string.IsNullOrEmpty(tooltip))
@@ -799,6 +802,7 @@ namespace QoLBar
             if (ImGui.BeginPopup("addItem"))
             {
                 Reveal();
+                SetConfigPopupOpen();
 
                 _sh ??= new Shortcut();
                 ItemBaseUI(_sh, false);
@@ -852,6 +856,7 @@ namespace QoLBar
             if (ImGui.BeginPopup("editItem"))
             {
                 Reveal();
+                SetConfigPopupOpen();
 
                 var sh = shortcuts[i];
                 if (ImGui.BeginTabBar("Config Tabs", ImGuiTabBarFlags.NoTooltip))
