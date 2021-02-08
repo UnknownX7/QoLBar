@@ -244,9 +244,9 @@ namespace QoLBar
         {
             foreach (var sh in shortcuts)
             {
-                if (sh.Hotkey > 0 && (sh.Type == Shortcut.ShortcutType.Single || sh.Type == Shortcut.ShortcutType.Multiline))
+                if (sh.Hotkey > 0 && sh.Type != Shortcut.ShortcutType.Spacer)
                     plugin.AddHotkey(this, sh);
-                else if (sh.Type == Shortcut.ShortcutType.Category)
+                if (sh.Type == Shortcut.ShortcutType.Category)
                     SetupHotkeys(sh.SubList);
             }
         }
@@ -567,10 +567,10 @@ namespace QoLBar
                     switch (parentShortcut.Mode)
                     {
                         case Shortcut.ShortcutMode.Incremental:
-                            parentShortcut._i = (parentShortcut._i + 1) % shortcuts.Count;
+                            parentShortcut._i = (parentShortcut._i + 1) % parentShortcut.SubList.Count;
                             break;
                         case Shortcut.ShortcutMode.Random:
-                            parentShortcut._i = plugin.GetFrameCount() % shortcuts.Count;
+                            parentShortcut._i = plugin.GetFrameCount() % parentShortcut.SubList.Count;
                             break;
                     }
                 }
@@ -652,10 +652,23 @@ namespace QoLBar
                     plugin.ExecuteCommand(command);
                     break;
                 case Shortcut.ShortcutType.Category:
-                    SetupCategoryPosition(v, subItem);
-                    ImGui.OpenPopup("ShortcutCategory");
-                    break;
-                default:
+                    switch (sh.Mode)
+                    {
+                        case Shortcut.ShortcutMode.Incremental:
+                            if (0 <= sh._i && sh._i < sh.SubList.Count)
+                                ItemClicked(sh.SubList[sh._i], v, true);
+                            sh._i = (sh._i + 1) % Math.Max(1, sh.SubList.Count);
+                            break;
+                        case Shortcut.ShortcutMode.Random:
+                            if (0 <= sh._i && sh._i < sh.SubList.Count)
+                                ItemClicked(sh.SubList[sh._i], v, true);
+                            sh._i = plugin.GetFrameCount() % Math.Max(1, sh.SubList.Count);
+                            break;
+                        default:
+                            SetupCategoryPosition(v, subItem);
+                            ImGui.OpenPopup("ShortcutCategory");
+                            break;
+                    }
                     break;
             }
         }
@@ -732,10 +745,11 @@ namespace QoLBar
                 {
                     ImGui.PushID(j);
 
+                    var stayOpen = sh.CategoryStaysOpen;
                     DrawShortcut(j, sublist, width, (sh) =>
                     {
                         ItemClicked(sh, sublist.Count >= (cols * (cols - 1) + 1), true);
-                        if (!sh.CategoryStaysOpen && sh.Type != Shortcut.ShortcutType.Category)
+                        if (!stayOpen && sh.Type != Shortcut.ShortcutType.Category)
                             ImGui.CloseCurrentPopup();
                     });
 
@@ -894,7 +908,7 @@ namespace QoLBar
                             ImGui.Text("Mode");
                             if (ImGui.IsItemHovered())
                                 ImGui.SetTooltip("Changes the behavior when pressed.\n" +
-                                    "Note: Subcategories will not open.");
+                                    "Note: Not intended to be used with categories containing subcategories.");
                             ImGui.Indent();
                             ImGui.RadioButton("Default", ref _m, 0);
                             if (ImGui.IsItemHovered())
@@ -947,7 +961,7 @@ namespace QoLBar
                         if (ImGui.ColorEdit4("Color", ref sh.IconTint, ImGuiColorEditFlags.NoDragDrop | ImGuiColorEditFlags.AlphaPreviewHalf))
                             config.Save();
 
-                        if (sh.Type == Shortcut.ShortcutType.Single || sh.Type == Shortcut.ShortcutType.Multiline)
+                        if (sh.Type != Shortcut.ShortcutType.Spacer)
                         {
                             var dispKey = GetKeyName(sh.Hotkey);
                             ImGui.InputText($"Hotkey##{sh.Hotkey}", ref dispKey, 200, ImGuiInputTextFlags.ReadOnly | ImGuiInputTextFlags.AllowTabInput); // delete the box to delete focus 4head
@@ -980,7 +994,8 @@ namespace QoLBar
                                 config.Save();
                             }
                             if (ImGui.IsItemHovered())
-                                ImGui.SetTooltip("Press escape to clear the hotkey.");
+                                ImGui.SetTooltip("Press escape to clear the hotkey.\n" +
+                                    "Categories cannot use hotkeys in default mode.");
                         }
 
                         ImGui.EndTabItem();
