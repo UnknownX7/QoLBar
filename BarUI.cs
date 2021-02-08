@@ -72,7 +72,10 @@ namespace QoLBar
             foreach (var sh in barConfig.ShortcutList)
             {
                 if (sh.Mode == Shortcut.ShortcutMode.Random)
-                    sh._i = DateTime.Now.Millisecond % sh.Command.Split('\n').Length;
+                {
+                    var count = Math.Max(1, (sh.Type == Shortcut.ShortcutType.Category) ? sh.SubList.Count : sh.Command.Split('\n').Length);
+                    sh._i = DateTime.Now.Millisecond % count;
+                }
             }
         }
 
@@ -468,9 +471,9 @@ namespace QoLBar
             {
                 ImGui.PushID(i);
 
-                DrawShortcut(i, barConfig.ShortcutList, barConfig.ButtonWidth * globalSize * barConfig.Scale, () =>
+                DrawShortcut(i, barConfig.ShortcutList, barConfig.ButtonWidth * globalSize * barConfig.Scale, (sh) =>
                 {
-                    ItemClicked(barConfig.ShortcutList[i], vertical, false);
+                    ItemClicked(sh, vertical, false);
                 });
 
                 if (!vertical && i != barConfig.ShortcutList.Count - 1)
@@ -480,12 +483,19 @@ namespace QoLBar
             }
         }
 
-        private void DrawShortcut(int i, List<Shortcut> shortcuts, float width, Action callback)
+        private void DrawShortcut(int i, List<Shortcut> shortcuts, float width, Action<Shortcut> callback)
         {
             var inCategory = (shortcuts != barConfig.ShortcutList);
             var sh = shortcuts[i];
-            var name = sh.Name;
             var type = sh.Type;
+            Shortcut parentShortcut = null;
+            if (type == Shortcut.ShortcutType.Category && sh.Mode != Shortcut.ShortcutMode.Default && sh.SubList.Count > 0)
+            {
+                parentShortcut = sh;
+                sh = sh.SubList[Math.Min(sh._i, sh.SubList.Count - 1)];
+                type = sh.Type;
+            }
+            var name = sh.Name;
 
             var useIcon = ParseName(ref name, out string tooltip, out int icon, out string args);
 
@@ -551,7 +561,22 @@ namespace QoLBar
             }
 
             if (clicked)
-                callback();
+            {
+                if (parentShortcut != null)
+                {
+                    switch (parentShortcut.Mode)
+                    {
+                        case Shortcut.ShortcutMode.Incremental:
+                            parentShortcut._i = (parentShortcut._i + 1) % shortcuts.Count;
+                            break;
+                        case Shortcut.ShortcutMode.Random:
+                            parentShortcut._i = plugin.GetFrameCount() % shortcuts.Count;
+                            break;
+                    }
+                }
+
+                callback(sh);
+            }
 
             ImGui.OpenPopupOnItemClick("editItem", 1);
 
@@ -707,12 +732,10 @@ namespace QoLBar
                 {
                     ImGui.PushID(j);
 
-                    DrawShortcut(j, sublist, width, () =>
+                    DrawShortcut(j, sublist, width, (sh) =>
                     {
-                        var _sh = sublist[j];
-
-                        ItemClicked(_sh, sublist.Count >= (cols * (cols - 1) + 1), true);
-                        if (!sh.CategoryStaysOpen && _sh.Type != Shortcut.ShortcutType.Category)
+                        ItemClicked(sh, sublist.Count >= (cols * (cols - 1) + 1), true);
+                        if (!sh.CategoryStaysOpen && sh.Type != Shortcut.ShortcutType.Category)
                             ImGui.CloseCurrentPopup();
                     });
 
@@ -870,7 +893,8 @@ namespace QoLBar
                             var _m = (int)sh.Mode;
                             ImGui.Text("Mode");
                             if (ImGui.IsItemHovered())
-                                ImGui.SetTooltip("Changes the behavior when pressed.");
+                                ImGui.SetTooltip("Changes the behavior when pressed.\n" +
+                                    "Note: Subcategories will not open.");
                             ImGui.Indent();
                             ImGui.RadioButton("Default", ref _m, 0);
                             if (ImGui.IsItemHovered())
@@ -890,7 +914,10 @@ namespace QoLBar
                                 config.Save();
 
                                 if (sh.Mode == Shortcut.ShortcutMode.Random)
-                                    sh._i = plugin.GetFrameCount() % sh.Command.Split('\n').Length;
+                                {
+                                    var c = Math.Max(1, (sh.Type == Shortcut.ShortcutType.Category) ? sh.SubList.Count : sh.Command.Split('\n').Length);
+                                    sh._i = plugin.GetFrameCount() % c;
+                                }
                                 else
                                     sh._i = 0;
                             }
