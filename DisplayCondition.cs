@@ -16,7 +16,7 @@ namespace QoLBar
 
         public ConditionType Type = ConditionType.ConditionFlag;
         public int Condition = 0;
-        public ulong Arg = 0;
+        public dynamic Arg = 0;
 
         public bool CheckCondition()
         {
@@ -118,13 +118,13 @@ namespace QoLBar
     public static class ConditionCache
     {
         private static QoLBar plugin;
-        private static readonly Dictionary<(int, ulong), bool> _conditionCache = new Dictionary<(int, ulong), bool>();
+        private static readonly Dictionary<(int, dynamic), bool> _conditionCache = new Dictionary<(int, dynamic), bool>();
         private static float _lastCache = 0;
         public static float GetLastCache() => _lastCache;
 
         public static void Initialize(QoLBar p) => plugin = p;
 
-        public static bool GetCondition(int cond, ulong arg = 0)
+        public static bool GetCondition(int cond, dynamic arg = null)
         {
             CheckCache();
 
@@ -151,7 +151,7 @@ namespace QoLBar
                     b = cond switch
                     {
                         1000 => plugin.pluginInterface.ClientState.Condition.Any(),
-                        1001 => arg == plugin.pluginInterface.ClientState.LocalContentId,
+                        1001 => (ulong)arg == plugin.pluginInterface.ClientState.LocalContentId,
                         _ => false,
                     };
                 }
