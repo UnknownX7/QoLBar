@@ -16,6 +16,7 @@ namespace QoLBar
 
         public ConditionType Type = ConditionType.ConditionFlag;
         public int Condition = 0;
+        public ulong Arg = 0;
 
         public bool CheckCondition()
         {
@@ -24,7 +25,7 @@ namespace QoLBar
                 ConditionType.ConditionFlag => ConditionCache.GetCondition(Condition),
                 ConditionType.Job => ConditionCache.GetCondition(200 + Condition),
                 ConditionType.Role => ConditionCache.GetCondition(400 + Condition),
-                ConditionType.Misc => ConditionCache.GetCondition(1000 + Condition),
+                ConditionType.Misc => ConditionCache.GetCondition(1000 + Condition, Arg),
                 _ => false,
             };
         }
@@ -117,17 +118,17 @@ namespace QoLBar
     public static class ConditionCache
     {
         private static QoLBar plugin;
-        private static readonly Dictionary<int, bool> _conditionCache = new Dictionary<int, bool>();
+        private static readonly Dictionary<(int, ulong), bool> _conditionCache = new Dictionary<(int, ulong), bool>();
         private static float _lastCache = 0;
         public static float GetLastCache() => _lastCache;
 
         public static void Initialize(QoLBar p) => plugin = p;
 
-        public static bool GetCondition(int cond)
+        public static bool GetCondition(int cond, ulong arg = 0)
         {
             CheckCache();
 
-            if (_conditionCache.TryGetValue(cond, out var b))
+            if (_conditionCache.TryGetValue((cond, arg), out var b))
                 return b;
             else
             {
@@ -150,11 +151,12 @@ namespace QoLBar
                     b = cond switch
                     {
                         1000 => plugin.pluginInterface.ClientState.Condition.Any(),
+                        1001 => arg == plugin.pluginInterface.ClientState.LocalContentId,
                         _ => false,
                     };
                 }
 
-                _conditionCache[cond] = b;
+                _conditionCache[(cond, arg)] = b;
                 return b;
             }
         }

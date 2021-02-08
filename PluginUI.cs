@@ -379,7 +379,34 @@ namespace QoLBar
                                         }
                                         break;
                                     case DisplayCondition.ConditionType.Misc:
-                                        ImGui.Combo("##Misc", ref cond.Condition, "Logged in");
+                                        var opts = new string[]
+                                        {
+                                            "Logged in",
+                                            "Character ID"
+                                        };
+
+                                        if (ImGui.BeginCombo("##Misc", (0 <= cond.Condition && cond.Condition < opts.Length) ? opts[cond.Condition] : string.Empty))
+                                        {
+                                            if (ImGui.Selectable(opts[0], cond.Condition == 0))
+                                            {
+                                                cond.Condition = 0;
+                                                cond.Arg = 0;
+                                                config.Save();
+                                            }
+
+                                            if (ImGui.Selectable(opts[1], cond.Condition == 1))
+                                            {
+                                                cond.Condition = 1;
+                                                cond.Arg = plugin.pluginInterface.ClientState.LocalContentId;
+                                                config.Save();
+                                            }
+                                            if (ImGui.IsItemHovered())
+                                                ImGui.SetTooltip("Selecting this will assign the current character's ID to this condition.");
+
+                                            ImGui.EndCombo();
+                                        }
+                                        if (cond.Condition == 1 && ImGui.IsItemHovered())
+                                            ImGui.SetTooltip($"ID: {cond.Arg}");
                                         break;
                                 }
 
