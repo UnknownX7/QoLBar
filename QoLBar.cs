@@ -171,6 +171,9 @@ namespace QoLBar
 
         public readonly TextureDictionary textureDictionary = new TextureDictionary();
 
+        public IntPtr textActiveBoolPtr = IntPtr.Zero;
+        public unsafe bool GameTextInputActive => (textActiveBoolPtr != IntPtr.Zero) && *(bool*)textActiveBoolPtr;
+
         public const int FrameIconID = 114_000;
         private const int SafeIconID = 1_000_000;
         public int GetSafeIconID(byte i) => SafeIconID + i;
@@ -199,12 +202,26 @@ namespace QoLBar
 
             SetupIPC();
 
+            InitializePointers();
+
             Task.Run(async () =>
             {
                 while (!config.AlwaysDisplayBars && !ui.configOpen && !IsLoggedIn())
                     await Task.Delay(1000);
                 ReadyPlugin();
             });
+        }
+
+        private unsafe void InitializePointers()
+        {
+            try
+            {
+                // I don't know what I'm doing, but it works
+                var dataptr = pluginInterface.TargetModuleScanner.GetStaticAddressFromSig("48 8B 05 ?? ?? ?? ?? 48 8B 48 28 80 B9 8E 18 00 00 00");
+                if (dataptr != IntPtr.Zero)
+                    textActiveBoolPtr = *(IntPtr*)(*(IntPtr*)dataptr + 0x28) + 0x188E;
+            }
+            catch { }
         }
 
         public void ReadyPlugin()
@@ -283,6 +300,8 @@ namespace QoLBar
 
         private void DoHotkeys()
         {
+            if (GameTextInputActive) { hotkeys.Clear(); return; }
+
             if (hotkeys.Count > 0)
             {
                 var key = 0;
