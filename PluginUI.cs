@@ -203,7 +203,7 @@ namespace QoLBar
                             ImGui.SetTooltip("Export to clipboard with minimal settings (May change with updates).\n" +
                                 "Right click to export with every setting (Longer string, doesn't change).");
 
-                            if (ImGui.IsMouseReleased(1))
+                            if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
                                 ImGui.SetClipboardText(ExportBar(i, true));
                         }
 
@@ -217,7 +217,7 @@ namespace QoLBar
                                 ImGui.SetTooltip($"Right click this button to delete bar #{i + 1}!" +
                                     (config.ExportOnDelete ? "\nThe bar will be exported to clipboard first." : ""));
 
-                                if (ImGui.IsMouseReleased(1))
+                                if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
                                 {
                                     if (config.ExportOnDelete)
                                         ImGui.SetClipboardText(plugin.ExportBar(bar, false));
@@ -289,7 +289,7 @@ namespace QoLBar
                         if (ImGui.IsItemHovered())
                         {
                             ImGui.SetTooltip($"Right click this button to delete this set!");
-                            if (ImGui.IsMouseReleased(1))
+                            if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
                                 RemoveConditionSet(i);
                         }
 
@@ -431,7 +431,7 @@ namespace QoLBar
                                 if (ImGui.IsItemHovered())
                                 {
                                     ImGui.SetTooltip($"Right click this button to delete this condition!");
-                                    if (ImGui.IsMouseReleased(1))
+                                    if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
                                     {
                                         set.Remove(j);
                                         config.Save();
@@ -521,7 +521,7 @@ namespace QoLBar
                 if (ImGui.BeginTabItem("Backups"))
                 {
                     var path = config.GetPluginBackupPath();
-                    var configFile = new FileInfo(config.GetPath());
+                    var configFile = Configuration.ConfigFile;
 
                     if (ImGui.Button("Open Folder"))
                         Process.Start(path);
@@ -551,7 +551,7 @@ namespace QoLBar
                                     ImGui.SetTooltip($"Double click this button to overwrite and\n" +
                                         $"reload the current config with {file.Name}");
 
-                                    if (ImGui.IsMouseDoubleClicked(0))
+                                    if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
                                         config.LoadConfig(file);
                                 }
 
@@ -562,7 +562,7 @@ namespace QoLBar
                                 {
                                     ImGui.SetTooltip($"Double right click this button to delete {file.Name}");
 
-                                    if (ImGui.IsMouseDoubleClicked(1))
+                                    if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Right))
                                         DeleteFile(file);
                                 }
 

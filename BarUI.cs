@@ -303,7 +303,7 @@ namespace QoLBar
 
                 if (_mouseRevealed && ImGui.IsWindowHovered(ImGuiHoveredFlags.RectOnly))
                     Reveal();
-                if (ImGui.IsMouseReleased(1) && ImGui.IsWindowHovered())
+                if (ImGui.IsMouseReleased(ImGuiMouseButton.Right) && ImGui.IsWindowHovered())
                     ImGui.OpenPopup($"BarConfig##{barNumber}");
 
                 DrawItems();
@@ -553,7 +553,7 @@ namespace QoLBar
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
             {
                 var onHover = (!inCategory ? barConfig.OpenCategoriesOnHover : barConfig.OpenSubcategoriesOnHover) && type == Shortcut.ShortcutType.Category;
-                if (ImGui.IsMouseReleased(0) || (onHover && (!docked || barPos == revealPos) && !IsConfigPopupOpen()))
+                if (ImGui.IsMouseReleased(ImGuiMouseButton.Left) || (onHover && (!docked || barPos == revealPos) && !IsConfigPopupOpen()))
                     clicked = true;
 
                 if (!string.IsNullOrEmpty(tooltip))
@@ -570,7 +570,7 @@ namespace QoLBar
                             parentShortcut._i = (parentShortcut._i + 1) % parentShortcut.SubList.Count;
                             break;
                         case Shortcut.ShortcutMode.Random:
-                            parentShortcut._i = plugin.GetFrameCount() % parentShortcut.SubList.Count;
+                            parentShortcut._i = (int)(plugin.GetFrameCount() % parentShortcut.SubList.Count);
                             break;
                     }
                 }
@@ -578,7 +578,7 @@ namespace QoLBar
                 callback(sh);
             }
 
-            ImGui.OpenPopupOnItemClick("editItem", 1);
+            ImGui.OpenPopupContextItem("editItem");
 
             if (type == Shortcut.ShortcutType.Category)
             {
@@ -603,7 +603,8 @@ namespace QoLBar
 
             var height = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
             PushFontScale(GetFontScale() * barConfig.FontScale);
-            ImGui.Button("+", new Vector2(barConfig.ButtonWidth * globalSize * barConfig.Scale, height));
+            if (ImGui.Button("+", new Vector2(barConfig.ButtonWidth * globalSize * barConfig.Scale, height)))
+                ImGui.OpenPopup("addItem");
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
                 ImGui.SetTooltip("Add a new shortcut.\nRight click this (or the bar background) for options.\nRight click other shortcuts to edit them.");
             PopFontScale();
@@ -611,8 +612,7 @@ namespace QoLBar
             if (_maxW < ImGui.GetItemRectSize().X)
                 _maxW = ImGui.GetItemRectSize().X;
 
-            ImGui.OpenPopupOnItemClick("addItem", 0);
-            ImGui.OpenPopupOnItemClick($"BarConfig##{barNumber}", 1);
+            //ImGui.OpenPopupContextItem($"BarConfig##{barNumber}"); // Technically unneeded
 
             ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, _defaultSpacing);
             PushFontScale(1);
@@ -645,7 +645,7 @@ namespace QoLBar
                             {
                                 var lines = command.Split('\n');
                                 command = lines[Math.Min(sh._i, lines.Length - 1)];
-                                sh._i = plugin.GetFrameCount() % lines.Length; // With this game's FPS drops? Completely random.
+                                sh._i = (int)(plugin.GetFrameCount() % lines.Length); // With this game's FPS drops? Completely random.
                                 break;
                             }
                     }
@@ -662,7 +662,7 @@ namespace QoLBar
                         case Shortcut.ShortcutMode.Random:
                             if (0 <= sh._i && sh._i < sh.SubList.Count)
                                 ItemClicked(sh.SubList[sh._i], v, true);
-                            sh._i = plugin.GetFrameCount() % Math.Max(1, sh.SubList.Count);
+                            sh._i = (int)(plugin.GetFrameCount() % Math.Max(1, sh.SubList.Count));
                             break;
                         default:
                             SetupCategoryPosition(v, subItem);
@@ -930,7 +930,7 @@ namespace QoLBar
                                 if (sh.Mode == Shortcut.ShortcutMode.Random)
                                 {
                                     var c = Math.Max(1, (sh.Type == Shortcut.ShortcutType.Category) ? sh.SubList.Count : sh.Command.Split('\n').Length);
-                                    sh._i = plugin.GetFrameCount() % c;
+                                    sh._i = (int)(plugin.GetFrameCount() % c);
                                 }
                                 else
                                     sh._i = 0;
@@ -1053,7 +1053,7 @@ namespace QoLBar
                     ImGui.SetTooltip("Export to clipboard with minimal settings (May change with updates).\n" +
                         "Right click to export with every setting (Longer string, doesn't change).");
 
-                    if (ImGui.IsMouseReleased(1))
+                    if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
                         ImGui.SetClipboardText(plugin.ExportShortcut(sh, true));
                 }
                 ImGui.SameLine();
@@ -1065,7 +1065,7 @@ namespace QoLBar
                     ImGui.SetTooltip("Right click this button to delete the shortcut!" +
                         (config.ExportOnDelete ? "\nThe shortcut will be exported to clipboard first." : ""));
 
-                    if (ImGui.IsMouseReleased(1))
+                    if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
                     {
                         if (config.ExportOnDelete)
                             ImGui.SetClipboardText(plugin.ExportShortcut(sh, false));
@@ -1258,7 +1258,7 @@ namespace QoLBar
                     ImGui.SetTooltip("Export to clipboard with minimal settings (May change with updates).\n" +
                         "Right click to export with every setting (Longer string, doesn't change).");
 
-                    if (ImGui.IsMouseReleased(1))
+                    if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
                         ImGui.SetClipboardText(plugin.ExportBar(barConfig, true));
                 }
                 ImGui.SameLine();

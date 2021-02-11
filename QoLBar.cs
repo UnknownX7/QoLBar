@@ -266,8 +266,8 @@ namespace QoLBar
 
         public bool IsLoggedIn() => ConditionCache.GetCondition(1000);
 
-        private int _frameCount = 0;
-        public int GetFrameCount() => _frameCount;
+        private long _frameCount = 0;
+        public long GetFrameCount() => _frameCount;
         private float _drawTime = 0;
         public float GetDrawTime() => _drawTime;
         public void Draw()

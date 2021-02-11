@@ -25,16 +25,11 @@ namespace QoLBar
 
         [JsonIgnore] private static QoLBar plugin;
         [JsonIgnore] private static DalamudPluginInterface pluginInterface;
-        [JsonIgnore] private static string ConfigFolder => pluginInterface.GetPluginConfigDirectory();
+        [JsonIgnore] public static DirectoryInfo ConfigFolder => pluginInterface.ConfigDirectory;
         [JsonIgnore] private static DirectoryInfo iconFolder;
         [JsonIgnore] private static DirectoryInfo backupFolder;
         [JsonIgnore] private static FileInfo tempConfig;
-        [JsonIgnore] private static readonly string filePath = Path.Combine(new[] {
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "XIVLauncher",
-            "pluginConfigs",
-            "QoLBar.json",
-        });
+        [JsonIgnore] public static FileInfo ConfigFile => pluginInterface.ConfigFile;
 
         public string GetVersion() => PluginVersion;
         public void UpdateVersion() => PluginVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
@@ -44,13 +39,13 @@ namespace QoLBar
         {
             plugin = p;
             pluginInterface = p.pluginInterface;
-            if (ConfigFolder != "")
+            if (ConfigFolder.Exists)
             {
-                iconFolder = new DirectoryInfo(Path.Combine(ConfigFolder, "icons"));
-                backupFolder = new DirectoryInfo(Path.Combine(ConfigFolder, "backups"));
+                iconFolder = new DirectoryInfo(Path.Combine(ConfigFolder.FullName, "icons"));
+                backupFolder = new DirectoryInfo(Path.Combine(ConfigFolder.FullName, "backups"));
                 tempConfig = new FileInfo(backupFolder.FullName + "\\temp.json");
             }
-
+            
             if (BarConfigs.Count < 1)
                 BarConfigs.Add(new BarConfig());
         }
@@ -76,10 +71,6 @@ namespace QoLBar
                 }
             }
         }
-
-        public string GetPath() => filePath;
-
-        public string GetPluginConfigPath() => ConfigFolder;
 
         public string GetPluginIconPath()
         {
@@ -140,8 +131,7 @@ namespace QoLBar
             {
                 if (!backupFolder.Exists)
                     backupFolder.Create();
-                var file = new FileInfo(filePath);
-                file.CopyTo(tempConfig.FullName, true);
+                ConfigFile.CopyTo(tempConfig.FullName, true);
             }
             catch (Exception e)
             {
@@ -149,15 +139,13 @@ namespace QoLBar
             }
         }
 
-        public FileInfo GetTempConfig() => tempConfig;
-
         public void LoadConfig(FileInfo file)
         {
             if (file.Exists)
             {
                 try
                 {
-                    file.CopyTo(filePath, true);
+                    file.CopyTo(ConfigFile.FullName, true);
                     plugin.Reload();
                 }
                 catch (Exception e)
