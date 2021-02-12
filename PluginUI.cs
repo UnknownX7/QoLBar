@@ -584,11 +584,19 @@ namespace QoLBar
                     ImGui.TextUnformatted("Game Data Pointers");
                     ImGui.Indent();
                     ImGui.Columns(3, "DebugPointers", false);
+
+                    ImGui.TextUnformatted("Chat UI Module");
+                    ImGui.NextColumn();
+                    ImGui.TextUnformatted($"{plugin.uiModulePtr.ToString("X")}");
+                    ImGui.NextColumn();
+
+                    ImGui.NextColumn();
                     ImGui.TextUnformatted("Game Text Input Active");
                     ImGui.NextColumn();
                     ImGui.TextUnformatted($"{plugin.textActiveBoolPtr.ToString("X")}");
                     ImGui.NextColumn();
                     ImGui.TextUnformatted($"{plugin.GameTextInputActive}");
+
                     ImGui.Columns(1);
                     ImGui.Unindent();
                     ImGui.Separator();

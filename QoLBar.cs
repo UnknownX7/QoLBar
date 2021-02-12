@@ -581,7 +581,7 @@ namespace QoLBar
         private GetUIModuleDelegate GetUIModule;
         private EasierProcessChatBoxDelegate _EasierProcessChatBox;
 
-        private IntPtr uiModulePtr;
+        public IntPtr uiModulePtr;
 
         private void InitCommands()
         {
