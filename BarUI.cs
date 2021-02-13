@@ -1157,10 +1157,13 @@ namespace QoLBar
                                 SetupPosition();
                             }
 
-                            if ((barConfig.Visibility != VisibilityMode.Always) && ImGui.Checkbox("Hint", ref barConfig.Hint))
-                                config.Save();
-                            if (ImGui.IsItemHovered())
-                                ImGui.SetTooltip("Will prevent the bar from sleeping, increasing CPU load.");
+                            if (barConfig.Visibility != VisibilityMode.Always)
+                            {
+                                if (ImGui.Checkbox("Hint", ref barConfig.Hint))
+                                    config.Save();
+                                if (ImGui.IsItemHovered())
+                                    ImGui.SetTooltip("Will prevent the bar from sleeping, increasing CPU load.");
+                            }
                         }
                         else
                         {
