@@ -1,0 +1,179 @@
+using System.Collections.Generic;
+using System.Windows.Forms;
+using ImGuiNET;
+using Dalamud.Game.ClientState;
+
+namespace QoLBar
+{
+    public static class Keybind
+    {
+        public static readonly List<(BarUI, Shortcut)> hotkeys = new List<(BarUI, Shortcut)>();
+        private static readonly bool[] prevKeyState = new bool[160];
+        private static readonly bool[] keyPressed = new bool[160];
+
+        public static void Run(KeyState keyState, bool gameInputActive)
+        {
+            GetKeyState(keyState);
+            DoHotkeys(gameInputActive);
+        }
+
+        private static void GetKeyState(KeyState keyState)
+        {
+            for (int i = 0; i < 160; i++)
+            {
+                var down = keyState[i];
+                keyPressed[i] = down && !prevKeyState[i];
+                prevKeyState[i] = down;
+            }
+        }
+
+        private static void DoHotkeys(bool gameInputActive)
+        {
+            if (gameInputActive) { hotkeys.Clear(); return; }
+
+            if (hotkeys.Count > 0)
+            {
+                var key = 0;
+                if (ImGui.GetIO().KeyShift)
+                    key |= (int)Keys.Shift;
+                if (ImGui.GetIO().KeyCtrl)
+                    key |= (int)Keys.Control;
+                if (ImGui.GetIO().KeyAlt)
+                    key |= (int)Keys.Alt;
+                for (var k = 0; k < 160; k++)
+                {
+                    if (16 <= k && k <= 18) continue;
+
+                    if (keyPressed[k])
+                    {
+                        foreach ((var bar, var sh) in hotkeys)
+                        {
+                            if (sh.Hotkey == (key | k))
+                                bar.ItemClicked(sh, false, false);
+                        }
+                    }
+                }
+                hotkeys.Clear();
+            }
+        }
+
+        public static void AddHotkey(BarUI bar, Shortcut sh) => hotkeys.Add((bar, sh));
+
+        public static void KeybindInput(Shortcut sh, Configuration config)
+        {
+            var dispKey = GetKeyName(sh.Hotkey);
+            ImGui.InputText($"Hotkey##{sh.Hotkey}", ref dispKey, 200, ImGuiInputTextFlags.ReadOnly | ImGuiInputTextFlags.AllowTabInput); // delete the box to delete focus 4head
+            if (ImGui.IsItemActive())
+            {
+                var keysDown = ImGui.GetIO().KeysDown;
+                var key = 0;
+                if (ImGui.GetIO().KeyShift)
+                    key |= (int)Keys.Shift;
+                if (ImGui.GetIO().KeyCtrl)
+                    key |= (int)Keys.Control;
+                if (ImGui.GetIO().KeyAlt)
+                    key |= (int)Keys.Alt;
+                for (var k = 0; k < 160; k++)
+                {
+                    if (16 <= k && k <= 18) continue;
+
+                    if (keysDown[k] && ImGui.GetIO().KeysDownDuration[k] == 0)
+                    {
+                        key |= k;
+                        sh.Hotkey = key;
+                        config.Save();
+                        break;
+                    }
+                }
+            }
+            if (ImGui.IsItemDeactivated() && ImGui.GetIO().KeysDown[(int)Keys.Escape])
+            {
+                sh.Hotkey = 0;
+                config.Save();
+            }
+            if (ImGui.IsItemHovered())
+                ImGui.SetTooltip("Press escape to clear the hotkey.\n" +
+                    "Categories cannot use hotkeys in default mode.");
+        }
+
+        public static void DrawDebug(Configuration config)
+        {
+            ImGui.TextUnformatted("Active Hotkeys");
+            ImGui.Spacing();
+            ImGui.Separator();
+            ImGui.Columns(2);
+            foreach ((_, var sh) in hotkeys)
+            {
+                if (ImGui.SmallButton("Delete"))
+                {
+                    sh.Hotkey = 0;
+                    config.Save();
+                }
+                ImGui.SameLine();
+                ImGui.TextUnformatted(GetKeyName(sh.Hotkey));
+                ImGui.NextColumn();
+                ImGui.TextUnformatted(sh.Command);
+                ImGui.Separator();
+                ImGui.NextColumn();
+            }
+            ImGui.Columns(1);
+        }
+
+        private static readonly Dictionary<Keys, string> _keynames = new Dictionary<Keys, string>
+        {
+            [Keys.ShiftKey] = "Shift",
+            [Keys.ControlKey] = "Ctrl",
+            [Keys.Menu] = "Alt",
+            [Keys.PageUp] = "PageUp",
+            [Keys.PageDown] = "PageDown",
+            [Keys.PrintScreen] = "PrintScreen",
+            [Keys.D0] = "0",
+            [Keys.D1] = "1",
+            [Keys.D2] = "2",
+            [Keys.D3] = "3",
+            [Keys.D4] = "4",
+            [Keys.D5] = "5",
+            [Keys.D6] = "6",
+            [Keys.D7] = "7",
+            [Keys.D8] = "8",
+            [Keys.D9] = "9",
+            [Keys.Scroll] = "ScrollLock",
+            [Keys.OemSemicolon] = ";",
+            [Keys.Oemplus] = "=",
+            [Keys.OemMinus] = "-",
+            [Keys.Oemcomma] = ",",
+            [Keys.OemPeriod] = ".",
+            [Keys.OemQuestion] = "/",
+            [Keys.Oemtilde] = "`",
+            [Keys.OemOpenBrackets] = "[",
+            [Keys.OemPipe] = "\\",
+            [Keys.OemCloseBrackets] = "]",
+            [Keys.OemQuotes] = "'"
+        };
+        public static string GetKeyName(int k)
+        {
+            var key = (Keys)k;
+            string mod = string.Empty;
+            if ((key & Keys.Shift) != 0)
+            {
+                mod += "Shift + ";
+                key -= Keys.Shift;
+            }
+            if ((key & Keys.Control) != 0)
+            {
+                mod += "Ctrl + ";
+                key -= Keys.Control;
+            }
+            if ((key & Keys.Alt) != 0)
+            {
+                mod += "Alt + ";
+                key -= Keys.Alt;
+            }
+            if (_keynames.TryGetValue(key, out var name))
+                return mod + name;
+            else
+                return mod + key.ToString();
+        }
+
+    }
+}

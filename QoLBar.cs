@@ -10,11 +10,10 @@ using System.Reflection;
 using System.Dynamic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
-using System.Windows.Forms;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using Dalamud.Plugin;
 using ImGuiNET;
+using Dalamud.Plugin;
 using QoLBar.Attributes;
 
 // I'm too lazy to make a file just for this
@@ -165,9 +164,6 @@ namespace QoLBar
         public readonly int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
         private readonly Queue<string> commandQueue = new Queue<string>();
         private readonly QoLSerializer qolSerializer = new QoLSerializer();
-        public readonly List<(BarUI, Shortcut)> hotkeys = new List<(BarUI, Shortcut)>();
-        private readonly bool[] prevKeyState = new bool[160];
-        private readonly bool[] keyPressed = new bool[160];
 
         public readonly TextureDictionary textureDictionary = new TextureDictionary();
 
@@ -274,8 +270,7 @@ namespace QoLBar
         {
             ReadyCommand();
 
-            GetKeyState();
-            DoHotkeys();
+            Keybind.Run(pluginInterface.ClientState.KeyState, GameTextInputActive);
 
             if (_addUserIcons)
                 AddUserIcons(ref _addUserIcons);
@@ -286,49 +281,6 @@ namespace QoLBar
             if (pluginReady)
                 ui.Draw();
         }
-
-        private void GetKeyState()
-        {
-            var keyState = pluginInterface.ClientState.KeyState;
-            for (int i = 0; i < 160; i++)
-            {
-                var down = keyState[i];
-                keyPressed[i] = down && !prevKeyState[i];
-                prevKeyState[i] = down;
-            }
-        }
-
-        private void DoHotkeys()
-        {
-            if (GameTextInputActive) { hotkeys.Clear(); return; }
-
-            if (hotkeys.Count > 0)
-            {
-                var key = 0;
-                if (ImGui.GetIO().KeyShift)
-                    key |= (int)Keys.Shift;
-                if (ImGui.GetIO().KeyCtrl)
-                    key |= (int)Keys.Control;
-                if (ImGui.GetIO().KeyAlt)
-                    key |= (int)Keys.Alt;
-                for (var k = 0; k < 160; k++)
-                {
-                    if (16 <= k && k <= 18) continue;
-
-                    if (keyPressed[k])
-                    {
-                        foreach ((var bar, var sh) in hotkeys)
-                        {
-                            if (sh.Hotkey == (key | k))
-                                bar.ItemClicked(sh, false, false);
-                        }
-                    }
-                }
-                hotkeys.Clear();
-            }
-        }
-
-        public void AddHotkey(BarUI bar, Shortcut sh) => hotkeys.Add((bar, sh));
 
         public void CheckHideOptOuts()
         {

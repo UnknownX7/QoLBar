@@ -1,8 +1,7 @@
-using ImGuiNET;
 using System;
 using System.Numerics;
 using System.Collections.Generic;
-using System.Windows.Forms;
+using ImGuiNET;
 using Dalamud.Plugin;
 using static QoLBar.BarConfig;
 
@@ -245,7 +244,7 @@ namespace QoLBar
             foreach (var sh in shortcuts)
             {
                 if (sh.Hotkey > 0 && sh.Type != Shortcut.ShortcutType.Spacer)
-                    plugin.AddHotkey(this, sh);
+                    Keybind.AddHotkey(this, sh);
                 if (sh.Type == Shortcut.ShortcutType.Category)
                     SetupHotkeys(sh.SubList);
             }
@@ -962,41 +961,7 @@ namespace QoLBar
                             config.Save();
 
                         if (sh.Type != Shortcut.ShortcutType.Spacer)
-                        {
-                            var dispKey = GetKeyName(sh.Hotkey);
-                            ImGui.InputText($"Hotkey##{sh.Hotkey}", ref dispKey, 200, ImGuiInputTextFlags.ReadOnly | ImGuiInputTextFlags.AllowTabInput); // delete the box to delete focus 4head
-                            if (ImGui.IsItemActive())
-                            {
-                                var keysDown = ImGui.GetIO().KeysDown;
-                                var key = 0;
-                                if (ImGui.GetIO().KeyShift)
-                                    key |= (int)Keys.Shift;
-                                if (ImGui.GetIO().KeyCtrl)
-                                    key |= (int)Keys.Control;
-                                if (ImGui.GetIO().KeyAlt)
-                                    key |= (int)Keys.Alt;
-                                for (var k = 0; k < 160; k++)
-                                {
-                                    if (16 <= k && k <= 18) continue;
-
-                                    if (keysDown[k] && ImGui.GetIO().KeysDownDuration[k] == 0)
-                                    {
-                                        key |= k;
-                                        sh.Hotkey = key;
-                                        config.Save();
-                                        break;
-                                    }
-                                }
-                            }
-                            if (ImGui.IsItemDeactivated() && ImGui.GetIO().KeysDown[(int)Keys.Escape])
-                            {
-                                sh.Hotkey = 0;
-                                config.Save();
-                            }
-                            if (ImGui.IsItemHovered())
-                                ImGui.SetTooltip("Press escape to clear the hotkey.\n" +
-                                    "Categories cannot use hotkeys in default mode.");
-                        }
+                            Keybind.KeybindInput(sh, config);
 
                         ImGui.EndTabItem();
                     }
@@ -1511,62 +1476,6 @@ namespace QoLBar
         }
 
         private float GetFontScale() => _curScale;
-
-        private static readonly Dictionary<Keys, string> _keynames = new Dictionary<Keys, string>
-        {
-            [Keys.ShiftKey] = "Shift",
-            [Keys.ControlKey] = "Ctrl",
-            [Keys.Menu] = "Alt",
-            [Keys.PageUp] = "PageUp",
-            [Keys.PageDown] = "PageDown",
-            [Keys.PrintScreen] = "PrintScreen",
-            [Keys.D0] = "0",
-            [Keys.D1] = "1",
-            [Keys.D2] = "2",
-            [Keys.D3] = "3",
-            [Keys.D4] = "4",
-            [Keys.D5] = "5",
-            [Keys.D6] = "6",
-            [Keys.D7] = "7",
-            [Keys.D8] = "8",
-            [Keys.D9] = "9",
-            [Keys.Scroll] = "ScrollLock",
-            [Keys.OemSemicolon] = ";",
-            [Keys.Oemplus] = "=",
-            [Keys.OemMinus] = "-",
-            [Keys.Oemcomma] = ",",
-            [Keys.OemPeriod] = ".",
-            [Keys.OemQuestion] = "/",
-            [Keys.Oemtilde] = "`",
-            [Keys.OemOpenBrackets] = "[",
-            [Keys.OemPipe] = "\\",
-            [Keys.OemCloseBrackets] = "]",
-            [Keys.OemQuotes] = "'"
-        };
-        private string GetKeyName(int k)
-        {
-            var key = (Keys)k;
-            string mod = string.Empty;
-            if ((key & Keys.Shift) != 0)
-            {
-                mod += "Shift + ";
-                key -= Keys.Shift;
-            }
-            if ((key & Keys.Control) != 0)
-            {
-                mod += "Ctrl + ";
-                key -= Keys.Control;
-            }
-            if ((key & Keys.Alt) != 0)
-            {
-                mod += "Alt + ";
-                key -= Keys.Alt;
-            }
-            if (_keynames.TryGetValue(key, out var name))
-                return mod + name;
-            else
-                return mod + key.ToString();
-        }
 
         public void Dispose()
         {

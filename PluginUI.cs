@@ -1,4 +1,3 @@
-using ImGuiNET;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -6,7 +5,7 @@ using System.Numerics;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows.Forms;
+using ImGuiNET;
 using Dalamud.Plugin;
 
 namespace QoLBar
@@ -602,19 +601,8 @@ namespace QoLBar
                     ImGui.Separator();
                     ImGui.Spacing();
 
-                    ImGui.TextUnformatted("Active Hotkeys");
-                    ImGui.Spacing();
-                    ImGui.Separator();
-                    ImGui.Columns(2);
-                    foreach ((_, var sh) in plugin.hotkeys)
-                    {
-                        ImGui.TextUnformatted(((Keys)sh.Hotkey).ToString());
-                        ImGui.NextColumn();
-                        ImGui.TextUnformatted(sh.Command);
-                        ImGui.Separator();
-                        ImGui.NextColumn();
-                    }
-                    ImGui.Columns(1);
+                    Keybind.DrawDebug(config);
+
                     ImGui.EndTabItem();
                 }
 
