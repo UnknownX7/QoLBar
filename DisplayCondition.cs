@@ -144,7 +144,7 @@ namespace QoLBar
                 else if (cond < 600)
                 {
                     var player = plugin.pluginInterface.ClientState.LocalPlayer;
-                    b = (player != null) && plugin.pluginInterface.Data.IsDataReady && (((cond < 30) ? player.ClassJob.GameData.Role : player.ClassJob.GameData.ClassJobCategory.Row) == (cond - 400));
+                    b = (player != null) && plugin.pluginInterface.Data.IsDataReady && ((((cond - 400) < 30) ? player.ClassJob.GameData.Role : player.ClassJob.GameData.ClassJobCategory.Row) == (cond - 400));
                 }
                 else
                 {
