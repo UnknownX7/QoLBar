@@ -511,13 +511,13 @@ namespace QoLBar
 
             var c = sh.IconTint;
             if (c.W > 1)
-                c = AnimateColor(c);
+                c = ShortcutUI.AnimateColor(c);
 
             PushFontScale(GetFontScale() * (!inCategory ? barConfig.FontScale : barConfig.CategoryFontScale));
             if (type == Shortcut.ShortcutType.Spacer)
             {
                 if (useIcon)
-                    DrawIconButton(icon, new Vector2(height), sh.IconZoom, sh.IconOffset, c, args, true, true);
+                    ShortcutUI.DrawIcon(icon, new Vector2(height), sh.IconZoom, sh.IconOffset, c, config.UseIconFrame, args, true, true);
                 else
                 {
                     var textSize = ImGui.CalcTextSize(name);
@@ -534,7 +534,7 @@ namespace QoLBar
                 }
             }
             else if (useIcon)
-                clicked = DrawIconButton(icon, new Vector2(height), sh.IconZoom, sh.IconOffset, c, args);
+                clicked = ShortcutUI.DrawIcon(icon, new Vector2(height), sh.IconZoom, sh.IconOffset, c, config.UseIconFrame, args);
             else
             {
                 ImGui.PushStyleColor(ImGuiCol.Text, c);
@@ -569,7 +569,7 @@ namespace QoLBar
                             parentShortcut._i = (parentShortcut._i + 1) % parentShortcut.SubList.Count;
                             break;
                         case Shortcut.ShortcutMode.Random:
-                            parentShortcut._i = (int)(plugin.GetFrameCount() % parentShortcut.SubList.Count);
+                            parentShortcut._i = (int)(QoLBar.GetFrameCount() % parentShortcut.SubList.Count);
                             break;
                     }
                 }
@@ -644,7 +644,7 @@ namespace QoLBar
                             {
                                 var lines = command.Split('\n');
                                 command = lines[Math.Min(sh._i, lines.Length - 1)];
-                                sh._i = (int)(plugin.GetFrameCount() % lines.Length); // With this game's FPS drops? Completely random.
+                                sh._i = (int)(QoLBar.GetFrameCount() % lines.Length); // With this game's FPS drops? Completely random.
                                 break;
                             }
                     }
@@ -661,7 +661,7 @@ namespace QoLBar
                         case Shortcut.ShortcutMode.Random:
                             if (0 <= sh._i && sh._i < sh.SubList.Count)
                                 ItemClicked(sh.SubList[sh._i], v, true);
-                            sh._i = (int)(plugin.GetFrameCount() % Math.Max(1, sh.SubList.Count));
+                            sh._i = (int)(QoLBar.GetFrameCount() % Math.Max(1, sh.SubList.Count));
                             break;
                         default:
                             SetupCategoryPosition(v, subItem);
@@ -788,13 +788,13 @@ namespace QoLBar
 
         private void ItemBaseUI(Shortcut sh, bool editing)
         {
-            if (plugin.ui.iconBrowserOpen && plugin.ui.doPasteIcon)
+            if (IconBrowserUI.iconBrowserOpen && IconBrowserUI.doPasteIcon)
             {
                 var split = sh.Name.Split(new[] { "##" }, 2, StringSplitOptions.None);
-                sh.Name = $"::{plugin.ui.pasteIcon}" + (split.Length > 1 ? $"##{split[1]}" : "");
+                sh.Name = $"::{IconBrowserUI.pasteIcon}" + (split.Length > 1 ? $"##{split[1]}" : "");
                 if (editing)
                     config.Save();
-                plugin.ui.doPasteIcon = false;
+                IconBrowserUI.doPasteIcon = false;
             }
             if (ImGui.InputText("Name          ", ref sh.Name, 256) && editing) // Not a bug... just ImGui not extending the window to fit multiline's name...
                 config.Save();
@@ -929,7 +929,7 @@ namespace QoLBar
                                 if (sh.Mode == Shortcut.ShortcutMode.Random)
                                 {
                                     var c = Math.Max(1, (sh.Type == Shortcut.ShortcutType.Category) ? sh.SubList.Count : sh.Command.Split('\n').Length);
-                                    sh._i = (int)(plugin.GetFrameCount() % c);
+                                    sh._i = (int)(QoLBar.GetFrameCount() % c);
                                 }
                                 else
                                     sh._i = 0;
@@ -969,12 +969,12 @@ namespace QoLBar
                     if (hasIcon && ImGui.BeginTabItem("Icon"))
                     {
                         // Name is available here for ease of access since it pertains to the icon as well
-                        if (plugin.ui.iconBrowserOpen && plugin.ui.doPasteIcon)
+                        if (IconBrowserUI.iconBrowserOpen && IconBrowserUI.doPasteIcon)
                         {
                             var split = sh.Name.Split(new[] { "##" }, 2, StringSplitOptions.None);
-                            sh.Name = $"::{plugin.ui.pasteIcon}" + (split.Length > 1 ? $"##{split[1]}" : "");
+                            sh.Name = $"::{IconBrowserUI.pasteIcon}" + (split.Length > 1 ? $"##{split[1]}" : "");
                             config.Save();
-                            plugin.ui.doPasteIcon = false;
+                            IconBrowserUI.doPasteIcon = false;
                         }
                         if (ImGui.InputText("Name", ref sh.Name, 256))
                             config.Save();
@@ -1043,7 +1043,7 @@ namespace QoLBar
 
                 var iconSize = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
                 ImGui.SameLine(ImGui.GetWindowContentRegionWidth() + Style.WindowPadding.X - iconSize);
-                if (DrawIconButton(46, new Vector2(iconSize), 1.0f, Vector2.Zero, Vector4.One))
+                if (ShortcutUI.DrawIcon(46, new Vector2(iconSize), 1.0f, Vector2.Zero, Vector4.One, false))
                     plugin.ToggleIconBrowser();
                 if (ImGui.IsItemHovered())
                     ImGui.SetTooltip("Opens up a list of all icons you can use instead of text.\n" +
@@ -1298,165 +1298,6 @@ namespace QoLBar
                 barPos.X = _tweenStart.X + deltaX;
                 barPos.Y = _tweenStart.Y + deltaY;
             }
-        }
-
-        private ImGuiScene.TextureWrap _buttonshine;
-        private Vector2 _uvMin, _uvMax, _uvMinHover, _uvMaxHover;//, _uvMinHover2, _uvMaxHover2;
-        public bool DrawIconButton(int icon, Vector2 size, float zoom, Vector2 offset, Vector4 tint, string args = "_", bool retExists = false, bool noButton = false)
-        {
-            bool ret = false;
-            var texd = plugin.textureDictionary;
-            var tex = texd[icon];
-            if (tex == null)
-            {
-                if (!retExists)
-                {
-                    if (icon == 66001)
-                        ret = ImGui.Button("  X  ##FailedTexture");
-                    else
-                        ret = DrawIconButton(66001, size, zoom, offset, tint, args);
-                }
-            }
-            else
-            {
-                var frameArg = false;
-                if (args != "_")
-                {
-                    frameArg = args.Contains("f");
-                    if (config.UseIconFrame)
-                        frameArg = !frameArg;
-                }
-
-                ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
-
-                if (frameArg)
-                {
-                    ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Vector4.Zero);
-                    ImGui.PushStyleColor(ImGuiCol.ButtonActive, Vector4.Zero);
-                }
-
-                var z = 0.5f / zoom;
-                var uv0 = new Vector2(0.5f - z + offset.X, 0.5f - z + offset.Y);
-                var uv1 = new Vector2(0.5f + z + offset.X, 0.5f + z + offset.Y);
-                if (!noButton)
-                    ret = ImGui.ImageButton(tex.ImGuiHandle, size, uv0, uv1, 0, Vector4.Zero, tint);
-                else
-                    ImGui.Image(tex.ImGuiHandle, size, uv0, uv1, tint);
-
-                if (frameArg && texd[QoLBar.FrameIconID] != null)
-                {
-                    if (_buttonshine == null)
-                    {
-                        _buttonshine = texd[QoLBar.FrameIconID];
-                        _uvMin = new Vector2(1f / _buttonshine.Width, 0f / _buttonshine.Height);
-                        _uvMax = new Vector2(47f / _buttonshine.Width, 46f / _buttonshine.Height);
-                        _uvMinHover = new Vector2(49f / _buttonshine.Width, 97f / _buttonshine.Height);
-                        _uvMaxHover = new Vector2(95f / _buttonshine.Width, 143f / _buttonshine.Height);
-                        //_uvMinHover2 = new Vector2(248f / _buttonshine.Width, 8f / _buttonshine.Height);
-                        //_uvMaxHover2 = new Vector2(304f / _buttonshine.Width, 64f / _buttonshine.Height);
-                    }
-                    var _sizeInc = size * 0.075f;
-                    var _rMin = ImGui.GetItemRectMin() - _sizeInc;
-                    var _rMax = ImGui.GetItemRectMax() + _sizeInc;
-                    ImGui.GetWindowDrawList().AddImage(_buttonshine.ImGuiHandle, _rMin, _rMax, _uvMin, _uvMax); // Frame
-                    if (!noButton && ImGui.IsItemHovered(ImGuiHoveredFlags.RectOnly))
-                    {
-                        ImGui.GetWindowDrawList().AddImage(_buttonshine.ImGuiHandle, _rMin, _rMax, _uvMinHover, _uvMaxHover, 0x85FFFFFF); // Frame Center Glow
-                        //ImGui.GetWindowDrawList().AddImage(_buttonshine.ImGuiHandle, _rMin - (_sizeInc * 1.5f), _rMax + (_sizeInc * 1.5f), _uvMinHover2, _uvMaxHover2); // Edge glow // TODO: Probably somewhat impossible as is, but fix glow being clipped
-                    }
-                    // TODO: Find a way to do the click animation
-
-                    ImGui.PopStyleColor(2);
-                }
-
-                ImGui.PopStyleColor();
-                if (retExists)
-                    ret = true;
-            }
-            return ret;
-        }
-
-        private Vector4 AnimateColor(Vector4 c)
-        {
-            float r, g, b, a, x;
-            r = g = b = a = 1;
-            var t = plugin.GetDrawTime();
-            var anim = Math.Round(c.W * 255) - 256;
-
-            switch (anim)
-            {
-                case 0: // Slow Rainbow
-                    ImGui.ColorConvertHSVtoRGB(((t * 15) % 360) / 360, 1, 1, out r, out g, out b);
-                    break;
-                case 1: // Rainbow
-                    ImGui.ColorConvertHSVtoRGB(((t * 30) % 360) / 360, 1, 1, out r, out g, out b);
-                    break;
-                case 2: // Fast Rainbow
-                    ImGui.ColorConvertHSVtoRGB(((t * 60) % 360) / 360, 1, 1, out r, out g, out b);
-                    break;
-                case 3: // Slow Fade
-                    r = c.X; g = c.Y; b = c.Z;
-                    a = (float)(Math.Sin(((t * 30) % 360) * Math.PI / 180) + 1) / 2;
-                    break;
-                case 4: // Fade
-                    r = c.X; g = c.Y; b = c.Z;
-                    a = (float)(Math.Sin(((t * 60) % 360) * Math.PI / 180) + 1) / 2;
-                    break;
-                case 5: // Fast Fade
-                    r = c.X; g = c.Y; b = c.Z;
-                    a = (float)(Math.Sin(((t * 120) % 360) * Math.PI / 180) + 1) / 2;
-                    break;
-                case 6: // Red Transition
-                    x = Math.Abs(((t * 60) % 360) - 180) / 180;
-                    r = c.X + (1 - c.X) * x;
-                    g = c.Y + (0 - c.Y) * x;
-                    b = c.Z + (0 - c.Z) * x;
-                    break;
-                case 7: // Yellow Transition
-                    x = Math.Abs(((t * 60) % 360) - 180) / 180;
-                    r = c.X + (1 - c.X) * x;
-                    g = c.Y + (1 - c.Y) * x;
-                    b = c.Z + (0 - c.Z) * x;
-                    break;
-                case 8: // Green Transition
-                    x = Math.Abs(((t * 60) % 360) - 180) / 180;
-                    r = c.X + (0 - c.X) * x;
-                    g = c.Y + (1 - c.Y) * x;
-                    b = c.Z + (0 - c.Z) * x;
-                    break;
-                case 9: // Cyan Transition
-                    x = Math.Abs(((t * 60) % 360) - 180) / 180;
-                    r = c.X + (0 - c.X) * x;
-                    g = c.Y + (1 - c.Y) * x;
-                    b = c.Z + (1 - c.Z) * x;
-                    break;
-                case 10: // Blue Transition
-                    x = Math.Abs(((t * 60) % 360) - 180) / 180;
-                    r = c.X + (0 - c.X) * x;
-                    g = c.Y + (0 - c.Y) * x;
-                    b = c.Z + (1 - c.Z) * x;
-                    break;
-                case 11: // Purple Transition
-                    x = Math.Abs(((t * 60) % 360) - 180) / 180;
-                    r = c.X + (1 - c.X) * x;
-                    g = c.Y + (0 - c.Y) * x;
-                    b = c.Z + (1 - c.Z) * x;
-                    break;
-                case 12: // White Transition
-                    x = Math.Abs(((t * 60) % 360) - 180) / 180;
-                    r = c.X + (1 - c.X) * x;
-                    g = c.Y + (1 - c.Y) * x;
-                    b = c.Z + (1 - c.Z) * x;
-                    break;
-                case 13: // Black Transition
-                    x = Math.Abs(((t * 60) % 360) - 180) / 180;
-                    r = c.X + (0 - c.X) * x;
-                    g = c.Y + (0 - c.Y) * x;
-                    b = c.Z + (0 - c.Z) * x;
-                    break;
-            }
-
-            return new Vector4(r, g, b, a);
         }
 
         // Why is this not a basic feature of ImGui...

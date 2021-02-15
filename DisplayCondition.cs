@@ -424,10 +424,10 @@ namespace QoLBar
 
         public static bool CheckCache()
         {
-            if (plugin.GetDrawTime() >= (_lastCache + 0.1f)) // Somewhat expensive, only run 10x/sec
+            if (QoLBar.GetDrawTime() >= (_lastCache + 0.1f)) // Somewhat expensive, only run 10x/sec
             {
                 ClearCache();
-                _lastCache = plugin.GetDrawTime();
+                _lastCache = QoLBar.GetDrawTime();
                 return true;
             }
             else

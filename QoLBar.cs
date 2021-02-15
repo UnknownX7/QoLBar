@@ -165,7 +165,7 @@ namespace QoLBar
         private readonly Queue<string> commandQueue = new Queue<string>();
         private readonly QoLSerializer qolSerializer = new QoLSerializer();
 
-        public readonly TextureDictionary textureDictionary = new TextureDictionary();
+        public static readonly TextureDictionary textureDictionary = new TextureDictionary();
 
         public IntPtr textActiveBoolPtr = IntPtr.Zero;
         public unsafe bool GameTextInputActive => (textActiveBoolPtr != IntPtr.Zero) && *(bool*)textActiveBoolPtr;
@@ -248,7 +248,7 @@ namespace QoLBar
 
         [Command("/qolicons")]
         [HelpMessage("Open the icon browser.")]
-        public void ToggleIconBrowser(string command = null, string argument = null) => ui.ToggleIconBrowser();
+        public void ToggleIconBrowser(string command = null, string argument = null) => IconBrowserUI.ToggleIconBrowser();
 
         [Command("/qoltoggle")]
         [HelpMessage("Hide or reveal a bar using its name or index.")]
@@ -260,12 +260,12 @@ namespace QoLBar
                 ui.ToggleBarVisible(argument);
         }
 
-        public bool IsLoggedIn() => ConditionCache.GetCondition(1000);
+        public static bool IsLoggedIn() => ConditionCache.GetCondition(1000);
 
-        private long _frameCount = 0;
-        public long GetFrameCount() => _frameCount;
-        private float _drawTime = 0;
-        public float GetDrawTime() => _drawTime;
+        private static long _frameCount = 0;
+        public static long GetFrameCount() => _frameCount;
+        private static float _drawTime = 0;
+        public static float GetDrawTime() => _drawTime;
         public void Draw()
         {
             ReadyCommand();
