@@ -1,27 +1,53 @@
+using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using System.Runtime.InteropServices;
 using ImGuiNET;
-using Dalamud.Game.ClientState;
 
 namespace QoLBar
 {
     public static class Keybind
     {
         public static readonly List<(BarUI, Shortcut)> hotkeys = new List<(BarUI, Shortcut)>();
-        private static readonly bool[] prevKeyState = new bool[160];
-        private static readonly bool[] keyPressed = new bool[160];
+        private static readonly byte[] keyState = new byte[256];
+        private static readonly bool[] prevKeyState = new bool[keyState.Length];
+        private static readonly bool[] keyPressed = new bool[keyState.Length];
 
-        public static void Run(KeyState keyState, bool gameInputActive)
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool GetKeyboardState(byte[] lpKeyState);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
+        private static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        private static extern int GetWindowThreadProcessId(IntPtr handle, out int processId);
+
+        private static bool GameHasFocus()
         {
-            GetKeyState(keyState);
+            var activatedHandle = GetForegroundWindow();
+            if (activatedHandle == IntPtr.Zero)
+                return false;
+
+            var procId = Process.GetCurrentProcess().Id;
+            GetWindowThreadProcessId(activatedHandle, out int activeProcId);
+
+            return activeProcId == procId;
+        }
+
+        public static void Run(bool gameInputActive)
+        {
+            GetKeyState();
             DoHotkeys(gameInputActive);
         }
 
-        private static void GetKeyState(KeyState keyState)
+        private static void GetKeyState()
         {
-            for (int i = 0; i < 160; i++)
+            GetKeyboardState(keyState);
+            for (int i = 0; i < keyState.Length; i++)
             {
-                var down = keyState[i];
+                var down = (keyState[i] & 0x80) != 0;
                 keyPressed[i] = down && !prevKeyState[i];
                 prevKeyState[i] = down;
             }
@@ -29,7 +55,7 @@ namespace QoLBar
 
         private static void DoHotkeys(bool gameInputActive)
         {
-            if (gameInputActive) { hotkeys.Clear(); return; }
+            if (gameInputActive || !GameHasFocus() || ImGui.GetIO().WantCaptureKeyboard) { hotkeys.Clear(); return; }
 
             if (hotkeys.Count > 0)
             {
@@ -40,7 +66,7 @@ namespace QoLBar
                     key |= (int)Keys.Control;
                 if (ImGui.GetIO().KeyAlt)
                     key |= (int)Keys.Alt;
-                for (var k = 0; k < 160; k++)
+                for (var k = 0; k < keyState.Length; k++)
                 {
                     if (16 <= k && k <= 18) continue;
 
@@ -73,7 +99,7 @@ namespace QoLBar
                     key |= (int)Keys.Control;
                 if (ImGui.GetIO().KeyAlt)
                     key |= (int)Keys.Alt;
-                for (var k = 0; k < 160; k++)
+                for (var k = 0; k < keyState.Length; k++)
                 {
                     if (16 <= k && k <= 18) continue;
 
@@ -174,6 +200,5 @@ namespace QoLBar
             else
                 return mod + key.ToString();
         }
-
     }
 }

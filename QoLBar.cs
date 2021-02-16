@@ -270,7 +270,7 @@ namespace QoLBar
         {
             ReadyCommand();
 
-            Keybind.Run(pluginInterface.ClientState.KeyState, GameTextInputActive);
+            Keybind.Run(GameTextInputActive);
 
             if (_addUserIcons)
                 AddUserIcons(ref _addUserIcons);
