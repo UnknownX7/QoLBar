@@ -57,7 +57,6 @@ namespace QoLBar
         private Vector2 _catpiv = Vector2.Zero;
         private Vector2 _catpos = Vector2.Zero;
         private Vector2 _maincatpos = Vector2.Zero;
-        private static readonly Vector2 _defaultSpacing = new Vector2(8, 4);
 
         private static QoLBar Plugin => QoLBar.Plugin;
         private static Configuration Config => QoLBar.Config;
@@ -315,7 +314,7 @@ namespace QoLBar
                     Config.Save();
                 }
 
-                ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, _defaultSpacing);
+                ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, PluginUI.defaultSpacing);
                 PushFontScale(1);
                 BarConfigPopup();
                 PopFontScale();
@@ -587,7 +586,7 @@ namespace QoLBar
                 ImGui.PopStyleVar();
             }
 
-            ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, _defaultSpacing);
+            ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, PluginUI.defaultSpacing);
             PushFontScale(1);
             ItemConfigPopup(shortcuts, i, useIcon);
             PopFontScale();
@@ -612,7 +611,7 @@ namespace QoLBar
 
             //ImGui.OpenPopupContextItem($"BarConfig##{barNumber}"); // Technically unneeded
 
-            ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, _defaultSpacing);
+            ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, PluginUI.defaultSpacing);
             PushFontScale(1);
             ItemCreatePopup(barConfig.ShortcutList);
             PopFontScale();
@@ -773,7 +772,7 @@ namespace QoLBar
                         ImGui.SetTooltip("Add a new shortcut.");
                 }
 
-                ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, _defaultSpacing);
+                ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, PluginUI.defaultSpacing);
                 PushFontScale(1);
                 ItemCreatePopup(sublist);
                 PopFontScale();

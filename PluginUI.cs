@@ -31,6 +31,8 @@ namespace QoLBar
         public bool IsConfigPopupOpen() => configPopupOpen || lastConfigPopupOpen;
         public void SetConfigPopupOpen() => configPopupOpen = true;
 
+        public static readonly Vector2 defaultSpacing = new Vector2(8, 4);
+
         public PluginUI()
         {
             bars = new List<BarUI>();
