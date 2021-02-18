@@ -164,7 +164,7 @@ namespace QoLBar
         private bool pluginReady = false;
         public readonly int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
         private readonly Queue<string> commandQueue = new Queue<string>();
-        private readonly QoLSerializer qolSerializer = new QoLSerializer();
+        private static readonly QoLSerializer qolSerializer = new QoLSerializer();
 
         public static readonly TextureDictionary textureDictionary = new TextureDictionary();
 
@@ -289,13 +289,13 @@ namespace QoLBar
             Interface.UiBuilder.DisableGposeUiHide = Config.OptOutGPoseHide;
         }
 
-        public Dictionary<int, string> GetUserIcons() => textureDictionary.GetUserIcons();
+        public static Dictionary<int, string> GetUserIcons() => textureDictionary.GetUserIcons();
 
         bool _addUserIcons = false;
         private bool AddUserIcons(ref bool b) => b = !textureDictionary.AddUserIcons(Config.GetPluginIconPath());
         public void AddUserIcons() => _addUserIcons = true;
 
-        private void CleanBarConfig(BarConfig bar)
+        private static void CleanBarConfig(BarConfig bar)
         {
             if (bar.DockSide == BarConfig.BarDock.UndockedH || bar.DockSide == BarConfig.BarDock.UndockedV)
             {
@@ -325,13 +325,13 @@ namespace QoLBar
             CleanShortcut(bar.ShortcutList);
         }
 
-        private void CleanShortcut(List<Shortcut> shortcuts)
+        private static void CleanShortcut(List<Shortcut> shortcuts)
         {
             foreach (var sh in shortcuts)
                 CleanShortcut(sh);
         }
 
-        private void CleanShortcut(Shortcut sh)
+        private static void CleanShortcut(Shortcut sh)
         {
             if (sh.Type != Shortcut.ShortcutType.Category)
             {
@@ -370,13 +370,13 @@ namespace QoLBar
                 sh.IconTint = new Vector4(1, 1, 1, 0);
         }
 
-        public T CopyObject<T>(T o)
+        public static T CopyObject<T>(T o)
         {
             var settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Objects, SerializationBinder = qolSerializer };
             return JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(o, settings), settings);
         }
 
-        public string ExportObject(object o, bool saveAllValues)
+        public static string ExportObject(object o, bool saveAllValues)
         {
             string jstring = !saveAllValues ? JsonConvert.SerializeObject(o, new JsonSerializerSettings
             {
@@ -399,7 +399,7 @@ namespace QoLBar
             return Convert.ToBase64String(mso.ToArray());
         }
 
-        public T ImportObject<T>(string import)
+        public static T ImportObject<T>(string import)
         {
             var data = Convert.FromBase64String(import);
             byte[] lengthBuffer = new byte[4];
@@ -419,7 +419,7 @@ namespace QoLBar
             });
         }
 
-        public string ExportBar(BarConfig bar, bool saveAllValues)
+        public static string ExportBar(BarConfig bar, bool saveAllValues)
         {
             if (!saveAllValues)
             {
@@ -429,9 +429,9 @@ namespace QoLBar
             return ExportObject(bar, saveAllValues);
         }
 
-        public bool allowImportConditions = false;
-        public bool allowImportHotkeys = false;
-        public BarConfig ImportBar(string import)
+        public static bool allowImportConditions = false;
+        public static bool allowImportHotkeys = false;
+        public static BarConfig ImportBar(string import)
         {
             var bar = ImportObject<BarConfig>(import);
 
@@ -455,7 +455,7 @@ namespace QoLBar
             return bar;
         }
 
-        public string ExportShortcut(Shortcut sh, bool saveAllValues)
+        public static string ExportShortcut(Shortcut sh, bool saveAllValues)
         {
             if (!saveAllValues)
             {
@@ -465,7 +465,7 @@ namespace QoLBar
             return ExportObject(sh, saveAllValues);
         }
 
-        public Shortcut ImportShortcut(string import)
+        public static Shortcut ImportShortcut(string import)
         {
             var sh = ImportObject<Shortcut>(import);
 
@@ -475,8 +475,8 @@ namespace QoLBar
             return sh;
         }
 
-        public void PrintEcho(string message) => Interface.Framework.Gui.Chat.Print($"[QoLBar] {message}");
-        public void PrintError(string message) => Interface.Framework.Gui.Chat.PrintError($"[QoLBar] {message}");
+        public static void PrintEcho(string message) => Interface.Framework.Gui.Chat.Print($"[QoLBar] {message}");
+        public static void PrintError(string message) => Interface.Framework.Gui.Chat.PrintError($"[QoLBar] {message}");
 
         private void SetupIPC()
         {

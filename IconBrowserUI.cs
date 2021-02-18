@@ -55,7 +55,7 @@ namespace QoLBar
                     if (ImGui.Button("Open Icon Folder"))
                         Process.Start(QoLBar.Config.GetPluginIconPath());
                 }
-                foreach (var kv in QoLBar.Plugin.GetUserIcons())
+                foreach (var kv in QoLBar.GetUserIcons())
                     AddIcons(kv.Key, kv.Key + 1);
                 _tooltip = "";
                 EndIconList();

@@ -16,8 +16,8 @@ namespace QoLBar
 
         private readonly List<BarUI> bars;
 
-        private QoLBar Plugin => QoLBar.Plugin;
-        private Configuration Config => QoLBar.Config;
+        private static QoLBar Plugin => QoLBar.Plugin;
+        private static Configuration Config => QoLBar.Config;
 
 #if DEBUG
         public bool configOpen = true;
@@ -228,7 +228,7 @@ namespace QoLBar
                         if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
                         {
                             if (Config.ExportOnDelete)
-                                ImGui.SetClipboardText(Plugin.ExportBar(bar, false));
+                                ImGui.SetClipboardText(QoLBar.ExportBar(bar, false));
 
                             bars.RemoveAt(i);
                             Config.BarConfigs.RemoveAt(i);
@@ -303,9 +303,9 @@ namespace QoLBar
             ImGui.Spacing();
             ImGui.Spacing();
             ImGui.TextUnformatted("Temporary settings, ENABLE AT OWN RISK");
-            ImGui.Checkbox("Allow importing conditions", ref Plugin.allowImportConditions);
+            ImGui.Checkbox("Allow importing conditions", ref QoLBar.allowImportConditions);
             ImGui.SameLine(ImGui.GetWindowWidth() / 2);
-            ImGui.Checkbox("Allow importing hotkeys", ref Plugin.allowImportHotkeys);
+            ImGui.Checkbox("Allow importing hotkeys", ref QoLBar.allowImportHotkeys);
         }
 
         private void DrawBackupManager()
@@ -400,19 +400,19 @@ namespace QoLBar
             Config.Save();
         }
 
-        public string ExportBar(int i, bool saveAllValues) => Plugin.ExportBar(Config.BarConfigs[i], saveAllValues);
+        public string ExportBar(int i, bool saveAllValues) => QoLBar.ExportBar(Config.BarConfigs[i], saveAllValues);
 
         public void ImportBar(string import)
         {
             try
             {
-                AddBar(Plugin.ImportBar(import));
+                AddBar(QoLBar.ImportBar(import));
             }
             catch (Exception e) // Try as a shortcut instead
             {
                 try
                 {
-                    var sh = Plugin.ImportShortcut(ImGui.GetClipboardText());
+                    var sh = QoLBar.ImportShortcut(ImGui.GetClipboardText());
                     var bar = new BarConfig();
                     bar.ShortcutList.Add(sh);
                     AddBar(bar);
@@ -436,7 +436,7 @@ namespace QoLBar
         {
             if (i < 0 || i >= bars.Count)
             {
-                Plugin.PrintError($"Bar #{i + 1} does not exist.");
+                QoLBar.PrintError($"Bar #{i + 1} does not exist.");
                 return false;
             }
             else
@@ -455,7 +455,7 @@ namespace QoLBar
                     found = ToggleBarVisible(i) || found;
             }
             if (!found)
-                Plugin.PrintError($"Bar \"{name}\" does not exist.");
+                QoLBar.PrintError($"Bar \"{name}\" does not exist.");
 
             return found;
         }
@@ -476,7 +476,7 @@ namespace QoLBar
             }
             catch (Exception e)
             {
-                Plugin.PrintError($"Failed to save: {e.Message}");
+                QoLBar.PrintError($"Failed to save: {e.Message}");
             }
         }
 
@@ -492,7 +492,7 @@ namespace QoLBar
             }
             catch (Exception e)
             {
-                Plugin.PrintError($"Failed to delete: {e.Message}");
+                QoLBar.PrintError($"Failed to delete: {e.Message}");
             }
         }
 

@@ -853,7 +853,7 @@ namespace QoLBar
                 {
                     try
                     {
-                        shortcuts.Add(Plugin.ImportShortcut(ImGui.GetClipboardText()));
+                        shortcuts.Add(QoLBar.ImportShortcut(ImGui.GetClipboardText()));
                         Config.Save();
                         ImGui.CloseCurrentPopup();
                     }
@@ -861,7 +861,7 @@ namespace QoLBar
                     {
                         try
                         {
-                            var bar = Plugin.ImportBar(ImGui.GetClipboardText());
+                            var bar = QoLBar.ImportBar(ImGui.GetClipboardText());
                             foreach (var sh in bar.ShortcutList)
                                 shortcuts.Add(sh);
                             Config.Save();
@@ -1010,14 +1010,14 @@ namespace QoLBar
                 }
                 ImGui.SameLine();
                 if (ImGui.Button("Export"))
-                    ImGui.SetClipboardText(Plugin.ExportShortcut(sh, false));
+                    ImGui.SetClipboardText(QoLBar.ExportShortcut(sh, false));
                 if (ImGui.IsItemHovered())
                 {
                     ImGui.SetTooltip("Export to clipboard with minimal settings (May change with updates).\n" +
                         "Right click to export with every setting (Longer string, doesn't change).");
 
                     if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
-                        ImGui.SetClipboardText(Plugin.ExportShortcut(sh, true));
+                        ImGui.SetClipboardText(QoLBar.ExportShortcut(sh, true));
                 }
                 ImGui.SameLine();
                 if (ImGui.Button(Config.ExportOnDelete ? "Cut" : "Delete"))
@@ -1031,7 +1031,7 @@ namespace QoLBar
                     if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
                     {
                         if (Config.ExportOnDelete)
-                            ImGui.SetClipboardText(Plugin.ExportShortcut(sh, false));
+                            ImGui.SetClipboardText(QoLBar.ExportShortcut(sh, false));
 
                         shortcuts.RemoveAt(i);
                         Config.Save();
@@ -1218,14 +1218,14 @@ namespace QoLBar
                 ImGui.Spacing();
                 ImGui.Spacing();
                 if (ImGui.Button("Export"))
-                    ImGui.SetClipboardText(Plugin.ExportBar(barConfig, false));
+                    ImGui.SetClipboardText(QoLBar.ExportBar(barConfig, false));
                 if (ImGui.IsItemHovered())
                 {
                     ImGui.SetTooltip("Export to clipboard with minimal settings (May change with updates).\n" +
                         "Right click to export with every setting (Longer string, doesn't change).");
 
                     if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
-                        ImGui.SetClipboardText(Plugin.ExportBar(barConfig, true));
+                        ImGui.SetClipboardText(QoLBar.ExportBar(barConfig, true));
                 }
                 ImGui.SameLine();
                 if (ImGui.Button("QoL Bar Config"))
