@@ -343,8 +343,6 @@ namespace QoLBar
                 config.ConditionSets.Add(new DisplayConditionSet());
                 config.Save();
             }
-
-            ImGui.EndTabItem();
         }
 
         private static void SwapConditionSet(int from, int to)
