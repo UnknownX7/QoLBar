@@ -85,7 +85,7 @@ namespace QoLBar
 
         public static void AddHotkey(BarUI bar, Shortcut sh) => hotkeys.Add((bar, sh));
 
-        public static void KeybindInput(Shortcut sh, Configuration config)
+        public static void KeybindInput(Shortcut sh)
         {
             var dispKey = GetKeyName(sh.Hotkey);
             ImGui.InputText($"Hotkey##{sh.Hotkey}", ref dispKey, 200, ImGuiInputTextFlags.ReadOnly | ImGuiInputTextFlags.AllowTabInput); // delete the box to delete focus 4head
@@ -107,7 +107,7 @@ namespace QoLBar
                     {
                         key |= k;
                         sh.Hotkey = key;
-                        config.Save();
+                        QoLBar.Config.Save();
                         break;
                     }
                 }
@@ -115,14 +115,14 @@ namespace QoLBar
             if (ImGui.IsItemDeactivated() && ImGui.GetIO().KeysDown[(int)Keys.Escape])
             {
                 sh.Hotkey = 0;
-                config.Save();
+                QoLBar.Config.Save();
             }
             if (ImGui.IsItemHovered())
                 ImGui.SetTooltip("Press escape to clear the hotkey.\n" +
                     "Categories cannot use hotkeys in default mode.");
         }
 
-        public static void DrawDebug(Configuration config)
+        public static void DrawDebug()
         {
             ImGui.TextUnformatted("Active Hotkeys");
             ImGui.Spacing();
@@ -133,7 +133,7 @@ namespace QoLBar
                 if (ImGui.SmallButton("Delete"))
                 {
                     sh.Hotkey = 0;
-                    config.Save();
+                    QoLBar.Config.Save();
                 }
                 ImGui.SameLine();
                 ImGui.TextUnformatted(GetKeyName(sh.Hotkey));

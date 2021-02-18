@@ -132,8 +132,9 @@ namespace QoLBar
             return _cached;
         }
 
-        public static void DrawEditor(QoLBar plugin, Configuration config)
+        public static void DrawEditor()
         {
+            var config = QoLBar.Config;
             for (int i = 0; i < config.ConditionSets.Count; i++)
             {
                 ImGui.PushID(i);
@@ -157,19 +158,19 @@ namespace QoLBar
                 else
                 {
                     if (ImGui.Button("↑") && i > 0)
-                        SwapConditionSet(config, i, i - 1);
+                        SwapConditionSet(i, i - 1);
                     ImGui.SameLine();
                     if (ImGui.Button("↓") && i < (config.ConditionSets.Count - 1))
-                        SwapConditionSet(config, i, i + 1);
+                        SwapConditionSet(i, i + 1);
                 }
                 ImGui.SameLine();
                 if (ImGui.Button("Delete"))
-                    plugin.ExecuteCommand("/echo <se> Right click to delete!");
+                    QoLBar.Plugin.ExecuteCommand("/echo <se> Right click to delete!");
                 if (ImGui.IsItemHovered())
                 {
                     ImGui.SetTooltip($"Right click this button to delete this set!");
                     if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
-                        RemoveConditionSet(config, i);
+                        RemoveConditionSet(i);
                 }
 
                 if (open)
@@ -276,7 +277,7 @@ namespace QoLBar
                                     if (ImGui.Selectable(opts[1], cond.Condition == 1))
                                     {
                                         cond.Condition = 1;
-                                        cond.Arg = plugin.pluginInterface.ClientState.LocalContentId;
+                                        cond.Arg = QoLBar.Interface.ClientState.LocalContentId;
                                         config.Save();
                                     }
                                     if (ImGui.IsItemHovered())
@@ -306,7 +307,7 @@ namespace QoLBar
                         }
                         ImGui.SameLine();
                         if (ImGui.Button("Delete"))
-                            plugin.ExecuteCommand("/echo <se> Right click to delete!");
+                            QoLBar.Plugin.ExecuteCommand("/echo <se> Right click to delete!");
                         if (ImGui.IsItemHovered())
                         {
                             ImGui.SetTooltip($"Right click this button to delete this condition!");
@@ -346,8 +347,9 @@ namespace QoLBar
             ImGui.EndTabItem();
         }
 
-        private static void SwapConditionSet(Configuration config, int from, int to)
+        private static void SwapConditionSet(int from, int to)
         {
+            var config = QoLBar.Config;
             var set = config.ConditionSets[from];
             foreach (var bar in config.BarConfigs)
             {
@@ -361,8 +363,9 @@ namespace QoLBar
             config.Save();
         }
 
-        private static void RemoveConditionSet(Configuration config, int i)
+        private static void RemoveConditionSet(int i)
         {
+            var config = QoLBar.Config;
             foreach (var bar in config.BarConfigs)
             {
                 if (bar.ConditionSet > i)
@@ -378,15 +381,13 @@ namespace QoLBar
 
     public static class ConditionCache
     {
-        private static QoLBar plugin;
         private static readonly Dictionary<(int, dynamic), bool> _conditionCache = new Dictionary<(int, dynamic), bool>();
         private static float _lastCache = 0;
         public static float GetLastCache() => _lastCache;
 
-        public static void Initialize(QoLBar p) => plugin = p;
-
         public static bool GetCondition(int cond, dynamic arg = null)
         {
+            var pluginInterface = QoLBar.Interface;
             CheckCache();
 
             if (_conditionCache.TryGetValue((cond, arg), out var b))
@@ -395,24 +396,24 @@ namespace QoLBar
             {
                 if (cond < 200)
                 {
-                    b = plugin.pluginInterface.ClientState.Condition[(ConditionFlag)cond];
+                    b = pluginInterface.ClientState.Condition[(ConditionFlag)cond];
                 }
                 else if (cond < 400)
                 {
-                    var player = plugin.pluginInterface.ClientState.LocalPlayer;
+                    var player = pluginInterface.ClientState.LocalPlayer;
                     b = (player != null) && (player.ClassJob.Id == (cond - 200));
                 }
                 else if (cond < 600)
                 {
-                    var player = plugin.pluginInterface.ClientState.LocalPlayer;
-                    b = (player != null) && plugin.pluginInterface.Data.IsDataReady && ((((cond - 400) < 30) ? player.ClassJob.GameData.Role : player.ClassJob.GameData.ClassJobCategory.Row) == (cond - 400));
+                    var player = pluginInterface.ClientState.LocalPlayer;
+                    b = (player != null) && pluginInterface.Data.IsDataReady && ((((cond - 400) < 30) ? player.ClassJob.GameData.Role : player.ClassJob.GameData.ClassJobCategory.Row) == (cond - 400));
                 }
                 else
                 {
                     b = cond switch
                     {
-                        1000 => plugin.pluginInterface.ClientState.Condition.Any(),
-                        1001 => (ulong)arg == plugin.pluginInterface.ClientState.LocalContentId,
+                        1000 => pluginInterface.ClientState.Condition.Any(),
+                        1001 => (ulong)arg == pluginInterface.ClientState.LocalContentId,
                         _ => false,
                     };
                 }

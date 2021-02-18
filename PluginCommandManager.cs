@@ -10,17 +10,14 @@ using static Dalamud.Game.Command.CommandInfo;
 
 namespace QoLBar
 {
-    public class PluginCommandManager<THost> : IDisposable
+    public class PluginCommandManager : IDisposable
     {
-        private readonly DalamudPluginInterface pluginInterface;
+        private DalamudPluginInterface pluginInterface => QoLBar.Interface;
         private readonly (string, CommandInfo)[] pluginCommands;
-        private readonly THost host;
+        private QoLBar host => QoLBar.Plugin;
 
-        public PluginCommandManager(THost host, DalamudPluginInterface pluginInterface)
+        public PluginCommandManager()
         {
-            this.pluginInterface = pluginInterface;
-            this.host = host;
-
             this.pluginCommands = host.GetType().GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
                 .Where(method => method.GetCustomAttribute<CommandAttribute>() != null)
                 .SelectMany(GetCommandInfoTuple)

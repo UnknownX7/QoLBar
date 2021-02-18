@@ -16,8 +16,8 @@ namespace QoLBar
 
         private readonly List<BarUI> bars;
 
-        private readonly QoLBar plugin;
-        private Configuration config;
+        private QoLBar Plugin => QoLBar.Plugin;
+        private Configuration Config => QoLBar.Config;
 
 #if DEBUG
         public bool configOpen = true;
@@ -31,44 +31,36 @@ namespace QoLBar
         public bool IsConfigPopupOpen() => configPopupOpen || lastConfigPopupOpen;
         public void SetConfigPopupOpen() => configPopupOpen = true;
 
-        public PluginUI(QoLBar p, Configuration c)
+        public PluginUI()
         {
-            plugin = p;
-            config = c;
-
             bars = new List<BarUI>();
-            for (int i = 0; i < c.BarConfigs.Count; i++)
-                bars.Add(new BarUI(p, c, i));
+            for (int i = 0; i < Config.BarConfigs.Count; i++)
+                bars.Add(new BarUI(i));
 
             Task.Run(async () =>
             {
-                while (!p.pluginInterface.Data.IsDataReady)
+                while (!QoLBar.Interface.Data.IsDataReady)
                     await Task.Delay(1000);
-                DisplayConditionSet.classDictionary = p.pluginInterface.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.ClassJob>(p.pluginInterface.ClientState.ClientLanguage).ToDictionary(i => i.RowId);
+                DisplayConditionSet.classDictionary = QoLBar.Interface.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.ClassJob>(QoLBar.Interface.ClientState.ClientLanguage).ToDictionary(i => i.RowId);
             });
         }
 
-        public void Reload(Configuration c)
+        public void Reload()
         {
             Dispose();
 
-            config = c;
-
             bars.Clear();
-            for (int i = 0; i < c.BarConfigs.Count; i++)
-                bars.Add(new BarUI(plugin, c, i));
+            for (int i = 0; i < Config.BarConfigs.Count; i++)
+                bars.Add(new BarUI(i));
         }
 
         public void Draw()
         {
             if (!IsVisible) return;
 
-            if (IconBrowserUI.iconBrowserOpen)
-                IconBrowserUI.Draw(plugin, config);
-            else
-                IconBrowserUI.doPasteIcon = false;
+            IconBrowserUI.Draw();
 
-            if (config.AlwaysDisplayBars || QoLBar.IsLoggedIn())
+            if (Config.AlwaysDisplayBars || QoLBar.IsLoggedIn())
             {
                 foreach (BarUI bar in bars)
                     bar.Draw();
@@ -97,7 +89,7 @@ namespace QoLBar
                     {
                         ImGui.PushID(i);
 
-                        var bar = config.BarConfigs[i];
+                        var bar = Config.BarConfigs[i];
 
                         ImGui.Text($"#{i + 1}");
                         ImGui.SameLine();
@@ -106,7 +98,7 @@ namespace QoLBar
 
                         ImGui.SetNextItemWidth(-1);
                         if (ImGui.InputText("##Title", ref bar.Title, 32))
-                            config.Save();
+                            Config.Save();
 
                         textsize = ImGui.GetItemRectSize();
 
@@ -123,20 +115,20 @@ namespace QoLBar
                         if (ImGui.IsItemHovered())
                             ImGui.SetTooltip(bar.Hidden ? "Reveal" : "Hide");
                         ImGui.SameLine();
-                        var preview = ((bar.ConditionSet >= 0) && (bar.ConditionSet < config.ConditionSets.Count)) ? $"[{bar.ConditionSet + 1}] {config.ConditionSets[bar.ConditionSet].Name}" : "Condition Set";
+                        var preview = ((bar.ConditionSet >= 0) && (bar.ConditionSet < Config.ConditionSets.Count)) ? $"[{bar.ConditionSet + 1}] {Config.ConditionSets[bar.ConditionSet].Name}" : "Condition Set";
                         if (ImGui.BeginCombo("##Condition", preview))
                         {
                             if (ImGui.Selectable("None", bar.ConditionSet == -1))
                             {
                                 bar.ConditionSet = -1;
-                                config.Save();
+                                Config.Save();
                             }
-                            for (int idx = 0; idx < config.ConditionSets.Count; idx++)
+                            for (int idx = 0; idx < Config.ConditionSets.Count; idx++)
                             {
-                                if (ImGui.Selectable($"[{idx + 1}] {config.ConditionSets[idx].Name}", idx == bar.ConditionSet))
+                                if (ImGui.Selectable($"[{idx + 1}] {Config.ConditionSets[idx].Name}", idx == bar.ConditionSet))
                                 {
                                     bar.ConditionSet = idx;
-                                    config.Save();
+                                    Config.Save();
                                 }
                             }
                             ImGui.EndCombo();
@@ -155,9 +147,9 @@ namespace QoLBar
                             bars.Insert(i - 1, b);
 
                             var b2 = bar;
-                            config.BarConfigs.RemoveAt(i);
-                            config.BarConfigs.Insert(i - 1, b2);
-                            config.Save();
+                            Config.BarConfigs.RemoveAt(i);
+                            Config.BarConfigs.Insert(i - 1, b2);
+                            Config.Save();
                             RefreshBarIndexes();
                         }
                         ImGui.SameLine();
@@ -168,9 +160,9 @@ namespace QoLBar
                             bars.Insert(i + 1, b);
 
                             var b2 = bar;
-                            config.BarConfigs.RemoveAt(i);
-                            config.BarConfigs.Insert(i + 1, b2);
-                            config.Save();
+                            Config.BarConfigs.RemoveAt(i);
+                            Config.BarConfigs.Insert(i + 1, b2);
+                            Config.Save();
                             RefreshBarIndexes();
                         }
                         ImGui.SameLine();
@@ -188,21 +180,21 @@ namespace QoLBar
                         if (i > 0)
                         {
                             ImGui.SameLine();
-                            if (ImGui.Button(config.ExportOnDelete ? "Cut" : "Delete"))
-                                plugin.ExecuteCommand("/echo <se> Right click to delete!");
+                            if (ImGui.Button(Config.ExportOnDelete ? "Cut" : "Delete"))
+                                Plugin.ExecuteCommand("/echo <se> Right click to delete!");
                             if (ImGui.IsItemHovered())
                             {
                                 ImGui.SetTooltip($"Right click this button to delete bar #{i + 1}!" +
-                                    (config.ExportOnDelete ? "\nThe bar will be exported to clipboard first." : ""));
+                                    (Config.ExportOnDelete ? "\nThe bar will be exported to clipboard first." : ""));
 
                                 if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
                                 {
-                                    if (config.ExportOnDelete)
-                                        ImGui.SetClipboardText(plugin.ExportBar(bar, false));
+                                    if (Config.ExportOnDelete)
+                                        ImGui.SetClipboardText(Plugin.ExportBar(bar, false));
 
                                     bars.RemoveAt(i);
-                                    config.BarConfigs.RemoveAt(i);
-                                    config.Save();
+                                    Config.BarConfigs.RemoveAt(i);
+                                    Config.Save();
                                     RefreshBarIndexes();
                                 }
                             }
@@ -232,62 +224,62 @@ namespace QoLBar
                 }
 
                 if (ImGui.BeginTabItem("Condition Sets"))
-                    DisplayConditionSet.DrawEditor(plugin, config);
+                    DisplayConditionSet.DrawEditor();
 
                 if (ImGui.BeginTabItem("Settings"))
                 {
-                    if (ImGui.Checkbox("Export on Delete", ref config.ExportOnDelete))
-                        config.Save();
+                    if (ImGui.Checkbox("Export on Delete", ref Config.ExportOnDelete))
+                        Config.Save();
                     ImGui.SameLine(ImGui.GetWindowWidth() / 2);
-                    if (ImGui.Checkbox("Resizing Repositions Bars", ref config.ResizeRepositionsBars))
-                        config.Save();
+                    if (ImGui.Checkbox("Resizing Repositions Bars", ref Config.ResizeRepositionsBars))
+                        Config.Save();
                     if (ImGui.IsItemHovered())
                         ImGui.SetTooltip("Undocked bars will automatically readjust if you change resolutions.");
 
-                    if (ImGui.Checkbox("Use Hotbar Frames on Icons", ref config.UseIconFrame))
-                        config.Save();
+                    if (ImGui.Checkbox("Use Hotbar Frames on Icons", ref Config.UseIconFrame))
+                        Config.Save();
                     if (ImGui.IsItemHovered())
                         ImGui.SetTooltip("This option will invert the ' f ' argument for all icons.");
                     ImGui.SameLine(ImGui.GetWindowWidth() / 2);
-                    if (ImGui.Checkbox("Always Display Bars", ref config.AlwaysDisplayBars))
-                        config.Save();
+                    if (ImGui.Checkbox("Always Display Bars", ref Config.AlwaysDisplayBars))
+                        Config.Save();
                     if (ImGui.IsItemHovered())
                         ImGui.SetTooltip("Bars will remain visible even when logged out.");
 
                     ImGui.Spacing();
                     ImGui.Spacing();
                     ImGui.TextUnformatted("Opt out of Dalamud settings for hiding UI");
-                    if (ImGui.Checkbox("Game UI Toggled", ref config.OptOutGameUIOffHide))
+                    if (ImGui.Checkbox("Game UI Toggled", ref Config.OptOutGameUIOffHide))
                     {
-                        config.Save();
-                        plugin.CheckHideOptOuts();
+                        Config.Save();
+                        Plugin.CheckHideOptOuts();
                     }
                     ImGui.SameLine(ImGui.GetWindowWidth() / 3);
-                    if (ImGui.Checkbox("In Cutscene", ref config.OptOutCutsceneHide))
+                    if (ImGui.Checkbox("In Cutscene", ref Config.OptOutCutsceneHide))
                     {
-                        config.Save();
-                        plugin.CheckHideOptOuts();
+                        Config.Save();
+                        Plugin.CheckHideOptOuts();
                     }
                     ImGui.SameLine(ImGui.GetWindowWidth() / 3 * 2);
-                    if (ImGui.Checkbox("In /gpose", ref config.OptOutGPoseHide))
+                    if (ImGui.Checkbox("In /gpose", ref Config.OptOutGPoseHide))
                     {
-                        config.Save();
-                        plugin.CheckHideOptOuts();
+                        Config.Save();
+                        Plugin.CheckHideOptOuts();
                     }
 
                     ImGui.Spacing();
                     ImGui.Spacing();
                     ImGui.TextUnformatted("Temporary settings, ENABLE AT OWN RISK");
-                    ImGui.Checkbox("Allow importing conditions", ref plugin.allowImportConditions);
+                    ImGui.Checkbox("Allow importing conditions", ref Plugin.allowImportConditions);
                     ImGui.SameLine(ImGui.GetWindowWidth() / 2);
-                    ImGui.Checkbox("Allow importing hotkeys", ref plugin.allowImportHotkeys);
+                    ImGui.Checkbox("Allow importing hotkeys", ref Plugin.allowImportHotkeys);
 
                     ImGui.EndTabItem();
                 }
 
                 if (ImGui.BeginTabItem("Backups"))
                 {
-                    var path = config.GetPluginBackupPath();
+                    var path = Config.GetPluginBackupPath();
                     var configFile = Configuration.ConfigFile;
 
                     if (ImGui.Button("Open Folder"))
@@ -319,12 +311,12 @@ namespace QoLBar
                                         $"reload the current config with {file.Name}");
 
                                     if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
-                                        config.LoadConfig(file);
+                                        Config.LoadConfig(file);
                                 }
 
                                 ImGui.SameLine();
                                 if (ImGui.SmallButton("Delete"))
-                                    plugin.ExecuteCommand("/echo <se> Double right click to delete!");
+                                    Plugin.ExecuteCommand("/echo <se> Double right click to delete!");
                                 if (ImGui.IsItemHovered())
                                 {
                                     ImGui.SetTooltip($"Double right click this button to delete {file.Name}");
@@ -354,22 +346,22 @@ namespace QoLBar
 
                     ImGui.TextUnformatted("Chat UI Module");
                     ImGui.NextColumn();
-                    ImGui.TextUnformatted($"{plugin.uiModulePtr.ToString("X")}");
+                    ImGui.TextUnformatted($"{Plugin.uiModulePtr.ToString("X")}");
                     ImGui.NextColumn();
 
                     ImGui.NextColumn();
                     ImGui.TextUnformatted("Game Text Input Active");
                     ImGui.NextColumn();
-                    ImGui.TextUnformatted($"{plugin.textActiveBoolPtr.ToString("X")}");
+                    ImGui.TextUnformatted($"{Plugin.textActiveBoolPtr.ToString("X")}");
                     ImGui.NextColumn();
-                    ImGui.TextUnformatted($"{plugin.GameTextInputActive}");
+                    ImGui.TextUnformatted($"{Plugin.GameTextInputActive}");
 
                     ImGui.Columns(1);
                     ImGui.Unindent();
                     ImGui.Separator();
                     ImGui.Spacing();
 
-                    Keybind.DrawDebug(config);
+                    Keybind.DrawDebug();
 
                     ImGui.EndTabItem();
                 }
@@ -382,24 +374,24 @@ namespace QoLBar
 
         private void AddBar(BarConfig bar)
         {
-            config.BarConfigs.Add(bar);
-            bars.Add(new BarUI(plugin, config, bars.Count));
-            config.Save();
+            Config.BarConfigs.Add(bar);
+            bars.Add(new BarUI(bars.Count));
+            Config.Save();
         }
 
-        public string ExportBar(int i, bool saveAllValues) => plugin.ExportBar(config.BarConfigs[i], saveAllValues);
+        public string ExportBar(int i, bool saveAllValues) => Plugin.ExportBar(Config.BarConfigs[i], saveAllValues);
 
         public void ImportBar(string import)
         {
             try
             {
-                AddBar(plugin.ImportBar(import));
+                AddBar(Plugin.ImportBar(import));
             }
             catch (Exception e) // Try as a shortcut instead
             {
                 try
                 {
-                    var sh = plugin.ImportShortcut(ImGui.GetClipboardText());
+                    var sh = Plugin.ImportShortcut(ImGui.GetClipboardText());
                     var bar = new BarConfig();
                     bar.ShortcutList.Add(sh);
                     AddBar(bar);
@@ -423,7 +415,7 @@ namespace QoLBar
         {
             if (i < 0 || i >= bars.Count)
             {
-                plugin.PrintError($"Bar #{i + 1} does not exist.");
+                Plugin.PrintError($"Bar #{i + 1} does not exist.");
                 return false;
             }
             else
@@ -438,11 +430,11 @@ namespace QoLBar
             var found = false;
             for (int i = 0; i < bars.Count; ++i)
             {
-                if (config.BarConfigs[i].Title == name)
+                if (Config.BarConfigs[i].Title == name)
                     found = ToggleBarVisible(i) || found;
             }
             if (!found)
-                plugin.PrintError($"Bar \"{name}\" does not exist.");
+                Plugin.PrintError($"Bar \"{name}\" does not exist.");
 
             return found;
         }
@@ -457,13 +449,13 @@ namespace QoLBar
                 if (string.IsNullOrEmpty(name))
                     name = DateTime.Now.ToString("yyyy-MM-dd HH.mm.ss");
 
-                var path = config.GetPluginBackupPath() + $"\\{name}.json";
+                var path = Config.GetPluginBackupPath() + $"\\{name}.json";
                 file.CopyTo(path, overwrite);
                 PluginLog.LogInformation($"Saved file to {path}");
             }
             catch (Exception e)
             {
-                plugin.PrintError($"Failed to save: {e.Message}");
+                Plugin.PrintError($"Failed to save: {e.Message}");
             }
         }
 
@@ -479,7 +471,7 @@ namespace QoLBar
             }
             catch (Exception e)
             {
-                plugin.PrintError($"Failed to delete: {e.Message}");
+                Plugin.PrintError($"Failed to delete: {e.Message}");
             }
         }
 

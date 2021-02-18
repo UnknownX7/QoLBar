@@ -12,18 +12,12 @@ namespace QoLBar
 {
     public class TextureDictionary : ConcurrentDictionary<int, TextureWrap>, IDisposable
     {
-        private DalamudPluginInterface pluginInterface;
         private readonly Dictionary<int, string> userIcons = new Dictionary<int, string>();
         private readonly Dictionary<int, string> textureOverrides = new Dictionary<int, string>();
         private int loadingTasks = 0;
         private static readonly TextureWrap disposedTexture = new GLTextureWrap(0, 0, 0);
         private readonly ConcurrentQueue<(bool, Task)> loadQueue = new ConcurrentQueue<(bool, Task)>();
         private Task loadTask;
-
-        public void Initialize(DalamudPluginInterface p)
-        {
-            pluginInterface = p;
-        }
 
         public new TextureWrap this[int k]
         {
@@ -129,8 +123,8 @@ namespace QoLBar
 
         private void LoadIcon(int icon, bool overwrite) => LoadTextureWrap(icon, overwrite, false, () =>
         {
-            var iconTex = pluginInterface.Data.GetIcon(icon);
-            return pluginInterface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
+            var iconTex = QoLBar.Interface.Data.GetIcon(icon);
+            return QoLBar.Interface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
         });
 
         public void AddTex(int iconSlot, string path)
@@ -141,8 +135,8 @@ namespace QoLBar
 
         private void LoadTex(int iconSlot, string path, bool overwrite) => LoadTextureWrap(iconSlot, overwrite, false, () =>
         {
-            var iconTex = pluginInterface.Data.GetFile<Lumina.Data.Files.TexFile>(path);
-            return pluginInterface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
+            var iconTex = QoLBar.Interface.Data.GetFile<Lumina.Data.Files.TexFile>(path);
+            return QoLBar.Interface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
         });
 
         public void AddImage(int iconSlot, string path)
@@ -152,7 +146,7 @@ namespace QoLBar
         }
 
         // Seems to cause a nvwgf2umx.dll crash (System Access Violation Exception) if used async
-        private void LoadImage(int iconSlot, string path, bool overwrite) => LoadTextureWrap(iconSlot, overwrite, true, () => pluginInterface.UiBuilder.LoadImage(path));
+        private void LoadImage(int iconSlot, string path, bool overwrite) => LoadTextureWrap(iconSlot, overwrite, true, () => QoLBar.Interface.UiBuilder.LoadImage(path));
 
         public Dictionary<int, string> GetUserIcons() => userIcons;
 

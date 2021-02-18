@@ -10,6 +10,8 @@ namespace QoLBar
 {
     public static class ShortcutUI
     {
+        // TODO: Refactor BarUI into separate files (Most of BarUI needs to be rewritten to achieve this)
+
         private static ImGuiScene.TextureWrap _buttonshine;
         private static Vector2 _uvMin, _uvMax, _uvMinHover, _uvMaxHover;//, _uvMinHover2, _uvMaxHover2;
         public static bool DrawIcon(int icon, Vector2 size, float zoom, Vector2 offset, Vector4 tint, bool invertFrame, string args = "_", bool retExists = false, bool noButton = false)

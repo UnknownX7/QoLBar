@@ -7,10 +7,11 @@ using static QoLBar.BarConfig;
 
 namespace QoLBar
 {
+    // TODO: Split this file into ShortcutUI
     public class BarUI : IDisposable
     {
         private int barNumber;
-        private BarConfig barConfig => config.BarConfigs[barNumber];
+        private BarConfig barConfig => Config.BarConfigs[barNumber];
         public void SetBarNumber(int i)
         {
             barNumber = i;
@@ -21,7 +22,7 @@ namespace QoLBar
         public void ToggleVisible()
         {
             barConfig.Hidden = !barConfig.Hidden;
-            config.Save();
+            Config.Save();
         }
 
         private static ImGuiStylePtr Style => ImGui.GetStyle();
@@ -43,8 +44,8 @@ namespace QoLBar
         private void Reveal() => _reveal = true;
         private void Hide() => _reveal = false;
 
-        private bool IsConfigPopupOpen() => plugin.ui.IsConfigPopupOpen();
-        private void SetConfigPopupOpen() => plugin.ui.SetConfigPopupOpen();
+        private bool IsConfigPopupOpen() => Plugin.ui.IsConfigPopupOpen();
+        private void SetConfigPopupOpen() => Plugin.ui.SetConfigPopupOpen();
 
         private bool _firstframe = true;
         private bool _setPos = true;
@@ -58,13 +59,11 @@ namespace QoLBar
         private Vector2 _maincatpos = Vector2.Zero;
         private static readonly Vector2 _defaultSpacing = new Vector2(8, 4);
 
-        private readonly QoLBar plugin;
-        private readonly Configuration config;
+        private static QoLBar Plugin => QoLBar.Plugin;
+        private static Configuration Config => QoLBar.Config;
 
-        public BarUI(QoLBar p, Configuration c, int nbar)
+        public BarUI(int nbar)
         {
-            plugin = p;
-            config = c;
             barNumber = nbar;
             SetupPosition();
 
@@ -80,8 +79,8 @@ namespace QoLBar
 
         private bool CheckConditionSet()
         {
-            if (barConfig.ConditionSet >= 0 && barConfig.ConditionSet < config.ConditionSets.Count)
-                return config.ConditionSets[barConfig.ConditionSet].CheckConditions();
+            if (barConfig.ConditionSet >= 0 && barConfig.ConditionSet < Config.ConditionSets.Count)
+                return Config.ConditionSets[barConfig.ConditionSet].CheckConditions();
             else
                 return true;
         }
@@ -313,7 +312,7 @@ namespace QoLBar
                 if (!barConfig.LockedPosition && !_firstframe && !docked && ImGui.GetWindowPos() != barConfig.Position)
                 {
                     barConfig.Position = ImGui.GetWindowPos();
-                    config.Save();
+                    Config.Save();
                 }
 
                 ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, _defaultSpacing);
@@ -357,11 +356,11 @@ namespace QoLBar
                     window = io.DisplaySize;
                     SetupPosition();
                 }
-                else if (config.ResizeRepositionsBars)
+                else if (Config.ResizeRepositionsBars)
                 {
                     var x = io.DisplaySize / window;
                     barConfig.Position *= x;
-                    config.Save();
+                    Config.Save();
                     _setPos = true;
                     window = io.DisplaySize;
                 }
@@ -517,7 +516,7 @@ namespace QoLBar
             if (type == Shortcut.ShortcutType.Spacer)
             {
                 if (useIcon)
-                    ShortcutUI.DrawIcon(icon, new Vector2(height), sh.IconZoom, sh.IconOffset, c, config.UseIconFrame, args, true, true);
+                    ShortcutUI.DrawIcon(icon, new Vector2(height), sh.IconZoom, sh.IconOffset, c, Config.UseIconFrame, args, true, true);
                 else
                 {
                     var textSize = ImGui.CalcTextSize(name);
@@ -534,7 +533,7 @@ namespace QoLBar
                 }
             }
             else if (useIcon)
-                clicked = ShortcutUI.DrawIcon(icon, new Vector2(height), sh.IconZoom, sh.IconOffset, c, config.UseIconFrame, args);
+                clicked = ShortcutUI.DrawIcon(icon, new Vector2(height), sh.IconZoom, sh.IconOffset, c, Config.UseIconFrame, args);
             else
             {
                 ImGui.PushStyleColor(ImGuiCol.Text, c);
@@ -628,7 +627,7 @@ namespace QoLBar
             switch (type)
             {
                 case Shortcut.ShortcutType.Single:
-                    plugin.ExecuteCommand(command);
+                    Plugin.ExecuteCommand(command);
                     break;
                 case Shortcut.ShortcutType.Multiline:
                     switch (sh.Mode)
@@ -648,7 +647,7 @@ namespace QoLBar
                                 break;
                             }
                     }
-                    plugin.ExecuteCommand(command);
+                    Plugin.ExecuteCommand(command);
                     break;
                 case Shortcut.ShortcutType.Category:
                     switch (sh.Mode)
@@ -793,11 +792,11 @@ namespace QoLBar
                 var split = sh.Name.Split(new[] { "##" }, 2, StringSplitOptions.None);
                 sh.Name = $"::{IconBrowserUI.pasteIcon}" + (split.Length > 1 ? $"##{split[1]}" : "");
                 if (editing)
-                    config.Save();
+                    Config.Save();
                 IconBrowserUI.doPasteIcon = false;
             }
             if (ImGui.InputText("Name          ", ref sh.Name, 256) && editing) // Not a bug... just ImGui not extending the window to fit multiline's name...
-                config.Save();
+                Config.Save();
             if (ImGui.IsItemHovered())
                 ImGui.SetTooltip("Start the name with ::x where x is a number to use icons, i.e. \"::2914\".\n" +
                     "Use ## anywhere in the name to make the text afterwards into a tooltip,\ni.e. \"Name##This is a Tooltip\".");
@@ -815,18 +814,18 @@ namespace QoLBar
                     sh.Command = string.Empty;
 
                 if (editing)
-                    config.Save();
+                    Config.Save();
             }
 
             switch (sh.Type)
             {
                 case Shortcut.ShortcutType.Single:
-                    if (ImGui.InputText("Command", ref sh.Command, (uint)plugin.maxCommandLength) && editing)
-                        config.Save();
+                    if (ImGui.InputText("Command", ref sh.Command, (uint)Plugin.maxCommandLength) && editing)
+                        Config.Save();
                     break;
                 case Shortcut.ShortcutType.Multiline:
-                    if (ImGui.InputTextMultiline("Command##Multi", ref sh.Command, (uint)plugin.maxCommandLength * 15, new Vector2(272 * globalSize, 124 * globalSize)) && editing)
-                        config.Save();
+                    if (ImGui.InputTextMultiline("Command##Multi", ref sh.Command, (uint)Plugin.maxCommandLength * 15, new Vector2(272 * globalSize, 124 * globalSize)) && editing)
+                        Config.Save();
                     break;
                 default:
                     break;
@@ -846,7 +845,7 @@ namespace QoLBar
                 if (ImGui.Button("Create"))
                 {
                     shortcuts.Add(_sh);
-                    config.Save();
+                    Config.Save();
                     _sh = null;
                     ImGui.CloseCurrentPopup();
                 }
@@ -855,18 +854,18 @@ namespace QoLBar
                 {
                     try
                     {
-                        shortcuts.Add(plugin.ImportShortcut(ImGui.GetClipboardText()));
-                        config.Save();
+                        shortcuts.Add(Plugin.ImportShortcut(ImGui.GetClipboardText()));
+                        Config.Save();
                         ImGui.CloseCurrentPopup();
                     }
                     catch (Exception e) // Try as a bar instead
                     {
                         try
                         {
-                            var bar = plugin.ImportBar(ImGui.GetClipboardText());
+                            var bar = Plugin.ImportBar(ImGui.GetClipboardText());
                             foreach (var sh in bar.ShortcutList)
                                 shortcuts.Add(sh);
-                            config.Save();
+                            Config.Save();
                             ImGui.CloseCurrentPopup();
                         }
                         catch (Exception e2)
@@ -924,7 +923,7 @@ namespace QoLBar
                             if (_m != (int)sh.Mode)
                             {
                                 sh.Mode = (Shortcut.ShortcutMode)_m;
-                                config.Save();
+                                Config.Save();
 
                                 if (sh.Mode == Shortcut.ShortcutMode.Random)
                                 {
@@ -939,29 +938,29 @@ namespace QoLBar
                         if (sh.Type == Shortcut.ShortcutType.Category)
                         {
                             if (ImGui.Checkbox("Hide + Button", ref sh.HideAdd))
-                                config.Save();
+                                Config.Save();
                             ImGui.SameLine(ImGui.GetWindowWidth() / 2);
                             if (ImGui.Checkbox("Stay Open on Selection", ref sh.CategoryStaysOpen))
-                                config.Save();
+                                Config.Save();
                             if (ImGui.IsItemHovered())
                                 ImGui.SetTooltip("Keeps the category open when pressing shortcuts within it.\nMay not work if the shortcut interacts with other plugins.");
 
                             if (ImGui.SliderInt("Category Width", ref sh.CategoryWidth, 0, 200))
-                                config.Save();
+                                Config.Save();
                             if (ImGui.IsItemHovered())
                                 ImGui.SetTooltip("Set to 0 to use text width.");
 
                             if (ImGui.SliderInt("Columns", ref sh.CategoryColumns, 1, 12))
-                                config.Save();
+                                Config.Save();
                             if (ImGui.IsItemHovered())
                                 ImGui.SetTooltip("Number of shortcuts in each row before starting another.");
                         }
 
                         if (ImGui.ColorEdit4("Color", ref sh.IconTint, ImGuiColorEditFlags.NoDragDrop | ImGuiColorEditFlags.AlphaPreviewHalf))
-                            config.Save();
+                            Config.Save();
 
                         if (sh.Type != Shortcut.ShortcutType.Spacer)
-                            Keybind.KeybindInput(sh, config);
+                            Keybind.KeybindInput(sh);
 
                         ImGui.EndTabItem();
                     }
@@ -973,21 +972,21 @@ namespace QoLBar
                         {
                             var split = sh.Name.Split(new[] { "##" }, 2, StringSplitOptions.None);
                             sh.Name = $"::{IconBrowserUI.pasteIcon}" + (split.Length > 1 ? $"##{split[1]}" : "");
-                            config.Save();
+                            Config.Save();
                             IconBrowserUI.doPasteIcon = false;
                         }
                         if (ImGui.InputText("Name", ref sh.Name, 256))
-                            config.Save();
+                            Config.Save();
                         if (ImGui.IsItemHovered())
                             ImGui.SetTooltip("Icons accept arguments between \"::\" and their ID. I.e. \"::f21\".\n" +
                                 "\t' f ' - Applies the hotbar frame (or removes it if applied globally).\n" +
                                 "\t' _ ' - Disables arguments, including implicit ones. Cannot be used with others.");
 
                         if (ImGui.DragFloat("Zoom", ref sh.IconZoom, 0.005f, 1.0f, 5.0f, "%.2f"))
-                            config.Save();
+                            Config.Save();
 
                         if (ImGui.DragFloat2("Offset", ref sh.IconOffset, 0.002f, -0.5f, 0.5f, "%.2f"))
-                            config.Save();
+                            Config.Save();
 
                         ImGui.EndTabItem();
                     }
@@ -999,7 +998,7 @@ namespace QoLBar
                 {
                     shortcuts.RemoveAt(i);
                     shortcuts.Insert(i - 1, sh);
-                    config.Save();
+                    Config.Save();
                     ImGui.CloseCurrentPopup();
                 }
                 ImGui.SameLine();
@@ -1007,36 +1006,36 @@ namespace QoLBar
                 {
                     shortcuts.RemoveAt(i);
                     shortcuts.Insert(i + 1, sh);
-                    config.Save();
+                    Config.Save();
                     ImGui.CloseCurrentPopup();
                 }
                 ImGui.SameLine();
                 if (ImGui.Button("Export"))
-                    ImGui.SetClipboardText(plugin.ExportShortcut(sh, false));
+                    ImGui.SetClipboardText(Plugin.ExportShortcut(sh, false));
                 if (ImGui.IsItemHovered())
                 {
                     ImGui.SetTooltip("Export to clipboard with minimal settings (May change with updates).\n" +
                         "Right click to export with every setting (Longer string, doesn't change).");
 
                     if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
-                        ImGui.SetClipboardText(plugin.ExportShortcut(sh, true));
+                        ImGui.SetClipboardText(Plugin.ExportShortcut(sh, true));
                 }
                 ImGui.SameLine();
-                if (ImGui.Button(config.ExportOnDelete ? "Cut" : "Delete"))
-                    plugin.ExecuteCommand("/echo <se> Right click to delete!");
+                if (ImGui.Button(Config.ExportOnDelete ? "Cut" : "Delete"))
+                    Plugin.ExecuteCommand("/echo <se> Right click to delete!");
                 //if (ImGui.IsItemClicked(1)) // Jesus christ I hate ImGui who made this function activate on PRESS AND NOT RELEASE??? THIS ISN'T A CLICK
                 if (ImGui.IsItemHovered())
                 {
                     ImGui.SetTooltip("Right click this button to delete the shortcut!" +
-                        (config.ExportOnDelete ? "\nThe shortcut will be exported to clipboard first." : ""));
+                        (Config.ExportOnDelete ? "\nThe shortcut will be exported to clipboard first." : ""));
 
                     if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
                     {
-                        if (config.ExportOnDelete)
-                            ImGui.SetClipboardText(plugin.ExportShortcut(sh, false));
+                        if (Config.ExportOnDelete)
+                            ImGui.SetClipboardText(Plugin.ExportShortcut(sh, false));
 
                         shortcuts.RemoveAt(i);
-                        config.Save();
+                        Config.Save();
                         ImGui.CloseCurrentPopup();
                     }
                 }
@@ -1044,7 +1043,7 @@ namespace QoLBar
                 var iconSize = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
                 ImGui.SameLine(ImGui.GetWindowContentRegionWidth() + Style.WindowPadding.X - iconSize);
                 if (ShortcutUI.DrawIcon(46, new Vector2(iconSize), 1.0f, Vector2.Zero, Vector4.One, false))
-                    plugin.ToggleIconBrowser();
+                    Plugin.ToggleIconBrowser();
                 if (ImGui.IsItemHovered())
                     ImGui.SetTooltip("Opens up a list of all icons you can use instead of text.\n" +
                         "Warning: This will load EVERY icon available so it will probably lag for a moment.\n" +
@@ -1068,7 +1067,7 @@ namespace QoLBar
                     if (ImGui.BeginTabItem("General"))
                     {
                         if (ImGui.InputText("Title", ref barConfig.Title, 256))
-                            config.Save();
+                            Config.Save();
 
                         var _dock = (int)barConfig.DockSide;
                         if (ImGui.Combo("Side", ref _dock, "Top\0Left\0Bottom\0Right\0Undocked\0Undocked (Vertical)"))
@@ -1076,7 +1075,7 @@ namespace QoLBar
                             barConfig.DockSide = (BarDock)_dock;
                             if (barConfig.DockSide == BarDock.UndockedH || barConfig.DockSide == BarDock.UndockedV)
                                 barConfig.Visibility = VisibilityMode.Always;
-                            config.Save();
+                            Config.Save();
                             SetupPosition();
                         }
 
@@ -1094,7 +1093,7 @@ namespace QoLBar
                             if (_align != (int)barConfig.Alignment)
                             {
                                 barConfig.Alignment = (BarAlign)_align;
-                                config.Save();
+                                Config.Save();
                                 SetupPosition();
                             }
 
@@ -1110,22 +1109,22 @@ namespace QoLBar
                             if (_visibility != (int)barConfig.Visibility)
                             {
                                 barConfig.Visibility = (VisibilityMode)_visibility;
-                                config.Save();
+                                Config.Save();
                             }
 
                             if ((barConfig.Visibility != VisibilityMode.Always) && ImGui.DragFloat("Reveal Area Scale", ref barConfig.RevealAreaScale, 0.01f, 0.0f, 1.0f, "%.2f"))
-                                config.Save();
+                                Config.Save();
 
                             if (ImGui.DragFloat2("Offset", ref barConfig.Offset, 0.2f, -300, 300, "%.f"))
                             {
-                                config.Save();
+                                Config.Save();
                                 SetupPosition();
                             }
 
                             if (barConfig.Visibility != VisibilityMode.Always)
                             {
                                 if (ImGui.Checkbox("Hint", ref barConfig.Hint))
-                                    config.Save();
+                                    Config.Save();
                                 if (ImGui.IsItemHovered())
                                     ImGui.SetTooltip("Will prevent the bar from sleeping, increasing CPU load.");
                             }
@@ -1142,15 +1141,15 @@ namespace QoLBar
                             if (_visibility != (int)barConfig.Visibility)
                             {
                                 barConfig.Visibility = (VisibilityMode)_visibility;
-                                config.Save();
+                                Config.Save();
                             }
 
                             if (ImGui.Checkbox("Lock Position", ref barConfig.LockedPosition))
-                                config.Save();
+                                Config.Save();
 
                             if (!barConfig.LockedPosition && ImGui.DragFloat2("Position", ref barConfig.Position, 1, -Style.WindowPadding.X, (window.X > window.Y) ? window.X : window.Y, "%.f"))
                             {
-                                config.Save();
+                                Config.Save();
                                 _setPos = true;
                             }
                         }
@@ -1161,21 +1160,21 @@ namespace QoLBar
                     if (ImGui.BeginTabItem("Style"))
                     {
                         if (ImGui.DragFloat("Scale", ref barConfig.Scale, 0.002f, 0.7f, 2.0f, "%.2f"))
-                            config.Save();
+                            Config.Save();
 
                         if (ImGui.SliderInt("Button Width", ref barConfig.ButtonWidth, 0, 200))
-                            config.Save();
+                            Config.Save();
                         if (ImGui.IsItemHovered())
                             ImGui.SetTooltip("Set to 0 to use text width.");
 
                         if (ImGui.DragFloat("Font Scale", ref barConfig.FontScale, 0.0018f, 0.5f, 1.0f, "%.2f"))
-                            config.Save();
+                            Config.Save();
 
                         if (ImGui.SliderInt("Spacing", ref barConfig.Spacing, 0, 32))
-                            config.Save();
+                            Config.Save();
 
                         if (ImGui.Checkbox("No Background", ref barConfig.NoBackground))
-                            config.Save();
+                            Config.Save();
 
                         if (barConfig.ShortcutList.Count > 0)
                         {
@@ -1183,8 +1182,8 @@ namespace QoLBar
                             if (ImGui.Checkbox("Hide + Button", ref barConfig.HideAdd))
                             {
                                 if (barConfig.HideAdd)
-                                    plugin.ExecuteCommand("/echo <se> You can right click on the bar itself (the black background) to reopen this settings menu!");
-                                config.Save();
+                                    Plugin.ExecuteCommand("/echo <se> You can right click on the bar itself (the black background) to reopen this settings menu!");
+                                Config.Save();
                             }
                         }
 
@@ -1194,22 +1193,22 @@ namespace QoLBar
                     if (ImGui.BeginTabItem("Categories"))
                     {
                         if (ImGui.DragFloat("Scale", ref barConfig.CategoryScale, 0.002f, 0.7f, 1.5f, "%.2f"))
-                            config.Save();
+                            Config.Save();
 
                         if (ImGui.DragFloat("Font Scale", ref barConfig.CategoryFontScale, 0.0018f, 0.5f, 1.0f, "%.2f"))
-                            config.Save();
+                            Config.Save();
 
                         if (ImGui.DragFloat2("Spacing", ref barConfig.CategorySpacing, 0.12f, 0, 32, "%.f"))
-                            config.Save();
+                            Config.Save();
 
                         if (ImGui.Checkbox("Open on Hover", ref barConfig.OpenCategoriesOnHover))
-                            config.Save();
+                            Config.Save();
                         ImGui.SameLine(ImGui.GetWindowWidth() / 2);
                         if (ImGui.Checkbox("Open Subcategories on Hover", ref barConfig.OpenSubcategoriesOnHover))
-                            config.Save();
+                            Config.Save();
 
                         if (ImGui.Checkbox("No Backgrounds", ref barConfig.NoCategoryBackgrounds))
-                            config.Save();
+                            Config.Save();
 
                         ImGui.EndTabItem();
                     }
@@ -1220,18 +1219,18 @@ namespace QoLBar
                 ImGui.Spacing();
                 ImGui.Spacing();
                 if (ImGui.Button("Export"))
-                    ImGui.SetClipboardText(plugin.ExportBar(barConfig, false));
+                    ImGui.SetClipboardText(Plugin.ExportBar(barConfig, false));
                 if (ImGui.IsItemHovered())
                 {
                     ImGui.SetTooltip("Export to clipboard with minimal settings (May change with updates).\n" +
                         "Right click to export with every setting (Longer string, doesn't change).");
 
                     if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
-                        ImGui.SetClipboardText(plugin.ExportBar(barConfig, true));
+                        ImGui.SetClipboardText(Plugin.ExportBar(barConfig, true));
                 }
                 ImGui.SameLine();
                 if (ImGui.Button("QoL Bar Config"))
-                    plugin.ToggleConfig();
+                    Plugin.ToggleConfig();
 
                 ClampWindowPos();
 

@@ -20,8 +20,14 @@ namespace QoLBar
 
         public static void ToggleIconBrowser() => iconBrowserOpen = !iconBrowserOpen;
 
-        public static void Draw(QoLBar plugin, Configuration config)
+        public static void Draw()
         {
+            if (!iconBrowserOpen)
+            {
+                doPasteIcon = false;
+                return;
+            }
+
             var iconSize = 48 * ImGui.GetIO().FontGlobalScale;
             ImGui.SetNextWindowSizeConstraints(new Vector2((iconSize + ImGui.GetStyle().ItemSpacing.X) * 11 + ImGui.GetStyle().WindowPadding.X * 2 + 8), ImGui.GetIO().DisplaySize); // whyyyyyyyyyyyyyyyyyyyy
             ImGui.Begin("Icon Browser", ref iconBrowserOpen);
@@ -44,12 +50,12 @@ namespace QoLBar
                 if (_tabExists)
                 {
                     if (ImGui.Button("Refresh Custom Icons"))
-                        plugin.AddUserIcons();
+                        QoLBar.Plugin.AddUserIcons();
                     ImGui.SameLine();
                     if (ImGui.Button("Open Icon Folder"))
-                        Process.Start(config.GetPluginIconPath());
+                        Process.Start(QoLBar.Config.GetPluginIconPath());
                 }
-                foreach (var kv in plugin.GetUserIcons())
+                foreach (var kv in QoLBar.Plugin.GetUserIcons())
                     AddIcons(kv.Key, kv.Key + 1);
                 _tooltip = "";
                 EndIconList();

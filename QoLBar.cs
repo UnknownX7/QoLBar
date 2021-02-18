@@ -155,9 +155,10 @@ namespace QoLBar
 
     public class QoLBar : IDalamudPlugin
     {
-        public DalamudPluginInterface pluginInterface;
-        private PluginCommandManager<QoLBar> commandManager;
-        private Configuration config;
+        public static DalamudPluginInterface Interface { get; private set; }
+        private PluginCommandManager commandManager;
+        public static Configuration Config { get; private set; }
+        public static QoLBar Plugin { get; private set; }
         public PluginUI ui;
         private bool commandReady = true;
         private bool pluginReady = false;
@@ -178,23 +179,21 @@ namespace QoLBar
 
         public void Initialize(DalamudPluginInterface pInterface)
         {
-            pluginInterface = pInterface;
+            Plugin = this;
 
-            config = (Configuration)pluginInterface.GetPluginConfig() ?? new Configuration();
-            config.Initialize(this);
-            config.TryBackup(); // Backup on version change
+            Interface = pInterface;
 
-            textureDictionary.Initialize(pluginInterface);
+            Config = (Configuration)Interface.GetPluginConfig() ?? new Configuration();
+            Config.Initialize();
+            Config.TryBackup(); // Backup on version change
 
-            ConditionCache.Initialize(this);
-
-            ui = new PluginUI(this, config);
-            pluginInterface.UiBuilder.OnOpenConfigUi += ToggleConfig;
-            pluginInterface.UiBuilder.OnBuildUi += Draw;
+            ui = new PluginUI();
+            Interface.UiBuilder.OnOpenConfigUi += ToggleConfig;
+            Interface.UiBuilder.OnBuildUi += Draw;
 
             CheckHideOptOuts();
 
-            commandManager = new PluginCommandManager<QoLBar>(this, pluginInterface);
+            commandManager = new PluginCommandManager();
 
             SetupIPC();
 
@@ -202,7 +201,7 @@ namespace QoLBar
 
             Task.Run(async () =>
             {
-                while (!config.AlwaysDisplayBars && !ui.configOpen && !IsLoggedIn())
+                while (!Config.AlwaysDisplayBars && !ui.configOpen && !IsLoggedIn())
                     await Task.Delay(1000);
                 ReadyPlugin();
             });
@@ -213,7 +212,7 @@ namespace QoLBar
             try
             {
                 // I don't know what I'm doing, but it works
-                var dataptr = pluginInterface.TargetModuleScanner.GetStaticAddressFromSig("48 8B 05 ?? ?? ?? ?? 48 8B 48 28 80 B9 8E 18 00 00 00");
+                var dataptr = Interface.TargetModuleScanner.GetStaticAddressFromSig("48 8B 05 ?? ?? ?? ?? 48 8B 48 28 80 B9 8E 18 00 00 00");
                 if (dataptr != IntPtr.Zero)
                     textActiveBoolPtr = *(IntPtr*)(*(IntPtr*)dataptr + 0x28) + 0x188E;
             }
@@ -232,11 +231,11 @@ namespace QoLBar
 
         public void Reload()
         {
-            config = (Configuration)pluginInterface.GetPluginConfig() ?? new Configuration();
-            config.Initialize(this);
-            config.UpdateVersion();
-            config.Save();
-            ui.Reload(config);
+            Config = (Configuration)Interface.GetPluginConfig() ?? new Configuration();
+            Config.Initialize();
+            Config.UpdateVersion();
+            Config.Save();
+            ui.Reload();
             CheckHideOptOuts();
         }
 
@@ -285,15 +284,15 @@ namespace QoLBar
         public void CheckHideOptOuts()
         {
             //pluginInterface.UiBuilder.DisableAutomaticUiHide = false;
-            pluginInterface.UiBuilder.DisableUserUiHide = config.OptOutGameUIOffHide;
-            pluginInterface.UiBuilder.DisableCutsceneUiHide = config.OptOutCutsceneHide;
-            pluginInterface.UiBuilder.DisableGposeUiHide = config.OptOutGPoseHide;
+            Interface.UiBuilder.DisableUserUiHide = Config.OptOutGameUIOffHide;
+            Interface.UiBuilder.DisableCutsceneUiHide = Config.OptOutCutsceneHide;
+            Interface.UiBuilder.DisableGposeUiHide = Config.OptOutGPoseHide;
         }
 
         public Dictionary<int, string> GetUserIcons() => textureDictionary.GetUserIcons();
 
         bool _addUserIcons = false;
-        private bool AddUserIcons(ref bool b) => b = !textureDictionary.AddUserIcons(config.GetPluginIconPath());
+        private bool AddUserIcons(ref bool b) => b = !textureDictionary.AddUserIcons(Config.GetPluginIconPath());
         public void AddUserIcons() => _addUserIcons = true;
 
         private void CleanBarConfig(BarConfig bar)
@@ -476,17 +475,17 @@ namespace QoLBar
             return sh;
         }
 
-        public void PrintEcho(string message) => pluginInterface.Framework.Gui.Chat.Print($"[QoLBar] {message}");
-        public void PrintError(string message) => pluginInterface.Framework.Gui.Chat.PrintError($"[QoLBar] {message}");
+        public void PrintEcho(string message) => Interface.Framework.Gui.Chat.Print($"[QoLBar] {message}");
+        public void PrintError(string message) => Interface.Framework.Gui.Chat.PrintError($"[QoLBar] {message}");
 
         private void SetupIPC()
         {
-            pluginInterface.SubscribeAny(OnReceiveMessage);
+            Interface.SubscribeAny(OnReceiveMessage);
             dynamic msg = new ExpandoObject();
             msg.Sender = "QoLBar";
             msg.Action = "Loaded";
-            msg.Version = config.PluginVersion;
-            pluginInterface.SendMessage(msg);
+            msg.Version = Config.PluginVersion;
+            Interface.SendMessage(msg);
         }
 
         private void OnReceiveMessage(string pluginName, dynamic msg)
@@ -504,9 +503,9 @@ namespace QoLBar
                         response.Sender = "QoLBar";
                         response.Receiver = pluginName;
                         response.Action = "pong";
-                        response.Version = config.PluginVersion;
-                        if (!pluginInterface.SendMessage(pluginName, response))
-                            pluginInterface.SendMessage(response);
+                        response.Version = Config.PluginVersion;
+                        if (!Interface.SendMessage(pluginName, response))
+                            Interface.SendMessage(response);
                     }
                 }
             }
@@ -521,8 +520,8 @@ namespace QoLBar
             dynamic msg = new ExpandoObject();
             msg.Sender = "QoLBar";
             msg.Action = "Unloaded";
-            pluginInterface.SendMessage(msg);
-            pluginInterface.UnsubscribeAny();
+            Interface.SendMessage(msg);
+            Interface.UnsubscribeAny();
         }
 
         // I'm too dumb to do any of this so its (almost) all taken from here https://git.sr.ht/~jkcclemens/CCMM/tree/master/Custom%20Commands%20and%20Macro%20Macros/GameFunctions.cs
@@ -539,9 +538,9 @@ namespace QoLBar
         {
             try
             {
-                var getUIModulePtr = pluginInterface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? 48 83 7F ?? 00 48 8B F0");
-                var easierProcessChatBoxPtr = pluginInterface.TargetModuleScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9");
-                uiModulePtr = pluginInterface.TargetModuleScanner.GetStaticAddressFromSig("48 8B 0D ?? ?? ?? ?? 48 8D 54 24 ?? 48 83 C1 10 E8 ?? ?? ?? ??");
+                var getUIModulePtr = Interface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? 48 83 7F ?? 00 48 8B F0");
+                var easierProcessChatBoxPtr = Interface.TargetModuleScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9");
+                uiModulePtr = Interface.TargetModuleScanner.GetStaticAddressFromSig("48 8B 0D ?? ?? ?? ?? 48 8D 54 24 ?? 48 83 C1 10 E8 ?? ?? ?? ??");
 
                 GetUIModule = Marshal.GetDelegateForFunctionPointer<GetUIModuleDelegate>(getUIModulePtr);
                 _EasierProcessChatBox = Marshal.GetDelegateForFunctionPointer<EasierProcessChatBoxDelegate>(easierProcessChatBoxPtr);
@@ -620,13 +619,13 @@ namespace QoLBar
             DisposeIPC();
 
             commandManager.Dispose();
-            config.Save();
-            config.SaveTempConfig();
+            Config.Save();
+            Config.SaveTempConfig();
 
-            pluginInterface.UiBuilder.OnOpenConfigUi -= ToggleConfig;
-            pluginInterface.UiBuilder.OnBuildUi -= Draw;
+            Interface.UiBuilder.OnOpenConfigUi -= ToggleConfig;
+            Interface.UiBuilder.OnBuildUi -= Draw;
 
-            pluginInterface.Dispose();
+            Interface.Dispose();
 
             ui.Dispose();
 

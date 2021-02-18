@@ -23,22 +23,18 @@ namespace QoLBar
         public bool OptOutGPoseHide = false;
         public string PluginVersion = ".INITIAL";
 
-        [JsonIgnore] private static QoLBar plugin;
-        [JsonIgnore] private static DalamudPluginInterface pluginInterface;
-        [JsonIgnore] public static DirectoryInfo ConfigFolder => pluginInterface.ConfigDirectory;
+        [JsonIgnore] public static DirectoryInfo ConfigFolder => QoLBar.Interface.ConfigDirectory;
         [JsonIgnore] private static DirectoryInfo iconFolder;
         [JsonIgnore] private static DirectoryInfo backupFolder;
         [JsonIgnore] private static FileInfo tempConfig;
-        [JsonIgnore] public static FileInfo ConfigFile => pluginInterface.ConfigFile;
+        [JsonIgnore] public static FileInfo ConfigFile => QoLBar.Interface.ConfigFile;
 
         public string GetVersion() => PluginVersion;
         public void UpdateVersion() => PluginVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
         public bool CheckVersion() => PluginVersion == Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
-        public void Initialize(QoLBar p)
+        public void Initialize()
         {
-            plugin = p;
-            pluginInterface = p.pluginInterface;
             if (ConfigFolder.Exists)
             {
                 iconFolder = new DirectoryInfo(Path.Combine(ConfigFolder.FullName, "icons"));
@@ -54,7 +50,7 @@ namespace QoLBar
         {
             try
             {
-                pluginInterface.SavePluginConfig(this);
+                QoLBar.Interface.SavePluginConfig(this);
             }
             catch
             {
@@ -66,7 +62,7 @@ namespace QoLBar
                 else
                 {
                     PluginLog.LogError("Failed to save again :(");
-                    var chat = pluginInterface.Framework.Gui.Chat;
+                    var chat = QoLBar.Interface.Framework.Gui.Chat;
                     chat.PrintError("[QoLBar] Error saving config, is something else writing to it?");
                 }
             }
@@ -146,7 +142,7 @@ namespace QoLBar
                 try
                 {
                     file.CopyTo(ConfigFile.FullName, true);
-                    plugin.Reload();
+                    QoLBar.Plugin.Reload();
                 }
                 catch (Exception e)
                 {
