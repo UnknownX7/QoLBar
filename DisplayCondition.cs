@@ -141,7 +141,7 @@ namespace QoLBar
 
                 var set = config.ConditionSets[i];
 
-                var open = ImGui.TreeNodeEx("##Node", ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.AllowItemOverlap | ImGuiTreeNodeFlags.NoTreePushOnOpen);
+                var open = ImGui.TreeNodeEx($"#{i + 1}##Node", ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.AllowItemOverlap | ImGuiTreeNodeFlags.NoTreePushOnOpen);
                 ImGui.SameLine();
                 if (ImGui.InputText("##Name", ref set.Name, 32))
                     config.Save();
