@@ -178,31 +178,11 @@ namespace QoLBar
 
                 ImGui.NextColumn();
 
-                if (ImGui.Button("↑") && i > 0)
-                {
-                    var b = bars[i];
-                    bars.RemoveAt(i);
-                    bars.Insert(i - 1, b);
-
-                    var b2 = bar;
-                    Config.BarConfigs.RemoveAt(i);
-                    Config.BarConfigs.Insert(i - 1, b2);
-                    Config.Save();
-                    RefreshBarIndexes();
-                }
+                if (ImGui.Button("↑"))
+                    ShiftBar(i, false);
                 ImGui.SameLine();
-                if (ImGui.Button("↓") && i < (bars.Count - 1))
-                {
-                    var b = bars[i];
-                    bars.RemoveAt(i);
-                    bars.Insert(i + 1, b);
-
-                    var b2 = bar;
-                    Config.BarConfigs.RemoveAt(i);
-                    Config.BarConfigs.Insert(i + 1, b2);
-                    Config.Save();
-                    RefreshBarIndexes();
-                }
+                if (ImGui.Button("↓"))
+                    ShiftBar(i, true);
                 ImGui.SameLine();
                 if (ImGui.Button("Export"))
                     ImGui.SetClipboardText(ExportBar(i, false));
@@ -226,15 +206,7 @@ namespace QoLBar
                             (Config.ExportOnDelete ? "\nThe bar will be exported to clipboard first." : ""));
 
                         if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
-                        {
-                            if (Config.ExportOnDelete)
-                                ImGui.SetClipboardText(QoLBar.ExportBar(bar, false));
-
-                            bars.RemoveAt(i);
-                            Config.BarConfigs.RemoveAt(i);
-                            Config.Save();
-                            RefreshBarIndexes();
-                        }
+                            RemoveBar(i);
                     }
                 }
 
@@ -398,6 +370,34 @@ namespace QoLBar
             Config.BarConfigs.Add(bar);
             bars.Add(new BarUI(bars.Count));
             Config.Save();
+        }
+
+        private void RemoveBar(int i)
+        {
+            if (Config.ExportOnDelete)
+                ImGui.SetClipboardText(QoLBar.ExportBar(Config.BarConfigs[i], false));
+
+            bars.RemoveAt(i);
+            Config.BarConfigs.RemoveAt(i);
+            Config.Save();
+            RefreshBarIndexes();
+        }
+
+        private void ShiftBar(int i, bool increment)
+        {
+            if (!increment ? i > 0 : i < (bars.Count - 1))
+            {
+                var j = (increment ? i + 1 : i - 1);
+                var b = bars[i];
+                bars.RemoveAt(i);
+                bars.Insert(j, b);
+
+                var b2 = Config.BarConfigs[i];
+                Config.BarConfigs.RemoveAt(i);
+                Config.BarConfigs.Insert(j, b2);
+                Config.Save();
+                RefreshBarIndexes();
+            }
         }
 
         public string ExportBar(int i, bool saveAllValues) => QoLBar.ExportBar(Config.BarConfigs[i], saveAllValues);

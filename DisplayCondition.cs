@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Numerics;
 using System.Collections.Generic;
 using ImGuiNET;
@@ -374,7 +374,6 @@ namespace QoLBar
             config.ConditionSets.RemoveAt(i);
             config.Save();
         }
-
     }
 
     public static class ConditionCache

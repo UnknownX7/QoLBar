@@ -126,10 +126,11 @@ namespace QoLBar
         {
             ImGui.TextUnformatted("Active Hotkeys");
             ImGui.Spacing();
-            ImGui.Separator();
             ImGui.Columns(2);
-            foreach ((_, var sh) in hotkeys)
+            ImGui.Separator();
+            for (int i = 0; i < hotkeys.Count; i++)
             {
+                (_, var sh) = hotkeys[i];
                 if (ImGui.SmallButton("Delete"))
                 {
                     sh.Hotkey = 0;
@@ -139,10 +140,12 @@ namespace QoLBar
                 ImGui.TextUnformatted(GetKeyName(sh.Hotkey));
                 ImGui.NextColumn();
                 ImGui.TextUnformatted(sh.Command);
-                ImGui.Separator();
                 ImGui.NextColumn();
+                if (i != hotkeys.Count - 1) // Shift last separator outside of columns so it doesn't clip with column borders
+                    ImGui.Separator();
             }
             ImGui.Columns(1);
+            ImGui.Separator();
         }
 
         private static readonly Dictionary<Keys, string> _keynames = new Dictionary<Keys, string>
