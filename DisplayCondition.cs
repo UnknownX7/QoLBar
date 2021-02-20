@@ -23,14 +23,10 @@ namespace QoLBar
 
         public bool CheckCondition()
         {
-            return Type switch
-            {
-                ConditionType.ConditionFlag => ConditionCache.GetCondition(Condition),
-                ConditionType.Job => ConditionCache.GetCondition(200 + Condition),
-                ConditionType.Role => ConditionCache.GetCondition(400 + Condition),
-                ConditionType.Misc => ConditionCache.GetCondition(1000 + Condition, Arg),
-                _ => false,
-            };
+            if (Type == ConditionType.Logic)
+                return false;
+            else
+                return ConditionCache.GetCondition(Type, Condition, (Type == ConditionType.Misc) ? Arg : null);
         }
 
         public bool IsLogic() => Type == ConditionType.Logic;
@@ -378,44 +374,42 @@ namespace QoLBar
 
     public static class ConditionCache
     {
-        private static readonly Dictionary<(int, dynamic), bool> _conditionCache = new Dictionary<(int, dynamic), bool>();
+        private static readonly Dictionary<(DisplayCondition.ConditionType, int, dynamic), bool> _conditionCache = new Dictionary<(DisplayCondition.ConditionType, int, dynamic), bool>();
         private static float _lastCache = 0;
         public static float GetLastCache() => _lastCache;
 
-        public static bool GetCondition(int cond, dynamic arg = null)
+        public static bool GetCondition(DisplayCondition.ConditionType type, int cond, dynamic arg = null)
         {
             var pluginInterface = QoLBar.Interface;
             CheckCache();
 
-            if (_conditionCache.TryGetValue((cond, arg), out var b))
+            if (_conditionCache.TryGetValue((type, cond, arg), out var b))
                 return b;
             else
             {
-                if (cond < 200)
+                var player = pluginInterface.ClientState.LocalPlayer;
+                switch (type)
                 {
-                    b = pluginInterface.ClientState.Condition[(ConditionFlag)cond];
-                }
-                else if (cond < 400)
-                {
-                    var player = pluginInterface.ClientState.LocalPlayer;
-                    b = (player != null) && (player.ClassJob.Id == (cond - 200));
-                }
-                else if (cond < 600)
-                {
-                    var player = pluginInterface.ClientState.LocalPlayer;
-                    b = (player != null) && pluginInterface.Data.IsDataReady && ((((cond - 400) < 30) ? player.ClassJob.GameData.Role : player.ClassJob.GameData.ClassJobCategory.Row) == (cond - 400));
-                }
-                else
-                {
-                    b = cond switch
-                    {
-                        1000 => pluginInterface.ClientState.Condition.Any(),
-                        1001 => (ulong)arg == pluginInterface.ClientState.LocalContentId,
-                        _ => false,
-                    };
+                    case DisplayCondition.ConditionType.ConditionFlag:
+                        b = pluginInterface.ClientState.Condition[(ConditionFlag)cond];
+                        break;
+                    case DisplayCondition.ConditionType.Job:
+                        b = (player != null) && (player.ClassJob.Id == cond);
+                        break;
+                    case DisplayCondition.ConditionType.Role:
+                        b = (player != null) && pluginInterface.Data.IsDataReady && (((cond < 30) ? player.ClassJob.GameData.Role : player.ClassJob.GameData.ClassJobCategory.Row) == cond);
+                        break;
+                    case DisplayCondition.ConditionType.Misc:
+                        b = cond switch
+                        {
+                            0 => pluginInterface.ClientState.Condition.Any(),
+                            1 => (ulong)arg == pluginInterface.ClientState.LocalContentId,
+                            _ => false,
+                        };
+                        break;
                 }
 
-                _conditionCache[(cond, arg)] = b;
+                _conditionCache[(type, cond, arg)] = b;
                 return b;
             }
         }

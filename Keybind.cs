@@ -124,28 +124,33 @@ namespace QoLBar
 
         public static void DrawDebug()
         {
-            ImGui.TextUnformatted("Active Hotkeys");
+            ImGui.TextUnformatted($"Active Hotkeys - {hotkeys.Count}");
             ImGui.Spacing();
-            ImGui.Columns(2);
-            ImGui.Separator();
-            for (int i = 0; i < hotkeys.Count; i++)
+            if (hotkeys.Count < 1)
+                ImGui.Separator();
+            else
             {
-                (_, var sh) = hotkeys[i];
-                if (ImGui.SmallButton("Delete"))
+                ImGui.Columns(2);
+                ImGui.Separator();
+                for (int i = 0; i < hotkeys.Count; i++)
                 {
-                    sh.Hotkey = 0;
-                    QoLBar.Config.Save();
+                    (_, var sh) = hotkeys[i];
+                    if (ImGui.SmallButton("Delete"))
+                    {
+                        sh.Hotkey = 0;
+                        QoLBar.Config.Save();
+                    }
+                    ImGui.SameLine();
+                    ImGui.TextUnformatted(GetKeyName(sh.Hotkey));
+                    ImGui.NextColumn();
+                    ImGui.TextUnformatted(sh.Command);
+                    ImGui.NextColumn();
+                    if (i != hotkeys.Count - 1) // Shift last separator outside of columns so it doesn't clip with column borders
+                        ImGui.Separator();
                 }
-                ImGui.SameLine();
-                ImGui.TextUnformatted(GetKeyName(sh.Hotkey));
-                ImGui.NextColumn();
-                ImGui.TextUnformatted(sh.Command);
-                ImGui.NextColumn();
-                if (i != hotkeys.Count - 1) // Shift last separator outside of columns so it doesn't clip with column borders
-                    ImGui.Separator();
+                ImGui.Columns(1);
+                ImGui.Separator();
             }
-            ImGui.Columns(1);
-            ImGui.Separator();
         }
 
         private static readonly Dictionary<Keys, string> _keynames = new Dictionary<Keys, string>

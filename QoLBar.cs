@@ -259,7 +259,7 @@ namespace QoLBar
                 ui.ToggleBarVisible(argument);
         }
 
-        public static bool IsLoggedIn() => ConditionCache.GetCondition(1000);
+        public static bool IsLoggedIn() => ConditionCache.GetCondition(DisplayCondition.ConditionType.Misc, 0);
 
         private static long _frameCount = 0;
         public static long GetFrameCount() => _frameCount;
