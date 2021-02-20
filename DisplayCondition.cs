@@ -14,7 +14,8 @@ namespace QoLBar
             ConditionFlag,
             Job,
             Role,
-            Misc
+            Misc,
+            Zone
         }
 
         public ConditionType Type = ConditionType.ConditionFlag;
@@ -50,7 +51,7 @@ namespace QoLBar
         public static Dictionary<uint, Lumina.Excel.GeneratedSheets.ClassJob> classDictionary;
         private static readonly Dictionary<int, string> roleDictionary = new Dictionary<int, string>
         {
-            [0] = "No role",
+            [0] = "No Role",
             [1] = "Tank",
             [2] = "Melee DPS",
             [3] = "Ranged DPS",
@@ -60,6 +61,7 @@ namespace QoLBar
             [32] = "DoL",
             [33] = "DoH"
         };
+        public static Dictionary<uint, Lumina.Excel.GeneratedSheets.TerritoryType> territoryDictionary;
 
         public void Add() => Conditions.Add(new DisplayCondition());
         public void Add(DisplayCondition cond) => Conditions.Add(cond);
@@ -186,15 +188,27 @@ namespace QoLBar
 
                         var names = Enum.GetNames(typeof(DisplayCondition.ConditionType));
                         ImGui.SetNextItemWidth(-1);
-                        if (ImGui.BeginCombo("##Type", names[(int)cond.Type]))
+                        if (ImGui.BeginCombo("##Type", cond.Type.ToString()))
                         {
                             for (int n = 0; n < names.Length; n++)
                             {
+                                if (n == 4) continue;
+
                                 if (ImGui.Selectable(names[n], n == (int)cond.Type))
                                 {
                                     cond.Type = (DisplayCondition.ConditionType)n;
+                                    // This list is completely and utterly awful so help people out a little bit
+                                    if (cond.Type == DisplayCondition.ConditionType.Zone)
+                                        cond.Condition = QoLBar.Interface.ClientState.TerritoryType;
                                     config.Save();
                                 }
+                            }
+
+                            // Always display Misc last
+                            if (ImGui.Selectable("Misc", cond.Type == DisplayCondition.ConditionType.Misc))
+                            {
+                                cond.Type = DisplayCondition.ConditionType.Misc;
+                                config.Save();
                             }
 
                             ImGui.EndCombo();
@@ -209,86 +223,115 @@ namespace QoLBar
                                 ImGui.Combo("##LogicOperator", ref cond.Condition, "OR\0XOR\0NOT\0EQUALS");
                                 break;
                             case DisplayCondition.ConditionType.ConditionFlag:
-                                if (ImGui.BeginCombo("##Flag", ((ConditionFlag)cond.Condition).ToString()))
                                 {
-                                    foreach (ConditionFlag flag in conditionFlags)
+                                    if (ImGui.BeginCombo("##Flag", ((ConditionFlag)cond.Condition).ToString()))
                                     {
-                                        if (ImGui.Selectable(flag.ToString(), (int)flag == cond.Condition))
+                                        foreach (ConditionFlag flag in conditionFlags)
                                         {
-                                            cond.Condition = (int)flag;
-                                            config.Save();
+                                            if (ImGui.Selectable(flag.ToString(), (int)flag == cond.Condition))
+                                            {
+                                                cond.Condition = (int)flag;
+                                                config.Save();
+                                            }
                                         }
+                                        ImGui.EndCombo();
                                     }
-                                    ImGui.EndCombo();
                                 }
                                 break;
                             case DisplayCondition.ConditionType.Job:
-                                classDictionary.TryGetValue((uint)cond.Condition, out var r);
-                                if (ImGui.BeginCombo("##Job", r?.Abbreviation.ToString()))
                                 {
-                                    foreach (var kv in classDictionary)
+                                    classDictionary.TryGetValue((uint)cond.Condition, out var r);
+                                    if (ImGui.BeginCombo("##Job", r?.Abbreviation.ToString()))
                                     {
-                                        if (kv.Key == 0) continue;
-
-                                        if (ImGui.Selectable(kv.Value.Abbreviation.ToString(), (int)kv.Key == cond.Condition))
+                                        foreach (var kv in classDictionary)
                                         {
-                                            cond.Condition = (int)kv.Key;
-                                            config.Save();
+                                            if (kv.Key == 0) continue;
+
+                                            if (ImGui.Selectable(kv.Value.Abbreviation.ToString(), (int)kv.Key == cond.Condition))
+                                            {
+                                                cond.Condition = (int)kv.Key;
+                                                config.Save();
+                                            }
                                         }
+                                        ImGui.EndCombo();
                                     }
-                                    ImGui.EndCombo();
                                 }
                                 break;
                             case DisplayCondition.ConditionType.Role:
-                                roleDictionary.TryGetValue(cond.Condition, out var s);
-                                if (ImGui.BeginCombo("##Role", s))
                                 {
-                                    foreach (var kv in roleDictionary)
+                                    roleDictionary.TryGetValue(cond.Condition, out var s);
+                                    if (ImGui.BeginCombo("##Role", s))
                                     {
-                                        if (ImGui.Selectable(kv.Value, kv.Key == cond.Condition))
+                                        foreach (var kv in roleDictionary)
                                         {
-                                            cond.Condition = kv.Key;
-                                            config.Save();
+                                            if (ImGui.Selectable(kv.Value, kv.Key == cond.Condition))
+                                            {
+                                                cond.Condition = kv.Key;
+                                                config.Save();
+                                            }
                                         }
+                                        ImGui.EndCombo();
                                     }
-                                    ImGui.EndCombo();
                                 }
                                 break;
                             case DisplayCondition.ConditionType.Misc:
-                                var opts = new string[]
                                 {
-                                    "Logged in",
-                                    "Character ID",
-                                    "Have Target",
-                                    "Have Focus Target"
-                                };
-
-                                if (ImGui.BeginCombo("##Misc", (0 <= cond.Condition && cond.Condition < opts.Length) ? opts[cond.Condition] : string.Empty))
-                                {
-                                    void AddMiscConditionSelectable(int id, dynamic arg)
+                                    var opts = new string[]
                                     {
-                                        if (ImGui.Selectable(opts[id], cond.Condition == id))
+                                        "Logged in",
+                                        "Character ID",
+                                        "Have Target",
+                                        "Have Focus Target"
+                                    };
+
+                                    if (ImGui.BeginCombo("##Misc", (0 <= cond.Condition && cond.Condition < opts.Length) ? opts[cond.Condition] : string.Empty))
+                                    {
+                                        void AddMiscConditionSelectable(int id, dynamic arg)
                                         {
-                                            cond.Condition = id;
-                                            cond.Arg = arg;
-                                            config.Save();
+                                            if (ImGui.Selectable(opts[id], cond.Condition == id))
+                                            {
+                                                cond.Condition = id;
+                                                cond.Arg = arg;
+                                                config.Save();
+                                            }
                                         }
+
+                                        AddMiscConditionSelectable(0, 0);
+
+                                        AddMiscConditionSelectable(1, QoLBar.Interface.ClientState.LocalContentId);
+                                        if (ImGui.IsItemHovered())
+                                            ImGui.SetTooltip("Selecting this will assign the current character's ID to this condition.");
+
+                                        AddMiscConditionSelectable(2, 0);
+
+                                        AddMiscConditionSelectable(3, 0);
+
+                                        ImGui.EndCombo();
                                     }
-
-                                    AddMiscConditionSelectable(0, 0);
-
-                                    AddMiscConditionSelectable(1, QoLBar.Interface.ClientState.LocalContentId);
-                                    if (ImGui.IsItemHovered())
-                                        ImGui.SetTooltip("Selecting this will assign the current character's ID to this condition.");
-
-                                    AddMiscConditionSelectable(2, 0);
-
-                                    AddMiscConditionSelectable(3, 0);
-
-                                    ImGui.EndCombo();
+                                    if (cond.Condition == 1 && ImGui.IsItemHovered())
+                                        ImGui.SetTooltip($"ID: {cond.Arg}");
                                 }
-                                if (cond.Condition == 1 && ImGui.IsItemHovered())
-                                    ImGui.SetTooltip($"ID: {cond.Arg}");
+                                break;
+                            case DisplayCondition.ConditionType.Zone:
+                                {
+                                    territoryDictionary.TryGetValue((uint)cond.Condition, out var r);
+                                    if (ImGui.BeginCombo("##Zone", r?.PlaceName.Value.Name.ToString()))
+                                    {
+                                        foreach (var kv in territoryDictionary)
+                                        {
+                                            if (ImGui.Selectable($"{kv.Value.PlaceName.Value.Name}##{kv.Key}", kv.Key == cond.Condition))
+                                            {
+                                                cond.Condition = (int)kv.Key;
+                                                config.Save();
+                                            }
+                                            if (ImGui.IsItemHovered())
+                                                ImGui.SetTooltip($"ID: {kv.Key}");
+                                        }
+                                        ImGui.EndCombo();
+                                    }
+                                    if (ImGui.IsItemHovered())
+                                        ImGui.SetTooltip($"ID: {cond.Condition}");
+                                }
                                 break;
                         }
 
@@ -414,6 +457,9 @@ namespace QoLBar
                             3 => pluginInterface.ClientState.Targets.FocusTarget != null,
                             _ => false,
                         };
+                        break;
+                    case DisplayCondition.ConditionType.Zone:
+                        b = pluginInterface.ClientState.TerritoryType == cond;
                         break;
                 }
 
