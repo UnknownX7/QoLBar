@@ -258,26 +258,32 @@ namespace QoLBar
                                 var opts = new string[]
                                 {
                                     "Logged in",
-                                    "Character ID"
+                                    "Character ID",
+                                    "Have Target",
+                                    "Have Focus Target"
                                 };
 
                                 if (ImGui.BeginCombo("##Misc", (0 <= cond.Condition && cond.Condition < opts.Length) ? opts[cond.Condition] : string.Empty))
                                 {
-                                    if (ImGui.Selectable(opts[0], cond.Condition == 0))
+                                    void AddMiscConditionSelectable(int id, dynamic arg)
                                     {
-                                        cond.Condition = 0;
-                                        cond.Arg = 0;
-                                        config.Save();
+                                        if (ImGui.Selectable(opts[id], cond.Condition == id))
+                                        {
+                                            cond.Condition = id;
+                                            cond.Arg = arg;
+                                            config.Save();
+                                        }
                                     }
 
-                                    if (ImGui.Selectable(opts[1], cond.Condition == 1))
-                                    {
-                                        cond.Condition = 1;
-                                        cond.Arg = QoLBar.Interface.ClientState.LocalContentId;
-                                        config.Save();
-                                    }
+                                    AddMiscConditionSelectable(0, 0);
+
+                                    AddMiscConditionSelectable(1, QoLBar.Interface.ClientState.LocalContentId);
                                     if (ImGui.IsItemHovered())
                                         ImGui.SetTooltip("Selecting this will assign the current character's ID to this condition.");
+
+                                    AddMiscConditionSelectable(2, 0);
+
+                                    AddMiscConditionSelectable(3, 0);
 
                                     ImGui.EndCombo();
                                 }
@@ -404,6 +410,8 @@ namespace QoLBar
                         {
                             0 => pluginInterface.ClientState.Condition.Any(),
                             1 => (ulong)arg == pluginInterface.ClientState.LocalContentId,
+                            2 => pluginInterface.ClientState.Targets.CurrentTarget != null,
+                            3 => pluginInterface.ClientState.Targets.FocusTarget != null,
                             _ => false,
                         };
                         break;
