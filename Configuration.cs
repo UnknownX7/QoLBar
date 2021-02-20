@@ -21,6 +21,7 @@ namespace QoLBar
         public bool OptOutGameUIOffHide = false;
         public bool OptOutCutsceneHide = false;
         public bool OptOutGPoseHide = false;
+        public bool NoConditionCache = false;
         public string PluginVersion = ".INITIAL";
 
         [JsonIgnore] public static DirectoryInfo ConfigFolder => QoLBar.Interface.ConfigDirectory;

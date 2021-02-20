@@ -251,6 +251,11 @@ namespace QoLBar
             if (ImGui.IsItemHovered())
                 ImGui.SetTooltip("Bars will remain visible even when logged out.");
 
+            if (ImGui.Checkbox("Disable Condition Caching", ref Config.NoConditionCache))
+                Config.Save();
+            if (ImGui.IsItemHovered())
+                ImGui.SetTooltip("Disables the 100ms delay between checking conditions, increasing CPU load.");
+
             ImGui.Spacing();
             ImGui.Spacing();
             ImGui.TextUnformatted("Opt out of Dalamud settings for hiding UI");

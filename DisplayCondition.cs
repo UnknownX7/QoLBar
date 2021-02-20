@@ -424,7 +424,7 @@ namespace QoLBar
 
         public static bool CheckCache()
         {
-            if (QoLBar.GetDrawTime() >= (_lastCache + 0.1f)) // Somewhat expensive, only run 10x/sec
+            if (QoLBar.GetDrawTime() > (_lastCache + (QoLBar.Config.NoConditionCache ? 0 : 0.1f)))
             {
                 ClearCache();
                 _lastCache = QoLBar.GetDrawTime();
