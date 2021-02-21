@@ -134,6 +134,8 @@ namespace QoLBar
                 ImGui.Separator();
                 for (int i = 0; i < hotkeys.Count; i++)
                 {
+                    ImGui.PushID(i);
+
                     (_, var sh) = hotkeys[i];
                     if (ImGui.SmallButton("Delete"))
                     {
@@ -147,6 +149,8 @@ namespace QoLBar
                     ImGui.NextColumn();
                     if (i != hotkeys.Count - 1) // Shift last separator outside of columns so it doesn't clip with column borders
                         ImGui.Separator();
+
+                    ImGui.PopID();
                 }
                 ImGui.Columns(1);
                 ImGui.Separator();
