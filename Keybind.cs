@@ -75,7 +75,22 @@ namespace QoLBar
                         foreach ((var bar, var sh) in hotkeys)
                         {
                             if (sh.Hotkey == (key | k))
-                                bar.ItemClicked(sh, false, false);
+                            {
+                                if (sh.Type == Shortcut.ShortcutType.Category && sh.Mode == Shortcut.ShortcutMode.Default)
+                                {
+                                    // TODO: Make less hacky
+                                    bar.ForceReveal();
+                                    var parent = sh._parent;
+                                    while (parent != null)
+                                    {
+                                        parent._activated = true;
+                                        parent = parent._parent;
+                                    }
+                                    sh._activated = true;
+                                }
+                                else
+                                    bar.ItemClicked(sh, false, false);
+                            }
                         }
                     }
                 }
@@ -118,8 +133,7 @@ namespace QoLBar
                 QoLBar.Config.Save();
             }
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("Press escape to clear the hotkey.\n" +
-                    "Categories cannot use hotkeys in default mode.");
+                ImGui.SetTooltip("Press escape to clear the hotkey.");
         }
 
         public static void DrawDebug()
@@ -145,7 +159,10 @@ namespace QoLBar
                     ImGui.SameLine();
                     ImGui.TextUnformatted(GetKeyName(sh.Hotkey));
                     ImGui.NextColumn();
-                    ImGui.TextUnformatted(sh.Command);
+                    if (sh.Type == Shortcut.ShortcutType.Category)
+                        ImGui.TextUnformatted($"{sh.Mode} {(sh._parent == null ? "Category" : "Subcategory")} \"{sh.Name}\"");
+                    else
+                        ImGui.TextUnformatted(sh.Command);
                     ImGui.NextColumn();
                     if (i != hotkeys.Count - 1) // Shift last separator outside of columns so it doesn't clip with column borders
                         ImGui.Separator();

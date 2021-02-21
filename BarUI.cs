@@ -41,8 +41,9 @@ namespace QoLBar
         private bool docked = true;
 
         private bool _reveal = false;
-        private void Reveal() => _reveal = true;
-        private void Hide() => _reveal = false;
+        public void Reveal() => _reveal = true;
+        public void ForceReveal() => _lastReveal = _reveal = true;
+        public void Hide() => _reveal = false;
 
         private bool IsConfigPopupOpen() => Plugin.ui.IsConfigPopupOpen();
         private void SetConfigPopupOpen() => Plugin.ui.SetConfigPopupOpen();
@@ -57,6 +58,7 @@ namespace QoLBar
         private Vector2 _catpiv = Vector2.Zero;
         private Vector2 _catpos = Vector2.Zero;
         private Vector2 _maincatpos = Vector2.Zero;
+        private bool _activated = false;
 
         private static QoLBar Plugin => QoLBar.Plugin;
         private static Configuration Config => QoLBar.Config;
@@ -237,14 +239,28 @@ namespace QoLBar
             return _hidePos;
         }
 
-        private void SetupHotkeys(List<Shortcut> shortcuts)
+        private void SetupHotkeys(List<Shortcut> shortcuts, Shortcut parent = null)
         {
             foreach (var sh in shortcuts)
             {
+                if (parent != null)
+                    sh._parent = parent;
+
                 if (sh.Hotkey > 0 && sh.Type != Shortcut.ShortcutType.Spacer)
                     Keybind.AddHotkey(this, sh);
                 if (sh.Type == Shortcut.ShortcutType.Category)
-                    SetupHotkeys(sh.SubList);
+                    SetupHotkeys(sh.SubList, sh);
+            }
+        }
+
+        private void ClearActivated(List<Shortcut> shortcuts)
+        {
+            foreach (var sh in shortcuts)
+            {
+                if (!_activated)
+                    sh._activated = false;
+                if (sh.Type == Shortcut.ShortcutType.Category)
+                    ClearActivated(sh.SubList);
             }
         }
 
@@ -270,7 +286,10 @@ namespace QoLBar
                 Reveal();
 
             if (!docked && !_firstframe && !_reveal && !_lastReveal)
+            {
+                ClearActivated(barConfig.ShortcutList);
                 return;
+            }
 
             if (_firstframe || _reveal || (barPos != hidePos) || (!docked && _lastReveal)) // Don't bother to render when fully off screen
             {
@@ -340,6 +359,9 @@ namespace QoLBar
             }
             else
                 _lastReveal = _reveal;
+
+            ClearActivated(barConfig.ShortcutList);
+            _activated = false;
 
             _firstframe = false;
         }
@@ -557,8 +579,14 @@ namespace QoLBar
                     ImGui.SetTooltip(tooltip);
             }
 
-            if (clicked)
+            if (clicked || (sh._activated && !_activated))
             {
+                if (sh._activated)
+                {
+                    sh._activated = false;
+                    _activated = true;
+                }
+
                 if (parentShortcut != null)
                 {
                     switch (parentShortcut.Mode)
