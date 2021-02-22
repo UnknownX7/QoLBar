@@ -18,7 +18,7 @@ namespace QoLBar
             Zone
         }
 
-        public ConditionType Type = ConditionType.ConditionFlag;
+        public ConditionType Type = ConditionType.Logic;
         public int Condition = 0;
         public dynamic Arg = 0;
 
