@@ -774,7 +774,7 @@ namespace QoLBar
                     DrawShortcut(j, sublist, width, (sh) =>
                     {
                         ItemClicked(sh, sublist.Count >= (cols * (cols - 1) + 1), true);
-                        if (!stayOpen && sh.Type != Shortcut.ShortcutType.Category)
+                        if (!stayOpen && sh.Type != Shortcut.ShortcutType.Category && sh.Type != Shortcut.ShortcutType.Spacer)
                             ImGui.CloseCurrentPopup();
                     });
 
