@@ -540,16 +540,15 @@ namespace QoLBar
                     ShortcutUI.DrawIcon(icon, new Vector2(height), sh.IconZoom, sh.IconOffset, c, Config.UseIconFrame, args, true, true);
                 else
                 {
+                    var wantedSize = ImGui.GetFontSize();
                     var textSize = ImGui.CalcTextSize(name);
                     ImGui.BeginChild((uint)i, new Vector2((width == 0) ? (textSize.X + Style.FramePadding.X * 2) : width, height));
-                    // What the fuck ImGui
-                    if (inCategory)
-                        ImGui.SetWindowFontScale(GetFontScale());
-                    else
-                        ImGui.SetWindowFontScale(1);
                     ImGui.SameLine((ImGui.GetContentRegionAvail().X - textSize.X) / 2);
                     ImGui.SetCursorPosY((ImGui.GetContentRegionAvail().Y - textSize.Y) / 2);
+                    // What the fuck ImGui
+                    ImGui.SetWindowFontScale(wantedSize / ImGui.GetFontSize());
                     ImGui.TextColored(c, name);
+                    ImGui.SetWindowFontScale(1);
                     ImGui.EndChild();
                 }
             }

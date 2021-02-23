@@ -255,7 +255,7 @@ namespace QoLBar
         [HelpMessage("Hide or reveal a bar using its name or index.")]
         private void OnQoLToggle(string command, string argument)
         {
-            if (int.TryParse(argument, out int id))
+            if (int.TryParse(argument, out var id))
                 ui.ToggleBarVisible(id - 1);
             else
                 ui.ToggleBarVisible(argument);
