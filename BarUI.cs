@@ -390,14 +390,20 @@ namespace QoLBar
             }
         }
 
+        private (Vector2, Vector2) CalculateRevealPosition()
+        {
+            var pos = docked ? revealPos : barConfig.Position;
+            var min = new Vector2(pos.X - (barSize.X * piv.X), pos.Y - (barSize.Y * piv.Y));
+            var max = new Vector2(pos.X + (barSize.X * (1 - piv.X)), pos.Y + (barSize.Y * (1 - piv.Y)));
+            return (min, max);
+        }
+
         private void CheckMousePosition()
         {
             if (docked && _reveal)
                 return;
 
-            Vector2 _pos = docked ? revealPos : barConfig.Position;
-            var _min = new Vector2(_pos.X - (barSize.X * piv.X), _pos.Y - (barSize.Y * piv.Y));
-            var _max = new Vector2(_pos.X + (barSize.X * (1 - piv.X)), _pos.Y + (barSize.Y * (1 - piv.Y)));
+            (var _min, var _max) = CalculateRevealPosition();
 
             switch (barConfig.DockSide)
             {
@@ -699,59 +705,52 @@ namespace QoLBar
 
         private void SetupCategoryPosition(bool v, bool subItem)
         {
-            /*var align = 0; // Align to button (possible user option later)
-            var _pos = align switch
-            {
-                0 => ImGui.GetItemRectMin() + (ImGui.GetItemRectSize() / 2),
-                1 => ImGui.GetWindowPos() + (ImGui.GetWindowSize() / 2),
-                2 => mousePos,
-                _ => Vector2.Zero,
-            };
-            var _offset = align switch
-            {
-                2 => 6.0f * globalSize,
-                //_ => (!vertical && !subItem) ? (ImGui.GetWindowHeight() / 2 - Style.WindowPadding.Y) : (ImGui.GetWindowWidth() / 2 - Style.WindowPadding.X),
-                _ => (!vertical && !subItem) ? (ImGui.GetWindowHeight() / 2 - Style.WindowPadding.Y) : (ImGui.GetWindowWidth() / 2 - Style.WindowPadding.X),
-            };*/
-            var _pos = ImGui.GetItemRectMin() + (ImGui.GetItemRectSize() / 2);
+            Vector2 pos, wMin, wMax;
             if (!subItem)
-                _maincatpos = _pos; // Forces all subcategories to position based on the original category
-            var _piv = Vector2.Zero;
+            {
+                (wMin, wMax) = CalculateRevealPosition();
+                pos = wMin + ((ImGui.GetItemRectMin() + (ImGui.GetItemRectSize() / 2)) - ImGui.GetWindowPos());
+                _maincatpos = pos; // Forces all subcategories to position based on the original category
+            }
+            else
+            {
+                wMin = ImGui.GetWindowPos();
+                wMax = ImGui.GetWindowPos() + ImGui.GetWindowSize();
+                pos = ImGui.GetItemRectMin() + (ImGui.GetItemRectSize() / 2);
+            }
+
+            var piv = Vector2.Zero;
 
             if (!v)
             {
-                _piv.X = 0.5f;
+                piv.X = 0.5f;
                 if (_maincatpos.Y < window.Y / 2)
                 {
-                    _piv.Y = 0.0f;
-                    //_y += _offset;
-                    _pos.Y = ImGui.GetWindowPos().Y + ImGui.GetWindowHeight() - Style.WindowPadding.Y / 2;
+                    piv.Y = 0.0f;
+                    pos.Y = wMax.Y - Style.WindowPadding.Y / 2;
                 }
                 else
                 {
-                    _piv.Y = 1.0f;
-                    //_y -= _offset;
-                    _pos.Y = ImGui.GetWindowPos().Y + Style.WindowPadding.Y / 2;
+                    piv.Y = 1.0f;
+                    pos.Y = wMin.Y + Style.WindowPadding.Y / 2;
                 }
             }
             else
             {
-                _piv.Y = 0.5f;
+                piv.Y = 0.5f;
                 if (_maincatpos.X < window.X / 2)
                 {
-                    _piv.X = 0.0f;
-                    //_x += _offset;
-                    _pos.X = ImGui.GetWindowPos().X + ImGui.GetWindowWidth() - Style.WindowPadding.X / 2;
+                    piv.X = 0.0f;
+                    pos.X = wMax.X - Style.WindowPadding.X / 2;
                 }
                 else
                 {
-                    _piv.X = 1.0f;
-                    //_x -= _offset;
-                    _pos.X = ImGui.GetWindowPos().X + Style.WindowPadding.X / 2;
+                    piv.X = 1.0f;
+                    pos.X = wMin.X + Style.WindowPadding.X / 2;
                 }
             }
-            _catpiv = _piv;
-            _catpos = _pos;
+            _catpiv = piv;
+            _catpos = pos;
         }
 
         private void CategoryPopup(Shortcut sh)
