@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
+using Dalamud.Interface;
 using ImGuiNET;
 
 namespace QoLBar
@@ -90,6 +91,9 @@ namespace QoLBar
                                 }
                                 else
                                     bar.ItemClicked(sh, false, false);
+
+                                if (!sh.KeyPassthrough && k <= 160)
+                                    QoLBar.Interface.ClientState.KeyState[k] = false;
                             }
                         }
                     }
@@ -130,10 +134,20 @@ namespace QoLBar
             if (ImGui.IsItemDeactivated() && ImGui.GetIO().KeysDown[(int)Keys.Escape])
             {
                 sh.Hotkey = 0;
+                sh.KeyPassthrough = false;
                 QoLBar.Config.Save();
             }
             if (ImGui.IsItemHovered())
                 ImGui.SetTooltip("Press escape to clear the hotkey.");
+
+            if (sh.Hotkey > 0)
+            {
+                if (ImGui.Checkbox("Pass Input to Game", ref sh.KeyPassthrough))
+                    QoLBar.Config.Save();
+                if (ImGui.IsItemHovered())
+                    ImGui.SetTooltip("Disables the hotkey from blocking the game input.\n" +
+                        "Some keys are unable to be blocked.");
+            }
         }
 
         public static void DrawDebug()
@@ -154,7 +168,22 @@ namespace QoLBar
                     if (ImGui.SmallButton("Delete"))
                     {
                         sh.Hotkey = 0;
+                        sh.KeyPassthrough = false;
                         QoLBar.Config.Save();
+                    }
+                    ImGui.SameLine();
+                    ImGui.PushFont(UiBuilder.IconFont);
+                    ImGui.TextUnformatted(sh.KeyPassthrough ? FontAwesomeIcon.CheckCircle.ToIconString() : FontAwesomeIcon.TimesCircle.ToIconString());
+                    ImGui.PopFont();
+                    if (ImGui.IsItemHovered())
+                    {
+                        ImGui.SetTooltip($"Hotkey {(sh.KeyPassthrough ? "doesn't block" : "blocks")} game input.");
+
+                        if (ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+                        {
+                            sh.KeyPassthrough = !sh.KeyPassthrough;
+                            QoLBar.Config.Save();
+                        }
                     }
                     ImGui.SameLine();
                     ImGui.TextUnformatted(GetKeyName(sh.Hotkey));

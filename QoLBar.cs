@@ -85,6 +85,7 @@ namespace QoLBar
         [DefaultValue(ShortcutType.Single)] public ShortcutType Type = ShortcutType.Single;
         [DefaultValue("")] public string Command = string.Empty;
         [DefaultValue(0)] public int Hotkey = 0;
+        [DefaultValue(false)] public bool KeyPassthrough = false;
         [DefaultValue(null)] public List<Shortcut> SubList;
         [DefaultValue(false)] public bool HideAdd = false;
         public enum ShortcutMode
@@ -189,6 +190,8 @@ namespace QoLBar
             Config.Initialize();
             Config.TryBackup(); // Backup on version change
 
+            Interface.Framework.OnUpdateEvent += Update;
+
             ui = new PluginUI();
             Interface.UiBuilder.OnOpenConfigUi += ToggleConfig;
             Interface.UiBuilder.OnBuildUi += Draw;
@@ -263,16 +266,18 @@ namespace QoLBar
 
         public static bool IsLoggedIn() => ConditionCache.GetCondition(DisplayCondition.ConditionType.Misc, 0);
 
+        private void Update(Dalamud.Game.Internal.Framework framework)
+        {
+            ReadyCommand();
+            Keybind.Run(GameTextInputActive);
+        }
+
         private static long _frameCount = 0;
         public static long GetFrameCount() => _frameCount;
         private static float _drawTime = 0;
         public static float GetDrawTime() => _drawTime;
-        public void Draw()
+        private void Draw()
         {
-            ReadyCommand();
-
-            Keybind.Run(GameTextInputActive);
-
             if (_addUserIcons)
                 AddUserIcons(ref _addUserIcons);
 
@@ -447,6 +452,7 @@ namespace QoLBar
                     foreach (var sh in shortcuts)
                     {
                         sh.Hotkey = sh.GetDefaultValue(x => x.Hotkey);
+                        sh.KeyPassthrough = sh.GetDefaultValue(x => x.KeyPassthrough);
                         if (sh.SubList != null && sh.SubList.Count > 0)
                             removeHotkeys(sh.SubList);
                     }
@@ -472,7 +478,10 @@ namespace QoLBar
             var sh = ImportObject<Shortcut>(import);
 
             if (!allowImportHotkeys)
+            {
                 sh.Hotkey = sh.GetDefaultValue(x => x.Hotkey);
+                sh.KeyPassthrough = sh.GetDefaultValue(x => x.KeyPassthrough);
+            }
 
             return sh;
         }
@@ -623,6 +632,8 @@ namespace QoLBar
             commandManager.Dispose();
             Config.Save();
             Config.SaveTempConfig();
+
+            Interface.Framework.OnUpdateEvent -= Update;
 
             Interface.UiBuilder.OnOpenConfigUi -= ToggleConfig;
             Interface.UiBuilder.OnBuildUi -= Draw;
