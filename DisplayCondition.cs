@@ -1,6 +1,7 @@
 using System;
 using System.Numerics;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using ImGuiNET;
 using Dalamud.Game.ClientState;
 
@@ -281,7 +282,8 @@ namespace QoLBar
                                         "Logged in",
                                         "Character ID",
                                         "Have Target",
-                                        "Have Focus Target"
+                                        "Have Focus Target",
+                                        "Weapon Drawn"
                                     };
 
                                     if (ImGui.BeginCombo("##Misc", (0 <= cond.Condition && cond.Condition < opts.Length) ? opts[cond.Condition] : string.Empty))
@@ -305,6 +307,8 @@ namespace QoLBar
                                         AddMiscConditionSelectable(2, 0);
 
                                         AddMiscConditionSelectable(3, 0);
+
+                                        AddMiscConditionSelectable(4, 0);
 
                                         ImGui.EndCombo();
                                     }
@@ -455,6 +459,7 @@ namespace QoLBar
                             1 => (ulong)arg == pluginInterface.ClientState.LocalContentId,
                             2 => pluginInterface.ClientState.Targets.CurrentTarget != null,
                             3 => pluginInterface.ClientState.Targets.FocusTarget != null,
+                            4 => (player != null) && ((Marshal.ReadByte(player.Address + 0x1980) & 4) > 0),
                             _ => false,
                         };
                         break;
