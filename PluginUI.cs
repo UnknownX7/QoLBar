@@ -226,8 +226,13 @@ namespace QoLBar
             if (ImGui.Button("Import", textsize))
                 ImportBar(ImGui.GetClipboardText());
             if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("Import a bar from the clipboard,\n" +
-                    "or import a single shortcut as a new bar.");
+            {
+                ImGui.SetTooltip("Import a bar from the clipboard, or import a single shortcut as a new bar.\n" +
+                    "Right click will add a demo bar that showcases various features.");
+
+                if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
+                    AddDemoBar();
+            }
 
             ImGui.Columns(1);
         }
@@ -431,6 +436,27 @@ namespace QoLBar
                 }
             }
         }
+
+        private void AddDemoBar() => ImportBar("H4sIAAAAAAAEALVZbW/bOBL+K4y8QPdwjk/vtvOtSdttDpdNEWfRTTeHBS3RNjcS6ROpOr5F//vOkJJfEktK7lwgiPXC4QwfDmeeGf3p/KDXS+ac" +
+            "OVOn79xyneH16bv3V9en8GCykIVOSv0vrrRz9tufm9EKXv5Mc7zEseT87Q3Km5dB37lMpLjlAmS2IiEM+NU58wZu37mrfr9Uv5/NrxuMfS8Ovn3rH1R0SWhOKNHsUZOEajaXxXqj1Adjy2mbnRc" +
+            "ykwVLjXyvd2tnEWTKSFK9+aNUmmT8gRF4zmEJr1ySO/BGdg3e06U1relTwZQiOSMzWZC8zDRfZoywZCHVRjlMdiHznIoUBP6B78hHlmXyXtgbvWAFO3G6NGhp5iVen/h9EhAuiCxSVrTp8Wodfn" +
+            "0RwPArmeLwlyyJkgLmk7lR3abpTpZkxcVJrQfvM6nYYDDYaPQbNPZ6lWtMMyoeyLTUGvau3YtUOa19qNf7KL+ygos5kUsm0PY+WYN+dA+aKUmWZkkXusjI38kEkJS7fvdR6ge2hlUFnhdFnX54d" +
+            "ha77sh7iW/dvciHfpISfFdOT7ZTfvs3mMVT9jYFhHVRMgC8Wu1nnuoF+Or2CRyMMhcK8e0U890dwYmma3UNkNnBrYDbA0W2mP+iEHB8qMAVlWY0JXJmTzdXhFG1PiH/xBOpmEYfJ4JaL74HCL17" +
+            "B7yXKAmPJB4AIsp8uuPM3fHg7GzmjXo9tN9MPys4EymcfxDZ80/7wjxvWCJMFYeu5/V676hI2L54io9ILjVvdkq0BY25kqXQpJBlxrR+Mg9NYOV2wE014N5pnjD2ghAM+lla4GkxL3MmtHKen72" +
+            "3Yn8MmUumIDDqFQNsEG5AGwTsLhiccR9ymfLZmizkyrwwU8DOpVwtM7pmaRtaYJzf670hM/Jmq/ZHLefzDHcCBv6tWfx3FA9Q/Pc9cT4XEMe3SwW/SrIyNX6WLzOecE2kYKpl6lOA7HYBq4C/Fc" +
+            "ZVkoALQvwyq+t5ZAXQp4Qul4wWhM9MnKBpCtkDZj6A7cWCJQ9bfKaFXClWvFEA64WZGaDVdIp4ZjClsHBKnBOl8pYNhjDiYeirshgVa5vJjE0rKtCNX5qI2yPMRtk1bDwEdLWkBSIOgfDkFUp2U" +
+            "qI7CIduNBr5wbBFqRvhNt9Vofi/EvdB1Bq/wK1zFoHVTfJj1/eirbxa8JmNJDync1bPcz2bQYTZtd23trsDf1Tldd9vsXIU+uOtllIx1IH/5ZyZ0ATbWdmOm7Sy6frJIjpsOQVuYWyBC3fUbIwX" +
+            "+T4e+ytpA6cG51e1h6SynMLxAg9JMJUlcCIekBDBUaaipFm2BhOXpSZfaVYytWfiqNNEsDDcmBg3mzh2wxh2dSI3OTZFDsP39bmDqBuScFQrjICNNPrhPhXzhyGMbolNceCF1tWfGnXq1Si8ntz" +
+            "6QeSPwxbF7k76bhozjCH0Ye5kBM5gwgplYkUGkQ+txb1G0gWxw2RG4+c7JLl54m7lJk/uxrCtyxuOJG0ehbhZmsyO5wzUC0gReDvPqMKAbJ4nshBwLiDdq6rAgEdixudPstN/ZGYIwv8WY+A38I" +
+            "KhH0XfuomN58WNxOYAVWpCqR5IztmCfuWyUL3exYKK+QYSYLK4cLqhQkB7swyCvwlNwJQSOLg85xk1gYMSIUXKZhRqA1sgZFywDW6v4Dt7u5WgTZAzOre9tvINEgK7pDrstwteiqRgmIZpdtY5W" +
+            "DMFNRn+f8WCvKbc6B/Iw7cmJNewKYsCe2RwY+I1h6BoRVRjKRU46Eft1c+NKXdaVvxyeoosJ+wgUVE7AYx3LG5j990O31R7vRUQZDRkEVNeq52gYF9YSgLOs7Y+V58Dy1RotlxQdPMFn5tMCUMI" +
+            "HNhX4ORHMSSTDFjTDeViKlffvQ/hR8Ne73jKhqMQEk6zMigLPlDI5kfT6HnDOBw2Zmg/GleAfqApO4K6KB7FfiPN82MXF3gUTePYHY6bFXkVksfR1pHQ/RgKnBs4GEfS1sZafCRUd9gTOtambRJ" +
+            "nk0JgSD8VWB4eSZ/BspHY+jHw+Is1PZo6OODgls3qIKacAwc+kroQ4Qxatg8CyqeywNbfkRTa4qpZIQSVzwuuX6UPWDYWbFFQFUWbuy97d9aCyB2P3LDFgcaIMIXa+DgrjkKo9tpKSXfo2eSUY0" +
+            "/pScFjCzZb9mCqOlQpHchc3wO4F3DVoLkHd4iqfqc88f5RF5RcitleM7SzCS9Sjp0wMmEa2MJ7QRFobC6lXJnrKUW6QJVpqcCeFFyWiigN61L9uhmYk3JZVxP3T2atOirSvl1mJZCOqr7oJKK2l" +
+            "4uGVdSQbkuUFdcLiaVK7Q1c93e/GZCF1GD8gFwivZ9if0jVq0r7MFrhCJyeUGxTKbKCkD3otOn94xIsAIWQlhcoaRBCyLZ0FunVrpPeV1KAhW2HYzdLEIYw2SF5N4PPN3rtpSkqTZlp9Mmlqewg" +
+            "KLNH+1oX9oFpXYmtRffVXGCNMQMqA2rssDBhI/dpPdNk1DmEjHKpsEvHqk1FmGmpJdBNnphDPaWmsQEuYtTtuAGWp8sUCeu2xZ9JanttZFbIvIKv0vP/+NI7Ni3n5IqJEmtAbAPCEWSFoBlczGS" +
+            "B9sLEO0qNRItKcP8yWaDnQJXIv7Lan3ZMaQ4enVTeVPgXRlFZGNueVeOwW00FB2q19T8OOvylB2aoWrz2C2P9secXsdiVPuDNN4CKwE8DWlZPqhkc60EHwMLPSSkQoqohijuNVoPoczscUye9k8" +
+            "nDhGOtFPWdc3Nsqog7ip7B+kkqE3IOdKbCOKiiqu+b/qQzAb9ENLCptYncO88+SKGre3cQ73Qinr2YLGkCsOx9wNk8e2aJ79aGuMYO3OLJ5ssXZ+pamG9f1QecvwA3WO0HDh4AAA==");
 
         private void RefreshBarIndexes()
         {
