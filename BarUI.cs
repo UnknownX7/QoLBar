@@ -1100,13 +1100,11 @@ namespace QoLBar
                         {
                             var _align = (int)barConfig.Alignment;
                             ImGui.Text("Alignment");
-                            ImGui.Indent();
                             ImGui.RadioButton(vertical ? "Top" : "Left", ref _align, 0);
                             ImGui.SameLine(ImGui.GetWindowWidth() / 3);
                             ImGui.RadioButton("Center", ref _align, 1);
                             ImGui.SameLine(ImGui.GetWindowWidth() / 3 * 2);
                             ImGui.RadioButton(vertical ? "Bottom" : "Right", ref _align, 2);
-                            ImGui.Unindent();
                             if (_align != (int)barConfig.Alignment)
                             {
                                 barConfig.Alignment = (BarAlign)_align;
@@ -1116,13 +1114,11 @@ namespace QoLBar
 
                             var _visibility = (int)barConfig.Visibility;
                             ImGui.Text("Animation");
-                            ImGui.Indent();
                             ImGui.RadioButton("Slide", ref _visibility, 0);
                             ImGui.SameLine(ImGui.GetWindowWidth() / 3);
                             ImGui.RadioButton("Immediate", ref _visibility, 1);
                             ImGui.SameLine(ImGui.GetWindowWidth() / 3 * 2);
                             ImGui.RadioButton("Always Visible", ref _visibility, 2);
-                            ImGui.Unindent();
                             if (_visibility != (int)barConfig.Visibility)
                             {
                                 barConfig.Visibility = (VisibilityMode)_visibility;
@@ -1150,11 +1146,9 @@ namespace QoLBar
                         {
                             var _visibility = (int)barConfig.Visibility;
                             ImGui.Text("Animation");
-                            ImGui.Indent();
                             ImGui.RadioButton("Immediate", ref _visibility, 1);
                             ImGui.SameLine(ImGui.GetWindowWidth() / 2);
                             ImGui.RadioButton("Always Visible", ref _visibility, 2);
-                            ImGui.Unindent();
                             if (_visibility != (int)barConfig.Visibility)
                             {
                                 barConfig.Visibility = (VisibilityMode)_visibility;
