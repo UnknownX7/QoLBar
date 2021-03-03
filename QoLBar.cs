@@ -77,12 +77,12 @@ namespace QoLBar
         [DefaultValue("")] public string Name = string.Empty;
         public enum ShortcutType
         {
-            Single,
-            Multiline,
+            Command,
+            Multiline_DEPRECATED,
             Category,
             Spacer
         }
-        [DefaultValue(ShortcutType.Single)] public ShortcutType Type = ShortcutType.Single;
+        [DefaultValue(ShortcutType.Command)] public ShortcutType Type = ShortcutType.Command;
         [DefaultValue("")] public string Command = string.Empty;
         [DefaultValue(0)] public int Hotkey = 0;
         [DefaultValue(false)] public bool KeyPassthrough = false;
@@ -355,11 +355,11 @@ namespace QoLBar
                 CleanShortcut(sh.SubList);
             }
 
-            if (sh.Type != Shortcut.ShortcutType.Multiline && sh.Type != Shortcut.ShortcutType.Category)
-                sh.Mode = sh.GetDefaultValue(x => x.Mode);
-
             if (sh.Type == Shortcut.ShortcutType.Spacer)
+            {
                 sh.Command = sh.GetDefaultValue(x => x.Command);
+                sh.Mode = sh.GetDefaultValue(x => x.Mode);
+            }
 
             if (!sh.Name.StartsWith("::"))
             {

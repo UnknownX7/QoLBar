@@ -658,10 +658,8 @@ namespace QoLBar
 
             switch (type)
             {
-                case Shortcut.ShortcutType.Single:
-                    Plugin.ExecuteCommand(command);
-                    break;
-                case Shortcut.ShortcutType.Multiline:
+                case Shortcut.ShortcutType.Command:
+                case Shortcut.ShortcutType.Multiline_DEPRECATED:
                     switch (sh.Mode)
                     {
                         case Shortcut.ShortcutMode.Incremental:
@@ -820,22 +818,26 @@ namespace QoLBar
                     Config.Save();
                 IconBrowserUI.doPasteIcon = false;
             }
-            if (ImGui.InputText("Name          ", ref sh.Name, 256) && editing) // Not a bug... just ImGui not extending the window to fit multiline's name...
+            if (ImGui.InputText("Name                    ", ref sh.Name, 256) && editing) // Not a bug... just want the window to not change width depending on which type it is...
                 Config.Save();
             if (ImGui.IsItemHovered())
                 ImGui.SetTooltip("Start the name with ::x where x is a number to use icons, i.e. \"::2914\".\n" +
                     "Use ## anywhere in the name to make the text afterwards into a tooltip,\ni.e. \"Name##This is a Tooltip\".");
 
             var _t = (int)sh.Type;
-            if (ImGui.Combo("Type", ref _t, "Single\0Multiline\0Category\0Spacer"))
+            ImGui.TextUnformatted("Type");
+            ImGui.RadioButton("Command", ref _t, 0);
+            ImGui.SameLine(ImGui.GetWindowWidth() / 3);
+            ImGui.RadioButton("Category", ref _t, 2);
+            ImGui.SameLine(ImGui.GetWindowWidth() / 3 * 2);
+            ImGui.RadioButton("Spacer", ref _t, 3);
+            if (_t != (int)sh.Type)
             {
                 sh.Type = (Shortcut.ShortcutType)_t;
                 if (sh.Type == Shortcut.ShortcutType.Category)
                     sh.SubList ??= new List<Shortcut>();
 
-                if (sh.Type == Shortcut.ShortcutType.Single)
-                    sh.Command = sh.Command.Split('\n')[0];
-                else if (sh.Type != Shortcut.ShortcutType.Multiline)
+                if (sh.Type == Shortcut.ShortcutType.Spacer)
                     sh.Command = string.Empty;
 
                 if (editing)
@@ -844,12 +846,9 @@ namespace QoLBar
 
             switch (sh.Type)
             {
-                case Shortcut.ShortcutType.Single:
-                    if (ImGui.InputText("Command", ref sh.Command, (uint)Plugin.maxCommandLength) && editing)
-                        Config.Save();
-                    break;
-                case Shortcut.ShortcutType.Multiline:
-                    if (ImGui.InputTextMultiline("Command##Multi", ref sh.Command, (uint)Plugin.maxCommandLength * 15, new Vector2(272 * globalSize, 124 * globalSize)) && editing)
+                case Shortcut.ShortcutType.Command:
+                case Shortcut.ShortcutType.Multiline_DEPRECATED:
+                    if (ImGui.InputTextMultiline("Command##Input", ref sh.Command, (uint)Plugin.maxCommandLength * 15, new Vector2(272 * globalSize, 124 * globalSize)) && editing)
                         Config.Save();
                     break;
                 default:
@@ -925,14 +924,13 @@ namespace QoLBar
                     {
                         ItemBaseUI(sh, true);
 
-                        if (sh.Type == Shortcut.ShortcutType.Multiline || sh.Type == Shortcut.ShortcutType.Category)
+                        if (sh.Type != Shortcut.ShortcutType.Spacer)
                         {
                             var _m = (int)sh.Mode;
-                            ImGui.Text("Mode");
+                            ImGui.TextUnformatted("Mode");
                             if (ImGui.IsItemHovered())
                                 ImGui.SetTooltip("Changes the behavior when pressed.\n" +
                                     "Note: Not intended to be used with categories containing subcategories.");
-                            ImGui.Indent();
                             ImGui.RadioButton("Default", ref _m, 0);
                             if (ImGui.IsItemHovered())
                                 ImGui.SetTooltip("Default behavior, categories must be set to this to edit their shortcuts!");
@@ -944,7 +942,6 @@ namespace QoLBar
                             ImGui.RadioButton("Random", ref _m, 2);
                             if (ImGui.IsItemHovered())
                                 ImGui.SetTooltip("Executes a random line/shortcut when pressed.");
-                            ImGui.Unindent();
                             if (_m != (int)sh.Mode)
                             {
                                 sh.Mode = (Shortcut.ShortcutMode)_m;
