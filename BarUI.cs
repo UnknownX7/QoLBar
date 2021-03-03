@@ -576,8 +576,9 @@ namespace QoLBar
 
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
             {
-                var onHover = (!inCategory ? barConfig.OpenCategoriesOnHover : barConfig.OpenSubcategoriesOnHover) && type == Shortcut.ShortcutType.Category;
-                if (ImGui.IsMouseReleased(ImGuiMouseButton.Left) || (onHover && (!docked || barPos == revealPos) && !IsConfigPopupOpen()))
+                var isHoverEnabled = (!inCategory ? barConfig.OpenCategoriesOnHover : barConfig.OpenSubcategoriesOnHover) && type == Shortcut.ShortcutType.Category;
+                var allowHover = (!docked || barPos == revealPos) && !IsConfigPopupOpen() && !ImGui.IsPopupOpen("ShortcutCategory") && Keybind.GameHasFocus() && !ImGui.IsAnyMouseDown() && !ImGui.IsMouseReleased(ImGuiMouseButton.Right);
+                if (ImGui.IsMouseReleased(ImGuiMouseButton.Left) || (isHoverEnabled && allowHover))
                     clicked = true;
 
                 if (!string.IsNullOrEmpty(tooltip))

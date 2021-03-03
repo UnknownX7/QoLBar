@@ -25,7 +25,7 @@ namespace QoLBar
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern int GetWindowThreadProcessId(IntPtr handle, out int processId);
 
-        private static bool GameHasFocus()
+        public static bool GameHasFocus() // Should probably move this elsewhere
         {
             var activatedHandle = GetForegroundWindow();
             if (activatedHandle == IntPtr.Zero)
