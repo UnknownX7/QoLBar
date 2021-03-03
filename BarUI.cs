@@ -68,14 +68,21 @@ namespace QoLBar
             barNumber = nbar;
             SetupPosition();
 
-            foreach (var sh in barConfig.ShortcutList)
+            static void RandomizeShortcuts(List<Shortcut> shortcuts)
             {
-                if (sh.Mode == Shortcut.ShortcutMode.Random)
+                foreach (var sh in shortcuts)
                 {
-                    var count = Math.Max(1, (sh.Type == Shortcut.ShortcutType.Category) ? sh.SubList.Count : sh.Command.Split('\n').Length);
-                    sh._i = DateTime.Now.Millisecond % count;
+                    if (sh.Mode == Shortcut.ShortcutMode.Random)
+                    {
+                        var count = Math.Max(1, (sh.Type == Shortcut.ShortcutType.Category) ? sh.SubList.Count : sh.Command.Split('\n').Length);
+                        sh._i = DateTime.Now.Millisecond % count;
+                    }
+                    if (sh.Type == Shortcut.ShortcutType.Category)
+                        RandomizeShortcuts(sh.SubList);
                 }
             }
+
+            RandomizeShortcuts(barConfig.ShortcutList);
         }
 
         private bool CheckConditionSet()
