@@ -350,7 +350,8 @@ namespace QoLBar
             }
             else
             {
-                sh.Command = sh.GetDefaultValue(x => x.Command);
+                if (sh.Mode != Shortcut.ShortcutMode.Default)
+                    sh.Command = sh.GetDefaultValue(x => x.Command);
                 sh.CategoryColumns = Math.Max(sh.CategoryColumns, 1);
                 CleanShortcut(sh.SubList);
             }

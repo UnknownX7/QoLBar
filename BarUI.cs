@@ -693,6 +693,7 @@ namespace QoLBar
                             sh._i = (int)(QoLBar.GetFrameCount() % Math.Max(1, sh.SubList.Count));
                             break;
                         default:
+                            Plugin.ExecuteCommand(command);
                             SetupCategoryPosition(v, subItem);
                             ImGui.OpenPopup("ShortcutCategory");
                             break;
@@ -837,23 +838,15 @@ namespace QoLBar
                 if (sh.Type == Shortcut.ShortcutType.Category)
                     sh.SubList ??= new List<Shortcut>();
 
-                if (sh.Type == Shortcut.ShortcutType.Spacer)
-                    sh.Command = string.Empty;
-
                 if (editing)
                     Config.Save();
             }
 
-            switch (sh.Type)
+            if (sh.Type != Shortcut.ShortcutType.Spacer && (sh.Type != Shortcut.ShortcutType.Category || sh.Mode == Shortcut.ShortcutMode.Default))
             {
-                case Shortcut.ShortcutType.Command:
-                case Shortcut.ShortcutType.Multiline_DEPRECATED:
-                    var height = ImGui.GetFontSize() * Math.Min(sh.Command.Split('\n').Length + 1, 7) + Style.FramePadding.Y * 2; // ImGui issue #238: can't disable multiline scrollbar and it appears a whole line earlier than it should, so thats cool I guess
-                    if (ImGui.InputTextMultiline("Command##Input", ref sh.Command, (uint)Plugin.maxCommandLength * 15, new Vector2(0, height)) && editing)
-                        Config.Save();
-                    break;
-                default:
-                    break;
+                var height = ImGui.GetFontSize() * Math.Min(sh.Command.Split('\n').Length + 1, 7) + Style.FramePadding.Y * 2; // ImGui issue #238: can't disable multiline scrollbar and it appears a whole line earlier than it should, so thats cool I guess
+                if (ImGui.InputTextMultiline("Command##Input", ref sh.Command, (uint)Plugin.maxCommandLength * 15, new Vector2(0, height)) && editing)
+                    Config.Save();
             }
         }
 

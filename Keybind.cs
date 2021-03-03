@@ -189,7 +189,7 @@ namespace QoLBar
                     ImGui.TextUnformatted(GetKeyName(sh.Hotkey));
                     ImGui.NextColumn();
                     if (sh.Type == Shortcut.ShortcutType.Category)
-                        ImGui.TextUnformatted($"{sh.Mode} {(sh._parent == null ? "Category" : "Subcategory")} \"{sh.Name}\"");
+                        ImGui.TextUnformatted($"{sh.Mode} {(sh._parent == null ? "Category" : "Subcategory")} \"{sh.Name}\" {(string.IsNullOrEmpty(sh.Command) ? "" : "\n" + sh.Command)}");
                     else
                         ImGui.TextUnformatted(sh.Command);
                     ImGui.NextColumn();
