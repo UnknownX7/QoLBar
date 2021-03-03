@@ -2,7 +2,6 @@ using System;
 using System.Numerics;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using ImGuiNET;
 using Dalamud.Game.ClientState;
 
@@ -481,7 +480,7 @@ namespace QoLBar
                             1 => !(arg is string) && (ulong)arg == pluginInterface.ClientState.LocalContentId,
                             2 => pluginInterface.ClientState.Targets.CurrentTarget != null,
                             3 => pluginInterface.ClientState.Targets.FocusTarget != null,
-                            4 => (player != null) && ((Marshal.ReadByte(player.Address + 0x1980) & 4) > 0),
+                            4 => (player != null) && IsWeaponDrawn(player),
                             5 => arg is string && CheckTimeCondition(arg),
                             _ => false,
                         };
@@ -495,6 +494,8 @@ namespace QoLBar
                 return b;
             }
         }
+
+        private static unsafe bool IsWeaponDrawn(Dalamud.Game.ClientState.Actors.Types.PlayerCharacter player) => (*(byte*)(player.Address + 0x1980) & 0b100) > 0;
 
         private static unsafe DateTimeOffset GetEorzeaTime() => DateTimeOffset.FromUnixTimeSeconds(*(long*)(QoLBar.Interface.Framework.Address.BaseAddress + 0x1608));
 
