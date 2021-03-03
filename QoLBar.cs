@@ -384,21 +384,28 @@ namespace QoLBar
             return JsonConvert.DeserializeObject<T>(JsonConvert.SerializeObject(o, settings), settings);
         }
 
-        public static string ExportObject(object o, bool saveAllValues)
-        {
-            string jstring = !saveAllValues ? JsonConvert.SerializeObject(o, new JsonSerializerSettings
+        public static string SerializeObject(object o, bool saveAllValues) => !saveAllValues
+            ? JsonConvert.SerializeObject(o, new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.Objects,
                 NullValueHandling = NullValueHandling.Ignore,
                 DefaultValueHandling = DefaultValueHandling.Ignore,
                 SerializationBinder = qolSerializer
-            }) :
-            JsonConvert.SerializeObject(o, new JsonSerializerSettings
+            })
+            : JsonConvert.SerializeObject(o, new JsonSerializerSettings
             {
                 TypeNameHandling = TypeNameHandling.Objects
             });
 
-            var bytes = Encoding.UTF8.GetBytes(jstring);
+        public static T DeserializeObject<T>(string o) => JsonConvert.DeserializeObject<T>(o, new JsonSerializerSettings
+            {
+                TypeNameHandling = TypeNameHandling.Objects,
+                SerializationBinder = qolSerializer
+            });
+
+        public static string CompressString(string s)
+        {
+            var bytes = Encoding.UTF8.GetBytes(s);
             using var mso = new MemoryStream();
             using (var gs = new GZipStream(mso, CompressionMode.Compress))
             {
@@ -407,9 +414,9 @@ namespace QoLBar
             return Convert.ToBase64String(mso.ToArray());
         }
 
-        public static T ImportObject<T>(string import)
+        public static string DecompressString(string s)
         {
-            var data = Convert.FromBase64String(import);
+            var data = Convert.FromBase64String(s);
             byte[] lengthBuffer = new byte[4];
             Array.Copy(data, data.Length - 4, lengthBuffer, 0, 4);
             int uncompressedSize = BitConverter.ToInt32(lengthBuffer, 0);
@@ -420,12 +427,12 @@ namespace QoLBar
                 using var gzip = new GZipStream(ms, CompressionMode.Decompress);
                 gzip.Read(buffer, 0, uncompressedSize);
             }
-            return JsonConvert.DeserializeObject<T>(Encoding.UTF8.GetString(buffer), new JsonSerializerSettings
-            {
-                TypeNameHandling = TypeNameHandling.Objects,
-                SerializationBinder = qolSerializer
-            });
+            return Encoding.UTF8.GetString(buffer);
         }
+
+        public static string ExportObject(object o, bool saveAllValues) => CompressString(SerializeObject(o, saveAllValues));
+
+        public static T ImportObject<T>(string import) => DeserializeObject<T>(DecompressString(import));
 
         public static string ExportBar(BarConfig bar, bool saveAllValues)
         {

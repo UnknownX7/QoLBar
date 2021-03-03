@@ -5,6 +5,7 @@ using System.Numerics;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using ImGuiNET;
 using Dalamud.Plugin;
 
@@ -350,6 +351,8 @@ namespace QoLBar
             ImGui.Columns(1);
         }
 
+        private string debug_SerializedImport = string.Empty;
+        private string debug_DeserializedImport = string.Empty;
         private void DrawDebugMenu()
         {
             ImGui.TextUnformatted("Game Data Pointers");
@@ -370,6 +373,51 @@ namespace QoLBar
 
             ImGui.Columns(1);
             ImGui.Unindent();
+            ImGui.Separator();
+            ImGui.Spacing();
+
+            if (ImGui.TreeNodeEx("Import Editor", ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.NoTreePushOnOpen))
+            {
+                var available = ImGui.GetContentRegionAvail();
+                ImGui.TextUnformatted("Serialized String");
+                ImGui.SetNextItemWidth(available.X);
+                if (ImGui.InputText("##Serialized", ref debug_SerializedImport, 1000000, ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.NoHorizontalScroll))
+                {
+                    try
+                    {
+                        var o = QoLBar.ImportObject<BarConfig>(debug_SerializedImport);
+                        debug_DeserializedImport = JsonConvert.SerializeObject(o, Formatting.Indented, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Objects });
+                    }
+                    catch
+                    {
+                        try
+                        {
+                            var o = QoLBar.ImportObject<Shortcut>(debug_SerializedImport);
+                            debug_DeserializedImport = JsonConvert.SerializeObject(o, Formatting.Indented, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Objects });
+                        }
+                        catch { }
+                    }
+                }
+
+                ImGui.TextUnformatted("Deserialized String");
+                if (ImGui.InputTextMultiline("##Deserialized", ref debug_DeserializedImport, 1000000, new Vector2(available.X, available.Y / 2)))
+                {
+                    try
+                    {
+                        debug_SerializedImport = QoLBar.ExportBar(QoLBar.ImportObject<BarConfig>(QoLBar.CompressString(debug_DeserializedImport)), true);
+                    }
+                    catch
+                    {
+                        try
+                        {
+                            debug_SerializedImport = QoLBar.ExportShortcut(QoLBar.ImportObject<Shortcut>(QoLBar.CompressString(debug_DeserializedImport)), true);
+                        }
+                        catch { }
+                    }
+                }
+            }
+
+            ImGui.Spacing();
             ImGui.Separator();
             ImGui.Spacing();
 
