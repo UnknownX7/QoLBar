@@ -1,5 +1,6 @@
 using System;
 using System.Numerics;
+using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using ImGuiNET;
@@ -209,6 +210,7 @@ namespace QoLBar
                             if (ImGui.Selectable("Misc", cond.Type == DisplayCondition.ConditionType.Misc))
                             {
                                 cond.Type = DisplayCondition.ConditionType.Misc;
+                                cond.Arg = 0;
                                 config.Save();
                             }
 
@@ -283,9 +285,12 @@ namespace QoLBar
                                         "Character ID",
                                         "Have Target",
                                         "Have Focus Target",
-                                        "Weapon Drawn"
+                                        "Weapon Drawn",
+                                        "Eorzea Timespan"
                                     };
 
+                                    if (cond.Condition == 5)
+                                        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X / 2);
                                     if (ImGui.BeginCombo("##Misc", (0 <= cond.Condition && cond.Condition < opts.Length) ? opts[cond.Condition] : string.Empty))
                                     {
                                         void AddMiscConditionSelectable(int id, dynamic arg)
@@ -310,10 +315,27 @@ namespace QoLBar
 
                                         AddMiscConditionSelectable(4, 0);
 
+                                        AddMiscConditionSelectable(5, "");
+
                                         ImGui.EndCombo();
                                     }
                                     if (cond.Condition == 1 && ImGui.IsItemHovered())
                                         ImGui.SetTooltip($"ID: {cond.Arg}");
+                                    if (cond.Condition == 5)
+                                    {
+                                        ImGui.SameLine();
+                                        string timespan = cond.Arg is string ? cond.Arg : string.Empty;
+                                        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+                                        if (ImGui.InputText("##Timespan", ref timespan, 16))
+                                        {
+                                            cond.Arg = timespan;
+                                            config.Save();
+                                        }
+                                        if (ImGui.IsItemHovered())
+                                            ImGui.SetTooltip("Timespan must be formatted as \"01:30-22:10\" and may contain \"X\" wildcards.\n" +
+                                                "I.e \"XX:30-XX:10\" will return true for times such as 01:30, 13:54, and 21:09.\n" +
+                                                "The minimum time is inclusive, but the maximum is not.");
+                                    }
                                 }
                                 break;
                             case DisplayCondition.ConditionType.Zone:
@@ -456,10 +478,11 @@ namespace QoLBar
                         b = cond switch
                         {
                             0 => pluginInterface.ClientState.Condition.Any(),
-                            1 => (ulong)arg == pluginInterface.ClientState.LocalContentId,
+                            1 => !(arg is string) && (ulong)arg == pluginInterface.ClientState.LocalContentId,
                             2 => pluginInterface.ClientState.Targets.CurrentTarget != null,
                             3 => pluginInterface.ClientState.Targets.FocusTarget != null,
                             4 => (player != null) && ((Marshal.ReadByte(player.Address + 0x1980) & 4) > 0),
+                            5 => arg is string && CheckTimeCondition(arg),
                             _ => false,
                         };
                         break;
@@ -471,6 +494,55 @@ namespace QoLBar
                 _conditionCache[(type, cond, arg)] = b;
                 return b;
             }
+        }
+
+        private static unsafe DateTimeOffset GetEorzeaTime() => DateTimeOffset.FromUnixTimeSeconds(*(long*)(QoLBar.Interface.Framework.Address.BaseAddress + 0x1608));
+
+        private static (double, double, double, double) ParseTime(string str) => (char.GetNumericValue(str[0]), char.GetNumericValue(str[1]), char.GetNumericValue(str[3]), char.GetNumericValue(str[4]));
+
+        private static bool IsTimeBetween(string tStr, string minStr, string maxStr)
+        {
+            var t = ParseTime(tStr);
+            var min = ParseTime(minStr);
+            var max = ParseTime(maxStr);
+
+            var minTime = 0.0;
+            var maxTime = 0.0;
+            var curTime = 0.0;
+            if (min.Item1 >= 0 && max.Item1 >= 0)
+            {
+                minTime += min.Item1 * 1000;
+                maxTime += max.Item1 * 1000;
+                curTime += t.Item1 * 1000;
+            }
+            if (min.Item2 >= 0 && max.Item2 >= 0)
+            {
+                minTime += min.Item2 * 100;
+                maxTime += max.Item2 * 100;
+                curTime += t.Item2 * 100;
+            }
+            if (min.Item3 >= 0 && max.Item3 >= 0)
+            {
+                minTime += min.Item3 * 10;
+                maxTime += max.Item3 * 10;
+                curTime += t.Item3 * 10;
+            }
+            if (min.Item4 >= 0 && max.Item4 >= 0)
+            {
+                minTime += min.Item4;
+                maxTime += max.Item4;
+                curTime += t.Item4;
+            }
+            return (minTime < maxTime) ? (minTime <= curTime && curTime < maxTime) : (minTime <= curTime || curTime < maxTime);
+        }
+
+        private static bool CheckTimeCondition(string arg)
+        {
+            var reg = Regex.Match(arg, @"^([0-9Xx]{2}:[0-9Xx]{2})\s*-\s*([0-9Xx]{2}:[0-9Xx]{2})$");
+            if (reg.Groups.Count == 3)
+                return IsTimeBetween(GetEorzeaTime().ToString("HH:mm"), reg.Groups[1].Value, reg.Groups[2].Value);
+            else
+                return false;
         }
 
         public static bool CheckCache()
