@@ -848,7 +848,8 @@ namespace QoLBar
             {
                 case Shortcut.ShortcutType.Command:
                 case Shortcut.ShortcutType.Multiline_DEPRECATED:
-                    if (ImGui.InputTextMultiline("Command##Input", ref sh.Command, (uint)Plugin.maxCommandLength * 15, new Vector2(272 * globalSize, 124 * globalSize)) && editing)
+                    var height = ImGui.GetFontSize() * Math.Min(sh.Command.Split('\n').Length + 1, 7) + Style.FramePadding.Y * 2; // ImGui issue #238: can't disable multiline scrollbar and it appears a whole line earlier than it should, so thats cool I guess
+                    if (ImGui.InputTextMultiline("Command##Input", ref sh.Command, (uint)Plugin.maxCommandLength * 15, new Vector2(0, height)) && editing)
                         Config.Save();
                     break;
                 default:
