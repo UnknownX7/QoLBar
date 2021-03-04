@@ -19,9 +19,11 @@ namespace QoLBar
         }
 
         public bool IsVisible => !barConfig.Hidden && CheckConditionSet();
-        public void ToggleVisible()
+        public bool GetHidden() => barConfig.Hidden;
+        public void SetHidden() => SetHidden(!barConfig.Hidden);
+        public void SetHidden(bool b)
         {
-            barConfig.Hidden = !barConfig.Hidden;
+            barConfig.Hidden = b;
             Config.Save();
         }
 

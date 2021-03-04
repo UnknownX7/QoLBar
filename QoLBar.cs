@@ -1,6 +1,7 @@
 using System;
 using System.Numerics;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using System.IO;
@@ -244,7 +245,7 @@ namespace QoLBar
             CheckHideOptOuts();
         }
 
-        public void ToggleConfig(object sender, EventArgs e) => ui.ToggleConfig();
+        public void ToggleConfig(object sender, EventArgs e) => ToggleConfig();
 
         [Command("/qolbar")]
         [HelpMessage("Open the configuration menu.")]
@@ -254,14 +255,59 @@ namespace QoLBar
         [HelpMessage("Open the icon browser.")]
         public void ToggleIconBrowser(string command = null, string argument = null) => IconBrowserUI.ToggleIconBrowser();
 
+        [Command("/qolvisible")]
+        [HelpMessage("Hide or reveal a bar using its name or index. Usage: /qolvisible [on|off|toggle] <bar>")]
+        private void OnQoLVisible(string command, string argument)
+        {
+            var reg = Regex.Match(argument, @"^(\w+) (.+)");
+            if (reg.Success)
+            {
+                var subcommand = reg.Groups[1].Value.ToLower();
+                var bar = reg.Groups[2].Value;
+                var useID = int.TryParse(bar, out var id);
+                switch (subcommand)
+                {
+                    case "on":
+                    case "reveal":
+                    case "r":
+                        if (useID)
+                            ui.SetBarHidden(id - 1, false, false);
+                        else
+                            ui.SetBarHidden(bar, false, false);
+                        break;
+                    case "off":
+                    case "hide":
+                    case "h":
+                        if (useID)
+                            ui.SetBarHidden(id - 1, false, true);
+                        else
+                            ui.SetBarHidden(bar, false, true);
+                        break;
+                    case "toggle":
+                    case "t":
+                        if (useID)
+                            ui.SetBarHidden(id - 1, true);
+                        else
+                            ui.SetBarHidden(bar, true);
+                        break;
+                    default:
+                        PrintError("Invalid subcommand.");
+                        break;
+                }
+            }
+            else
+                PrintError("Usage: /qolvisible [on|off|toggle] <bar>");
+        }
+
+        [DoNotShowInHelp]
         [Command("/qoltoggle")]
-        [HelpMessage("Hide or reveal a bar using its name or index.")]
+        [HelpMessage("DEPRECATED: use /qolvisible")]
         private void OnQoLToggle(string command, string argument)
         {
             if (int.TryParse(argument, out var id))
-                ui.ToggleBarVisible(id - 1);
+                ui.SetBarHidden(id - 1, true);
             else
-                ui.ToggleBarVisible(argument);
+                ui.SetBarHidden(argument, true);
         }
 
         public static bool IsLoggedIn() => ConditionCache.GetCondition(DisplayCondition.ConditionType.Misc, 0);

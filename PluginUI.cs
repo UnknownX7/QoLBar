@@ -151,7 +151,7 @@ namespace QoLBar
                 bars[i].BarConfigPopup();
                 ImGui.SameLine();
                 if (ImGui.Button(bar.Hidden ? "R" : "H"))
-                    bars[i].ToggleVisible();
+                    bars[i].SetHidden();
                 if (ImGui.IsItemHovered())
                     ImGui.SetTooltip(bar.Hidden ? "Reveal" : "Hide");
                 ImGui.SameLine();
@@ -514,32 +514,32 @@ namespace QoLBar
                 bars[i].SetBarNumber(i);
         }
 
-        public bool ToggleBarVisible(int i)
+        public void SetBarHidden(int i, bool toggle, bool b = false)
         {
             if (i < 0 || i >= bars.Count)
-            {
                 QoLBar.PrintError($"Bar #{i + 1} does not exist.");
-                return false;
-            }
             else
             {
-                bars[i].ToggleVisible();
-                return true;
+                if (toggle)
+                    bars[i].SetHidden();
+                else
+                    bars[i].SetHidden(b);
             }
         }
 
-        public bool ToggleBarVisible(string name)
+        public void SetBarHidden(string name, bool toggle, bool b = false)
         {
             var found = false;
             for (int i = 0; i < bars.Count; ++i)
             {
                 if (Config.BarConfigs[i].Title == name)
-                    found = ToggleBarVisible(i) || found;
+                {
+                    found = true;
+                    SetBarHidden(i, toggle, b);
+                }
             }
             if (!found)
                 QoLBar.PrintError($"Bar \"{name}\" does not exist.");
-
-            return found;
         }
 
         private void BackupFile(FileInfo file, string name = "", bool overwrite = false)
