@@ -324,16 +324,37 @@ namespace QoLBar
                                     {
                                         ImGui.SameLine();
                                         string timespan = cond.Arg is string ? cond.Arg : string.Empty;
+                                        var reg = Regex.Match(timespan, ConditionCache.TimespanRegex);
                                         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
                                         if (ImGui.InputText("##Timespan", ref timespan, 16))
                                         {
                                             cond.Arg = timespan;
                                             config.Save();
                                         }
+                                        if (!reg.Success)
+                                            ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), 0x200000FF, 5f);
+
                                         if (ImGui.IsItemHovered())
-                                            ImGui.SetTooltip("Timespan must be formatted as \"01:30-22:10\" and may contain \"X\" wildcards.\n" +
+                                        {
+                                            var regexInfo = "Failed regex!";
+                                            if (reg.Success)
+                                            {
+                                                var min = ConditionCache.ParseTime(reg.Groups[1].Value);
+                                                var max = ConditionCache.ParseTime(reg.Groups[2].Value);
+                                                var use1 = min.Item1 >= 0 && max.Item1 >= 0;
+                                                var use2 = min.Item2 >= 0 && max.Item2 >= 0;
+                                                var use3 = min.Item3 >= 0 && max.Item3 >= 0;
+                                                var use4 = min.Item4 >= 0 && max.Item4 >= 0;
+                                                var minStr = $"{(use1 ? min.Item1.ToString() : "X")}{(use2 ? min.Item2.ToString() : "X")}:{(use3 ? min.Item3.ToString() : "X")}{(use4 ? min.Item4.ToString() : "X")}";
+                                                var maxStr = $"{(use1 ? max.Item1.ToString() : "X")}{(use2 ? max.Item2.ToString() : "X")}:{(use3 ? max.Item3.ToString() : "X")}{(use4 ? max.Item4.ToString() : "X")}";
+                                                regexInfo = $"Minimum: {minStr}\nMaximum: {maxStr} {(minStr == maxStr ? "\nWarning: this will always be true!" : string.Empty)}";
+                                            }
+
+                                            ImGui.SetTooltip("Timespan should be formatted as \"XX:XX-XX:XX\" (24h) and may contain \"X\" wildcards.\n" +
                                                 "I.e \"XX:30-XX:10\" will return true for times such as 01:30, 13:54, and 21:09.\n" +
-                                                "The minimum time is inclusive, but the maximum is not.");
+                                                "The minimum time is inclusive, but the maximum is not.\n\n" +
+                                                regexInfo);
+                                        }
                                     }
                                 }
                                 break;
@@ -452,6 +473,8 @@ namespace QoLBar
         private static float _lastCache = 0;
         public static float GetLastCache() => _lastCache;
 
+        public const string TimespanRegex = @"^([0-9Xx]{1,2}:[0-9Xx]{2})\s*-\s*([0-9Xx]{1,2}:[0-9Xx]{2})$";
+
         public static bool GetCondition(DisplayCondition.ConditionType type, int cond, dynamic arg = null)
         {
             var pluginInterface = QoLBar.Interface;
@@ -499,7 +522,11 @@ namespace QoLBar
 
         private static unsafe DateTimeOffset GetEorzeaTime() => DateTimeOffset.FromUnixTimeSeconds(*(long*)(QoLBar.Interface.Framework.Address.BaseAddress + 0x1608));
 
-        private static (double, double, double, double) ParseTime(string str) => (char.GetNumericValue(str[0]), char.GetNumericValue(str[1]), char.GetNumericValue(str[3]), char.GetNumericValue(str[4]));
+        public static (double, double, double, double) ParseTime(string str) => str.Length switch {
+            4 => (0, char.GetNumericValue(str[0]), char.GetNumericValue(str[2]), char.GetNumericValue(str[3])),
+            5 => (char.GetNumericValue(str[0]), char.GetNumericValue(str[1]), char.GetNumericValue(str[3]), char.GetNumericValue(str[4])),
+            _ => (0, 0, 0, 0)
+        };
 
         private static bool IsTimeBetween(string tStr, string minStr, string maxStr)
         {
@@ -539,8 +566,8 @@ namespace QoLBar
 
         private static bool CheckTimeCondition(string arg)
         {
-            var reg = Regex.Match(arg, @"^([0-9Xx]{2}:[0-9Xx]{2})\s*-\s*([0-9Xx]{2}:[0-9Xx]{2})$");
-            if (reg.Groups.Count == 3)
+            var reg = Regex.Match(arg, TimespanRegex);
+            if (reg.Success)
                 return IsTimeBetween(GetEorzeaTime().ToString("HH:mm"), reg.Groups[1].Value, reg.Groups[2].Value);
             else
                 return false;
