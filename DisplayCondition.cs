@@ -285,10 +285,11 @@ namespace QoLBar
                                         "Have Target",
                                         "Have Focus Target",
                                         "Weapon Drawn",
-                                        "Eorzea Timespan"
+                                        "Eorzea Timespan",
+                                        "Local Timespan"
                                     };
 
-                                    if (cond.Condition == 5)
+                                    if (cond.Condition == 5 || cond.Condition == 6)
                                         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X / 2);
                                     if (ImGui.BeginCombo("##Misc", (0 <= cond.Condition && cond.Condition < opts.Length) ? opts[cond.Condition] : string.Empty))
                                     {
@@ -314,13 +315,15 @@ namespace QoLBar
 
                                         AddMiscConditionSelectable(4, 0);
 
-                                        AddMiscConditionSelectable(5, "");
+                                        AddMiscConditionSelectable(5, cond.Arg is string ? cond.Arg : string.Empty);
+
+                                        AddMiscConditionSelectable(6, cond.Arg is string ? cond.Arg : string.Empty);
 
                                         ImGui.EndCombo();
                                     }
                                     if (cond.Condition == 1 && ImGui.IsItemHovered())
                                         ImGui.SetTooltip($"ID: {cond.Arg}");
-                                    if (cond.Condition == 5)
+                                    if (cond.Condition == 5 || cond.Condition == 6)
                                     {
                                         ImGui.SameLine();
                                         string timespan = cond.Arg is string ? cond.Arg : string.Empty;
@@ -504,7 +507,8 @@ namespace QoLBar
                             2 => pluginInterface.ClientState.Targets.CurrentTarget != null,
                             3 => pluginInterface.ClientState.Targets.FocusTarget != null,
                             4 => (player != null) && IsWeaponDrawn(player),
-                            5 => arg is string && CheckTimeCondition(arg),
+                            5 => arg is string && CheckEorzeaTimeCondition(arg),
+                            6 => arg is string && CheckLocalTimeCondition(arg),
                             _ => false,
                         };
                         break;
@@ -564,11 +568,20 @@ namespace QoLBar
             return (minTime < maxTime) ? (minTime <= curTime && curTime < maxTime) : (minTime <= curTime || curTime < maxTime);
         }
 
-        private static bool CheckTimeCondition(string arg)
+        private static bool CheckEorzeaTimeCondition(string arg)
         {
             var reg = Regex.Match(arg, TimespanRegex);
             if (reg.Success)
                 return IsTimeBetween(GetEorzeaTime().ToString("HH:mm"), reg.Groups[1].Value, reg.Groups[2].Value);
+            else
+                return false;
+        }
+
+        private static bool CheckLocalTimeCondition(string arg)
+        {
+            var reg = Regex.Match(arg, TimespanRegex);
+            if (reg.Success)
+                return IsTimeBetween(DateTime.Now.ToString("HH:mm"), reg.Groups[1].Value, reg.Groups[2].Value);
             else
                 return false;
         }
