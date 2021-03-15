@@ -90,7 +90,7 @@ namespace QoLBar
                                     sh._activated = true;
                                 }
                                 else
-                                    bar.ItemClicked(sh, false, false);
+                                    bar.ItemClicked(sh, false, false, false);
 
                                 if (!sh.KeyPassthrough && k <= 160)
                                     QoLBar.Interface.ClientState.KeyState[k] = false;

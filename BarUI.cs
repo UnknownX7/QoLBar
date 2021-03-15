@@ -505,9 +505,9 @@ namespace QoLBar
             {
                 ImGui.PushID(i);
 
-                DrawShortcut(i, barConfig.ShortcutList, barConfig.ButtonWidth * globalSize * barConfig.Scale, (sh) =>
+                DrawShortcut(i, barConfig.ShortcutList, barConfig.ButtonWidth * globalSize * barConfig.Scale, (sh, wasHovered) =>
                 {
-                    ItemClicked(sh, vertical, false);
+                    ItemClicked(sh, vertical, false, wasHovered);
                 });
 
                 if (!vertical && i != barConfig.ShortcutList.Count - 1)
@@ -517,7 +517,7 @@ namespace QoLBar
             }
         }
 
-        private void DrawShortcut(int i, List<Shortcut> shortcuts, float width, Action<Shortcut> callback)
+        private void DrawShortcut(int i, List<Shortcut> shortcuts, float width, Action<Shortcut, bool> callback)
         {
             var inCategory = (shortcuts != barConfig.ShortcutList);
             var sh = shortcuts[i];
@@ -583,18 +583,29 @@ namespace QoLBar
             if (inCategory)
                 ImGui.PopStyleColor();
 
+            var wasHovered = false;
+            clicked = clicked || (sh._activated && !_activated);
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
             {
-                var isHoverEnabled = (!inCategory ? barConfig.OpenCategoriesOnHover : barConfig.OpenSubcategoriesOnHover) && type == Shortcut.ShortcutType.Category;
-                var allowHover = (!docked || barPos == revealPos) && !IsConfigPopupOpen() && !ImGui.IsPopupOpen("ShortcutCategory") && Keybind.GameHasFocus() && !ImGui.IsAnyMouseDown() && !ImGui.IsMouseReleased(ImGuiMouseButton.Right);
-                if (ImGui.IsMouseReleased(ImGuiMouseButton.Left) || (isHoverEnabled && allowHover))
+                if (ImGui.IsMouseReleased(ImGuiMouseButton.Left))
                     clicked = true;
+
+                if (!clicked)
+                {
+                    var isHoverEnabled = (!inCategory ? barConfig.OpenCategoriesOnHover : barConfig.OpenSubcategoriesOnHover) && type == Shortcut.ShortcutType.Category;
+                    var allowHover = (!docked || barPos == revealPos) && !IsConfigPopupOpen() && !ImGui.IsPopupOpen("ShortcutCategory") && Keybind.GameHasFocus() && !ImGui.IsAnyMouseDown() && !ImGui.IsMouseReleased(ImGuiMouseButton.Right);
+                    if (isHoverEnabled && allowHover)
+                    {
+                        wasHovered = true;
+                        clicked = true;
+                    }
+                }
 
                 if (!string.IsNullOrEmpty(tooltip))
                     ImGui.SetTooltip(tooltip);
             }
 
-            if (clicked || (sh._activated && !_activated))
+            if (clicked)
             {
                 if (sh._activated)
                 {
@@ -615,7 +626,7 @@ namespace QoLBar
                     }
                 }
 
-                callback(sh);
+                callback(sh, wasHovered);
             }
 
             ImGui.OpenPopupContextItem("editItem");
@@ -661,7 +672,7 @@ namespace QoLBar
             ImGui.PopStyleVar();
         }
 
-        public void ItemClicked(Shortcut sh, bool v, bool subItem)
+        public void ItemClicked(Shortcut sh, bool v, bool subItem, bool wasHovered)
         {
             var type = sh.Type;
             var command = sh.Command;
@@ -694,16 +705,17 @@ namespace QoLBar
                     {
                         case Shortcut.ShortcutMode.Incremental:
                             if (0 <= sh._i && sh._i < sh.SubList.Count)
-                                ItemClicked(sh.SubList[sh._i], v, true);
+                                ItemClicked(sh.SubList[sh._i], v, true, wasHovered);
                             sh._i = (sh._i + 1) % Math.Max(1, sh.SubList.Count);
                             break;
                         case Shortcut.ShortcutMode.Random:
                             if (0 <= sh._i && sh._i < sh.SubList.Count)
-                                ItemClicked(sh.SubList[sh._i], v, true);
+                                ItemClicked(sh.SubList[sh._i], v, true, wasHovered);
                             sh._i = (int)(QoLBar.GetFrameCount() % Math.Max(1, sh.SubList.Count));
                             break;
                         default:
-                            Plugin.ExecuteCommand(command);
+                            if (!wasHovered)
+                                Plugin.ExecuteCommand(command);
                             SetupCategoryPosition(v, subItem);
                             ImGui.OpenPopup("ShortcutCategory");
                             break;
@@ -778,9 +790,9 @@ namespace QoLBar
                     ImGui.PushID(j);
 
                     var stayOpen = sh.CategoryStaysOpen;
-                    DrawShortcut(j, sublist, width, (sh) =>
+                    DrawShortcut(j, sublist, width, (sh, wasHovered) =>
                     {
-                        ItemClicked(sh, sublist.Count >= (cols * (cols - 1) + 1), true);
+                        ItemClicked(sh, sublist.Count >= (cols * (cols - 1) + 1), true, wasHovered);
                         if (!stayOpen && sh.Type != Shortcut.ShortcutType.Category && sh.Type != Shortcut.ShortcutType.Spacer)
                             ImGui.CloseCurrentPopup();
                     });
