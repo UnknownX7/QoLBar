@@ -287,9 +287,9 @@ namespace QoLBar
             ImGui.Spacing();
             ImGui.Spacing();
             ImGui.TextUnformatted("Temporary settings, ENABLE AT OWN RISK");
-            ImGui.Checkbox("Allow importing conditions", ref QoLBar.allowImportConditions);
+            ImGui.Checkbox("Allow importing conditions", ref Importing.allowImportConditions);
             ImGui.SameLine(ImGui.GetWindowWidth() / 2);
-            ImGui.Checkbox("Allow importing hotkeys", ref QoLBar.allowImportHotkeys);
+            ImGui.Checkbox("Allow importing hotkeys", ref Importing.allowImportHotkeys);
         }
 
         private void DrawBackupManager()
@@ -385,14 +385,14 @@ namespace QoLBar
                 {
                     try
                     {
-                        var o = QoLBar.ImportObject<BarConfig>(debug_SerializedImport);
+                        var o = Importing.ImportObject<BarConfig>(debug_SerializedImport);
                         debug_DeserializedImport = JsonConvert.SerializeObject(o, Formatting.Indented, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Objects });
                     }
                     catch
                     {
                         try
                         {
-                            var o = QoLBar.ImportObject<Shortcut>(debug_SerializedImport);
+                            var o = Importing.ImportObject<Shortcut>(debug_SerializedImport);
                             debug_DeserializedImport = JsonConvert.SerializeObject(o, Formatting.Indented, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Objects });
                         }
                         catch { }
@@ -404,13 +404,13 @@ namespace QoLBar
                 {
                     try
                     {
-                        debug_SerializedImport = QoLBar.ExportBar(QoLBar.ImportObject<BarConfig>(QoLBar.CompressString(debug_DeserializedImport)), true);
+                        debug_SerializedImport = Importing.ExportBar(Importing.ImportObject<BarConfig>(Importing.CompressString(debug_DeserializedImport)), true);
                     }
                     catch
                     {
                         try
                         {
-                            debug_SerializedImport = QoLBar.ExportShortcut(QoLBar.ImportObject<Shortcut>(QoLBar.CompressString(debug_DeserializedImport)), true);
+                            debug_SerializedImport = Importing.ExportShortcut(Importing.ImportObject<Shortcut>(Importing.CompressString(debug_DeserializedImport)), true);
                         }
                         catch { }
                     }
@@ -434,7 +434,7 @@ namespace QoLBar
         private void RemoveBar(int i)
         {
             if (Config.ExportOnDelete)
-                ImGui.SetClipboardText(QoLBar.ExportBar(Config.BarConfigs[i], false));
+                ImGui.SetClipboardText(Importing.ExportBar(Config.BarConfigs[i], false));
 
             bars.RemoveAt(i);
             Config.BarConfigs.RemoveAt(i);
@@ -459,36 +459,25 @@ namespace QoLBar
             }
         }
 
-        public string ExportBar(int i, bool saveAllValues) => QoLBar.ExportBar(Config.BarConfigs[i], saveAllValues);
+        public string ExportBar(int i, bool saveAllValues) => Importing.ExportBar(Config.BarConfigs[i], saveAllValues);
 
         public void ImportBar(string import)
         {
-            try
+            var imports = Importing.TryImport(import, true);
+            if (imports.bar != null)
+                AddBar(imports.bar);
+            else if (imports.shortcut != null)
             {
-                AddBar(QoLBar.ImportBar(import));
-            }
-            catch (Exception e) // Try as a shortcut instead
-            {
-                try
-                {
-                    var sh = QoLBar.ImportShortcut(ImGui.GetClipboardText());
-                    var bar = new BarConfig();
-                    bar.ShortcutList.Add(sh);
-                    AddBar(bar);
-                }
-                catch (Exception e2)
-                {
-                    PluginLog.LogError("Invalid import string!");
-                    PluginLog.LogError($"{e.GetType()}\n{e.Message}");
-                    PluginLog.LogError($"{e2.GetType()}\n{e2.Message}");
-                }
+                var bar = new BarConfig();
+                bar.ShortcutList.Add(imports.shortcut);
+                AddBar(bar);
             }
         }
 
         private void AddDemoBar()
         {
-            var prev = QoLBar.allowImportHotkeys;
-            QoLBar.allowImportHotkeys = true;
+            var prev = Importing.allowImportHotkeys;
+            Importing.allowImportHotkeys = true;
             ImportBar("H4sIAAAAAAAEALVZbW/bOBL+K4y9QPdwjk+SJfnlW5O22xwumyLJoptuDgtaoi1uJFInUnF8i/73nSElv6SWlNy5QNFYFDkzfDiceWb0Z+8Hvc5Zb9ab9wa9W65T/H367v3l1SkM3CSy0FGp/8WV7s1++3MzW8HLn2mGP3E" +
                 "uOXt7jevNy9GgdxFJccsFrNku8WHCr72ZO3QGvbvq75fq72fz1xlNPTccff06OKjogtCMUKLZkyYR1Wwpi/VGqQfGlvM2O89lKgsWm/X9/q2VIsickah680epNEn5AyMwzmELr9ySM3Qndg/u86017elTwZQiGSMLWZCsTDXPU0ZY" +
                 "lEicdC6zjIoY5v0Dh8hHlqbyXtgHnbCCnfS6BGtpxBF3QLwBGREuiCxiVhwQ79aivfrHCGZdyhgEui/ZACUFyJOZ0XhAwZ0syYqLk1o8PqdSseFwuFHkNSjq96vzn6dUPJB5qTUcULurqHJeO0q//1E+soKLJZE5E2jygKxBP/oAT" +
@@ -506,7 +495,7 @@ namespace QoLBar
                 "OHaxBGEIk52SdTP4bKPX/jTFpCkvjT6Zm4oOgjJ7sq91YQdMy0psLbqvZIE1xgyoDKixw8KEDdxqJ51GnUHIKHOF3TlWHSrCTEstgW7yyFzqOTUNDXARo27HDbAszWMkrNvWfiqp7bGRRSGzCr5Kz//jS+/YvFySSyZKrP2w/bep3" +
                 "zjcmgLtBcE7Ss2KFpXg/mWUoOfQSPNHVvvTjinNwaOTypvK/twoKgtj2zdVOJxWU8GBWm3dj5OeL3zkipuIulgQ++mw/sDzi0h2Vx7w5GtARODnAC2rkUpCz3rPAaDwE1IsVwN0LWzE3e8bIWobeqY+eiejhxuONVIw6J2Z61JF2k" +
                 "nwDZyfpDKh5kAnyg9HVTT1PNOP7N2AP2KxiE2sTcTeGfsgha6enWG403n45sVNTiOAZO+DzWbsG0s8pzbEMXbg0d5svnRxpq6E+dZVfbD5C5JpTb3jHQAA");
-            QoLBar.allowImportHotkeys = prev;
+            Importing.allowImportHotkeys = prev;
         }
 
         private void RefreshBarIndexes()

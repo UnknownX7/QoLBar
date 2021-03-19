@@ -867,7 +867,7 @@ namespace QoLBar
             if (sh.Type != Shortcut.ShortcutType.Spacer && (sh.Type != Shortcut.ShortcutType.Category || sh.Mode == Shortcut.ShortcutMode.Default))
             {
                 var height = ImGui.GetFontSize() * Math.Min(sh.Command.Split('\n').Length + 1, 7) + Style.FramePadding.Y * 2; // ImGui issue #238: can't disable multiline scrollbar and it appears a whole line earlier than it should, so thats cool I guess
-                if (ImGui.InputTextMultiline("Command##Input", ref sh.Command, (uint)Plugin.maxCommandLength * 15, new Vector2(0, height)) && editing)
+                if (ImGui.InputTextMultiline("Command##Input", ref sh.Command, 65535, new Vector2(0, height)) && editing)
                     Config.Save();
             }
         }
@@ -892,29 +892,16 @@ namespace QoLBar
                 ImGui.SameLine();
                 if (ImGui.Button("Import"))
                 {
-                    try
+                    var imports = Importing.TryImport(ImGui.GetClipboardText(), true);
+                    if (imports.shortcut != null)
+                        shortcuts.Add(imports.shortcut);
+                    else if (imports.bar != null)
                     {
-                        shortcuts.Add(QoLBar.ImportShortcut(ImGui.GetClipboardText()));
-                        Config.Save();
-                        ImGui.CloseCurrentPopup();
+                        foreach (var sh in imports.bar.ShortcutList)
+                            shortcuts.Add(sh);
                     }
-                    catch (Exception e) // Try as a bar instead
-                    {
-                        try
-                        {
-                            var bar = QoLBar.ImportBar(ImGui.GetClipboardText());
-                            foreach (var sh in bar.ShortcutList)
-                                shortcuts.Add(sh);
-                            Config.Save();
-                            ImGui.CloseCurrentPopup();
-                        }
-                        catch (Exception e2)
-                        {
-                            PluginLog.LogError("Invalid import string!");
-                            PluginLog.LogError($"{e.GetType()}\n{e.Message}");
-                            PluginLog.LogError($"{e2.GetType()}\n{e2.Message}");
-                        }
-                    }
+                    Config.Save();
+                    ImGui.CloseCurrentPopup();
                 }
                 if (ImGui.IsItemHovered())
                     ImGui.SetTooltip("Import a shortcut from the clipboard,\n" +
@@ -1049,14 +1036,14 @@ namespace QoLBar
                 }
                 ImGui.SameLine();
                 if (ImGui.Button("Export"))
-                    ImGui.SetClipboardText(QoLBar.ExportShortcut(sh, false));
+                    ImGui.SetClipboardText(Importing.ExportShortcut(sh, false));
                 if (ImGui.IsItemHovered())
                 {
                     ImGui.SetTooltip("Export to clipboard with minimal settings (May change with updates).\n" +
                         "Right click to export with every setting (Longer string, doesn't change).");
 
                     if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
-                        ImGui.SetClipboardText(QoLBar.ExportShortcut(sh, true));
+                        ImGui.SetClipboardText(Importing.ExportShortcut(sh, true));
                 }
                 ImGui.SameLine();
                 if (ImGui.Button(Config.ExportOnDelete ? "Cut" : "Delete"))
@@ -1070,7 +1057,7 @@ namespace QoLBar
                     if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
                     {
                         if (Config.ExportOnDelete)
-                            ImGui.SetClipboardText(QoLBar.ExportShortcut(sh, false));
+                            ImGui.SetClipboardText(Importing.ExportShortcut(sh, false));
 
                         shortcuts.RemoveAt(i);
                         Config.Save();
@@ -1251,14 +1238,14 @@ namespace QoLBar
                 ImGui.Spacing();
                 ImGui.Spacing();
                 if (ImGui.Button("Export"))
-                    ImGui.SetClipboardText(QoLBar.ExportBar(barConfig, false));
+                    ImGui.SetClipboardText(Importing.ExportBar(barConfig, false));
                 if (ImGui.IsItemHovered())
                 {
                     ImGui.SetTooltip("Export to clipboard with minimal settings (May change with updates).\n" +
                         "Right click to export with every setting (Longer string, doesn't change).");
 
                     if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
-                        ImGui.SetClipboardText(QoLBar.ExportBar(barConfig, true));
+                        ImGui.SetClipboardText(Importing.ExportBar(barConfig, true));
                 }
                 ImGui.SameLine();
                 if (ImGui.Button("QoL Bar Config"))
