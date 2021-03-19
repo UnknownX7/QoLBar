@@ -304,6 +304,7 @@ namespace QoLBar
         [HelpMessage("DEPRECATED: use /qolvisible")]
         private void OnQoLToggle(string command, string argument)
         {
+            PrintError($"Please use \"/qolvisible t {argument}\" instead, this command will be removed soon.");
             if (int.TryParse(argument, out var id))
                 ui.SetBarHidden(id - 1, true);
             else
