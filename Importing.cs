@@ -14,10 +14,14 @@ namespace QoLBar
     {
         private readonly static Type barType = typeof(BarConfig);
         private readonly static Type shortcutType = typeof(Shortcut);
+        private readonly static Type barType2 = typeof(BarCfg);
+        private readonly static Type shortcutType2 = typeof(ShCfg);
         private readonly static Type vector2Type = typeof(Vector2);
         private readonly static Type vector4Type = typeof(Vector4);
         private readonly static string barShortName = "b";
         private readonly static string shortcutShortName = "s";
+        private readonly static string barShortName2 = "b2";
+        private readonly static string shortcutShortName2 = "s2";
         private readonly static string vector2ShortName = "2";
         private readonly static string vector4ShortName = "4";
         private readonly static Dictionary<string, Type> types = new Dictionary<string, Type>
@@ -26,6 +30,10 @@ namespace QoLBar
             [barShortName] = barType,
             [shortcutType.FullName] = shortcutType,
             [shortcutShortName] = shortcutType,
+            [barType2.FullName] = barType2,
+            [barShortName2] = barType2,
+            [shortcutType2.FullName] = shortcutType2,
+            [shortcutShortName2] = shortcutType2,
             [vector2Type.FullName] = vector2Type,
             [vector2ShortName] = vector2Type,
             [vector4Type.FullName] = vector4Type,
@@ -35,6 +43,8 @@ namespace QoLBar
         {
             [barType] = barShortName,
             [shortcutType] = shortcutShortName,
+            [barType2] = barShortName2,
+            [shortcutType2] = shortcutShortName2,
             [vector2Type] = vector2ShortName,
             [vector4Type] = vector4ShortName
         };
@@ -59,14 +69,23 @@ namespace QoLBar
         }
     }
 
-    public struct ImportStruct
-    {
-        public BarConfig bar;
-        public Shortcut shortcut;
-    }
-
     public static class Importing
     {
+        public class ImportInfo
+        {
+            public BarCfg bar;
+            public ShCfg shortcut;
+        }
+
+        private class ExportInfo
+        {
+            public BarConfig b1;
+            public BarCfg b2;
+            public Shortcut s1;
+            public ShCfg s2;
+            public string v;
+        }
+
         private static readonly QoLSerializer qolSerializer = new QoLSerializer();
 
         private static void CleanBarConfig(BarConfig bar)
@@ -261,24 +280,47 @@ namespace QoLBar
             return sh;
         }
 
-        public static ImportStruct TryImport(string import, bool printError = false)
+        public static ImportInfo TryImport(string import, bool printError = false)
         {
-            ImportStruct imports = new ImportStruct();
-            try { imports.bar = ImportBar(import); }
-            catch (Exception e1)
+            ExportInfo imported;
+            try
             {
-                try { imports.shortcut = ImportShortcut(import); }
-                catch (Exception e2)
+                imported = ImportObject<ExportInfo>(import);
+            }
+            catch (Exception e)
+            {
+                // If we failed to import the ExportInfo then this is an old version
+                imported = ImportLegacy(import);
+                if (imported == null && printError)
                 {
-                    if (printError)
-                    {
-                        PluginLog.LogError("Invalid import string!");
-                        PluginLog.LogError($"{e1.GetType()}\n{e1.Message}");
-                        PluginLog.LogError($"{e2.GetType()}\n{e2.Message}");
-                    }
+                    PluginLog.LogError("Invalid import string!");
+                    PluginLog.LogError($"{e.GetType()}\n{e.Message}");
                 }
             }
-            return imports;
+
+            if (imported != null)
+            {
+                // TODO: upgrade configs
+                // TODO: change export functions to ExportInfo
+            }
+
+            return new ImportInfo
+            {
+                bar = imported?.b2,
+                shortcut = imported?.s2
+            };
+        }
+
+        private static ExportInfo ImportLegacy(string import)
+        {
+            var imported = new ExportInfo();
+            try { imported.b1 = ImportBar(import); }
+            catch
+            {
+                try { imported.s1 = ImportShortcut(import); }
+                catch { return null; }
+            }
+            return imported;
         }
     }
 }

@@ -2,7 +2,6 @@ using System;
 using System.Numerics;
 using System.Collections.Generic;
 using ImGuiNET;
-using Dalamud.Plugin;
 using static QoLBar.BarConfig;
 
 namespace QoLBar
@@ -894,11 +893,11 @@ namespace QoLBar
                 {
                     var imports = Importing.TryImport(ImGui.GetClipboardText(), true);
                     if (imports.shortcut != null)
-                        shortcuts.Add(imports.shortcut);
+                        ;//shortcuts.Add(imports.shortcut);
                     else if (imports.bar != null)
                     {
                         foreach (var sh in imports.bar.ShortcutList)
-                            shortcuts.Add(sh);
+                            ;//shortcuts.Add(sh);
                     }
                     Config.Save();
                     ImGui.CloseCurrentPopup();

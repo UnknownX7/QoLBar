@@ -465,11 +465,11 @@ namespace QoLBar
         {
             var imports = Importing.TryImport(import, true);
             if (imports.bar != null)
-                AddBar(imports.bar);
+                ;//AddBar(imports.bar);
             else if (imports.shortcut != null)
             {
                 var bar = new BarConfig();
-                bar.ShortcutList.Add(imports.shortcut);
+                ;//bar.ShortcutList.Add(imports.shortcut);
                 AddBar(bar);
             }
         }
