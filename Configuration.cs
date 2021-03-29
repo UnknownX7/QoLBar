@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Numerics;
 using System.Collections.Generic;
 using System.IO;
@@ -58,6 +58,36 @@ namespace QoLBar
         [DefaultValue(false)] public bool OpenCategoriesOnHover = false;
         [DefaultValue(false)] public bool OpenSubcategoriesOnHover = false;
         [DefaultValue(-1)] public int ConditionSet = -1;
+
+        public BarCfg Upgrade()
+        {
+            var bar = new BarCfg
+            {
+                Name = Title,
+                Hidden = Hidden,
+                Visibility = (BarCfg.BarVisibility)Visibility,
+                Alignment = (BarCfg.BarAlign)Alignment,
+                DockSide = (BarCfg.BarDock)DockSide,
+                Hint = Hint,
+                ButtonWidth = ButtonWidth,
+                Editing = !HideAdd,
+                //Position = Position,
+                LockedPosition = LockedPosition,
+                //Offset = Offset,
+                Scale = Scale,
+                RevealAreaScale = RevealAreaScale,
+                FontScale = FontScale,
+                //Spacing = Spacing, store this as a "vector" instead for eventual bar columns
+                NoBackground = NoBackground,
+                ConditionSet = ConditionSet
+            };
+            //CategorySpacing
+
+            foreach (var sh in ShortcutList)
+                bar.ShortcutList.Add(sh.Upgrade(this, false));
+
+            return bar;
+        }
     }
 
     public class Shortcut
@@ -93,6 +123,45 @@ namespace QoLBar
         [JsonIgnore] public int _i = 0;
         [JsonIgnore] public Shortcut _parent = null;
         [JsonIgnore] public bool _activated = false;
+
+        public ShCfg Upgrade(BarConfig bar, bool sub)
+        {
+            var sh = new ShCfg
+            {
+                Name = Name,
+                Command = Command,
+                Hotkey = Hotkey,
+                KeyPassthrough = KeyPassthrough,
+                Mode = (ShCfg.ShortcutMode)Mode,
+                Color = IconTint,
+                IconZoom = IconZoom,
+                IconOffset = IconOffset,
+                CategoryWidth = CategoryWidth,
+                CategoryStaysOpen = CategoryStaysOpen,
+                CategoryColumns = CategoryColumns,
+                //CategorySpacing = bar.CategorySpacing,
+                CategoryScale = bar.CategoryScale,
+                CategoryFontScale = bar.CategoryFontScale,
+                CategoryNoBackground = bar.NoCategoryBackgrounds,
+                CategoryOnHover = !sub ? bar.OpenCategoriesOnHover : bar.OpenSubcategoriesOnHover
+            };
+
+            sh.Type = Type switch
+            {
+                ShortcutType.Category => ShCfg.ShortcutType.Category,
+                ShortcutType.Spacer => ShCfg.ShortcutType.Spacer,
+                _ => ShCfg.ShortcutType.Command
+            };
+
+            if (SubList != null)
+            {
+                sh.SubList ??= new List<ShCfg>();
+                foreach (var s in SubList)
+                    sh.SubList.Add(s.Upgrade(bar, true));
+            }
+
+            return sh;
+        }
     }
 
     // TODO: convert vectors into stuff that uses less space
