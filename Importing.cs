@@ -12,12 +12,14 @@ namespace QoLBar
 {
     public class QoLSerializer : DefaultSerializationBinder
     {
+        private readonly static Type exportType = typeof(Importing.ExportInfo);
         private readonly static Type barType = typeof(BarConfig);
         private readonly static Type shortcutType = typeof(Shortcut);
         private readonly static Type barType2 = typeof(BarCfg);
         private readonly static Type shortcutType2 = typeof(ShCfg);
         private readonly static Type vector2Type = typeof(Vector2);
         private readonly static Type vector4Type = typeof(Vector4);
+        private readonly static string exportShortName = "e";
         private readonly static string barShortName = "b";
         private readonly static string shortcutShortName = "s";
         private readonly static string barShortName2 = "b2";
@@ -26,6 +28,8 @@ namespace QoLBar
         private readonly static string vector4ShortName = "4";
         private readonly static Dictionary<string, Type> types = new Dictionary<string, Type>
         {
+            [exportType.FullName] = exportType,
+            [exportShortName] = exportType,
             [barType.FullName] = barType,
             [barShortName] = barType,
             [shortcutType.FullName] = shortcutType,
@@ -41,6 +45,7 @@ namespace QoLBar
         };
         private readonly static Dictionary<Type, string> typeNames = new Dictionary<Type, string>
         {
+            [exportType] = exportShortName,
             [barType] = barShortName,
             [shortcutType] = shortcutShortName,
             [barType2] = barShortName2,
@@ -233,17 +238,18 @@ namespace QoLBar
 
             if (!allowImportHotkeys)
             {
-                static void removeHotkeys(List<Shortcut> shortcuts)
+                static void removeHotkeys(Shortcut sh)
                 {
-                    foreach (var sh in shortcuts)
+                    sh.Hotkey = sh.GetDefaultValue(x => x.Hotkey);
+                    sh.KeyPassthrough = sh.GetDefaultValue(x => x.KeyPassthrough);
+                    if (sh.SubList != null && sh.SubList.Count > 0)
                     {
-                        sh.Hotkey = sh.GetDefaultValue(x => x.Hotkey);
-                        sh.KeyPassthrough = sh.GetDefaultValue(x => x.KeyPassthrough);
-                        if (sh.SubList != null && sh.SubList.Count > 0)
-                            removeHotkeys(sh.SubList);
+                        foreach (var sub in sh.SubList)
+                            removeHotkeys(sub);
                     }
                 }
-                removeHotkeys(bar.ShortcutList);
+                foreach (var sh in bar.ShortcutList)
+                    removeHotkeys(sh);
             }
 
             return bar;
@@ -265,8 +271,17 @@ namespace QoLBar
 
             if (!allowImportHotkeys)
             {
-                sh.Hotkey = sh.GetDefaultValue(x => x.Hotkey);
-                sh.KeyPassthrough = sh.GetDefaultValue(x => x.KeyPassthrough);
+                static void removeHotkeys(Shortcut sh)
+                {
+                    sh.Hotkey = sh.GetDefaultValue(x => x.Hotkey);
+                    sh.KeyPassthrough = sh.GetDefaultValue(x => x.KeyPassthrough);
+                    if (sh.SubList != null && sh.SubList.Count > 0)
+                    {
+                        foreach (var sub in sh.SubList)
+                            removeHotkeys(sub);
+                    }
+                }
+                removeHotkeys(sh);
             }
 
             return sh;
@@ -290,10 +305,37 @@ namespace QoLBar
                 }
             }
 
-            if (imported?.b1 != null)
-                imported.b2 = imported.b1.Upgrade();
-            else if (imported?.s1 != null)
-                imported.s2 = imported.s1.Upgrade(new BarConfig(), false);
+            if (imported != null)
+            {
+                if (imported.b1 != null)
+                    imported.b2 = imported.b1.Upgrade();
+                else if (imported.s1 != null)
+                    imported.s2 = imported.s1.Upgrade(new BarConfig(), false);
+
+                if (!allowImportConditions && imported.b2 != null)
+                    imported.b2.ConditionSet = imported.b2.GetDefaultValue(x => x.ConditionSet);
+
+                if (!allowImportHotkeys)
+                {
+                    static void removeHotkeys(ShCfg sh)
+                    {
+                        sh.Hotkey = sh.GetDefaultValue(x => x.Hotkey);
+                        sh.KeyPassthrough = sh.GetDefaultValue(x => x.KeyPassthrough);
+                        if (sh.SubList != null && sh.SubList.Count > 0)
+                        {
+                            foreach (var sub in sh.SubList)
+                                removeHotkeys(sub);
+                        }
+                    }
+
+                    if (imported.b2 != null)
+                        foreach (var sh in imported.b2.ShortcutList)
+                            removeHotkeys(sh);
+
+                    if (imported.s2 != null)
+                        removeHotkeys(imported.s2);
+                }
+            }
 
             return new ImportInfo
             {
