@@ -77,20 +77,20 @@ namespace QoLBar
             public ShCfg shortcut;
         }
 
-        private class ExportInfo
+        public class ExportInfo
         {
             public BarConfig b1;
             public BarCfg b2;
             public Shortcut s1;
             public ShCfg s2;
-            public string v;
+            //public string v = QoLBar.Config.PluginVersion;
         }
 
         private static readonly QoLSerializer qolSerializer = new QoLSerializer();
 
-        private static void CleanBarConfig(BarConfig bar)
+        private static void CleanBarConfig(BarCfg bar)
         {
-            if (bar.DockSide == BarConfig.BarDock.UndockedH || bar.DockSide == BarConfig.BarDock.UndockedV)
+            if (bar.DockSide == BarCfg.BarDock.UndockedH || bar.DockSide == BarCfg.BarDock.UndockedV)
             {
                 bar.Alignment = bar.GetDefaultValue(x => x.Alignment);
                 bar.RevealAreaScale = bar.GetDefaultValue(x => x.RevealAreaScale);
@@ -103,46 +103,45 @@ namespace QoLBar
                 bar.Position = bar.GetDefaultValue(x => x.Position);
                 bar.RevealAreaScale = bar.GetDefaultValue(x => x.RevealAreaScale);
 
-                if (bar.Visibility == BarConfig.VisibilityMode.Always)
+                if (bar.Visibility == BarCfg.BarVisibility.Always)
                 {
                     bar.RevealAreaScale = bar.GetDefaultValue(x => x.RevealAreaScale);
                     bar.Hint = bar.GetDefaultValue(x => x.Hint);
                 }
             }
-            // Cursed optimization...
-            if (bar.CategorySpacing.X == 8 && bar.CategorySpacing.Y == 4)
-                bar.CategorySpacing = bar.GetDefaultValue(x => x.CategorySpacing);
-            else if (bar.CategorySpacing == Vector2.Zero)
-                bar.CategorySpacing = new Vector2(0.1f);
 
             CleanShortcut(bar.ShortcutList);
         }
 
-        private static void CleanShortcut(List<Shortcut> shortcuts)
+        private static void CleanShortcut(List<ShCfg> shortcuts)
         {
             foreach (var sh in shortcuts)
                 CleanShortcut(sh);
         }
 
-        private static void CleanShortcut(Shortcut sh)
+        private static void CleanShortcut(ShCfg sh)
         {
-            if (sh.Type != Shortcut.ShortcutType.Category)
+            if (sh.Type != ShCfg.ShortcutType.Category)
             {
                 sh.SubList = sh.GetDefaultValue(x => x.SubList);
-                sh.HideAdd = sh.GetDefaultValue(x => x.HideAdd);
                 sh.CategoryColumns = sh.GetDefaultValue(x => x.CategoryColumns);
                 sh.CategoryStaysOpen = sh.GetDefaultValue(x => x.CategoryStaysOpen);
                 sh.CategoryWidth = sh.GetDefaultValue(x => x.CategoryWidth);
+                sh.CategorySpacing = sh.GetDefaultValue(x => x.CategorySpacing);
+                sh.CategoryScale = sh.GetDefaultValue(x => x.CategoryScale);
+                sh.CategoryFontScale = sh.GetDefaultValue(x => x.CategoryFontScale);
+                sh.CategoryNoBackground = sh.GetDefaultValue(x => x.CategoryNoBackground);
+                sh.CategoryOnHover = sh.GetDefaultValue(x => x.CategoryOnHover);
             }
             else
             {
-                if (sh.Mode != Shortcut.ShortcutMode.Default)
+                if (sh.Mode != ShCfg.ShortcutMode.Default)
                     sh.Command = sh.GetDefaultValue(x => x.Command);
                 sh.CategoryColumns = Math.Max(sh.CategoryColumns, 1);
                 CleanShortcut(sh.SubList);
             }
 
-            if (sh.Type == Shortcut.ShortcutType.Spacer)
+            if (sh.Type == ShCfg.ShortcutType.Spacer)
             {
                 sh.Command = sh.GetDefaultValue(x => x.Command);
                 sh.Mode = sh.GetDefaultValue(x => x.Mode);
@@ -153,15 +152,8 @@ namespace QoLBar
                 sh.IconZoom = sh.GetDefaultValue(x => x.IconZoom);
                 sh.IconOffset = sh.GetDefaultValue(x => x.IconOffset);
             }
-
-            sh.IconTint.X = Math.Min(Math.Max(sh.IconTint.X, 0), 1);
-            sh.IconTint.Y = Math.Min(Math.Max(sh.IconTint.Y, 0), 1);
-            sh.IconTint.Z = Math.Min(Math.Max(sh.IconTint.Z, 0), 1);
-            sh.IconTint.W = Math.Min(Math.Max(sh.IconTint.W, 0), 2);
-            if (sh.IconTint == Vector4.One)
-                sh.IconTint = sh.GetDefaultValue(x => x.IconTint);
-            else if (sh.IconTint.W == 0)
-                sh.IconTint = new Vector4(1, 1, 1, 0);
+            else if (sh.ColorAnimation == 0)
+                sh.ColorBg = sh.GetDefaultValue(x => x.ColorBg);
         }
 
         public static T CopyObject<T>(T o)
@@ -220,14 +212,14 @@ namespace QoLBar
 
         public static T ImportObject<T>(string import) => DeserializeObject<T>(DecompressString(import));
 
-        public static string ExportBar(BarConfig bar, bool saveAllValues)
+        public static string ExportBar(BarCfg bar, bool saveAllValues)
         {
             if (!saveAllValues)
             {
                 bar = CopyObject(bar);
                 CleanBarConfig(bar);
             }
-            return ExportObject(bar, saveAllValues);
+            return ExportObject(new ExportInfo { b2 = bar }, saveAllValues);
         }
 
         public static bool allowImportConditions = false;
@@ -257,14 +249,14 @@ namespace QoLBar
             return bar;
         }
 
-        public static string ExportShortcut(Shortcut sh, bool saveAllValues)
+        public static string ExportShortcut(ShCfg sh, bool saveAllValues)
         {
             if (!saveAllValues)
             {
                 sh = CopyObject(sh);
                 CleanShortcut(sh);
             }
-            return ExportObject(sh, saveAllValues);
+            return ExportObject(new ExportInfo { s2 = sh }, saveAllValues);
         }
 
         public static Shortcut ImportShortcut(string import)
@@ -298,11 +290,10 @@ namespace QoLBar
                 }
             }
 
-            if (imported != null)
-            {
-                // TODO: upgrade configs
-                // TODO: change export functions to ExportInfo
-            }
+            if (imported?.b1 != null)
+                imported.b2 = imported.b1.Upgrade();
+            else if (imported?.s1 != null)
+                imported.s2 = imported.s1.Upgrade(new BarConfig(), false);
 
             return new ImportInfo
             {

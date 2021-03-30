@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Numerics;
 using System.Collections.Generic;
 using System.IO;
@@ -11,160 +11,6 @@ using Dalamud.Plugin;
 
 namespace QoLBar
 {
-    public class BarConfig
-    {
-        [DefaultValue("")] public string Title = string.Empty;
-        [DefaultValue(null)] public List<Shortcut> ShortcutList = new List<Shortcut>();
-        [DefaultValue(false)] public bool Hidden = false;
-        public enum VisibilityMode
-        {
-            Slide,
-            Immediate,
-            Always
-        }
-        [DefaultValue(VisibilityMode.Always)] public VisibilityMode Visibility = VisibilityMode.Always;
-        public enum BarAlign
-        {
-            LeftOrTop,
-            Center,
-            RightOrBottom
-        }
-        [DefaultValue(BarAlign.Center)] public BarAlign Alignment = BarAlign.Center;
-        public enum BarDock
-        {
-            Top,
-            Left,
-            Bottom,
-            Right,
-            UndockedH,
-            UndockedV
-        }
-        [DefaultValue(BarDock.Bottom)] public BarDock DockSide = BarDock.Bottom;
-        [DefaultValue(false)] public bool Hint = false;
-        [DefaultValue(100)] public int ButtonWidth = 100;
-        [DefaultValue(false)] public bool HideAdd = false;
-        public Vector2 Position = Vector2.Zero;
-        [DefaultValue(false)] public bool LockedPosition = false;
-        public Vector2 Offset = Vector2.Zero;
-        [DefaultValue(1.0f)] public float Scale = 1.0f;
-        [DefaultValue(1.0f)] public float CategoryScale = 1.0f;
-        [DefaultValue(1.0f)] public float RevealAreaScale = 1.0f;
-        [DefaultValue(1.0f)] public float FontScale = 1.0f;
-        [DefaultValue(1.0f)] public float CategoryFontScale = 1.0f;
-        [DefaultValue(8)] public int Spacing = 8;
-        public Vector2 CategorySpacing = new Vector2(8, 4);
-        [DefaultValue(false)] public bool NoBackground = false;
-        [DefaultValue(false)] public bool NoCategoryBackgrounds = false;
-        [DefaultValue(false)] public bool OpenCategoriesOnHover = false;
-        [DefaultValue(false)] public bool OpenSubcategoriesOnHover = false;
-        [DefaultValue(-1)] public int ConditionSet = -1;
-
-        public BarCfg Upgrade()
-        {
-            var oldPos = Position / ImGui.GetIO().DisplaySize;
-            var oldOffset = Offset / ImGui.GetIO().DisplaySize;
-
-            var bar = new BarCfg
-            {
-                Name = Title,
-                Hidden = Hidden,
-                Visibility = (BarCfg.BarVisibility)Visibility,
-                Alignment = (BarCfg.BarAlign)Alignment,
-                DockSide = (BarCfg.BarDock)DockSide,
-                Hint = Hint,
-                ButtonWidth = ButtonWidth,
-                Editing = !HideAdd,
-                Position = new[] { oldPos.X, oldPos.Y },
-                LockedPosition = LockedPosition,
-                Offset = new[] { oldOffset.X, oldOffset.Y },
-                Scale = Scale,
-                RevealAreaScale = RevealAreaScale,
-                FontScale = FontScale,
-                Spacing = new[] { Spacing, Spacing },
-                NoBackground = NoBackground,
-                ConditionSet = ConditionSet
-            };
-
-            foreach (var sh in ShortcutList)
-                bar.ShortcutList.Add(sh.Upgrade(this, false));
-
-            return bar;
-        }
-    }
-
-    public class Shortcut
-    {
-        [DefaultValue("")] public string Name = string.Empty;
-        public enum ShortcutType
-        {
-            Command,
-            Multiline_DEPRECATED,
-            Category,
-            Spacer
-        }
-        [DefaultValue(ShortcutType.Command)] public ShortcutType Type = ShortcutType.Command;
-        [DefaultValue("")] public string Command = string.Empty;
-        [DefaultValue(0)] public int Hotkey = 0;
-        [DefaultValue(false)] public bool KeyPassthrough = false;
-        [DefaultValue(null)] public List<Shortcut> SubList;
-        [DefaultValue(false)] public bool HideAdd = false;
-        public enum ShortcutMode
-        {
-            Default,
-            Incremental,
-            Random
-        }
-        [DefaultValue(ShortcutMode.Default)] public ShortcutMode Mode = ShortcutMode.Default;
-        [DefaultValue(140)] public int CategoryWidth = 140;
-        [DefaultValue(false)] public bool CategoryStaysOpen = false;
-        [DefaultValue(1)] public int CategoryColumns = 1;
-        [DefaultValue(1.0f)] public float IconZoom = 1.0f;
-        public Vector2 IconOffset = Vector2.Zero;
-        public Vector4 IconTint = Vector4.One;
-
-        [JsonIgnore] public int _i = 0;
-        [JsonIgnore] public Shortcut _parent = null;
-        [JsonIgnore] public bool _activated = false;
-
-        public ShCfg Upgrade(BarConfig bar, bool sub)
-        {
-            var sh = new ShCfg
-            {
-                Name = Name,
-                Type = Type switch
-                {
-                    ShortcutType.Category => ShCfg.ShortcutType.Category,
-                    ShortcutType.Spacer => ShCfg.ShortcutType.Spacer,
-                    _ => ShCfg.ShortcutType.Command
-                },
-                Command = Command,
-                Hotkey = Hotkey,
-                KeyPassthrough = KeyPassthrough,
-                Mode = (ShCfg.ShortcutMode)Mode,
-                Color = ImGui.ColorConvertFloat4ToU32(IconTint),
-                IconZoom = IconZoom,
-                IconOffset = new[] { IconOffset.X, IconOffset.Y },
-                CategoryWidth = CategoryWidth,
-                CategoryStaysOpen = CategoryStaysOpen,
-                CategoryColumns = CategoryColumns,
-                CategorySpacing = new[] { (int)bar.CategorySpacing.X, (int)bar.CategorySpacing.Y },
-                CategoryScale = bar.CategoryScale,
-                CategoryFontScale = bar.CategoryFontScale,
-                CategoryNoBackground = bar.NoCategoryBackgrounds,
-                CategoryOnHover = !sub ? bar.OpenCategoriesOnHover : bar.OpenSubcategoriesOnHover
-            };
-
-            if (SubList != null)
-            {
-                sh.SubList ??= new List<ShCfg>();
-                foreach (var s in SubList)
-                    sh.SubList.Add(s.Upgrade(bar, true));
-            }
-
-            return sh;
-        }
-    }
-
     // TODO: go through and rename stuff
     public class BarCfg
     {
@@ -199,13 +45,13 @@ namespace QoLBar
         [JsonProperty("ht")] [DefaultValue(false)]                public bool Hint = false;
         [JsonProperty("bW")] [DefaultValue(100)]                  public int ButtonWidth = 100;
         [JsonProperty("e")]  [DefaultValue(false)]                public bool Editing = true;
-        [JsonProperty("p")]  [DefaultValue(new[] { 0f, 0f })]     public float[] Position = new float[2]; // TODO
+        [JsonProperty("p")]  [DefaultValue(new[] { 0f, 0f })]     public float[] Position = new float[2];
         [JsonProperty("l")]  [DefaultValue(false)]                public bool LockedPosition = false;
-        [JsonProperty("o")]  [DefaultValue(new[] { 0f, 0f })]     public float[] Offset = new float[2]; // TODO
+        [JsonProperty("o")]  [DefaultValue(new[] { 0f, 0f })]     public float[] Offset = new float[2]; // TODO: should it be merged into position?
         [JsonProperty("s")]  [DefaultValue(1.0f)]                 public float Scale = 1.0f;
         [JsonProperty("rA")] [DefaultValue(1.0f)]                 public float RevealAreaScale = 1.0f;
         [JsonProperty("fS")] [DefaultValue(1.0f)]                 public float FontScale = 1.0f;
-        [JsonProperty("sp")] [DefaultValue(new[] { 8, 4 })]       public int[] Spacing = new[] { 8, 4 }; // TODO
+        [JsonProperty("sp")] [DefaultValue(new[] { 8, 4 })]       public int[] Spacing = new[] { 8, 4 };
         [JsonProperty("nB")] [DefaultValue(false)]                public bool NoBackground = false;
         [JsonProperty("c")]  [DefaultValue(-1)]                   public int ConditionSet = -1;
     }
@@ -232,13 +78,15 @@ namespace QoLBar
         [JsonProperty("kP")]  [DefaultValue(false)]                public bool KeyPassthrough = false;
         [JsonProperty("sL")]  [DefaultValue(null)]                 public List<ShCfg> SubList;
         [JsonProperty("m")]   [DefaultValue(ShortcutMode.Default)] public ShortcutMode Mode = ShortcutMode.Default;
-        [JsonProperty("cl")]  [DefaultValue(0xFFFFFFFF)]           public uint Color = 0xFFFFFFFF; // TODO
+        [JsonProperty("cl")]  [DefaultValue(0xFFFFFFFF)]           public uint ColorFg = 0xFFFFFFFF;
+        [JsonProperty("cl2")] [DefaultValue(0xE6494949)]           public uint ColorBg = 0xE6494949;
+        [JsonProperty("clA")] [DefaultValue(0)]                    public int ColorAnimation = 0;
         [JsonProperty("iZ")]  [DefaultValue(1.0f)]                 public float IconZoom = 1.0f;
-        [JsonProperty("iO")]  [DefaultValue(new[] { 0f, 0f })]     public float[] IconOffset = new float[2]; // TODO
+        [JsonProperty("iO")]  [DefaultValue(new[] { 0f, 0f })]     public float[] IconOffset = new float[2];
         [JsonProperty("cW")]  [DefaultValue(140)]                  public int CategoryWidth = 140;
         [JsonProperty("cSO")] [DefaultValue(false)]                public bool CategoryStaysOpen = false;
         [JsonProperty("cC")]  [DefaultValue(1)]                    public int CategoryColumns = 1;
-        [JsonProperty("cSp")] [DefaultValue(new[] { 8, 4 })]       public int[] CategorySpacing = new[] { 8, 4 }; // TODO
+        [JsonProperty("cSp")] [DefaultValue(new[] { 8, 4 })]       public int[] CategorySpacing = new[] { 8, 4 };
         [JsonProperty("cS")]  [DefaultValue(1.0f)]                 public float CategoryScale = 1.0f;
         [JsonProperty("cF")]  [DefaultValue(1.0f)]                 public float CategoryFontScale = 1.0f;
         [JsonProperty("cNB")] [DefaultValue(false)]                public bool CategoryNoBackground = false;
@@ -252,9 +100,10 @@ namespace QoLBar
 
     public class Configuration : IPluginConfiguration
     {
-        public int Version { get; set; } = 0;
+        public int Version { get; set; } = 1;
 
-        public List<BarConfig> BarConfigs = new List<BarConfig>();
+        public List<BarConfig> BarConfigs = null; // Old
+        public List<BarCfg> BarCfgs = new List<BarCfg>();
         public List<DisplayConditionSet> ConditionSets = new List<DisplayConditionSet>();
         public bool ExportOnDelete = true;
         public bool ResizeRepositionsBars = false;
@@ -287,13 +136,12 @@ namespace QoLBar
 
         public bool CheckVersion() => PluginVersion == Assembly.GetExecutingAssembly().GetName().Version.ToString();
 
-        public bool IsVersionGE(string v1, string v2) => new Version(v1) >= new Version(v2);
-
         public void CheckDisplayUpdateWindow()
         {
             if (!string.IsNullOrEmpty(PrevPluginVersion))
             {
-                if (IsVersionGE("1.3.2.1", PrevPluginVersion))
+                var v = new Version(PrevPluginVersion);
+                if (new Version("1.3.2.1") >= v)
                     displayUpdateWindow = true;
             }
         }
@@ -306,9 +154,17 @@ namespace QoLBar
                 backupFolder = new DirectoryInfo(Path.Combine(ConfigFolder.FullName, "backups"));
                 tempConfig = new FileInfo(backupFolder.FullName + "\\temp.json");
             }
+
+            if (Version == 0)
+            {
+                for (int i = 0; i < BarConfigs.Count; i++)
+                    BarCfgs.Add(BarConfigs[i].Upgrade());
+                BarConfigs = null;
+                Version++;
+            }
             
-            if (BarConfigs.Count < 1)
-                BarConfigs.Add(new BarConfig());
+            if (BarCfgs.Count < 1)
+                BarCfgs.Add(new BarCfg());
         }
 
         public void Save(bool failed = false)
@@ -443,9 +299,9 @@ namespace QoLBar
                     ImGui.Spacing();
                     if (ImGui.Button("YES, DELETE THEM"))
                     {
-                        static void DeleteRecursive(Shortcut sh)
+                        static void DeleteRecursive(ShCfg sh)
                         {
-                            if (sh.Type == Shortcut.ShortcutType.Category)
+                            if (sh.Type == ShCfg.ShortcutType.Category)
                             {
                                 sh.Command = string.Empty;
                                 if (sh.SubList != null)
@@ -455,7 +311,7 @@ namespace QoLBar
                                 }
                             }
                         }
-                        foreach (var bar in BarConfigs)
+                        foreach (var bar in BarCfgs)
                         {
                             foreach (var sh in bar.ShortcutList)
                                 DeleteRecursive(sh);

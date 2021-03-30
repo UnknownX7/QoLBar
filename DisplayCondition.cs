@@ -443,7 +443,7 @@ namespace QoLBar
         {
             var config = QoLBar.Config;
             var set = config.ConditionSets[from];
-            foreach (var bar in config.BarConfigs)
+            foreach (var bar in config.BarCfgs)
             {
                 if (bar.ConditionSet == from)
                     bar.ConditionSet = to;
@@ -458,7 +458,7 @@ namespace QoLBar
         private static void RemoveConditionSet(int i)
         {
             var config = QoLBar.Config;
-            foreach (var bar in config.BarConfigs)
+            foreach (var bar in config.BarCfgs)
             {
                 if (bar.ConditionSet > i)
                     bar.ConditionSet -= 1;

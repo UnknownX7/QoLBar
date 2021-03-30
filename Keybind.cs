@@ -10,7 +10,7 @@ namespace QoLBar
 {
     public static class Keybind
     {
-        public static readonly List<(BarUI, Shortcut)> hotkeys = new List<(BarUI, Shortcut)>();
+        public static readonly List<(BarUI, ShCfg)> hotkeys = new List<(BarUI, ShCfg)>();
         private static readonly byte[] keyState = new byte[256];
         private static readonly bool[] prevKeyState = new bool[keyState.Length];
         private static readonly bool[] keyPressed = new bool[keyState.Length];
@@ -77,7 +77,7 @@ namespace QoLBar
                         {
                             if (sh.Hotkey == (key | k))
                             {
-                                if (sh.Type == Shortcut.ShortcutType.Category && sh.Mode == Shortcut.ShortcutMode.Default)
+                                if (sh.Type == ShCfg.ShortcutType.Category && sh.Mode == ShCfg.ShortcutMode.Default)
                                 {
                                     // TODO: Make less hacky
                                     bar.ForceReveal();
@@ -102,9 +102,9 @@ namespace QoLBar
             }
         }
 
-        public static void AddHotkey(BarUI bar, Shortcut sh) => hotkeys.Add((bar, sh));
+        public static void AddHotkey(BarUI bar, ShCfg sh) => hotkeys.Add((bar, sh));
 
-        public static void KeybindInput(Shortcut sh)
+        public static void KeybindInput(ShCfg sh)
         {
             var dispKey = GetKeyName(sh.Hotkey);
             ImGui.InputText($"Hotkey##{sh.Hotkey}", ref dispKey, 200, ImGuiInputTextFlags.ReadOnly | ImGuiInputTextFlags.AllowTabInput); // delete the box to delete focus 4head
@@ -188,7 +188,7 @@ namespace QoLBar
                     ImGui.SameLine();
                     ImGui.TextUnformatted(GetKeyName(sh.Hotkey));
                     ImGui.NextColumn();
-                    if (sh.Type == Shortcut.ShortcutType.Category)
+                    if (sh.Type == ShCfg.ShortcutType.Category)
                         ImGui.TextUnformatted($"{sh.Mode} {(sh._parent == null ? "Category" : "Subcategory")} \"{sh.Name}\" {(string.IsNullOrEmpty(sh.Command) ? "" : "\n" + sh.Command)}");
                     else
                         ImGui.TextUnformatted(sh.Command);

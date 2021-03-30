@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using ImGuiNET;
 using Dalamud.Plugin;
-using static QoLBar.BarConfig;
+using static QoLBar.BarCfg;
 
 namespace QoLBar
 {

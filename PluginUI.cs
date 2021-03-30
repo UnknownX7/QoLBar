@@ -37,7 +37,7 @@ namespace QoLBar
         public PluginUI()
         {
             bars = new List<BarUI>();
-            for (int i = 0; i < Config.BarConfigs.Count; i++)
+            for (int i = 0; i < Config.BarCfgs.Count; i++)
                 bars.Add(new BarUI(i));
 
             Task.Run(async () =>
@@ -54,7 +54,7 @@ namespace QoLBar
             Dispose();
 
             bars.Clear();
-            for (int i = 0; i < Config.BarConfigs.Count; i++)
+            for (int i = 0; i < Config.BarCfgs.Count; i++)
                 bars.Add(new BarUI(i));
         }
 
@@ -129,7 +129,7 @@ namespace QoLBar
             {
                 ImGui.PushID(i);
 
-                var bar = Config.BarConfigs[i];
+                var bar = Config.BarCfgs[i];
 
                 ImGui.Text($"#{i + 1}");
                 ImGui.SameLine();
@@ -137,7 +137,7 @@ namespace QoLBar
                 textx = ImGui.GetCursorPosX();
 
                 ImGui.SetNextItemWidth(-1);
-                if (ImGui.InputText("##Title", ref bar.Title, 32))
+                if (ImGui.InputText("##Name", ref bar.Name, 32))
                     Config.Save();
 
                 textsize = ImGui.GetItemRectSize();
@@ -221,7 +221,7 @@ namespace QoLBar
             ImGui.Spacing();
             ImGui.SameLine(textx);
             if (ImGui.Button("+", textsize))
-                AddBar(new BarConfig());
+                AddBar(new BarCfg());
             ImGui.NextColumn();
             ImGui.NextColumn();
             if (ImGui.Button("Import", textsize))
@@ -376,7 +376,8 @@ namespace QoLBar
             ImGui.Separator();
             ImGui.Spacing();
 
-            if (ImGui.TreeNodeEx("Import Editor", ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.NoTreePushOnOpen))
+            if (true) ;
+            /*if (ImGui.TreeNodeEx("Import Editor", ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.NoTreePushOnOpen))
             {
                 var available = ImGui.GetContentRegionAvail();
                 ImGui.TextUnformatted("Serialized String");
@@ -415,7 +416,7 @@ namespace QoLBar
                         catch { }
                     }
                 }
-            }
+            }*/
 
             ImGui.Spacing();
             ImGui.Separator();
@@ -424,9 +425,9 @@ namespace QoLBar
             Keybind.DrawDebug();
         }
 
-        private void AddBar(BarConfig bar)
+        private void AddBar(BarCfg bar)
         {
-            Config.BarConfigs.Add(bar);
+            Config.BarCfgs.Add(bar);
             bars.Add(new BarUI(bars.Count));
             Config.Save();
         }
@@ -434,10 +435,10 @@ namespace QoLBar
         private void RemoveBar(int i)
         {
             if (Config.ExportOnDelete)
-                ImGui.SetClipboardText(Importing.ExportBar(Config.BarConfigs[i], false));
+                ImGui.SetClipboardText(Importing.ExportBar(Config.BarCfgs[i], false));
 
             bars.RemoveAt(i);
-            Config.BarConfigs.RemoveAt(i);
+            Config.BarCfgs.RemoveAt(i);
             Config.Save();
             RefreshBarIndexes();
         }
@@ -451,25 +452,25 @@ namespace QoLBar
                 bars.RemoveAt(i);
                 bars.Insert(j, b);
 
-                var b2 = Config.BarConfigs[i];
-                Config.BarConfigs.RemoveAt(i);
-                Config.BarConfigs.Insert(j, b2);
+                var b2 = Config.BarCfgs[i];
+                Config.BarCfgs.RemoveAt(i);
+                Config.BarCfgs.Insert(j, b2);
                 Config.Save();
                 RefreshBarIndexes();
             }
         }
 
-        public string ExportBar(int i, bool saveAllValues) => Importing.ExportBar(Config.BarConfigs[i], saveAllValues);
+        public string ExportBar(int i, bool saveAllValues) => Importing.ExportBar(Config.BarCfgs[i], saveAllValues);
 
         public void ImportBar(string import)
         {
             var imports = Importing.TryImport(import, true);
             if (imports.bar != null)
-                ;//AddBar(imports.bar);
+                AddBar(imports.bar);
             else if (imports.shortcut != null)
             {
-                var bar = new BarConfig();
-                ;//bar.ShortcutList.Add(imports.shortcut);
+                var bar = new BarCfg();
+                bar.ShortcutList.Add(imports.shortcut);
                 AddBar(bar);
             }
         }
@@ -522,7 +523,7 @@ namespace QoLBar
             var found = false;
             for (int i = 0; i < bars.Count; ++i)
             {
-                if (Config.BarConfigs[i].Title == name)
+                if ((Config.BarCfgs[i]).Name == name)
                 {
                     found = true;
                     SetBarHidden(i, toggle, b);
