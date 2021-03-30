@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Numerics;
 using System.Collections.Generic;
 using System.IO;
@@ -61,6 +61,9 @@ namespace QoLBar
 
         public BarCfg Upgrade()
         {
+            var oldPos = Position / ImGui.GetIO().DisplaySize;
+            var oldOffset = Offset / ImGui.GetIO().DisplaySize;
+
             var bar = new BarCfg
             {
                 Name = Title,
@@ -71,17 +74,16 @@ namespace QoLBar
                 Hint = Hint,
                 ButtonWidth = ButtonWidth,
                 Editing = !HideAdd,
-                //Position = Position,
+                Position = new[] { oldPos.X, oldPos.Y },
                 LockedPosition = LockedPosition,
-                //Offset = Offset,
+                Offset = new[] { oldOffset.X, oldOffset.Y },
                 Scale = Scale,
                 RevealAreaScale = RevealAreaScale,
                 FontScale = FontScale,
-                //Spacing = Spacing, store this as a "vector" instead for eventual bar columns
+                Spacing = new[] { Spacing, Spacing },
                 NoBackground = NoBackground,
                 ConditionSet = ConditionSet
             };
-            //CategorySpacing
 
             foreach (var sh in ShortcutList)
                 bar.ShortcutList.Add(sh.Upgrade(this, false));
@@ -129,28 +131,27 @@ namespace QoLBar
             var sh = new ShCfg
             {
                 Name = Name,
+                Type = Type switch
+                {
+                    ShortcutType.Category => ShCfg.ShortcutType.Category,
+                    ShortcutType.Spacer => ShCfg.ShortcutType.Spacer,
+                    _ => ShCfg.ShortcutType.Command
+                },
                 Command = Command,
                 Hotkey = Hotkey,
                 KeyPassthrough = KeyPassthrough,
                 Mode = (ShCfg.ShortcutMode)Mode,
-                Color = IconTint,
+                Color = ImGui.ColorConvertFloat4ToU32(IconTint),
                 IconZoom = IconZoom,
-                IconOffset = IconOffset,
+                IconOffset = new[] { IconOffset.X, IconOffset.Y },
                 CategoryWidth = CategoryWidth,
                 CategoryStaysOpen = CategoryStaysOpen,
                 CategoryColumns = CategoryColumns,
-                //CategorySpacing = bar.CategorySpacing,
+                CategorySpacing = new[] { (int)bar.CategorySpacing.X, (int)bar.CategorySpacing.Y },
                 CategoryScale = bar.CategoryScale,
                 CategoryFontScale = bar.CategoryFontScale,
                 CategoryNoBackground = bar.NoCategoryBackgrounds,
                 CategoryOnHover = !sub ? bar.OpenCategoriesOnHover : bar.OpenSubcategoriesOnHover
-            };
-
-            sh.Type = Type switch
-            {
-                ShortcutType.Category => ShCfg.ShortcutType.Category,
-                ShortcutType.Spacer => ShCfg.ShortcutType.Spacer,
-                _ => ShCfg.ShortcutType.Command
             };
 
             if (SubList != null)
@@ -164,7 +165,6 @@ namespace QoLBar
         }
     }
 
-    // TODO: convert vectors into stuff that uses less space
     // TODO: go through and rename stuff
     public class BarCfg
     {
@@ -190,24 +190,24 @@ namespace QoLBar
             UndockedV
         }
 
-        [JsonProperty("n")] [DefaultValue("")] public string Name = string.Empty;
-        [JsonProperty("sL")] [DefaultValue(null)] public List<ShCfg> ShortcutList = new List<ShCfg>();
-        [JsonProperty("h")] [DefaultValue(false)] public bool Hidden = false;
-        [JsonProperty("v")] [DefaultValue(BarVisibility.Always)] public BarVisibility Visibility = BarVisibility.Always;
-        [JsonProperty("a")] [DefaultValue(BarAlign.Center)] public BarAlign Alignment = BarAlign.Center;
-        [JsonProperty("d")] [DefaultValue(BarDock.Bottom)] public BarDock DockSide = BarDock.Bottom;
-        [JsonProperty("ht")] [DefaultValue(false)] public bool Hint = false;
-        [JsonProperty("bW")] [DefaultValue(100)] public int ButtonWidth = 100;
-        [JsonProperty("e")] [DefaultValue(false)] public bool Editing = true;
-        [JsonProperty("p")] public Vector2 Position = Vector2.Zero; // TODO
-        [JsonProperty("l")] [DefaultValue(false)] public bool LockedPosition = false;
-        [JsonProperty("o")] public Vector2 Offset = Vector2.Zero; // TODO
-        [JsonProperty("s")] [DefaultValue(1.0f)] public float Scale = 1.0f;
-        [JsonProperty("rA")] [DefaultValue(1.0f)] public float RevealAreaScale = 1.0f;
-        [JsonProperty("fS")] [DefaultValue(1.0f)] public float FontScale = 1.0f;
-        [JsonProperty("sp")] [DefaultValue(8)] public int Spacing = 8;
-        [JsonProperty("nB")] [DefaultValue(false)] public bool NoBackground = false;
-        [JsonProperty("c")] [DefaultValue(-1)] public int ConditionSet = -1;
+        [JsonProperty("n")]  [DefaultValue("")]                   public string Name = string.Empty;
+        [JsonProperty("sL")] [DefaultValue(null)]                 public List<ShCfg> ShortcutList = new List<ShCfg>();
+        [JsonProperty("h")]  [DefaultValue(false)]                public bool Hidden = false;
+        [JsonProperty("v")]  [DefaultValue(BarVisibility.Always)] public BarVisibility Visibility = BarVisibility.Always;
+        [JsonProperty("a")]  [DefaultValue(BarAlign.Center)]      public BarAlign Alignment = BarAlign.Center;
+        [JsonProperty("d")]  [DefaultValue(BarDock.Bottom)]       public BarDock DockSide = BarDock.Bottom;
+        [JsonProperty("ht")] [DefaultValue(false)]                public bool Hint = false;
+        [JsonProperty("bW")] [DefaultValue(100)]                  public int ButtonWidth = 100;
+        [JsonProperty("e")]  [DefaultValue(false)]                public bool Editing = true;
+        [JsonProperty("p")]  [DefaultValue(new[] { 0f, 0f })]     public float[] Position = new float[2]; // TODO
+        [JsonProperty("l")]  [DefaultValue(false)]                public bool LockedPosition = false;
+        [JsonProperty("o")]  [DefaultValue(new[] { 0f, 0f })]     public float[] Offset = new float[2]; // TODO
+        [JsonProperty("s")]  [DefaultValue(1.0f)]                 public float Scale = 1.0f;
+        [JsonProperty("rA")] [DefaultValue(1.0f)]                 public float RevealAreaScale = 1.0f;
+        [JsonProperty("fS")] [DefaultValue(1.0f)]                 public float FontScale = 1.0f;
+        [JsonProperty("sp")] [DefaultValue(new[] { 8, 4 })]       public int[] Spacing = new[] { 8, 4 }; // TODO
+        [JsonProperty("nB")] [DefaultValue(false)]                public bool NoBackground = false;
+        [JsonProperty("c")]  [DefaultValue(-1)]                   public int ConditionSet = -1;
     }
 
     public class ShCfg
@@ -225,29 +225,28 @@ namespace QoLBar
             Random
         }
 
-        [JsonProperty("n")] [DefaultValue("")] public string Name = string.Empty;
-        [JsonProperty("t")] [DefaultValue(ShortcutType.Command)] public ShortcutType Type = ShortcutType.Command;
-        [JsonProperty("c")] [DefaultValue("")] public string Command = string.Empty;
-        [JsonProperty("k")] [DefaultValue(0)] public int Hotkey = 0;
-        [JsonProperty("kP")] [DefaultValue(false)] public bool KeyPassthrough = false;
-        [JsonProperty("sL")] [DefaultValue(null)] public List<ShCfg> SubList;
-        //[JsonProperty("e")] [DefaultValue(false)] public bool Editing = true;
-        [JsonProperty("m")] [DefaultValue(ShortcutMode.Default)] public ShortcutMode Mode = ShortcutMode.Default;
-        [JsonProperty("cl")] public Vector4 Color = Vector4.One; // TODO
-        [JsonProperty("iZ")] [DefaultValue(1.0f)] public float IconZoom = 1.0f;
-        [JsonProperty("iO")] public Vector2 IconOffset = Vector2.Zero; // TODO
-        [JsonProperty("cW")] [DefaultValue(140)] public int CategoryWidth = 140;
-        [JsonProperty("cSO")] [DefaultValue(false)] public bool CategoryStaysOpen = false;
-        [JsonProperty("cC")] [DefaultValue(1)] public int CategoryColumns = 1;
-        [JsonProperty("cSp")] public Vector2 CategorySpacing = new Vector2(8, 4); // TODO
-        [JsonProperty("cS")] [DefaultValue(1.0f)] public float CategoryScale = 1.0f;
-        [JsonProperty("cF")] [DefaultValue(1.0f)] public float CategoryFontScale = 1.0f;
-        [JsonProperty("cNB")] [DefaultValue(false)] public bool CategoryNoBackground = false;
-        [JsonProperty("cH")] [DefaultValue(false)] public bool CategoryOnHover = false;
+        [JsonProperty("n")]   [DefaultValue("")]                   public string Name = string.Empty;
+        [JsonProperty("t")]   [DefaultValue(ShortcutType.Command)] public ShortcutType Type = ShortcutType.Command;
+        [JsonProperty("c")]   [DefaultValue("")]                   public string Command = string.Empty;
+        [JsonProperty("k")]   [DefaultValue(0)]                    public int Hotkey = 0;
+        [JsonProperty("kP")]  [DefaultValue(false)]                public bool KeyPassthrough = false;
+        [JsonProperty("sL")]  [DefaultValue(null)]                 public List<ShCfg> SubList;
+        [JsonProperty("m")]   [DefaultValue(ShortcutMode.Default)] public ShortcutMode Mode = ShortcutMode.Default;
+        [JsonProperty("cl")]  [DefaultValue(0xFFFFFFFF)]           public uint Color = 0xFFFFFFFF; // TODO
+        [JsonProperty("iZ")]  [DefaultValue(1.0f)]                 public float IconZoom = 1.0f;
+        [JsonProperty("iO")]  [DefaultValue(new[] { 0f, 0f })]     public float[] IconOffset = new float[2]; // TODO
+        [JsonProperty("cW")]  [DefaultValue(140)]                  public int CategoryWidth = 140;
+        [JsonProperty("cSO")] [DefaultValue(false)]                public bool CategoryStaysOpen = false;
+        [JsonProperty("cC")]  [DefaultValue(1)]                    public int CategoryColumns = 1;
+        [JsonProperty("cSp")] [DefaultValue(new[] { 8, 4 })]       public int[] CategorySpacing = new[] { 8, 4 }; // TODO
+        [JsonProperty("cS")]  [DefaultValue(1.0f)]                 public float CategoryScale = 1.0f;
+        [JsonProperty("cF")]  [DefaultValue(1.0f)]                 public float CategoryFontScale = 1.0f;
+        [JsonProperty("cNB")] [DefaultValue(false)]                public bool CategoryNoBackground = false;
+        [JsonProperty("cH")]  [DefaultValue(false)]                public bool CategoryOnHover = false;
 
         // TODO: move to shortcut ui variables
         [JsonIgnore] public int _i = 0;
-        [JsonIgnore] public Shortcut _parent = null;
+        [JsonIgnore] public ShCfg _parent = null;
         [JsonIgnore] public bool _activated = false;
     }
 
