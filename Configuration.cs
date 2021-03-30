@@ -44,7 +44,7 @@ namespace QoLBar
         [JsonProperty("d")]  [DefaultValue(BarDock.Bottom)]       public BarDock DockSide = BarDock.Bottom;
         [JsonProperty("ht")] [DefaultValue(false)]                public bool Hint = false;
         [JsonProperty("bW")] [DefaultValue(100)]                  public int ButtonWidth = 100;
-        [JsonProperty("e")]  [DefaultValue(false)]                public bool Editing = true;
+        [JsonProperty("e")]  [DefaultValue(false)]                public bool Editing = false;
         [JsonProperty("p")]  [DefaultValue(new[] { 0f, 0f })]     public float[] Position = new float[2];
         [JsonProperty("l")]  [DefaultValue(false)]                public bool LockedPosition = false;
         [JsonProperty("o")]  [DefaultValue(new[] { 0f, 0f })]     public float[] Offset = new float[2]; // TODO: should it be merged into position?
@@ -164,7 +164,7 @@ namespace QoLBar
             }
             
             if (BarCfgs.Count < 1)
-                BarCfgs.Add(new BarCfg());
+                BarCfgs.Add(new BarCfg { Editing = true });
         }
 
         public void Save(bool failed = false)

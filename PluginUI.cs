@@ -221,7 +221,7 @@ namespace QoLBar
             ImGui.Spacing();
             ImGui.SameLine(textx);
             if (ImGui.Button("+", textsize))
-                AddBar(new BarCfg());
+                AddBar(new BarCfg { Editing = true });
             ImGui.NextColumn();
             ImGui.NextColumn();
             if (ImGui.Button("Import", textsize))
@@ -376,28 +376,18 @@ namespace QoLBar
             ImGui.Separator();
             ImGui.Spacing();
 
-            if (true) ;
-            /*if (ImGui.TreeNodeEx("Import Editor", ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.NoTreePushOnOpen))
+            if (ImGui.TreeNodeEx("Export Editor", ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.NoTreePushOnOpen))
             {
                 var available = ImGui.GetContentRegionAvail();
                 ImGui.TextUnformatted("Serialized String");
                 ImGui.SetNextItemWidth(available.X);
                 if (ImGui.InputText("##Serialized", ref debug_SerializedImport, 1000000, ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.NoHorizontalScroll))
                 {
-                    try
-                    {
-                        var o = Importing.ImportObject<BarConfig>(debug_SerializedImport);
-                        debug_DeserializedImport = JsonConvert.SerializeObject(o, Formatting.Indented, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Objects });
-                    }
-                    catch
-                    {
-                        try
-                        {
-                            var o = Importing.ImportObject<Shortcut>(debug_SerializedImport);
-                            debug_DeserializedImport = JsonConvert.SerializeObject(o, Formatting.Indented, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Objects });
-                        }
-                        catch { }
-                    }
+                    var import = Importing.TryImport(debug_SerializedImport);
+                    if (import.bar != null)
+                        debug_DeserializedImport = JsonConvert.SerializeObject(import.bar, Formatting.Indented, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Objects });
+                    else if (import.shortcut != null)
+                        debug_DeserializedImport = JsonConvert.SerializeObject(import.shortcut, Formatting.Indented, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Objects });
                 }
 
                 ImGui.TextUnformatted("Deserialized String");
@@ -405,18 +395,18 @@ namespace QoLBar
                 {
                     try
                     {
-                        debug_SerializedImport = Importing.ExportBar(Importing.ImportObject<BarConfig>(Importing.CompressString(debug_DeserializedImport)), true);
+                        debug_SerializedImport = Importing.ExportBar(Importing.ImportObject<BarCfg>(Importing.CompressString(debug_DeserializedImport)), true);
                     }
                     catch
                     {
                         try
                         {
-                            debug_SerializedImport = Importing.ExportShortcut(Importing.ImportObject<Shortcut>(Importing.CompressString(debug_DeserializedImport)), true);
+                            debug_SerializedImport = Importing.ExportShortcut(Importing.ImportObject<ShCfg>(Importing.CompressString(debug_DeserializedImport)), true);
                         }
                         catch { }
                     }
                 }
-            }*/
+            }
 
             ImGui.Spacing();
             ImGui.Separator();
@@ -469,7 +459,7 @@ namespace QoLBar
                 AddBar(imports.bar);
             else if (imports.shortcut != null)
             {
-                var bar = new BarCfg();
+                var bar = new BarCfg { Editing = true };
                 bar.ShortcutList.Add(imports.shortcut);
                 AddBar(bar);
             }
