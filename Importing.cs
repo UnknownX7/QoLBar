@@ -152,8 +152,8 @@ namespace QoLBar
                 sh.IconZoom = sh.GetDefaultValue(x => x.IconZoom);
                 sh.IconOffset = sh.GetDefaultValue(x => x.IconOffset);
             }
-            else if (sh.ColorAnimation == 0)
-                sh.ColorBg = sh.GetDefaultValue(x => x.ColorBg);
+            //else if (sh.ColorAnimation == 0)
+            //    sh.ColorBg = sh.GetDefaultValue(x => x.ColorBg);
         }
 
         public static T CopyObject<T>(T o)

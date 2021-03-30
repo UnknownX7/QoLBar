@@ -78,7 +78,6 @@ namespace QoLBar
         {
             try
             {
-                // I don't know what I'm doing, but it works
                 var dataptr = Interface.TargetModuleScanner.GetStaticAddressFromSig("48 8B 05 ?? ?? ?? ?? 48 8B 48 28 80 B9 8E 18 00 00 00");
                 if (dataptr != IntPtr.Zero)
                     textActiveBoolPtr = *(IntPtr*)(*(IntPtr*)dataptr + 0x28) + 0x188E;

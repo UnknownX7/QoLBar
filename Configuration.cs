@@ -78,8 +78,8 @@ namespace QoLBar
         [JsonProperty("kP")]  [DefaultValue(false)]                public bool KeyPassthrough = false;
         [JsonProperty("sL")]  [DefaultValue(null)]                 public List<ShCfg> SubList;
         [JsonProperty("m")]   [DefaultValue(ShortcutMode.Default)] public ShortcutMode Mode = ShortcutMode.Default;
-        [JsonProperty("cl")]  [DefaultValue(0xFFFFFFFF)]           public uint ColorFg = 0xFFFFFFFF;
-        [JsonProperty("cl2")] [DefaultValue(0xE6494949)]           public uint ColorBg = 0xE6494949;
+        [JsonProperty("cl")]  [DefaultValue(0xFFFFFFFF)]           public uint Color = 0xFFFFFFFF;
+        //[JsonProperty("cl2")] [DefaultValue(0xE6494949)]           public uint ColorBg = 0xE6494949; // TODO: Decide how to use this
         [JsonProperty("clA")] [DefaultValue(0)]                    public int ColorAnimation = 0;
         [JsonProperty("iZ")]  [DefaultValue(1.0f)]                 public float IconZoom = 1.0f;
         [JsonProperty("iO")]  [DefaultValue(new[] { 0f, 0f })]     public float[] IconOffset = new float[2];

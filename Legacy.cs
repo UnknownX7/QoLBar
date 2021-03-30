@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 using System.Collections.Generic;
 using System.ComponentModel;
 using Newtonsoft.Json;
@@ -136,7 +137,7 @@ namespace QoLBar
                 Hotkey = Hotkey,
                 KeyPassthrough = KeyPassthrough,
                 Mode = (ShCfg.ShortcutMode)Mode,
-                ColorFg = ImGui.ColorConvertFloat4ToU32(IconTint),
+                Color = ImGui.ColorConvertFloat4ToU32(IconTint),
                 IconZoom = IconZoom,
                 IconOffset = new[] { IconOffset.X, IconOffset.Y },
                 CategoryWidth = CategoryWidth,
@@ -148,6 +149,9 @@ namespace QoLBar
                 CategoryNoBackground = bar.NoCategoryBackgrounds,
                 CategoryOnHover = !sub ? bar.OpenCategoriesOnHover : bar.OpenSubcategoriesOnHover
             };
+
+            if (IconTint.W > 1)
+                sh.ColorAnimation = (int)Math.Round(IconTint.W * 255) - 255;
 
             if (SubList != null)
             {

@@ -535,9 +535,10 @@ namespace QoLBar
             var height = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
             var clicked = false;
 
-            var c = ImGui.ColorConvertU32ToFloat4(sh.ColorFg);
+            var c = ImGui.ColorConvertU32ToFloat4(sh.Color);
+            c.W += sh.ColorAnimation / 255f; // Temporary
             if (c.W > 1)
-                ;// c = ShortcutUI.AnimateColor(c);
+                c = ShortcutUI.AnimateColor(c);
 
             PushFontScale(GetFontScale() * (!inCategory ? barConfig.FontScale : sh._parent.CategoryFontScale));
             if (type == ShortcutType.Spacer)
@@ -950,10 +951,12 @@ namespace QoLBar
                             }
                         }
 
-                        var color = ImGui.ColorConvertU32ToFloat4(sh.ColorFg);
+                        var color = ImGui.ColorConvertU32ToFloat4(sh.Color);
+                        color.W += sh.ColorAnimation / 255f; // Temporary
                         if (ImGui.ColorEdit4("Color", ref color, ImGuiColorEditFlags.NoDragDrop | ImGuiColorEditFlags.AlphaPreviewHalf))
                         {
-                            sh.ColorFg = ImGui.ColorConvertFloat4ToU32(color);
+                            sh.Color = ImGui.ColorConvertFloat4ToU32(color);
+                            sh.ColorAnimation = Math.Max((int)Math.Round(color.W * 255) - 255, 0);
                             Config.Save();
                         }
 
