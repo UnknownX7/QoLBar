@@ -88,7 +88,7 @@ namespace QoLBar
             public BarCfg b2;
             public Shortcut s1;
             public ShCfg s2;
-            //public string v = QoLBar.Config.PluginVersion;
+            public string v = QoLBar.Config.PluginVersion;
         }
 
         private static readonly QoLSerializer qolSerializer = new QoLSerializer();
@@ -288,10 +288,7 @@ namespace QoLBar
         public static ImportInfo TryImport(string import, bool printError = false)
         {
             ExportInfo imported;
-            try
-            {
-                imported = ImportObject<ExportInfo>(import);
-            }
+            try { imported = ImportObject<ExportInfo>(import); }
             catch (Exception e)
             {
                 // If we failed to import the ExportInfo then this is an old version
@@ -351,6 +348,7 @@ namespace QoLBar
                 try { imported.s1 = ImportShortcut(import); }
                 catch { return null; }
             }
+            imported.v = "1.3.2.1";
             return imported;
         }
     }
