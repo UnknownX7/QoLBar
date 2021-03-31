@@ -47,7 +47,6 @@ namespace QoLBar
         [JsonProperty("e")]  [DefaultValue(false)]                public bool Editing = false;
         [JsonProperty("p")]  [DefaultValue(new[] { 0f, 0f })]     public float[] Position = new float[2];
         [JsonProperty("l")]  [DefaultValue(false)]                public bool LockedPosition = false;
-        [JsonProperty("o")]  [DefaultValue(new[] { 0f, 0f })]     public float[] Offset = new float[2]; // TODO: should it be merged into position?
         [JsonProperty("s")]  [DefaultValue(1.0f)]                 public float Scale = 1.0f;
         [JsonProperty("rA")] [DefaultValue(1.0f)]                 public float RevealAreaScale = 1.0f;
         [JsonProperty("fS")] [DefaultValue(1.0f)]                 public float FontScale = 1.0f;

@@ -30,7 +30,6 @@ namespace QoLBar
         private static ImGuiStylePtr Style => ImGui.GetStyle();
 
         private Vector2 ConfigPosition => new Vector2((float)Math.Floor(barConfig.Position[0] * window.X), (float)Math.Floor(barConfig.Position[1] * window.Y));
-        private Vector2 ConfigOffset => new Vector2((float)Math.Floor(barConfig.Offset[0] * window.X), (float)Math.Floor(barConfig.Offset[1] * window.Y));
 
         private static ShCfg _sh;
         private Vector2 window = ImGui.GetIO().DisplaySize;
@@ -168,7 +167,7 @@ namespace QoLBar
                 piv.X = pivX;
                 piv.Y = pivY;
 
-                hidePos.X = window.X * pivX + offset + (ConfigOffset.X * globalSize);
+                hidePos.X = window.X * pivX + offset + (ConfigPosition.X * globalSize);
                 hidePos.Y = defPos;
                 revealPos.X = hidePos.X;
             }
@@ -178,7 +177,7 @@ namespace QoLBar
                 piv.Y = pivX;
 
                 hidePos.X = defPos;
-                hidePos.Y = window.Y * pivX + offset + (ConfigOffset.Y * globalSize);
+                hidePos.Y = window.Y * pivX + offset + (ConfigPosition.Y * globalSize);
                 revealPos.Y = hidePos.Y;
             }
 
@@ -193,16 +192,16 @@ namespace QoLBar
             switch (barConfig.DockSide)
             {
                 case BarDock.Top:
-                    revealPos.Y = Math.Max(hidePos.Y + barSize.Y + (ConfigOffset.Y * globalSize), GetHidePosition().Y + 1);
+                    revealPos.Y = Math.Max(hidePos.Y + barSize.Y + (ConfigPosition.Y * globalSize), GetHidePosition().Y + 1);
                     break;
                 case BarDock.Left:
-                    revealPos.X = Math.Max(hidePos.X + barSize.X + (ConfigOffset.X * globalSize), GetHidePosition().X + 1);
+                    revealPos.X = Math.Max(hidePos.X + barSize.X + (ConfigPosition.X * globalSize), GetHidePosition().X + 1);
                     break;
                 case BarDock.Bottom:
-                    revealPos.Y = Math.Min(hidePos.Y - barSize.Y + (ConfigOffset.Y * globalSize), GetHidePosition().Y - 1);
+                    revealPos.Y = Math.Min(hidePos.Y - barSize.Y + (ConfigPosition.Y * globalSize), GetHidePosition().Y - 1);
                     break;
                 case BarDock.Right:
-                    revealPos.X = Math.Min(hidePos.X - barSize.X + (ConfigOffset.X * globalSize), GetHidePosition().X - 1);
+                    revealPos.X = Math.Min(hidePos.X - barSize.X + (ConfigPosition.X * globalSize), GetHidePosition().X - 1);
                     break;
                 default:
                     break;
@@ -1154,11 +1153,11 @@ namespace QoLBar
                             if ((barConfig.Visibility != BarVisibility.Always) && ImGui.DragFloat("Reveal Area Scale", ref barConfig.RevealAreaScale, 0.01f, 0.0f, 1.0f, "%.2f"))
                                 Config.Save();
 
-                            var offset = ConfigOffset;
+                            var offset = ConfigPosition;
                             if (ImGui.DragFloat2("Offset", ref offset, 0.2f, -500, 500, "%.f"))
                             {
-                                barConfig.Offset[0] = offset.X / window.X;
-                                barConfig.Offset[1] = offset.Y / window.Y;
+                                barConfig.Position[0] = offset.X / window.X;
+                                barConfig.Position[1] = offset.Y / window.Y;
                                 Config.Save();
                                 SetupPosition();
                             }

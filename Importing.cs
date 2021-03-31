@@ -99,13 +99,11 @@ namespace QoLBar
             {
                 bar.Alignment = bar.GetDefaultValue(x => x.Alignment);
                 bar.RevealAreaScale = bar.GetDefaultValue(x => x.RevealAreaScale);
-                bar.Offset = bar.GetDefaultValue(x => x.Offset);
                 bar.Hint = bar.GetDefaultValue(x => x.Hint);
             }
             else
             {
                 bar.LockedPosition = bar.GetDefaultValue(x => x.LockedPosition);
-                bar.Position = bar.GetDefaultValue(x => x.Position);
                 bar.RevealAreaScale = bar.GetDefaultValue(x => x.RevealAreaScale);
 
                 if (bar.Visibility == BarCfg.BarVisibility.Always)
