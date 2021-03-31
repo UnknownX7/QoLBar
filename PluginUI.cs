@@ -243,21 +243,16 @@ namespace QoLBar
             if (ImGui.Checkbox("Export on Delete", ref Config.ExportOnDelete))
                 Config.Save();
             ImGui.SameLine(ImGui.GetWindowWidth() / 2);
-            if (ImGui.Checkbox("Resizing Repositions Bars", ref Config.ResizeRepositionsBars))
-                Config.Save();
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("Undocked bars will automatically readjust if you change resolutions.");
-
             if (ImGui.Checkbox("Use Hotbar Frames on Icons", ref Config.UseIconFrame))
                 Config.Save();
             if (ImGui.IsItemHovered())
                 ImGui.SetTooltip("This option will invert the ' f ' argument for all icons.");
-            ImGui.SameLine(ImGui.GetWindowWidth() / 2);
+
             if (ImGui.Checkbox("Always Display Bars", ref Config.AlwaysDisplayBars))
                 Config.Save();
             if (ImGui.IsItemHovered())
                 ImGui.SetTooltip("Bars will remain visible even when logged out.");
-
+            ImGui.SameLine(ImGui.GetWindowWidth() / 2);
             if (ImGui.Checkbox("Disable Condition Caching", ref Config.NoConditionCache))
                 Config.Save();
             if (ImGui.IsItemHovered())

@@ -106,7 +106,6 @@ namespace QoLBar
         public List<BarCfg> BarCfgs = new List<BarCfg>();
         public List<DisplayConditionSet> ConditionSets = new List<DisplayConditionSet>();
         public bool ExportOnDelete = true;
-        public bool ResizeRepositionsBars = false;
         public bool UseIconFrame = false;
         public bool AlwaysDisplayBars = false;
         public bool OptOutGameUIOffHide = false;
