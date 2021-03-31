@@ -338,7 +338,8 @@ namespace QoLBar
                 if (!barConfig.LockedPosition && !_firstframe && !docked && ImGui.GetWindowPos() != ConfigPosition)
                 {
                     var newPos = ImGui.GetWindowPos() / window;
-                    barConfig.Position = new[] { newPos.X, newPos.Y };
+                    barConfig.Position[0] = newPos.X;
+                    barConfig.Position[1] = newPos.Y;
                     Config.Save();
                 }
 
