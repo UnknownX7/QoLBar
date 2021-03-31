@@ -588,10 +588,10 @@ namespace QoLBar
 
         public static bool CheckCache()
         {
-            if (QoLBar.GetDrawTime() > (_lastCache + (QoLBar.Config.NoConditionCache ? 0 : 0.1f)))
+            if (QoLBar.GetRunTime() > (_lastCache + (QoLBar.Config.NoConditionCache ? 0 : 0.1f)))
             {
                 ClearCache();
-                _lastCache = QoLBar.GetDrawTime();
+                _lastCache = QoLBar.GetRunTime();
                 return true;
             }
             else

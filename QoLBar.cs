@@ -166,14 +166,20 @@ namespace QoLBar
 
         public static bool IsLoggedIn() => ConditionCache.GetCondition(DisplayCondition.ConditionType.Misc, 0);
 
-        private void Update(Dalamud.Game.Internal.Framework framework)
-        {
-            ReadyCommand();
-            Keybind.Run(GameTextInputActive);
-        }
-
+        private static float _runTime = 0;
+        public static float GetRunTime() => _runTime;
         private static long _frameCount = 0;
         public static long GetFrameCount() => _frameCount;
+        private void Update(Dalamud.Game.Internal.Framework framework)
+        {
+            _frameCount++;
+            _runTime += ImGui.GetIO().DeltaTime;
+
+            ReadyCommand();
+            Keybind.Run(GameTextInputActive);
+            Keybind.SetupHotkeys(ui.bars);
+        }
+
         private static float _drawTime = 0;
         public static float GetDrawTime() => _drawTime;
         private void Draw()
@@ -181,7 +187,6 @@ namespace QoLBar
             if (_addUserIcons)
                 AddUserIcons(ref _addUserIcons);
 
-            _frameCount++;
             _drawTime += ImGui.GetIO().DeltaTime;
 
             if (pluginReady)

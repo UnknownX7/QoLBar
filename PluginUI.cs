@@ -15,7 +15,7 @@ namespace QoLBar
     {
         public bool IsVisible => true;
 
-        private readonly List<BarUI> bars;
+        public readonly List<BarUI> bars;
 
         private static QoLBar Plugin => QoLBar.Plugin;
         private static Configuration Config => QoLBar.Config;

@@ -11,7 +11,7 @@ namespace QoLBar
     public class BarUI : IDisposable
     {
         private int barNumber;
-        private BarCfg barConfig => Config.BarCfgs[barNumber];
+        public BarCfg barConfig => Config.BarCfgs[barNumber];
         public void SetBarNumber(int i)
         {
             barNumber = i;
@@ -251,12 +251,11 @@ namespace QoLBar
             return _hidePos;
         }
 
-        private void SetupHotkeys(List<ShCfg> shortcuts, ShCfg parent = null)
+        public void SetupHotkeys(List<ShCfg> shortcuts, ShCfg parent = null)
         {
             foreach (var sh in shortcuts)
             {
-                if (parent != null)
-                    sh._parent = parent;
+                sh._parent = parent;
 
                 if (sh.Hotkey > 0 && sh.Type != ShortcutType.Spacer)
                     Keybind.AddHotkey(this, sh);
@@ -281,8 +280,6 @@ namespace QoLBar
             CheckGameResolution();
 
             if (!IsVisible) return;
-
-            SetupHotkeys(barConfig.ShortcutList);
 
             var io = ImGui.GetIO();
             mousePos = io.MousePos;

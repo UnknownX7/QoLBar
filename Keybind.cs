@@ -43,6 +43,13 @@ namespace QoLBar
             DoHotkeys(gameInputActive);
         }
 
+        public static void SetupHotkeys(List<BarUI> bars)
+        {
+            foreach (var bar in bars)
+                if (bar.IsVisible)
+                    bar.SetupHotkeys(bar.barConfig.ShortcutList);
+        }
+
         private static void GetKeyState()
         {
             GetKeyboardState(keyState);
