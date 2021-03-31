@@ -102,7 +102,7 @@ namespace QoLBar
     {
         public int Version { get; set; } = 1;
 
-        public List<BarConfig> BarConfigs = null; // Old
+        [Obsolete] public List<BarConfig> BarConfigs { internal get; set; }
         public List<BarCfg> BarCfgs = new List<BarCfg>();
         public List<DisplayConditionSet> ConditionSets = new List<DisplayConditionSet>();
         public bool ExportOnDelete = true;
@@ -155,6 +155,7 @@ namespace QoLBar
                 tempConfig = new FileInfo(backupFolder.FullName + "\\temp.json");
             }
 
+#pragma warning disable CS0612 // Type or member is obsolete
             if (Version == 0)
             {
                 for (int i = 0; i < BarConfigs.Count; i++)
@@ -162,7 +163,8 @@ namespace QoLBar
                 BarConfigs = null;
                 Version++;
             }
-            
+#pragma warning restore CS0612 // Type or member is obsolete
+
             if (BarCfgs.Count < 1)
                 BarCfgs.Add(new BarCfg { Editing = true });
         }
