@@ -306,8 +306,7 @@ namespace QoLBar
                                         AddMiscConditionSelectable(0, 0);
 
                                         AddMiscConditionSelectable(1, QoLBar.Interface.ClientState.LocalContentId);
-                                        if (ImGui.IsItemHovered())
-                                            ImGui.SetTooltip("Selecting this will assign the current character's ID to this condition.");
+                                        ImGuiEx.SetItemTooltip("Selecting this will assign the current character's ID to this condition.");
 
                                         AddMiscConditionSelectable(2, 0);
 
@@ -321,8 +320,8 @@ namespace QoLBar
 
                                         ImGui.EndCombo();
                                     }
-                                    if (cond.Condition == 1 && ImGui.IsItemHovered())
-                                        ImGui.SetTooltip($"ID: {cond.Arg}");
+                                    if (cond.Condition == 1)
+                                        ImGuiEx.SetItemTooltip($"ID: {cond.Arg}");
                                     if (cond.Condition == 5 || cond.Condition == 6)
                                     {
                                         ImGui.SameLine();
@@ -373,13 +372,11 @@ namespace QoLBar
                                                 cond.Condition = (int)kv.Key;
                                                 config.Save();
                                             }
-                                            if (ImGui.IsItemHovered())
-                                                ImGui.SetTooltip($"ID: {kv.Key}");
+                                            ImGuiEx.SetItemTooltip($"ID: {kv.Key}");
                                         }
                                         ImGui.EndCombo();
                                     }
-                                    if (ImGui.IsItemHovered())
-                                        ImGui.SetTooltip($"ID: {cond.Condition}");
+                                    ImGuiEx.SetItemTooltip($"ID: {cond.Condition}");
                                 }
                                 break;
                         }

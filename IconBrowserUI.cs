@@ -43,10 +43,9 @@ namespace QoLBar
                 EndIconList();
 
                 BeginIconList("Custom", iconSize);
-                if (ImGui.IsItemHovered())
-                    ImGui.SetTooltip("Place images inside \"%%AppData%%\\XIVLauncher\\pluginConfigs\\QoLBar\\icons\"\n" +
-                        "to load them as usable icons, the file names must be in the format \"#.img\" (# > 0).\n" +
-                        "I.e. \"1.jpg\" \"2.png\" \"3.png\" \"732487.jpg\" and so on.");
+                ImGuiEx.SetItemTooltip("Place images inside \"%%AppData%%\\XIVLauncher\\pluginConfigs\\QoLBar\\icons\"\n" +
+                    "to load them as usable icons, the file names must be in the format \"#.img\" (# > 0).\n" +
+                    "I.e. \"1.jpg\" \"2.png\" \"3.png\" \"732487.jpg\" and so on.");
                 if (_tabExists)
                 {
                     if (ImGui.Button("Refresh Custom Icons"))
@@ -185,13 +184,13 @@ namespace QoLBar
         {
             if (_tabExists)
             {
-                if (ImGui.IsItemHovered() && !string.IsNullOrEmpty(_tooltip))
-                    ImGui.SetTooltip(_tooltip);
+                if (!string.IsNullOrEmpty(_tooltip))
+                    ImGuiEx.SetItemTooltip(_tooltip);
                 DrawIconList();
                 ImGui.EndTabItem();
             }
-            else if (ImGui.IsItemHovered() && !string.IsNullOrEmpty(_tooltip))
-                ImGui.SetTooltip(_tooltip);
+            else if (!string.IsNullOrEmpty(_tooltip))
+                ImGuiEx.SetItemTooltip(_tooltip);
         }
 
         private static void AddIcons(int start, int end, string desc = "")
@@ -216,8 +215,7 @@ namespace QoLBar
                             pasteIcon = icon;
                             ImGui.SetClipboardText($"::{icon}");
                         }
-                        if (ImGui.IsItemHovered())
-                            ImGui.SetTooltip($"{icon}");
+                        ImGuiEx.SetItemTooltip($"{icon}");
                         if (_i % _columns != _columns - 1)
                             ImGui.SameLine();
                         _i++;

@@ -146,14 +146,12 @@ namespace QoLBar
 
                 if (ImGui.Button("O"))
                     ImGui.OpenPopup($"BarConfig##{i}");
-                if (ImGui.IsItemHovered())
-                    ImGui.SetTooltip("Options");
+                ImGuiEx.SetItemTooltip("Options");
                 bars[i].BarConfigPopup();
                 ImGui.SameLine();
                 if (ImGui.Button(bar.Hidden ? "R" : "H"))
                     bars[i].SetHidden();
-                if (ImGui.IsItemHovered())
-                    ImGui.SetTooltip(bar.Hidden ? "Reveal" : "Hide");
+                ImGuiEx.SetItemTooltip(bar.Hidden ? "Reveal" : "Hide");
                 ImGui.SameLine();
                 var preview = ((bar.ConditionSet >= 0) && (bar.ConditionSet < Config.ConditionSets.Count)) ? $"[{bar.ConditionSet + 1}] {Config.ConditionSets[bar.ConditionSet].Name}" : "Condition Set";
                 if (ImGui.BeginCombo("##Condition", preview))
@@ -173,10 +171,9 @@ namespace QoLBar
                     }
                     ImGui.EndCombo();
                 }
-                if (ImGui.IsItemHovered())
-                    ImGui.SetTooltip("Applies a condition set to the bar that will control when it is shown.\n" +
-                        "Useful for making groups of bars that all display at the same time.\n" +
-                        "You can make these on the \"Condition Sets\" tab at the top of this window.");
+                ImGuiEx.SetItemTooltip("Applies a condition set to the bar that will control when it is shown.\n" +
+                    "Useful for making groups of bars that all display at the same time.\n" +
+                    "You can make these on the \"Condition Sets\" tab at the top of this window.");
 
                 ImGui.NextColumn();
 
@@ -245,18 +242,15 @@ namespace QoLBar
             ImGui.SameLine(ImGui.GetWindowWidth() / 2);
             if (ImGui.Checkbox("Use Hotbar Frames on Icons", ref Config.UseIconFrame))
                 Config.Save();
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("This option will invert the ' f ' argument for all icons.");
+            ImGuiEx.SetItemTooltip("This option will invert the ' f ' argument for all icons.");
 
             if (ImGui.Checkbox("Always Display Bars", ref Config.AlwaysDisplayBars))
                 Config.Save();
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("Bars will remain visible even when logged out.");
+            ImGuiEx.SetItemTooltip("Bars will remain visible even when logged out.");
             ImGui.SameLine(ImGui.GetWindowWidth() / 2);
             if (ImGui.Checkbox("Disable Condition Caching", ref Config.NoConditionCache))
                 Config.Save();
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("Disables the 100ms delay between checking conditions, increasing CPU load.");
+            ImGuiEx.SetItemTooltip("Disables the 100ms delay between checking conditions, increasing CPU load.");
 
             ImGui.Spacing();
             ImGui.Spacing();

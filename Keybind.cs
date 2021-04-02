@@ -144,16 +144,14 @@ namespace QoLBar
                 sh.KeyPassthrough = false;
                 QoLBar.Config.Save();
             }
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("Press escape to clear the hotkey.");
+            ImGuiEx.SetItemTooltip("Press escape to clear the hotkey.");
 
             if (sh.Hotkey > 0)
             {
                 if (ImGui.Checkbox("Pass Input to Game", ref sh.KeyPassthrough))
                     QoLBar.Config.Save();
-                if (ImGui.IsItemHovered())
-                    ImGui.SetTooltip("Disables the hotkey from blocking the game input.\n" +
-                        "Some keys are unable to be blocked.");
+                ImGuiEx.SetItemTooltip("Disables the hotkey from blocking the game input.\n" +
+                    "Some keys are unable to be blocked.");
             }
         }
 

@@ -645,8 +645,7 @@ namespace QoLBar
             PushFontScale(GetFontScale() * barConfig.FontScale);
             if (ImGui.Button("+", new Vector2(barConfig.ButtonWidth * globalSize * barConfig.Scale, height)))
                 ImGui.OpenPopup("addItem");
-            if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
-                ImGui.SetTooltip("Add a new shortcut.\nRight click this (or the bar background) for options.\nRight click other shortcuts to edit them.");
+            ImGuiEx.SetItemTooltip("Add a new shortcut.\nRight click this (or the bar background) for options.\nRight click other shortcuts to edit them.", ImGuiHoveredFlags.AllowWhenBlockedByPopup);
             PopFontScale();
 
             if (_maxW < ImGui.GetItemRectSize().X)
@@ -803,8 +802,7 @@ namespace QoLBar
                         ImGui.OpenPopup("addItem");
                     PopFontScale();
                     ImGui.PopStyleColor();
-                    if (ImGui.IsItemHovered())
-                        ImGui.SetTooltip("Add a new shortcut.");
+                    ImGuiEx.SetItemTooltip("Add a new shortcut.");
                 }
 
                 ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, PluginUI.defaultSpacing);
@@ -831,9 +829,8 @@ namespace QoLBar
             }
             if (ImGui.InputText("Name                    ", ref sh.Name, 256) && editing) // Not a bug... just want the window to not change width depending on which type it is...
                 Config.Save();
-            if (ImGui.IsItemHovered())
-                ImGui.SetTooltip("Start the name with ::x where x is a number to use icons, i.e. \"::2914\".\n" +
-                    "Use ## anywhere in the name to make the text afterwards into a tooltip,\ni.e. \"Name##This is a Tooltip\".");
+            ImGuiEx.SetItemTooltip("Start the name with ::x where x is a number to use icons, i.e. \"::2914\".\n" +
+                "Use ## anywhere in the name to make the text afterwards into a tooltip,\ni.e. \"Name##This is a Tooltip\".");
 
             var _t = (int)sh.Type;
             ImGui.TextUnformatted("Type");
@@ -891,9 +888,8 @@ namespace QoLBar
                     Config.Save();
                     ImGui.CloseCurrentPopup();
                 }
-                if (ImGui.IsItemHovered())
-                    ImGui.SetTooltip("Import a shortcut from the clipboard,\n" +
-                        "or import all of another bar's shortcuts.");
+                ImGuiEx.SetItemTooltip("Import a shortcut from the clipboard,\n" +
+                    "or import all of another bar's shortcuts.");
 
                 ClampWindowPos();
 
@@ -919,20 +915,20 @@ namespace QoLBar
                         {
                             var _m = (int)sh.Mode;
                             ImGui.TextUnformatted("Mode");
-                            if (ImGui.IsItemHovered())
-                                ImGui.SetTooltip("Changes the behavior when pressed.\n" +
-                                    "Note: Not intended to be used with categories containing subcategories.");
+                            ImGuiEx.SetItemTooltip("Changes the behavior when pressed.\n" +
+                                "Note: Not intended to be used with categories containing subcategories.");
+
                             ImGui.RadioButton("Default", ref _m, 0);
-                            if (ImGui.IsItemHovered())
-                                ImGui.SetTooltip("Default behavior, categories must be set to this to edit their shortcuts!");
+                            ImGuiEx.SetItemTooltip("Default behavior, categories must be set to this to edit their shortcuts!");
+
                             ImGui.SameLine(ImGui.GetWindowWidth() / 3);
                             ImGui.RadioButton("Incremental", ref _m, 1);
-                            if (ImGui.IsItemHovered())
-                                ImGui.SetTooltip("Executes each line/shortcut in order over multiple presses.");
+                            ImGuiEx.SetItemTooltip("Executes each line/shortcut in order over multiple presses.");
+
                             ImGui.SameLine(ImGui.GetWindowWidth() / 3 * 2);
                             ImGui.RadioButton("Random", ref _m, 2);
-                            if (ImGui.IsItemHovered())
-                                ImGui.SetTooltip("Executes a random line/shortcut when pressed.");
+                            ImGuiEx.SetItemTooltip("Executes a random line/shortcut when pressed.");
+
                             if (_m != (int)sh.Mode)
                             {
                                 sh.Mode = (ShortcutMode)_m;
@@ -967,13 +963,11 @@ namespace QoLBar
                     {
                         if (ImGui.SliderInt("Width", ref sh.CategoryWidth, 0, 200))
                             Config.Save();
-                        if (ImGui.IsItemHovered())
-                            ImGui.SetTooltip("Set to 0 to use text width.");
+                        ImGuiEx.SetItemTooltip("Set to 0 to use text width.");
 
                         if (ImGui.SliderInt("Columns", ref sh.CategoryColumns, 1, 12))
                             Config.Save();
-                        if (ImGui.IsItemHovered())
-                            ImGui.SetTooltip("Number of shortcuts in each row before starting another.");
+                        ImGuiEx.SetItemTooltip("Number of shortcuts in each row before starting another.");
 
                         if (ImGui.DragFloat("Scale", ref sh.CategoryScale, 0.002f, 0.7f, 1.5f, "%.2f"))
                             Config.Save();
@@ -994,8 +988,7 @@ namespace QoLBar
                         ImGui.SameLine(ImGui.GetWindowWidth() / 2);
                         if (ImGui.Checkbox("Stay Open on Selection", ref sh.CategoryStaysOpen))
                             Config.Save();
-                        if (ImGui.IsItemHovered())
-                            ImGui.SetTooltip("Keeps the category open when pressing shortcuts within it.\nMay not work if the shortcut interacts with other plugins.");
+                        ImGuiEx.SetItemTooltip("Keeps the category open when pressing shortcuts within it.\nMay not work if the shortcut interacts with other plugins.");
 
                         if (ImGui.Checkbox("No Background", ref sh.CategoryNoBackground))
                             Config.Save();
@@ -1015,10 +1008,9 @@ namespace QoLBar
                         }
                         if (ImGui.InputText("Name", ref sh.Name, 256))
                             Config.Save();
-                        if (ImGui.IsItemHovered())
-                            ImGui.SetTooltip("Icons accept arguments between \"::\" and their ID. I.e. \"::f21\".\n" +
-                                "\t' f ' - Applies the hotbar frame (or removes it if applied globally).\n" +
-                                "\t' _ ' - Disables arguments, including implicit ones. Cannot be used with others.");
+                        ImGuiEx.SetItemTooltip("Icons accept arguments between \"::\" and their ID. I.e. \"::f21\".\n" +
+                            "\t' f ' - Applies the hotbar frame (or removes it if applied globally).\n" +
+                            "\t' _ ' - Disables arguments, including implicit ones. Cannot be used with others.");
 
                         if (ImGui.DragFloat("Zoom", ref sh.IconZoom, 0.005f, 1.0f, 5.0f, "%.2f"))
                             Config.Save();
@@ -1087,11 +1079,10 @@ namespace QoLBar
                 ImGui.SameLine(ImGui.GetWindowContentRegionWidth() + Style.WindowPadding.X - iconSize);
                 if (ShortcutUI.DrawIcon(46, new Vector2(iconSize), 1.0f, Vector2.Zero, Vector4.One, false))
                     Plugin.ToggleIconBrowser();
-                if (ImGui.IsItemHovered())
-                    ImGui.SetTooltip("Opens up a list of all icons you can use instead of text.\n" +
-                        "Warning: This will load EVERY icon available so it will probably lag for a moment.\n" +
-                        "Clicking on one will copy text to be pasted into the \"Name\" field of a shortcut.\n" +
-                        "Additionally, while the browser is open it will autofill the \"Name\" of shortcuts.");
+                ImGuiEx.SetItemTooltip("Opens up a list of all icons you can use instead of text.\n" +
+                    "Warning: This will load EVERY icon available so it will probably lag for a moment.\n" +
+                    "Clicking on one will copy text to be pasted into the \"Name\" field of a shortcut.\n" +
+                    "Additionally, while the browser is open it will autofill the \"Name\" of shortcuts.");
 
                 ClampWindowPos();
 
@@ -1175,8 +1166,7 @@ namespace QoLBar
                                 ImGui.SameLine(ImGui.GetWindowWidth() / 2);
                                 if (ImGui.Checkbox("Hint", ref barConfig.Hint))
                                     Config.Save();
-                                if (ImGui.IsItemHovered())
-                                    ImGui.SetTooltip("Will prevent the bar from sleeping, increasing CPU load.");
+                                ImGuiEx.SetItemTooltip("Will prevent the bar from sleeping, increasing CPU load.");
                             }
                         }
                         else
@@ -1225,8 +1215,7 @@ namespace QoLBar
 
                         if (ImGui.SliderInt("Button Width", ref barConfig.ButtonWidth, 0, 200))
                             Config.Save();
-                        if (ImGui.IsItemHovered())
-                            ImGui.SetTooltip("Set to 0 to use text width.");
+                        ImGuiEx.SetItemTooltip("Set to 0 to use text width.");
 
                         if (ImGui.DragFloat("Font Scale", ref barConfig.FontScale, 0.0018f, 0.5f, 1.0f, "%.2f"))
                             Config.Save();
