@@ -47,7 +47,7 @@ namespace QoLBar
         {
             foreach (var bar in bars)
                 if (bar.IsVisible)
-                    bar.SetupHotkeys(bar.barConfig.ShortcutList);
+                    bar.SetupHotkeys(bar.Config.ShortcutList);
         }
 
         private static void GetKeyState()
