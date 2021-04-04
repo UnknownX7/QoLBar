@@ -18,18 +18,23 @@ namespace QoLBar
             SetupPosition();
         }
 
-        public bool IsVisible => !Config.Hidden && CheckConditionSet();
-        public bool GetHidden() => Config.Hidden;
-        public void SetHidden() => SetHidden(!Config.Hidden);
-        public void SetHidden(bool b)
+        public bool IsVisible => !IsHidden && CheckConditionSet();
+        public bool IsHidden
         {
-            Config.Hidden = b;
-            QoLBar.Config.Save();
+            get => Config.Hidden;
+            set
+            {
+                Config.Hidden = value;
+                QoLBar.Config.Save();
+            }
         }
 
         private static ImGuiStylePtr Style => ImGui.GetStyle();
 
         private Vector2 ConfigPosition => new Vector2((float)Math.Floor(Config.Position[0] * window.X), (float)Math.Floor(Config.Position[1] * window.Y));
+
+        public bool IsVertical { get; private set; } = false;
+        public bool IsDocked { get; private set; } = true;
 
         private static ShCfg _sh;
         private Vector2 window = ImGui.GetIO().DisplaySize;
@@ -41,8 +46,6 @@ namespace QoLBar
         private Vector2 piv = Vector2.Zero;
         private Vector2 hidePos = Vector2.Zero;
         private Vector2 revealPos = Vector2.Zero;
-        private bool vertical = false;
-        private bool docked = true;
 
         private bool _reveal = false;
         public void Reveal() => _reveal = true;
@@ -105,37 +108,37 @@ namespace QoLBar
                 case BarDock.Top: //    0.0 1.0, 0.5 1.0, 1.0 1.0 // 0 0(+H),    winX/2 0(+H),    winX 0(+H)
                     pivY = 1.0f;
                     defPos = 0.0f;
-                    vertical = false;
-                    docked = true;
+                    IsVertical = false;
+                    IsDocked = true;
                     break;
                 case BarDock.Left: //   1.0 0.0, 1.0 0.5, 1.0 1.0 // 0(+W) 0,    0(+W) winY/2,    0(+W) winY
                     pivY = 1.0f;
                     defPos = 0.0f;
-                    vertical = true;
-                    docked = true;
+                    IsVertical = true;
+                    IsDocked = true;
                     break;
                 case BarDock.Bottom: // 0.0 0.0, 0.5 0.0, 1.0 0.0 // 0 winY(-H), winX/2 winY(-H), winX winY(-H)
                     pivY = 0.0f;
                     defPos = window.Y;
-                    vertical = false;
-                    docked = true;
+                    IsVertical = false;
+                    IsDocked = true;
                     break;
                 case BarDock.Right: //  0.0 0.0, 0.0 0.5, 0.0 1.0 // winX(-W) 0, winX(-W) winY/2, winX(-W) winY
                     pivY = 0.0f;
                     defPos = window.X;
-                    vertical = true;
-                    docked = true;
+                    IsVertical = true;
+                    IsDocked = true;
                     break;
                 case BarDock.UndockedH:
                     piv = Vector2.Zero;
-                    vertical = false;
-                    docked = false;
+                    IsVertical = false;
+                    IsDocked = false;
                     _setPos = true;
                     return;
                 case BarDock.UndockedV:
                     piv = Vector2.Zero;
-                    vertical = true;
-                    docked = false;
+                    IsVertical = true;
+                    IsDocked = false;
                     _setPos = true;
                     return;
                 default:
@@ -159,7 +162,7 @@ namespace QoLBar
                     break;
             }
 
-            if (!vertical)
+            if (!IsVertical)
             {
                 piv.X = pivX;
                 piv.Y = pivY;
@@ -210,7 +213,7 @@ namespace QoLBar
             flags = ImGuiWindowFlags.None;
 
             flags |= ImGuiWindowFlags.NoDecoration;
-            if (docked || Config.LockedPosition)
+            if (IsDocked || Config.LockedPosition)
                 flags |= ImGuiWindowFlags.NoMove;
             flags |= ImGuiWindowFlags.NoScrollWithMouse;
             if (Config.NoBackground)
@@ -281,7 +284,7 @@ namespace QoLBar
             mousePos = io.MousePos;
             globalSize = io.FontGlobalScale;
 
-            if (docked || Config.Visibility == BarVisibility.Immediate)
+            if (IsDocked || Config.Visibility == BarVisibility.Immediate)
             {
                 SetupRevealPosition();
 
@@ -290,20 +293,20 @@ namespace QoLBar
             else
                 Reveal();
 
-            if (!docked && !_firstframe && !_reveal && !_lastReveal)
+            if (!IsDocked && !_firstframe && !_reveal && !_lastReveal)
             {
                 ClearActivated(Config.ShortcutList);
                 return;
             }
 
-            if (_firstframe || _reveal || (barPos != hidePos) || (!docked && _lastReveal)) // Don't bother to render when fully off screen
+            if (_firstframe || _reveal || (barPos != hidePos) || (!IsDocked && _lastReveal)) // Don't bother to render when fully off screen
             {
                 ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0);
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0);
                 ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(Config.Spacing[0]));
                 ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.286f, 0.286f, 0.286f, 0.9f));
 
-                if (docked)
+                if (IsDocked)
                     ImGui.SetNextWindowPos(barPos, ImGuiCond.Always, piv);
                 else if (_setPos || Config.LockedPosition)
                 {
@@ -332,7 +335,7 @@ namespace QoLBar
                 if (Config.Editing || Config.ShortcutList.Count < 1)
                     DrawAddButton();
 
-                if (!Config.LockedPosition && !_firstframe && !docked && ImGui.GetWindowPos() != ConfigPosition)
+                if (!Config.LockedPosition && !_firstframe && !IsDocked && ImGui.GetWindowPos() != ConfigPosition)
                 {
                     var newPos = ImGui.GetWindowPos() / window;
                     Config.Position[0] = newPos.X;
@@ -359,7 +362,7 @@ namespace QoLBar
             if (!_reveal)
                 _mouseRevealed = false;
 
-            if (docked)
+            if (IsDocked)
             {
                 SetBarPosition();
                 Hide(); // Allows other objects to reveal the bar
@@ -386,7 +389,7 @@ namespace QoLBar
 
         private (Vector2, Vector2) CalculateRevealPosition()
         {
-            var pos = docked ? revealPos : ConfigPosition;
+            var pos = IsDocked ? revealPos : ConfigPosition;
             var min = new Vector2(pos.X - (barSize.X * piv.X), pos.Y - (barSize.Y * piv.Y));
             var max = new Vector2(pos.X + (barSize.X * (1 - piv.X)), pos.Y + (barSize.Y * (1 - piv.Y)));
             return (min, max);
@@ -394,7 +397,7 @@ namespace QoLBar
 
         private void CheckMousePosition()
         {
-            if (docked && _reveal)
+            if (IsDocked && _reveal)
                 return;
 
             (var _min, var _max) = CalculateRevealPosition();
@@ -492,10 +495,10 @@ namespace QoLBar
 
                 DrawShortcut(i, Config.ShortcutList, Config.ButtonWidth * globalSize * Config.Scale, (sh, wasHovered) =>
                 {
-                    ItemClicked(sh, vertical, false, wasHovered);
+                    ItemClicked(sh, IsVertical, false, wasHovered);
                 });
 
-                if (!vertical && i != Config.ShortcutList.Count - 1)
+                if (!IsVertical && i != Config.ShortcutList.Count - 1)
                     ImGui.SameLine();
 
                 ImGui.PopID();
@@ -579,7 +582,7 @@ namespace QoLBar
                 if (!clicked)
                 {
                     var isHoverEnabled = sh.CategoryOnHover && type == ShortcutType.Category;
-                    var allowHover = (!docked || barPos == revealPos) && !IsConfigPopupOpen() && !ImGui.IsPopupOpen("ShortcutCategory") && Keybind.GameHasFocus() && !ImGui.IsAnyMouseDown() && !ImGui.IsMouseReleased(ImGuiMouseButton.Right);
+                    var allowHover = (!IsDocked || barPos == revealPos) && !IsConfigPopupOpen() && !ImGui.IsPopupOpen("ShortcutCategory") && Keybind.GameHasFocus() && !ImGui.IsAnyMouseDown() && !ImGui.IsMouseReleased(ImGuiMouseButton.Right);
                     if (isHoverEnabled && allowHover)
                     {
                         wasHovered = true;
@@ -635,7 +638,7 @@ namespace QoLBar
 
         private void DrawAddButton()
         {
-            if (!vertical && Config.ShortcutList.Count > 0)
+            if (!IsVertical && Config.ShortcutList.Count > 0)
                 ImGui.SameLine();
 
             var height = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
@@ -1026,7 +1029,7 @@ namespace QoLBar
                     ImGui.EndTabBar();
                 }
 
-                if (ImGui.Button((shortcuts == Config.ShortcutList && !vertical) ? "←" : "↑") && i > 0)
+                if (ImGui.Button((shortcuts == Config.ShortcutList && !IsVertical) ? "←" : "↑") && i > 0)
                 {
                     shortcuts.RemoveAt(i);
                     shortcuts.Insert(i - 1, sh);
@@ -1034,7 +1037,7 @@ namespace QoLBar
                     ImGui.CloseCurrentPopup();
                 }
                 ImGui.SameLine();
-                if (ImGui.Button((shortcuts == Config.ShortcutList && !vertical) ? "→" : "↓") && i < (shortcuts.Count - 1))
+                if (ImGui.Button((shortcuts == Config.ShortcutList && !IsVertical) ? "→" : "↓") && i < (shortcuts.Count - 1))
                 {
                     shortcuts.RemoveAt(i);
                     shortcuts.Insert(i + 1, sh);
@@ -1110,15 +1113,15 @@ namespace QoLBar
                             SetupPosition();
                         }
 
-                        if (docked)
+                        if (IsDocked)
                         {
                             var _align = (int)Config.Alignment;
                             ImGui.Text("Alignment");
-                            ImGui.RadioButton(vertical ? "Top" : "Left", ref _align, 0);
+                            ImGui.RadioButton(IsVertical ? "Top" : "Left", ref _align, 0);
                             ImGui.SameLine(ImGui.GetWindowWidth() / 3);
                             ImGui.RadioButton("Center", ref _align, 1);
                             ImGui.SameLine(ImGui.GetWindowWidth() / 3 * 2);
-                            ImGui.RadioButton(vertical ? "Bottom" : "Right", ref _align, 2);
+                            ImGui.RadioButton(IsVertical ? "Bottom" : "Right", ref _align, 2);
                             if (_align != (int)Config.Alignment)
                             {
                                 Config.Alignment = (BarAlign)_align;
@@ -1257,7 +1260,7 @@ namespace QoLBar
         private void SetBarSize()
         {
             barSize.Y = ImGui.GetCursorPosY() + Style.WindowPadding.Y - Style.ItemSpacing.Y;
-            if (!vertical)
+            if (!IsVertical)
             {
                 ImGui.SameLine();
                 barSize.X = ImGui.GetCursorPosX() + Style.WindowPadding.X - Style.ItemSpacing.X;

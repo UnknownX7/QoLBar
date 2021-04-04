@@ -147,7 +147,7 @@ namespace QoLBar
                 bars[i].BarConfigPopup();
                 ImGui.SameLine();
                 if (ImGui.Button(bar.Hidden ? "R" : "H"))
-                    bars[i].SetHidden();
+                    bars[i].IsHidden = !bars[i].IsHidden;
                 ImGuiEx.SetItemTooltip(bar.Hidden ? "Reveal" : "Hide");
                 ImGui.SameLine();
                 var preview = ((bar.ConditionSet >= 0) && (bar.ConditionSet < QoLBar.Config.ConditionSets.Count)) ? $"[{bar.ConditionSet + 1}] {QoLBar.Config.ConditionSets[bar.ConditionSet].Name}" : "Condition Set";
@@ -488,9 +488,9 @@ namespace QoLBar
             else
             {
                 if (toggle)
-                    bars[i].SetHidden();
+                    bars[i].IsHidden = !bars[i].IsHidden;
                 else
-                    bars[i].SetHidden(b);
+                    bars[i].IsHidden = b;
             }
         }
 
