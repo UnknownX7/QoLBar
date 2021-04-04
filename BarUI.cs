@@ -320,7 +320,7 @@ namespace QoLBar
                 SetupImGuiFlags();
                 ImGui.Begin($"QoLBar##{barNumber}", flags);
 
-                PushFontScale(Config.Scale);
+                ImGuiEx.PushFontScale(Config.Scale);
 
                 if (_mouseRevealed && ImGui.IsWindowHovered(ImGuiHoveredFlags.RectOnly))
                     Reveal();
@@ -341,14 +341,14 @@ namespace QoLBar
                 }
 
                 ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, PluginUI.defaultSpacing);
-                PushFontScale(1);
+                ImGuiEx.PushFontScale(1);
                 BarConfigPopup();
-                PopFontScale();
+                ImGuiEx.PopFontScale();
                 ImGui.PopStyleVar();
 
                 SetBarSize();
 
-                PopFontScale();
+                ImGuiEx.PopFontScale();
 
                 ImGui.End();
 
@@ -534,7 +534,7 @@ namespace QoLBar
             if (c.W > 1)
                 c = ShortcutUI.AnimateColor(c);
 
-            PushFontScale(GetFontScale() * (!inCategory ? Config.FontScale : sh._parent.CategoryFontScale));
+            ImGuiEx.PushFontScale(ImGuiEx.GetFontScale() * (!inCategory ? Config.FontScale : sh._parent.CategoryFontScale));
             if (type == ShortcutType.Spacer)
             {
                 if (useIcon)
@@ -561,7 +561,7 @@ namespace QoLBar
                 clicked = ImGui.Button(name, new Vector2(width, height));
                 ImGui.PopStyleColor();
             }
-            PopFontScale();
+            ImGuiEx.PopFontScale();
 
             if (!inCategory && _maxW < ImGui.GetItemRectSize().X)
                 _maxW = ImGui.GetItemRectSize().X;
@@ -620,16 +620,16 @@ namespace QoLBar
             if (type == ShortcutType.Category)
             {
                 ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(sh.CategorySpacing[0], sh.CategorySpacing[1]));
-                PushFontScale(sh.CategoryScale);
+                ImGuiEx.PushFontScale(sh.CategoryScale);
                 CategoryPopup(sh);
-                PopFontScale();
+                ImGuiEx.PopFontScale();
                 ImGui.PopStyleVar();
             }
 
             ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, PluginUI.defaultSpacing);
-            PushFontScale(1);
+            ImGuiEx.PushFontScale(1);
             ItemConfigPopup(shortcuts, i, useIcon);
-            PopFontScale();
+            ImGuiEx.PopFontScale();
             ImGui.PopStyleVar();
         }
 
@@ -639,11 +639,11 @@ namespace QoLBar
                 ImGui.SameLine();
 
             var height = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
-            PushFontScale(GetFontScale() * Config.FontScale);
+            ImGuiEx.PushFontScale(ImGuiEx.GetFontScale() * Config.FontScale);
             if (ImGui.Button("+", new Vector2(Config.ButtonWidth * globalSize * Config.Scale, height)))
                 ImGui.OpenPopup("addItem");
             ImGuiEx.SetItemTooltip("Add a new shortcut.\nRight click this (or the bar background) for options.\nRight click other shortcuts to edit them.", ImGuiHoveredFlags.AllowWhenBlockedByPopup);
-            PopFontScale();
+            ImGuiEx.PopFontScale();
 
             if (_maxW < ImGui.GetItemRectSize().X)
                 _maxW = ImGui.GetItemRectSize().X;
@@ -651,9 +651,9 @@ namespace QoLBar
             //ImGui.OpenPopupContextItem($"BarConfig##{barNumber}"); // Technically unneeded
 
             ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, PluginUI.defaultSpacing);
-            PushFontScale(1);
+            ImGuiEx.PushFontScale(1);
             ItemCreatePopup(Config.ShortcutList);
-            PopFontScale();
+            ImGuiEx.PopFontScale();
             ImGui.PopStyleVar();
         }
 
@@ -794,18 +794,18 @@ namespace QoLBar
                     else
                         ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.08f, 0.08f, 0.08f, 0.94f));
                     var height = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
-                    PushFontScale(GetFontScale() * sh.CategoryFontScale);
+                    ImGuiEx.PushFontScale(ImGuiEx.GetFontScale() * sh.CategoryFontScale);
                     if (ImGui.Button("+", new Vector2(width, height)))
                         ImGui.OpenPopup("addItem");
-                    PopFontScale();
+                    ImGuiEx.PopFontScale();
                     ImGui.PopStyleColor();
                     ImGuiEx.SetItemTooltip("Add a new shortcut.");
                 }
 
                 ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, PluginUI.defaultSpacing);
-                PushFontScale(1);
+                ImGuiEx.PushFontScale(1);
                 ItemCreatePopup(sublist);
-                PopFontScale();
+                ImGuiEx.PopFontScale();
                 ImGui.PopStyleVar();
 
                 ClampWindowPos();
@@ -1314,24 +1314,6 @@ namespace QoLBar
                 barPos.Y = _tweenStart.Y + deltaY;
             }
         }
-
-        // Why is this not a basic feature of ImGui...
-        private readonly Stack<float> _fontScaleStack = new Stack<float>();
-        private float _curScale = 1;
-        private void PushFontScale(float scale)
-        {
-            _fontScaleStack.Push(_curScale);
-            _curScale = scale;
-            ImGui.SetWindowFontScale(_curScale);
-        }
-
-        private void PopFontScale()
-        {
-            _curScale = _fontScaleStack.Pop();
-            ImGui.SetWindowFontScale(_curScale);
-        }
-
-        private float GetFontScale() => _curScale;
 
         public void Dispose()
         {
