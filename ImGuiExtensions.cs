@@ -1,3 +1,5 @@
+using System;
+using System.Numerics;
 using System.Collections.Generic;
 using ImGuiNET;
 
@@ -29,5 +31,16 @@ namespace QoLBar
         }
 
         public static float GetFontScale() => _curScale;
+
+        public static void ClampWindowPos(Vector2 max) => ClampWindowPos(Vector2.Zero, max);
+
+        public static void ClampWindowPos(Vector2 min, Vector2 max)
+        {
+            var pos = ImGui.GetWindowPos();
+            var size = ImGui.GetWindowSize();
+            var x = Math.Min(Math.Max(pos.X, min.X), max.X - size.X);
+            var y = Math.Min(Math.Max(pos.Y, min.Y), max.Y - size.Y);
+            ImGui.SetWindowPos(new Vector2(x, y));
+        }
     }
 }

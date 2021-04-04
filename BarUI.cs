@@ -51,6 +51,7 @@ namespace QoLBar
         public void Reveal() => _reveal = true;
         public void ForceReveal() => _lastReveal = _reveal = true;
         public void Hide() => _reveal = false;
+        public bool IsFullyRevealed => !IsDocked || barPos == revealPos;
 
         private bool IsConfigPopupOpen() => QoLBar.Plugin.ui.IsConfigPopupOpen();
         private void SetConfigPopupOpen() => QoLBar.Plugin.ui.SetConfigPopupOpen();
@@ -65,7 +66,7 @@ namespace QoLBar
         private Vector2 _catpiv = Vector2.Zero;
         private Vector2 _catpos = Vector2.Zero;
         private Vector2 _maincatpos = Vector2.Zero;
-        private bool _activated = false;
+        public bool _activated = false; // TODO: this variable sucks make it pretty
 
         public BarUI(int nbar)
         {
@@ -711,7 +712,8 @@ namespace QoLBar
             }
         }
 
-        private void SetupCategoryPosition(bool v, bool subItem)
+        // TODO: rewrite this, preferably insert into ShortcutUI
+        public void SetupCategoryPosition(bool v, bool subItem)
         {
             Vector2 pos, wMin, wMax;
             if (!subItem)
@@ -811,7 +813,7 @@ namespace QoLBar
                 ImGuiEx.PopFontScale();
                 ImGui.PopStyleVar();
 
-                ClampWindowPos();
+                ImGuiEx.ClampWindowPos(window);
 
                 ImGui.EndPopup();
             }
@@ -891,7 +893,7 @@ namespace QoLBar
                 ImGuiEx.SetItemTooltip("Import a shortcut from the clipboard,\n" +
                     "or import all of another bar's shortcuts.");
 
-                ClampWindowPos();
+                ImGuiEx.ClampWindowPos(window);
 
                 ImGui.EndPopup();
             }
@@ -1084,7 +1086,7 @@ namespace QoLBar
                     "Clicking on one will copy text to be pasted into the \"Name\" field of a shortcut.\n" +
                     "Additionally, while the browser is open it will autofill the \"Name\" of shortcuts.");
 
-                ClampWindowPos();
+                ImGuiEx.ClampWindowPos(window);
 
                 ImGui.EndPopup();
             }
@@ -1251,7 +1253,7 @@ namespace QoLBar
                 if (ImGui.Button("QoL Bar Config"))
                     QoLBar.Plugin.ToggleConfig();
 
-                ClampWindowPos();
+                ImGuiEx.ClampWindowPos(window);
 
                 ImGui.EndPopup();
             }
@@ -1270,15 +1272,6 @@ namespace QoLBar
                 barSize.X = _maxW + (Style.WindowPadding.X * 2);
                 _maxW = 0;
             }
-        }
-
-        private void ClampWindowPos()
-        {
-            var _lastPos = ImGui.GetWindowPos();
-            var _size = ImGui.GetWindowSize();
-            var _x = Math.Min(Math.Max(_lastPos.X, 0), window.X - _size.X);
-            var _y = Math.Min(Math.Max(_lastPos.Y, 0), window.Y - _size.Y);
-            ImGui.SetWindowPos(new Vector2(_x, _y));
         }
 
         private void SetBarPosition()
