@@ -134,14 +134,12 @@ namespace QoLBar
             {
                 case BarAlign.LeftOrTop:
                     pivX = 0.0f;
-                    offset = 22 + ImGui.GetFontSize();
                     break;
                 case BarAlign.Center:
                     pivX = 0.5f;
                     break;
                 case BarAlign.RightOrBottom:
                     pivX = 1.0f;
-                    offset = -22 - ImGui.GetFontSize();
                     break;
             }
 
@@ -150,7 +148,7 @@ namespace QoLBar
                 piv.X = pivX;
                 piv.Y = pivY;
 
-                hidePos.X = window.X * pivX + offset + (ConfigPosition.X * globalSize);
+                hidePos.X = window.X * pivX + offset + ConfigPosition.X;
                 hidePos.Y = defPos;
                 revealPos.X = hidePos.X;
             }
@@ -160,7 +158,7 @@ namespace QoLBar
                 piv.Y = pivX;
 
                 hidePos.X = defPos;
-                hidePos.Y = window.Y * pivX + offset + (ConfigPosition.Y * globalSize);
+                hidePos.Y = window.Y * pivX + offset + ConfigPosition.Y;
                 revealPos.Y = hidePos.Y;
             }
 
@@ -175,16 +173,16 @@ namespace QoLBar
             switch (Config.DockSide)
             {
                 case BarDock.Top:
-                    revealPos.Y = Math.Max(hidePos.Y + barSize.Y + (ConfigPosition.Y * globalSize), GetHidePosition().Y + 1);
+                    revealPos.Y = Math.Max(hidePos.Y + barSize.Y + ConfigPosition.Y, GetHidePosition().Y + 1);
                     break;
                 case BarDock.Left:
-                    revealPos.X = Math.Max(hidePos.X + barSize.X + (ConfigPosition.X * globalSize), GetHidePosition().X + 1);
+                    revealPos.X = Math.Max(hidePos.X + barSize.X + ConfigPosition.X, GetHidePosition().X + 1);
                     break;
                 case BarDock.Bottom:
-                    revealPos.Y = Math.Min(hidePos.Y - barSize.Y + (ConfigPosition.Y * globalSize), GetHidePosition().Y - 1);
+                    revealPos.Y = Math.Min(hidePos.Y - barSize.Y + ConfigPosition.Y, GetHidePosition().Y - 1);
                     break;
                 case BarDock.Right:
-                    revealPos.X = Math.Min(hidePos.X - barSize.X + (ConfigPosition.X * globalSize), GetHidePosition().X - 1);
+                    revealPos.X = Math.Min(hidePos.X - barSize.X + ConfigPosition.X, GetHidePosition().X - 1);
                     break;
             }
         }
