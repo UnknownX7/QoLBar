@@ -10,11 +10,11 @@ namespace QoLBar
     // TODO: Split this file into ShortcutUI
     public class BarUI : IDisposable
     {
-        private int barNumber;
-        public BarCfg Config => QoLBar.Config.BarCfgs[barNumber];
+        public int ID { get; private set; }
+        public BarCfg Config => QoLBar.Config.BarCfgs[ID];
         public void SetBarNumber(int n)
         {
-            barNumber = n;
+            ID = n;
             SetupPosition();
         }
 
@@ -35,6 +35,8 @@ namespace QoLBar
 
         public bool IsVertical { get; private set; } = false;
         public bool IsDocked { get; private set; } = true;
+
+        public List<ShortcutUI> children = new List<ShortcutUI>();
 
         private static ShCfg _sh;
         private Vector2 window = ImGui.GetIO().DisplaySize;
@@ -60,7 +62,7 @@ namespace QoLBar
         private bool _setPos = true;
         private bool _lastReveal = true;
         private bool _mouseRevealed = false;
-        private float _maxW = 0;
+        public float _maxW = 0; // TODO: same as below
         private Vector2 _tweenStart;
         private float _tweenProgress = 1;
         private Vector2 _catpiv = Vector2.Zero;
@@ -70,24 +72,11 @@ namespace QoLBar
 
         public BarUI(int nbar)
         {
-            barNumber = nbar;
+            ID = nbar;
             SetupPosition();
 
-            static void RandomizeShortcuts(List<ShCfg> shortcuts)
-            {
-                foreach (var sh in shortcuts)
-                {
-                    if (sh.Mode == ShortcutMode.Random)
-                    {
-                        var count = Math.Max(1, (sh.Type == ShortcutType.Category) ? sh.SubList.Count : sh.Command.Split('\n').Length);
-                        sh._i = DateTime.Now.Millisecond % count;
-                    }
-                    if (sh.Type == ShortcutType.Category)
-                        RandomizeShortcuts(sh.SubList);
-                }
-            }
-
-            RandomizeShortcuts(Config.ShortcutList);
+            //for (int i = 0; i < Config.ShortcutList.Count; i++)
+            //    children.Add(new ShortcutUI(this, null, i));
         }
 
         private bool CheckConditionSet()
@@ -322,14 +311,14 @@ namespace QoLBar
                 ImGui.SetNextWindowSize(barSize);
 
                 SetupImGuiFlags();
-                ImGui.Begin($"QoLBar##{barNumber}", flags);
+                ImGui.Begin($"QoLBar##{ID}", flags);
 
                 ImGuiEx.PushFontScale(Config.Scale);
 
                 if (_mouseRevealed && ImGui.IsWindowHovered(ImGuiHoveredFlags.RectOnly))
                     Reveal();
                 if (ImGui.IsMouseReleased(ImGuiMouseButton.Right) && ImGui.IsWindowHovered())
-                    ImGui.OpenPopup($"BarConfig##{barNumber}");
+                    ImGui.OpenPopup($"BarConfig##{ID}");
 
                 DrawItems();
 
@@ -763,6 +752,8 @@ namespace QoLBar
             _catpos = pos;
         }
 
+        public void SetCategoryPosition() => ImGui.SetNextWindowPos(_catpos, ImGuiCond.Appearing, _catpiv);
+
         private void CategoryPopup(ShCfg sh)
         {
             ImGui.SetNextWindowPos(_catpos, ImGuiCond.Appearing, _catpiv);
@@ -819,46 +810,6 @@ namespace QoLBar
             }
         }
 
-        private void ItemBaseUI(ShCfg sh, bool editing)
-        {
-            if (IconBrowserUI.iconBrowserOpen && IconBrowserUI.doPasteIcon)
-            {
-                var split = sh.Name.Split(new[] { "##" }, 2, StringSplitOptions.None);
-                sh.Name = $"::{IconBrowserUI.pasteIcon}" + (split.Length > 1 ? $"##{split[1]}" : "");
-                if (editing)
-                    QoLBar.Config.Save();
-                IconBrowserUI.doPasteIcon = false;
-            }
-            if (ImGui.InputText("Name                    ", ref sh.Name, 256) && editing) // Not a bug... just want the window to not change width depending on which type it is...
-                QoLBar.Config.Save();
-            ImGuiEx.SetItemTooltip("Start the name with ::x where x is a number to use icons, i.e. \"::2914\".\n" +
-                "Use ## anywhere in the name to make the text afterwards into a tooltip,\ni.e. \"Name##This is a Tooltip\".");
-
-            var _t = (int)sh.Type;
-            ImGui.TextUnformatted("Type");
-            ImGui.RadioButton("Command", ref _t, 0);
-            ImGui.SameLine(ImGui.GetWindowWidth() / 3);
-            ImGui.RadioButton("Category", ref _t, 1);
-            ImGui.SameLine(ImGui.GetWindowWidth() / 3 * 2);
-            ImGui.RadioButton("Spacer", ref _t, 2);
-            if (_t != (int)sh.Type)
-            {
-                sh.Type = (ShortcutType)_t;
-                if (sh.Type == ShortcutType.Category)
-                    sh.SubList ??= new List<ShCfg>();
-
-                if (editing)
-                    QoLBar.Config.Save();
-            }
-
-            if (sh.Type != ShortcutType.Spacer && (sh.Type != ShortcutType.Category || sh.Mode == ShortcutMode.Default))
-            {
-                var height = ImGui.GetFontSize() * Math.Min(sh.Command.Split('\n').Length + 1, 7) + Style.FramePadding.Y * 2; // ImGui issue #238: can't disable multiline scrollbar and it appears a whole line earlier than it should, so thats cool I guess
-                if (ImGui.InputTextMultiline("Command##Input", ref sh.Command, 65535, new Vector2(0, height)) && editing)
-                    QoLBar.Config.Save();
-            }
-        }
-
         private void ItemCreatePopup(List<ShCfg> shortcuts)
         {
             if (ImGui.BeginPopup("addItem"))
@@ -867,7 +818,7 @@ namespace QoLBar
                 SetConfigPopupOpen();
 
                 _sh ??= new ShCfg();
-                ItemBaseUI(_sh, false);
+                ShortcutUI.ItemBaseUI(_sh, false);
 
                 if (ImGui.Button("Create"))
                 {
@@ -911,7 +862,7 @@ namespace QoLBar
                 {
                     if (ImGui.BeginTabItem("Shortcut"))
                     {
-                        ItemBaseUI(sh, true);
+                        ShortcutUI.ItemBaseUI(sh, true);
 
                         if (sh.Type != ShortcutType.Spacer)
                         {
@@ -1094,7 +1045,7 @@ namespace QoLBar
 
         public void BarConfigPopup()
         {
-            if (ImGui.BeginPopup($"BarConfig##{barNumber}"))
+            if (ImGui.BeginPopup($"BarConfig##{ID}"))
             {
                 Reveal();
 
@@ -1311,8 +1262,52 @@ namespace QoLBar
             }
         }
 
+        public void AddShortcut(ShCfg sh)
+        {
+            Config.ShortcutList.Add(sh);
+            children.Add(new ShortcutUI(this, null, children.Count));
+            QoLBar.Config.Save();
+        }
+
+        public void RemoveShortcut(int i)
+        {
+            if (QoLBar.Config.ExportOnDelete)
+                ImGui.SetClipboardText(Importing.ExportShortcut(Config.ShortcutList[i], false));
+
+            children[i].Dispose();
+            children.RemoveAt(i);
+            Config.ShortcutList.RemoveAt(i);
+            QoLBar.Config.Save();
+            RefreshShortcutIDs();
+        }
+
+        public void ShiftShortcut(int i, bool increment)
+        {
+            if (!increment ? i > 0 : i < (children.Count - 1))
+            {
+                var j = (increment ? i + 1 : i - 1);
+                var sh = children[i];
+                children.RemoveAt(i);
+                children.Insert(j, sh);
+
+                var sh2 = Config.ShortcutList[i];
+                Config.ShortcutList.RemoveAt(i);
+                Config.ShortcutList.Insert(j, sh2);
+                QoLBar.Config.Save();
+                RefreshShortcutIDs();
+            }
+        }
+
+        private void RefreshShortcutIDs()
+        {
+            for (int i = 0; i < children.Count; i++)
+                children[i].SetShortcutNumber(i);
+        }
+
         public void Dispose()
         {
+            foreach (var ui in children)
+                ui.Dispose();
         }
     }
 }

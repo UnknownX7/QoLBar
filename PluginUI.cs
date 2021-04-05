@@ -413,6 +413,7 @@ namespace QoLBar
             if (QoLBar.Config.ExportOnDelete)
                 ImGui.SetClipboardText(Importing.ExportBar(QoLBar.Config.BarCfgs[i], false));
 
+            bars[i].Dispose();
             bars.RemoveAt(i);
             QoLBar.Config.BarCfgs.RemoveAt(i);
             QoLBar.Config.Save();
