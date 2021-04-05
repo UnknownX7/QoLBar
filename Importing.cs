@@ -103,7 +103,6 @@ namespace QoLBar
             }
             else
             {
-                bar.LockedPosition = bar.GetDefaultValue(x => x.LockedPosition);
                 bar.RevealAreaScale = bar.GetDefaultValue(x => x.RevealAreaScale);
 
                 if (bar.Visibility == BarCfg.BarVisibility.Always)

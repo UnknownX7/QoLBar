@@ -42,5 +42,24 @@ namespace QoLBar
             var y = Math.Min(Math.Max(pos.Y, min.Y), max.Y - size.Y);
             ImGui.SetWindowPos(new Vector2(x, y));
         }
+
+        //public static bool IsWindowDragging() => ImGui.IsWindowHovered() && !ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.IsMouseDragging(ImGuiMouseButton.Left, 0.0f);
+
+        private static bool _beganDrag = false;
+        public static bool OnStartWindowDrag()
+        {
+            if (!_beganDrag)
+                return _beganDrag = ImGui.IsWindowHovered() && !ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.IsMouseDragging(ImGuiMouseButton.Left, 0);
+            else
+                return false;
+        }
+
+        public static bool OnStopWindowDrag()
+        {
+            if (_beganDrag)
+                return !(_beganDrag = !ImGui.IsMouseReleased(ImGuiMouseButton.Left));
+            else
+                return false;
+        }
     }
 }

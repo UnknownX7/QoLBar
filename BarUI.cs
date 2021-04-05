@@ -34,6 +34,7 @@ namespace QoLBar
 
         public bool IsVertical { get; private set; } = false;
         public bool IsDocked { get; private set; } = true;
+        public bool IsDragging { get; private set; } = false;
 
         public List<ShortcutUI> children = new List<ShortcutUI>();
 
@@ -303,12 +304,39 @@ namespace QoLBar
                 if (Config.Editing || children.Count < 1)
                     DrawAddButton();
 
-                if (!Config.LockedPosition && !_firstframe && !IsDocked && ImGui.GetWindowPos() != ConfigPosition)
+                if (!_firstframe && !Config.LockedPosition)
                 {
-                    var newPos = ImGui.GetWindowPos() / window;
-                    Config.Position[0] = newPos.X;
-                    Config.Position[1] = newPos.Y;
-                    QoLBar.Config.Save();
+                    if (IsDocked)
+                    {
+                        if (ImGuiEx.OnStartWindowDrag())
+                            IsDragging = true;
+
+                        if (IsDragging)
+                        {
+                            Reveal();
+                            var delta = ImGui.GetMouseDragDelta(ImGuiMouseButton.Left, 0) / window;
+                            ImGui.ResetMouseDragDelta();
+                            Config.Position[0] = Math.Min(Config.Position[0] + delta.X, 1);
+                            Config.Position[1] = Math.Min(Config.Position[1] + delta.Y, 1);
+                            SetupPosition();
+                        }
+
+                        if (ImGuiEx.OnStopWindowDrag())
+                        {
+                            IsDragging = false;
+                            QoLBar.Config.Save();
+                        }
+                    }
+                    else
+                    {
+                        if (ImGui.GetWindowPos() != ConfigPosition)
+                        {
+                            var newPos = ImGui.GetWindowPos() / window;
+                            Config.Position[0] = newPos.X;
+                            Config.Position[1] = newPos.Y;
+                            QoLBar.Config.Save();
+                        }
+                    }
                 }
 
                 ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, PluginUI.defaultSpacing);
@@ -588,30 +616,6 @@ namespace QoLBar
 
                             if ((Config.Visibility != BarVisibility.Always) && ImGui.DragFloat("Reveal Area Scale", ref Config.RevealAreaScale, 0.01f, 0.0f, 1.0f, "%.2f"))
                                 QoLBar.Config.Save();
-
-                            var offset = ConfigPosition;
-                            if (ImGui.DragFloat2("Offset", ref offset, 0.2f, -500, 500, "%.f"))
-                            {
-                                Config.Position[0] = offset.X / window.X;
-                                Config.Position[1] = offset.Y / window.Y;
-                                QoLBar.Config.Save();
-                                SetupPosition();
-                            }
-
-                            if (ImGui.Checkbox("Edit Mode", ref Config.Editing))
-                            {
-                                if (!Config.Editing)
-                                    QoLBar.Plugin.ExecuteCommand("/echo <se> You can right click on the bar itself (the black background) to reopen this settings menu!");
-                                QoLBar.Config.Save();
-                            }
-
-                            if (Config.Visibility != BarVisibility.Always)
-                            {
-                                ImGui.SameLine(ImGui.GetWindowWidth() / 2);
-                                if (ImGui.Checkbox("Hint", ref Config.Hint))
-                                    QoLBar.Config.Save();
-                                ImGuiEx.SetItemTooltip("Will prevent the bar from sleeping, increasing CPU load.");
-                            }
                         }
                         else
                         {
@@ -625,28 +629,39 @@ namespace QoLBar
                                 Config.Visibility = (BarVisibility)_visibility;
                                 QoLBar.Config.Save();
                             }
+                        }
 
-                            if (ImGui.Checkbox("Edit Mode", ref Config.Editing))
-                            {
-                                if (!Config.Editing)
-                                    QoLBar.Plugin.ExecuteCommand("/echo <se> You can right click on the bar itself (the black background) to reopen this settings menu!");
-                                QoLBar.Config.Save();
-                            }
-                            ImGui.SameLine(ImGui.GetWindowWidth() / 2);
-                            if (ImGui.Checkbox("Lock Position", ref Config.LockedPosition))
-                                QoLBar.Config.Save();
+                        if (ImGui.Checkbox("Edit Mode", ref Config.Editing))
+                        {
+                            if (!Config.Editing)
+                                QoLBar.Plugin.ExecuteCommand("/echo <se> You can right click on the bar itself (the black background) to reopen this settings menu!");
+                            QoLBar.Config.Save();
+                        }
+                        ImGui.SameLine(ImGui.GetWindowWidth() / 2);
+                        if (ImGui.Checkbox("Lock Position", ref Config.LockedPosition))
+                            QoLBar.Config.Save();
 
-                            if (!Config.LockedPosition)
+                        if (!Config.LockedPosition)
+                        {
+                            var pos = ConfigPosition;
+                            var max = (window.X > window.Y) ? window.X : window.Y;
+                            if (ImGui.DragFloat2(IsDocked ? "Offset" : "Position", ref pos, 1, -max, max, "%.f"))
                             {
-                                var pos = ConfigPosition;
-                                if (ImGui.DragFloat2("Position", ref pos, 1, -Style.WindowPadding.X, (window.X > window.Y) ? window.X : window.Y, "%.f"))
-                                {
-                                    Config.Position[0] = pos.X / window.X;
-                                    Config.Position[1] = pos.Y / window.Y;
-                                    QoLBar.Config.Save();
+                                Config.Position[0] = Math.Min(pos.X / window.X, 1);
+                                Config.Position[1] = Math.Min(pos.Y / window.Y, 1);
+                                QoLBar.Config.Save();
+                                if (IsDocked)
+                                    SetupPosition();
+                                else
                                     _setPos = true;
-                                }
                             }
+                        }
+
+                        if (IsDocked && Config.Visibility != BarVisibility.Always)
+                        {
+                            if (ImGui.Checkbox("Hint", ref Config.Hint))
+                                QoLBar.Config.Save();
+                            ImGuiEx.SetItemTooltip("Will prevent the bar from sleeping, increasing CPU load.");
                         }
 
                         ImGui.EndTabItem();
