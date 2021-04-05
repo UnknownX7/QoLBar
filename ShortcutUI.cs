@@ -24,15 +24,15 @@ namespace QoLBar
 
         private static ImGuiStylePtr Style => ImGui.GetStyle();
 
-        private readonly BarUI parentBar;
-        private readonly ShortcutUI parent;
-        private readonly List<ShortcutUI> children = new List<ShortcutUI>();
+        public readonly BarUI parentBar;
+        public readonly ShortcutUI parent;
+        public readonly List<ShortcutUI> children = new List<ShortcutUI>();
 
         private bool IsConfigPopupOpen() => QoLBar.Plugin.ui.IsConfigPopupOpen();
         private void SetConfigPopupOpen() => QoLBar.Plugin.ui.SetConfigPopupOpen();
 
         private int _i = 0;
-        private bool _activated = false;
+        public bool _activated = false;
 
         public ShortcutUI(BarUI bar, ShortcutUI sh, int n)
         {
@@ -40,11 +40,39 @@ namespace QoLBar
             parent = sh;
             SetShortcutNumber(n);
 
-            var count = Math.Max(1, (Config.Type == ShortcutType.Category) ? Config.SubList.Count : Config.Command.Split('\n').Length);
-            _i = DateTime.Now.Millisecond % count;
+            if (Config.Mode == ShortcutMode.Random)
+            {
+                var count = Math.Max(1, (Config.Type == ShortcutType.Category) ? Config.SubList.Count : Config.Command.Split('\n').Length);
+                _i = DateTime.Now.Millisecond % count;
+            }
 
-            for (int i = 0; i < Config.SubList.Count; i++)
-                children.Add(new ShortcutUI(bar, this, i));
+            if (Config.SubList != null)
+            {
+                for (int i = 0; i < Config.SubList.Count; i++)
+                    children.Add(new ShortcutUI(bar, this, i));
+            }
+        }
+
+        public void SetupHotkeys()
+        {
+            if (Config.Hotkey > 0 && Config.Type != ShortcutType.Spacer)
+                Keybind.AddHotkey(this);
+
+            if (Config.Type == ShortcutType.Category)
+            {
+                foreach (var ui in children)
+                    ui.SetupHotkeys();
+            }
+        }
+
+        public void ClearActivated()
+        {
+            _activated = false;
+            if (Config.Type == ShortcutType.Category)
+            {
+                foreach (var ui in children)
+                    ui.ClearActivated();
+            }
         }
 
         public void OnClick(bool v, bool wasHovered)
@@ -100,22 +128,17 @@ namespace QoLBar
         public void DrawShortcut(float width)
         {
             var inCategory = parent != null;
-            var sh = Config;
-            var type = sh.Type;
-            ShCfg parentShortcut = null;
-            if (type == ShortcutType.Category && sh.Mode != ShortcutMode.Default && children.Count > 0)
-            {
-                parentShortcut = sh;
-                sh = sh.SubList[Math.Min(sh._i, sh.SubList.Count - 1)];
-                type = sh.Type;
-            }
-            var name = sh.Name;
+            var ui = this;
+            if (Config.Type == ShortcutType.Category && Config.Mode != ShortcutMode.Default && children.Count > 0)
+                ui = children[Math.Min(_i, children.Count - 1)];
+            var sh = ui.Config;
 
+            var name = sh.Name;
             var useIcon = ParseName(ref name, out string tooltip, out int icon, out string args);
 
             if (inCategory)
             {
-                if (useIcon || !sh._parent.CategoryNoBackground)
+                if (useIcon || !ui.parent.Config.CategoryNoBackground)
                     ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
                 else
                     ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.08f, 0.08f, 0.08f, 0.94f));
@@ -129,8 +152,8 @@ namespace QoLBar
             if (c.W > 1)
                 c = AnimateColor(c);
 
-            ImGuiEx.PushFontScale(ImGuiEx.GetFontScale() * (!inCategory ? parentBar.Config.FontScale : sh._parent.CategoryFontScale));
-            if (type == ShortcutType.Spacer)
+            ImGuiEx.PushFontScale(ImGuiEx.GetFontScale() * (!inCategory ? parentBar.Config.FontScale : ui.parent.Config.CategoryFontScale));
+            if (sh.Type == ShortcutType.Spacer)
             {
                 if (useIcon)
                     DrawIcon(icon, new Vector2(height), sh.IconZoom, new Vector2(sh.IconOffset[0], sh.IconOffset[1]), c, QoLBar.Config.UseIconFrame, args, true, true);
@@ -173,7 +196,7 @@ namespace QoLBar
 
                 if (!clicked)
                 {
-                    var isHoverEnabled = sh.CategoryOnHover && type == ShortcutType.Category;
+                    var isHoverEnabled = sh.CategoryOnHover && sh.Type == ShortcutType.Category;
                     var allowHover = parentBar.IsFullyRevealed && !IsConfigPopupOpen() && !ImGui.IsPopupOpen("ShortcutCategory") && Keybind.GameHasFocus() && !ImGui.IsAnyMouseDown() && !ImGui.IsMouseReleased(ImGuiMouseButton.Right);
                     if (isHoverEnabled && allowHover)
                     {
@@ -194,15 +217,15 @@ namespace QoLBar
                     parentBar._activated = true;
                 }
 
-                if (parentShortcut != null)
+                if (ui != this)
                 {
-                    switch (parentShortcut.Mode)
+                    switch (Config.Mode)
                     {
                         case ShortcutMode.Incremental:
-                            parentShortcut._i = (parentShortcut._i + 1) % parentShortcut.SubList.Count;
+                            _i = (_i + 1) % children.Count;
                             break;
                         case ShortcutMode.Random:
-                            parentShortcut._i = (int)(QoLBar.GetFrameCount() % parentShortcut.SubList.Count);
+                            _i = (int)(QoLBar.GetFrameCount() % children.Count);
                             break;
                     }
                 }
@@ -220,7 +243,7 @@ namespace QoLBar
 
             ImGui.OpenPopupContextItem("editItem");
 
-            if (type == ShortcutType.Category)
+            if (sh.Type == ShortcutType.Category)
             {
                 ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(sh.CategorySpacing[0], sh.CategorySpacing[1]));
                 ImGuiEx.PushFontScale(sh.CategoryScale);
@@ -275,9 +298,49 @@ namespace QoLBar
 
                 ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, PluginUI.defaultSpacing);
                 ImGuiEx.PushFontScale(1);
-                //ItemCreatePopup(sublist);
+                DrawAdd();
                 ImGuiEx.PopFontScale();
                 ImGui.PopStyleVar();
+
+                ImGuiEx.ClampWindowPos(ImGui.GetIO().DisplaySize);
+
+                ImGui.EndPopup();
+            }
+        }
+
+        private void DrawAdd()
+        {
+            if (ImGui.BeginPopup("addItem"))
+            {
+                parentBar.Reveal();
+                SetConfigPopupOpen();
+
+                BarUI.tempSh ??= new ShCfg();
+                var newSh = BarUI.tempSh;
+                ItemBaseUI(newSh, false);
+
+                if (ImGui.Button("Create"))
+                {
+                    AddShortcut(newSh);
+                    BarUI.tempSh = null;
+                    ImGui.CloseCurrentPopup();
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Import"))
+                {
+                    var imports = Importing.TryImport(ImGui.GetClipboardText(), true);
+                    if (imports.shortcut != null)
+                        AddShortcut(imports.shortcut);
+                    else if (imports.bar != null)
+                    {
+                        foreach (var sh in imports.bar.ShortcutList)
+                            AddShortcut(sh);
+                    }
+                    QoLBar.Config.Save();
+                    ImGui.CloseCurrentPopup();
+                }
+                ImGuiEx.SetItemTooltip("Import a shortcut from the clipboard,\n" +
+                    "or import all of another bar's shortcuts.");
 
                 ImGuiEx.ClampWindowPos(ImGui.GetIO().DisplaySize);
 

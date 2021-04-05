@@ -90,11 +90,6 @@ namespace QoLBar
         [JsonProperty("cF")]  [DefaultValue(1.0f)]                 public float CategoryFontScale = 1.0f;
         [JsonProperty("cNB")] [DefaultValue(false)]                public bool CategoryNoBackground = false;
         [JsonProperty("cH")]  [DefaultValue(false)]                public bool CategoryOnHover = false;
-
-        // TODO: move to shortcut ui variables
-        [JsonIgnore] public int _i = 0;
-        [JsonIgnore] public ShCfg _parent = null;
-        [JsonIgnore] public bool _activated = false;
     }
 
     public class Configuration : IPluginConfiguration

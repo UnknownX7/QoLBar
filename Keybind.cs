@@ -10,7 +10,7 @@ namespace QoLBar
 {
     public static class Keybind
     {
-        public static readonly List<(BarUI, ShCfg)> hotkeys = new List<(BarUI, ShCfg)>();
+        public static readonly List<(BarUI, ShortcutUI)> hotkeys = new List<(BarUI, ShortcutUI)>();
         private static readonly byte[] keyState = new byte[256];
         private static readonly bool[] prevKeyState = new bool[keyState.Length];
         private static readonly bool[] keyPressed = new bool[keyState.Length];
@@ -47,7 +47,7 @@ namespace QoLBar
         {
             foreach (var bar in bars)
                 if (bar.IsVisible)
-                    bar.SetupHotkeys(bar.Config.ShortcutList);
+                    bar.SetupHotkeys();
         }
 
         private static void GetKeyState()
@@ -82,24 +82,25 @@ namespace QoLBar
                     {
                         foreach ((var bar, var sh) in hotkeys)
                         {
-                            if (sh.Hotkey == (key | k))
+                            var cfg = sh.Config;
+                            if (cfg.Hotkey == (key | k))
                             {
-                                if (sh.Type == ShCfg.ShortcutType.Category && sh.Mode == ShCfg.ShortcutMode.Default)
+                                if (cfg.Type == ShCfg.ShortcutType.Category && cfg.Mode == ShCfg.ShortcutMode.Default)
                                 {
                                     // TODO: Make less hacky
                                     bar.ForceReveal();
-                                    var parent = sh._parent;
+                                    var parent = sh.parent;
                                     while (parent != null)
                                     {
                                         parent._activated = true;
-                                        parent = parent._parent;
+                                        parent = parent.parent;
                                     }
                                     sh._activated = true;
                                 }
                                 else
-                                    bar.ItemClicked(sh, false, false, false);
+                                    sh.OnClick(false, false);
 
-                                if (!sh.KeyPassthrough && k <= 160)
+                                if (!cfg.KeyPassthrough && k <= 160)
                                     QoLBar.Interface.ClientState.KeyState[k] = false;
                             }
                         }
@@ -109,7 +110,7 @@ namespace QoLBar
             }
         }
 
-        public static void AddHotkey(BarUI bar, ShCfg sh) => hotkeys.Add((bar, sh));
+        public static void AddHotkey(ShortcutUI sh) => hotkeys.Add((sh.parentBar, sh));
 
         public static void KeybindInput(ShCfg sh)
         {
@@ -169,7 +170,8 @@ namespace QoLBar
                 {
                     ImGui.PushID(i);
 
-                    (_, var sh) = hotkeys[i];
+                    (_, var ui) = hotkeys[i];
+                    var sh = ui.Config;
                     if (ImGui.SmallButton("Delete"))
                     {
                         sh.Hotkey = 0;
@@ -194,7 +196,7 @@ namespace QoLBar
                     ImGui.TextUnformatted(GetKeyName(sh.Hotkey));
                     ImGui.NextColumn();
                     if (sh.Type == ShCfg.ShortcutType.Category)
-                        ImGui.TextUnformatted($"{sh.Mode} {(sh._parent == null ? "Category" : "Subcategory")} \"{sh.Name}\" {(string.IsNullOrEmpty(sh.Command) ? "" : "\n" + sh.Command)}");
+                        ImGui.TextUnformatted($"{sh.Mode} {(ui.parent == null ? "Category" : "Subcategory")} \"{sh.Name}\" {(string.IsNullOrEmpty(sh.Command) ? "" : "\n" + sh.Command)}");
                     else
                         ImGui.TextUnformatted(sh.Command);
                     ImGui.NextColumn();
