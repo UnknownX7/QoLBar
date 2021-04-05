@@ -215,7 +215,7 @@ namespace QoLBar
                     ImGui.SetTooltip(tooltip);
             }
 
-            if (clicked)
+            if (clicked && !parentBar.IsDragging)
             {
                 if (_activated)
                 {
