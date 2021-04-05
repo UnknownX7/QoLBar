@@ -1,18 +1,13 @@
 ﻿using System;
 using System.Numerics;
 using System.Collections.Generic;
-using System.Windows.Forms;
 using ImGuiNET;
-using Dalamud.Plugin;
-using static QoLBar.BarCfg;
 using static QoLBar.ShCfg;
 
 namespace QoLBar
 {
     public class ShortcutUI : IDisposable
     {
-        // TODO: Refactor BarUI into separate files (Most of BarUI needs to be rewritten to achieve this)
-
         public int ID { get; private set; }
         //public ShCfg shConfig => (parent != null) ? parent.shConfig.SubList[shNumber] : parentBar.barConfig.ShortcutList[shNumber];
         public ShCfg Config { get; private set; }
@@ -34,12 +29,23 @@ namespace QoLBar
         private int _i = 0;
         public bool _activated = false;
 
-        public ShortcutUI(BarUI bar, ShortcutUI sh, int n)
+        public ShortcutUI(BarUI bar)
         {
             parentBar = bar;
-            parent = sh;
-            SetShortcutNumber(n);
+            SetShortcutNumber(bar.children.Count);
+            Initialize();
+        }
 
+        public ShortcutUI(ShortcutUI sh)
+        {
+            parentBar = sh.parentBar;
+            parent = sh;
+            SetShortcutNumber(sh.children.Count);
+            Initialize();
+        }
+
+        public void Initialize()
+        {
             if (Config.Mode == ShortcutMode.Random)
             {
                 var count = Math.Max(1, (Config.Type == ShortcutType.Category) ? Config.SubList.Count : Config.Command.Split('\n').Length);
@@ -49,7 +55,7 @@ namespace QoLBar
             if (Config.SubList != null)
             {
                 for (int i = 0; i < Config.SubList.Count; i++)
-                    children.Add(new ShortcutUI(bar, this, i));
+                    children.Add(new ShortcutUI(this));
             }
         }
 
@@ -538,7 +544,7 @@ namespace QoLBar
         public void AddShortcut(ShCfg sh)
         {
             Config.SubList.Add(sh);
-            children.Add(new ShortcutUI(parentBar, this, children.Count));
+            children.Add(new ShortcutUI(this));
             QoLBar.Config.Save();
         }
 
@@ -559,13 +565,13 @@ namespace QoLBar
             if (!increment ? i > 0 : i < (children.Count - 1))
             {
                 var j = (increment ? i + 1 : i - 1);
-                var sh = children[i];
+                var ui = children[i];
                 children.RemoveAt(i);
-                children.Insert(j, sh);
+                children.Insert(j, ui);
 
-                var sh2 = Config.SubList[i];
+                var sh = Config.SubList[i];
                 Config.SubList.RemoveAt(i);
-                Config.SubList.Insert(j, sh2);
+                Config.SubList.Insert(j, sh);
                 QoLBar.Config.Save();
                 RefreshShortcutIDs();
             }

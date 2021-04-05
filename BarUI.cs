@@ -3,18 +3,17 @@ using System.Numerics;
 using System.Collections.Generic;
 using ImGuiNET;
 using static QoLBar.BarCfg;
-using static QoLBar.ShCfg;
 
 namespace QoLBar
 {
-    // TODO: Split this file into ShortcutUI
     public class BarUI : IDisposable
     {
         public int ID { get; private set; }
-        public BarCfg Config => QoLBar.Config.BarCfgs[ID];
+        public BarCfg Config { get; private set; }
         public void SetBarNumber(int n)
         {
             ID = n;
+            Config = QoLBar.Config.BarCfgs[n];
             SetupPosition();
         }
 
@@ -69,13 +68,12 @@ namespace QoLBar
         private Vector2 _maincatpos = Vector2.Zero;
         public bool _activated = false; // TODO: this variable sucks make it pretty
 
-        public BarUI(int nbar)
+        public BarUI(int n)
         {
-            ID = nbar;
-            SetupPosition();
+            SetBarNumber(n);
 
             for (int i = 0; i < Config.ShortcutList.Count; i++)
-                children.Add(new ShortcutUI(this, null, i));
+                children.Add(new ShortcutUI(this));
         }
 
         private bool CheckConditionSet()
@@ -130,8 +128,6 @@ namespace QoLBar
                     IsDocked = false;
                     _setPos = true;
                     return;
-                default:
-                    break;
             }
 
             switch (Config.Alignment)
@@ -146,8 +142,6 @@ namespace QoLBar
                 case BarAlign.RightOrBottom:
                     pivX = 1.0f;
                     offset = -22 - ImGui.GetFontSize();
-                    break;
-                default:
                     break;
             }
 
@@ -192,8 +186,6 @@ namespace QoLBar
                 case BarDock.Right:
                     revealPos.X = Math.Min(hidePos.X - barSize.X + (ConfigPosition.X * globalSize), GetHidePosition().X - 1);
                     break;
-                default:
-                    break;
             }
         }
 
@@ -231,8 +223,6 @@ namespace QoLBar
                         break;
                     case BarDock.Right:
                         _hidePos.X -= _winPad.X;
-                        break;
-                    default:
                         break;
                 }
             }
@@ -768,7 +758,7 @@ namespace QoLBar
         public void AddShortcut(ShCfg sh)
         {
             Config.ShortcutList.Add(sh);
-            children.Add(new ShortcutUI(this, null, children.Count));
+            children.Add(new ShortcutUI(this));
             QoLBar.Config.Save();
         }
 
@@ -789,13 +779,13 @@ namespace QoLBar
             if (!increment ? i > 0 : i < (children.Count - 1))
             {
                 var j = (increment ? i + 1 : i - 1);
-                var sh = children[i];
+                var ui = children[i];
                 children.RemoveAt(i);
-                children.Insert(j, sh);
+                children.Insert(j, ui);
 
-                var sh2 = Config.ShortcutList[i];
+                var sh = Config.ShortcutList[i];
                 Config.ShortcutList.RemoveAt(i);
-                Config.ShortcutList.Insert(j, sh2);
+                Config.ShortcutList.Insert(j, sh);
                 QoLBar.Config.Save();
                 RefreshShortcutIDs();
             }
