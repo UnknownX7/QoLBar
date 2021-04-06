@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Numerics;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -57,8 +57,35 @@ namespace QoLBar
 
         public BarCfg Upgrade()
         {
-            var oldPos = Position / ImGui.GetIO().DisplaySize;
-            var oldOffset = Offset / ImGui.GetIO().DisplaySize;
+            var window = ImGui.GetIO().DisplaySize; // TODO: this will need to be changed to main viewport size
+            var oldPos = Position / window;
+
+            var oldOffset = Offset * ImGui.GetIO().FontGlobalScale;
+
+            var add = 0f;
+            switch (Alignment)
+            {
+                case BarAlign.LeftOrTop:
+                    add = 22 + ImGui.GetFontSize();
+                    break;
+                case BarAlign.RightOrBottom:
+                    add = -22 - ImGui.GetFontSize();
+                    break;
+            }
+
+            switch (DockSide)
+            {
+                case BarDock.Top:
+                case BarDock.Bottom:
+                    oldOffset.X += add;
+                    break;
+                case BarDock.Left:
+                case BarDock.Right:
+                    oldOffset.Y += add;
+                    break;
+            }
+
+            oldOffset /= window;
 
             var bar = new BarCfg
             {

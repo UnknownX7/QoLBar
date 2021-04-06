@@ -90,7 +90,6 @@ namespace QoLBar
             var pivX = 0.0f;
             var pivY = 0.0f;
             var defPos = 0.0f;
-            var offset = 0.0f;
             switch (Config.DockSide)
             {
                 case BarDock.Top: //    0.0 1.0, 0.5 1.0, 1.0 1.0 // 0 0(+H),    winX/2 0(+H),    winX 0(+H)
@@ -149,7 +148,7 @@ namespace QoLBar
                 piv.X = pivX;
                 piv.Y = pivY;
 
-                hidePos.X = window.X * pivX + offset + ConfigPosition.X;
+                hidePos.X = window.X * pivX + ConfigPosition.X;
                 hidePos.Y = defPos;
                 revealPos.X = hidePos.X;
             }
@@ -159,7 +158,7 @@ namespace QoLBar
                 piv.Y = pivX;
 
                 hidePos.X = defPos;
-                hidePos.Y = window.Y * pivX + offset + ConfigPosition.Y;
+                hidePos.Y = window.Y * pivX + ConfigPosition.Y;
                 revealPos.Y = hidePos.Y;
             }
 

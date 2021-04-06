@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Numerics;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -21,7 +20,7 @@ namespace QoLBar
             Bottom,
             Left,
             Center, // thoughts?
-            Undocked,
+            Undocked, // TODO: use this to change positioning to be screenwide
             UndockedV
         }
         public enum BarAlign
