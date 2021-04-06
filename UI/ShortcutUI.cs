@@ -191,14 +191,14 @@ namespace QoLBar
             }
             ImGuiEx.PopFontScale();
 
-            if (!inCategory && parentBar._maxW < ImGui.GetItemRectSize().X)
-                parentBar._maxW = ImGui.GetItemRectSize().X;
+            if (!inCategory)
+                parentBar.MaxWidth = ImGui.GetItemRectSize().X;
 
             if (inCategory)
                 ImGui.PopStyleColor();
 
             var wasHovered = false;
-            clicked = clicked || (_activated && !parentBar._activated);
+            clicked = clicked || (_activated && !parentBar.WasActivated);
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
             {
                 if (ImGui.IsMouseReleased(ImGuiMouseButton.Left))
@@ -224,7 +224,7 @@ namespace QoLBar
                 if (_activated)
                 {
                     _activated = false;
-                    parentBar._activated = true;
+                    parentBar.WasActivated = true;
                 }
 
                 if (ui != this)

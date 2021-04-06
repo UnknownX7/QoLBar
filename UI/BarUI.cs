@@ -34,7 +34,7 @@ namespace QoLBar
 
         private static ImGuiStylePtr Style => ImGui.GetStyle();
 
-        private Vector2 ConfigPosition => new Vector2((float)Math.Floor(Config.Position[0] * window.X), (float)Math.Floor(Config.Position[1] * window.Y));
+        private Vector2 VectorPosition => new Vector2((float)Math.Floor(Config.Position[0] * window.X), (float)Math.Floor(Config.Position[1] * window.Y)); // TODO: will need to change for new ImGui
 
         public bool IsVertical { get; private set; } = false;
         public bool IsDocked { get; private set; } = true;
@@ -43,7 +43,7 @@ namespace QoLBar
         public List<ShortcutUI> children = new List<ShortcutUI>();
 
         public static ShCfg tempSh;
-        private Vector2 window = ImGui.GetIO().DisplaySize;
+        private Vector2 window = ImGui.GetIO().DisplaySize; // TODO: will need to change for new ImGui
         private static Vector2 mousePos = ImGui.GetIO().MousePos;
         private static float globalSize = ImGui.GetIO().FontGlobalScale;
         private Vector2 barSize = new Vector2(200, 38);
@@ -59,19 +59,49 @@ namespace QoLBar
         public void Hide() => _reveal = false;
         public bool IsFullyRevealed => !IsDocked || barPos == revealPos;
 
-        private void SetConfigPopupOpen() => QoLBar.Plugin.ui.SetConfigPopupOpen();
+        private float _maxW = 0;
+        public float MaxWidth
+        {
+            get => _maxW;
+            set
+            {
+                if (_maxW < value || value == 0)
+                    _maxW = value;
+            }
+        }
+
+        private float _maxH = 0;
+        public float MaxHeight
+        {
+            get => _maxH;
+            set
+            {
+                if (_maxH < value || value == 0)
+                    _maxH = value;
+            }
+        }
+
+        private bool _activated = false;
+        public bool WasActivated
+        {
+            get => _activated;
+            set
+            {
+                if (!value)
+                    ClearActivated();
+                _activated = value;
+            }
+        }
 
         private bool _firstframe = true;
         private bool _setPos = true;
         private bool _lastReveal = true;
         private bool _mouseRevealed = false;
-        public float _maxW = 0; // TODO: same as below
         private Vector2 _tweenStart;
         private float _tweenProgress = 1;
         private Vector2 _catpiv = Vector2.Zero;
         private Vector2 _catpos = Vector2.Zero;
         private Vector2 _maincatpos = Vector2.Zero;
-        public bool _activated = false; // TODO: this variable sucks make it pretty
 
         public BarUI(int n)
         {
@@ -152,7 +182,7 @@ namespace QoLBar
                 piv.X = pivX;
                 piv.Y = pivY;
 
-                hidePos.X = window.X * pivX + ConfigPosition.X;
+                hidePos.X = window.X * pivX + VectorPosition.X;
                 hidePos.Y = defPos;
                 revealPos.X = hidePos.X;
             }
@@ -162,7 +192,7 @@ namespace QoLBar
                 piv.Y = pivX;
 
                 hidePos.X = defPos;
-                hidePos.Y = window.Y * pivX + ConfigPosition.Y;
+                hidePos.Y = window.Y * pivX + VectorPosition.Y;
                 revealPos.Y = hidePos.Y;
             }
 
@@ -177,16 +207,16 @@ namespace QoLBar
             switch (Config.DockSide)
             {
                 case BarDock.Top:
-                    revealPos.Y = Math.Max(hidePos.Y + barSize.Y + ConfigPosition.Y, GetHidePosition().Y + 1);
+                    revealPos.Y = Math.Max(hidePos.Y + barSize.Y + VectorPosition.Y, GetHidePosition().Y + 1);
                     break;
                 case BarDock.Left:
-                    revealPos.X = Math.Max(hidePos.X + barSize.X + ConfigPosition.X, GetHidePosition().X + 1);
+                    revealPos.X = Math.Max(hidePos.X + barSize.X + VectorPosition.X, GetHidePosition().X + 1);
                     break;
                 case BarDock.Bottom:
-                    revealPos.Y = Math.Min(hidePos.Y - barSize.Y + ConfigPosition.Y, GetHidePosition().Y - 1);
+                    revealPos.Y = Math.Min(hidePos.Y - barSize.Y + VectorPosition.Y, GetHidePosition().Y - 1);
                     break;
                 case BarDock.Right:
-                    revealPos.X = Math.Min(hidePos.X - barSize.X + ConfigPosition.X, GetHidePosition().X - 1);
+                    revealPos.X = Math.Min(hidePos.X - barSize.X + VectorPosition.X, GetHidePosition().X - 1);
                     break;
             }
         }
@@ -239,7 +269,7 @@ namespace QoLBar
 
         private void ClearActivated()
         {
-            if (!_activated)
+            if (!WasActivated)
             {
                 foreach (var ui in children)
                     ui.ClearActivated();
@@ -284,7 +314,7 @@ namespace QoLBar
                 {
                     if (!_firstframe)
                     {
-                        ImGui.SetNextWindowPos(ConfigPosition);
+                        ImGui.SetNextWindowPos(VectorPosition);
                         _setPos = false;
                     }
                     else
@@ -338,7 +368,7 @@ namespace QoLBar
                     }
                     else
                     {
-                        if (ImGui.GetWindowPos() != ConfigPosition)
+                        if (ImGui.GetWindowPos() != VectorPosition)
                         {
                             var newPos = ImGui.GetWindowPos() / window;
                             Config.Position[0] = newPos.X;
@@ -375,8 +405,7 @@ namespace QoLBar
             else
                 _lastReveal = _reveal;
 
-            ClearActivated();
-            _activated = false;
+            WasActivated = false;
 
             _firstframe = false;
         }
@@ -394,7 +423,7 @@ namespace QoLBar
 
         private (Vector2, Vector2) CalculateRevealPosition()
         {
-            var pos = IsDocked ? revealPos : ConfigPosition;
+            var pos = IsDocked ? revealPos : VectorPosition;
             var min = new Vector2(pos.X - (barSize.X * piv.X), pos.Y - (barSize.Y * piv.Y));
             var max = new Vector2(pos.X + (barSize.X * (1 - piv.X)), pos.Y + (barSize.Y * (1 - piv.Y)));
             return (min, max);
@@ -469,8 +498,7 @@ namespace QoLBar
                 ImGuiEx.SetItemTooltip("Add a new shortcut.\nRight click this (or the bar background) for options.\nRight click other shortcuts to edit them.", ImGuiHoveredFlags.AllowWhenBlockedByPopup);
                 ImGuiEx.PopFontScale();
 
-                if (_maxW < ImGui.GetItemRectSize().X)
-                    _maxW = ImGui.GetItemRectSize().X;
+                MaxWidth = ImGui.GetItemRectSize().X;
 
                 //ImGui.OpenPopupContextItem($"BarConfig##{barNumber}"); // Technically unneeded
             }
@@ -544,7 +572,7 @@ namespace QoLBar
             if (ImGui.BeginPopup("addItem"))
             {
                 Reveal();
-                SetConfigPopupOpen();
+                QoLBar.Plugin.ui.SetConfigPopupOpen();
 
                 tempSh ??= new ShCfg();
                 ShortcutUI.ItemBaseUI(tempSh, false);
@@ -659,7 +687,7 @@ namespace QoLBar
 
                         if (!Config.LockedPosition)
                         {
-                            var pos = ConfigPosition;
+                            var pos = VectorPosition;
                             var max = (window.X > window.Y) ? window.X : window.Y;
                             if (ImGui.DragFloat2(IsDocked ? "Offset" : "Position", ref pos, 1, -max, max, "%.f"))
                             {
@@ -742,8 +770,8 @@ namespace QoLBar
             }
             else
             {
-                barSize.X = _maxW + (Style.WindowPadding.X * 2);
-                _maxW = 0;
+                barSize.X = MaxWidth + (Style.WindowPadding.X * 2);
+                MaxWidth = 0;
             }
         }
 
