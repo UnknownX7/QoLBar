@@ -95,7 +95,7 @@ namespace QoLBar
 
         private static void CleanBarConfig(BarCfg bar)
         {
-            if (bar.DockSide == BarCfg.BarDock.UndockedH || bar.DockSide == BarCfg.BarDock.UndockedV)
+            if (bar.DockSide == BarCfg.BarDock.Undocked || bar.DockSide == BarCfg.BarDock.UndockedV)
             {
                 bar.Alignment = bar.GetDefaultValue(x => x.Alignment);
                 bar.RevealAreaScale = bar.GetDefaultValue(x => x.RevealAreaScale);

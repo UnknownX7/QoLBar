@@ -14,11 +14,15 @@ namespace QoLBar
     // TODO: go through and rename stuff
     public class BarCfg
     {
-        public enum BarVisibility
+        public enum BarDock
         {
-            Slide,
-            Immediate,
-            Always
+            Top,
+            Right,
+            Bottom,
+            Left,
+            Center, // thoughts?
+            Undocked,
+            UndockedV
         }
         public enum BarAlign
         {
@@ -26,22 +30,19 @@ namespace QoLBar
             Center,
             RightOrBottom
         }
-        public enum BarDock
+        public enum BarVisibility
         {
-            Top,
-            Left,
-            Bottom,
-            Right,
-            UndockedH,
-            UndockedV
+            Slide,
+            Immediate,
+            Always
         }
 
         [JsonProperty("n")]  [DefaultValue("")]                   public string Name = string.Empty;
         [JsonProperty("sL")] [DefaultValue(null)]                 public List<ShCfg> ShortcutList = new List<ShCfg>();
         [JsonProperty("h")]  [DefaultValue(false)]                public bool Hidden = false;
-        [JsonProperty("v")]  [DefaultValue(BarVisibility.Always)] public BarVisibility Visibility = BarVisibility.Always;
-        [JsonProperty("a")]  [DefaultValue(BarAlign.Center)]      public BarAlign Alignment = BarAlign.Center;
         [JsonProperty("d")]  [DefaultValue(BarDock.Bottom)]       public BarDock DockSide = BarDock.Bottom;
+        [JsonProperty("a")]  [DefaultValue(BarAlign.Center)]      public BarAlign Alignment = BarAlign.Center;
+        [JsonProperty("v")]  [DefaultValue(BarVisibility.Always)] public BarVisibility Visibility = BarVisibility.Always;
         [JsonProperty("ht")] [DefaultValue(false)]                public bool Hint = false;
         [JsonProperty("bW")] [DefaultValue(100)]                  public int ButtonWidth = 100;
         [JsonProperty("e")]  [DefaultValue(false)]                public bool Editing = false;

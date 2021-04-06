@@ -65,8 +65,6 @@ namespace QoLBar
                 Name = Title,
                 Hidden = Hidden,
                 Visibility = (BarCfg.BarVisibility)Visibility,
-                Alignment = (BarCfg.BarAlign)Alignment,
-                DockSide = (BarCfg.BarDock)DockSide,
                 Hint = Hint,
                 ButtonWidth = ButtonWidth,
                 Editing = !HideAdd,
@@ -78,6 +76,24 @@ namespace QoLBar
                 Spacing = new[] { Spacing, Spacing },
                 NoBackground = NoBackground,
                 ConditionSet = ConditionSet
+            };
+
+            bar.DockSide = DockSide switch
+            {
+                BarDock.Top => BarCfg.BarDock.Top,
+                BarDock.Left => BarCfg.BarDock.Left,
+                BarDock.Bottom => BarCfg.BarDock.Bottom,
+                BarDock.Right => BarCfg.BarDock.Right,
+                BarDock.UndockedH => BarCfg.BarDock.Top,
+                BarDock.UndockedV => BarCfg.BarDock.Left,
+                _ => BarCfg.BarDock.Top
+            };
+
+            bar.Alignment = DockSide switch
+            {
+                BarDock.UndockedH => BarCfg.BarAlign.LeftOrTop,
+                BarDock.UndockedV => BarCfg.BarAlign.LeftOrTop,
+                _ => (BarCfg.BarAlign)Alignment
             };
 
             foreach (var sh in ShortcutList)

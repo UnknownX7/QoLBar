@@ -117,7 +117,7 @@ namespace QoLBar
                     IsVertical = true;
                     IsDocked = true;
                     break;
-                case BarDock.UndockedH:
+                case BarDock.Undocked:
                     piv = Vector2.Zero;
                     IsVertical = false;
                     IsDocked = false;
@@ -584,10 +584,10 @@ namespace QoLBar
                             QoLBar.Config.Save();
 
                         var _dock = (int)Config.DockSide;
-                        if (ImGui.Combo("Side", ref _dock, "Top\0Left\0Bottom\0Right\0Undocked\0Undocked (Vertical)"))
+                        if (ImGui.Combo("Side", ref _dock, "Top\0Right\0Bottom\0Left"))
                         {
                             Config.DockSide = (BarDock)_dock;
-                            if (Config.DockSide == BarDock.UndockedH || Config.DockSide == BarDock.UndockedV)
+                            if (Config.DockSide == BarDock.Undocked || Config.DockSide == BarDock.UndockedV)
                                 Config.Visibility = BarVisibility.Always;
                             QoLBar.Config.Save();
                             SetupPosition();
