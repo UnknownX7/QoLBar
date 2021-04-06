@@ -192,7 +192,11 @@ namespace QoLBar
             ImGuiEx.PopFontScale();
 
             if (!inCategory)
-                parentBar.MaxWidth = ImGui.GetItemRectSize().X;
+            {
+                var size = ImGui.GetItemRectMax() - ImGui.GetWindowPos();
+                parentBar.MaxWidth = size.X;
+                parentBar.MaxHeight = size.Y;
+            }
 
             if (inCategory)
                 ImGui.PopStyleColor();
@@ -244,8 +248,8 @@ namespace QoLBar
                     OnClick(parentBar.IsVertical, wasHovered);
                 else
                 {
-                    var cols = Math.Max(parent.Config.CategoryColumns, 1);
-                    OnClick(parent.children.Count >= (cols * (cols - 1) + 1), wasHovered);
+                    var cols = parent.Config.CategoryColumns;
+                    OnClick(cols > 0 && parent.children.Count >= (cols * (cols - 1) + 1), wasHovered);
                     if (!parent.Config.CategoryStaysOpen && sh.Type != ShortcutType.Category && sh.Type != ShortcutType.Spacer)
                         ImGui.CloseCurrentPopup();
                 }
@@ -276,7 +280,7 @@ namespace QoLBar
             {
                 parentBar.Reveal();
 
-                var cols = Math.Max(Config.CategoryColumns, 1);
+                var cols = Config.CategoryColumns;
                 var width = Config.CategoryWidth * ImGui.GetIO().FontGlobalScale * Config.CategoryScale;
 
                 for (int i = 0; i < children.Count; i++)
@@ -285,7 +289,7 @@ namespace QoLBar
 
                     children[i].DrawShortcut(width);
 
-                    if (i % cols != cols - 1)
+                    if (cols <= 0 || i % cols != cols - 1)
                         ImGui.SameLine();
 
                     ImGui.PopID();
@@ -428,9 +432,10 @@ namespace QoLBar
                             QoLBar.Config.Save();
                         ImGuiEx.SetItemTooltip("Set to 0 to use text width.");
 
-                        if (ImGui.SliderInt("Columns", ref Config.CategoryColumns, 1, 12))
+                        if (ImGui.SliderInt("Columns", ref Config.CategoryColumns, 0, 12))
                             QoLBar.Config.Save();
-                        ImGuiEx.SetItemTooltip("Number of shortcuts in each row before starting another.");
+                        ImGuiEx.SetItemTooltip("Number of shortcuts in each row before starting another.\n" +
+                            "Set to 0 to specify infinite.");
 
                         if (ImGui.DragFloat("Scale", ref Config.CategoryScale, 0.002f, 0.7f, 1.5f, "%.2f"))
                             QoLBar.Config.Save();

@@ -46,6 +46,7 @@ namespace QoLBar
         [JsonProperty("e")]  [DefaultValue(false)]                public bool Editing = false;
         [JsonProperty("p")]  [DefaultValue(new[] { 0f, 0f })]     public float[] Position = new float[2];
         [JsonProperty("l")]  [DefaultValue(false)]                public bool LockedPosition = false;
+        [JsonProperty("co")] [DefaultValue(0)]                    public int Columns = 0;
         [JsonProperty("s")]  [DefaultValue(1.0f)]                 public float Scale = 1.0f;
         [JsonProperty("rA")] [DefaultValue(1.0f)]                 public float RevealAreaScale = 1.0f;
         [JsonProperty("fS")] [DefaultValue(1.0f)]                 public float FontScale = 1.0f;
@@ -133,7 +134,7 @@ namespace QoLBar
             if (!string.IsNullOrEmpty(PrevPluginVersion))
             {
                 var v = new Version(PrevPluginVersion);
-                if (new Version("1.3.2.1") >= v)
+                if (new Version("1.3.2.0") >= v)
                     displayUpdateWindow = true;
             }
         }

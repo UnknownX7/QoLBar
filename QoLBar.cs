@@ -14,7 +14,7 @@ using QoLBar.Attributes;
 
 // I'm too lazy to make a file just for this
 [assembly: AssemblyTitle("QoLBar")]
-[assembly: AssemblyVersion("1.3.2.1")]
+[assembly: AssemblyVersion("1.3.2.2")]
 
 // Disclaimer: I have no idea what I'm doing.
 namespace QoLBar

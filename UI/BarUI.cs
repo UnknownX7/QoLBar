@@ -16,7 +16,7 @@ namespace QoLBar
             {
                 _id = value;
                 Config = QoLBar.Config.BarCfgs[value];
-                SetupPosition();
+                SetupPivot();
             }
         }
         public BarCfg Config { get; private set; }
@@ -36,7 +36,7 @@ namespace QoLBar
 
         private Vector2 VectorPosition => new Vector2((float)Math.Floor(Config.Position[0] * window.X), (float)Math.Floor(Config.Position[1] * window.Y)); // TODO: will need to change for new ImGui
 
-        public bool IsVertical { get; private set; } = false;
+        public bool IsVertical => (Config.Columns > 0) && children.Count >= (Config.Columns * (Config.Columns - 1) + 1);
         public bool IsDocked { get; private set; } = true;
         public bool IsDragging { get; private set; } = false;
 
@@ -119,105 +119,93 @@ namespace QoLBar
                 return true;
         }
 
-        private void SetupPosition()
+        private void SetupPivot()
         {
-            var pivX = 0.0f;
-            var pivY = 0.0f;
-            var defPos = 0.0f;
+            var alignPiv = 0.0f;
+
+            switch (Config.Alignment)
+            {
+                case BarAlign.LeftOrTop:
+                    alignPiv = 0.0f;
+                    break;
+                case BarAlign.Center:
+                    alignPiv = 0.5f;
+                    break;
+                case BarAlign.RightOrBottom:
+                    alignPiv = 1.0f;
+                    break;
+            }
+
             switch (Config.DockSide)
             {
                 case BarDock.Top: //    0.0 1.0, 0.5 1.0, 1.0 1.0 // 0 0(+H),    winX/2 0(+H),    winX 0(+H)
-                    pivY = 1.0f;
-                    defPos = 0.0f;
-                    IsVertical = false;
-                    IsDocked = true;
-                    break;
-                case BarDock.Left: //   1.0 0.0, 1.0 0.5, 1.0 1.0 // 0(+W) 0,    0(+W) winY/2,    0(+W) winY
-                    pivY = 1.0f;
-                    defPos = 0.0f;
-                    IsVertical = true;
-                    IsDocked = true;
-                    break;
-                case BarDock.Bottom: // 0.0 0.0, 0.5 0.0, 1.0 0.0 // 0 winY(-H), winX/2 winY(-H), winX winY(-H)
-                    pivY = 0.0f;
-                    defPos = window.Y;
-                    IsVertical = false;
+                    piv.X = alignPiv;
+                    piv.Y = 1.0f;
                     IsDocked = true;
                     break;
                 case BarDock.Right: //  0.0 0.0, 0.0 0.5, 0.0 1.0 // winX(-W) 0, winX(-W) winY/2, winX(-W) winY
-                    pivY = 0.0f;
-                    defPos = window.X;
-                    IsVertical = true;
+                    piv.X = 0.0f;
+                    piv.Y = alignPiv;
+                    IsDocked = true;
+                    break;
+                case BarDock.Bottom: // 0.0 0.0, 0.5 0.0, 1.0 0.0 // 0 winY(-H), winX/2 winY(-H), winX winY(-H)
+                    piv.X = alignPiv;
+                    piv.Y = 0.0f;
+                    IsDocked = true;
+                    break;
+                case BarDock.Left: //   1.0 0.0, 1.0 0.5, 1.0 1.0 // 0(+W) 0,    0(+W) winY/2,    0(+W) winY
+                    piv.X = 1.0f;
+                    piv.Y = alignPiv;
                     IsDocked = true;
                     break;
                 case BarDock.Undocked:
                     piv = Vector2.Zero;
-                    IsVertical = false;
                     IsDocked = false;
                     _setPos = true;
                     return;
                 case BarDock.UndockedV:
                     piv = Vector2.Zero;
-                    IsVertical = true;
                     IsDocked = false;
                     _setPos = true;
                     return;
             }
 
-            switch (Config.Alignment)
-            {
-                case BarAlign.LeftOrTop:
-                    pivX = 0.0f;
-                    break;
-                case BarAlign.Center:
-                    pivX = 0.5f;
-                    break;
-                case BarAlign.RightOrBottom:
-                    pivX = 1.0f;
-                    break;
-            }
-
-            if (!IsVertical)
-            {
-                piv.X = pivX;
-                piv.Y = pivY;
-
-                hidePos.X = window.X * pivX + VectorPosition.X;
-                hidePos.Y = defPos;
-                revealPos.X = hidePos.X;
-            }
-            else
-            {
-                piv.X = pivY;
-                piv.Y = pivX;
-
-                hidePos.X = defPos;
-                hidePos.Y = window.Y * pivX + VectorPosition.Y;
-                revealPos.Y = hidePos.Y;
-            }
-
-            SetupRevealPosition();
+            SetupPositions();
 
             barPos = hidePos;
             _tweenStart = hidePos;
         }
 
-        private void SetupRevealPosition()
+        private void SetupPositions()
         {
+            var pos = VectorPosition;
             switch (Config.DockSide)
             {
                 case BarDock.Top:
-                    revealPos.Y = Math.Max(hidePos.Y + barSize.Y + VectorPosition.Y, GetHidePosition().Y + 1);
-                    break;
-                case BarDock.Left:
-                    revealPos.X = Math.Max(hidePos.X + barSize.X + VectorPosition.X, GetHidePosition().X + 1);
-                    break;
-                case BarDock.Bottom:
-                    revealPos.Y = Math.Min(hidePos.Y - barSize.Y + VectorPosition.Y, GetHidePosition().Y - 1);
+                    hidePos.X = window.X * piv.X + pos.X;
+                    hidePos.Y = 0;
+                    revealPos.X = hidePos.X;
+                    revealPos.Y = Math.Max(hidePos.Y + barSize.Y + pos.Y, GetHidePosition().Y + 1);
                     break;
                 case BarDock.Right:
-                    revealPos.X = Math.Min(hidePos.X - barSize.X + VectorPosition.X, GetHidePosition().X - 1);
+                    hidePos.X = window.X;
+                    hidePos.Y = window.Y * piv.Y + pos.Y;
+                    revealPos.X = Math.Min(hidePos.X - barSize.X + pos.X, GetHidePosition().X - 1);
+                    revealPos.Y = hidePos.Y;
                     break;
+                case BarDock.Bottom:
+                    hidePos.X = window.X * piv.X + pos.X;
+                    hidePos.Y = window.Y;
+                    revealPos.X = hidePos.X;
+                    revealPos.Y = Math.Min(hidePos.Y - barSize.Y + pos.Y, GetHidePosition().Y - 1);
+                    break;
+                case BarDock.Left:
+                    hidePos.X = 0;
+                    hidePos.Y = window.Y * piv.Y + pos.Y;
+                    revealPos.X = Math.Max(hidePos.X + barSize.X + pos.X, GetHidePosition().X + 1);
+                    revealPos.Y = hidePos.Y;
+                    break;
+
             }
         }
 
@@ -288,8 +276,7 @@ namespace QoLBar
 
             if (IsDocked || Config.Visibility == BarVisibility.Immediate)
             {
-                SetupRevealPosition();
-
+                SetupPositions();
                 CheckMousePosition();
             }
             else
@@ -356,7 +343,7 @@ namespace QoLBar
                             ImGui.ResetMouseDragDelta();
                             Config.Position[0] = Math.Min(Config.Position[0] + delta.X, 1);
                             Config.Position[1] = Math.Min(Config.Position[1] + delta.Y, 1);
-                            SetupPosition();
+                            SetupPivot();
                         }
 
                         // Stopped dragging
@@ -417,7 +404,7 @@ namespace QoLBar
             if (io.DisplaySize != window)
             {
                 window = io.DisplaySize;
-                SetupPosition();
+                SetupPivot();
             }
         }
 
@@ -469,6 +456,7 @@ namespace QoLBar
 
         private void DrawItems()
         {
+            var cols = Config.Columns;
             var width = Config.ButtonWidth * globalSize * Config.Scale;
             for (int i = 0; i < children.Count; i++)
             {
@@ -477,7 +465,7 @@ namespace QoLBar
 
                 ui.DrawShortcut(width);
 
-                if (!IsVertical && ui.ID != children.Count - 1)
+                if (cols <= 0 || i % cols != cols - 1)
                     ImGui.SameLine();
 
                 ImGui.PopID();
@@ -488,9 +476,6 @@ namespace QoLBar
         {
             if (Config.Editing || children.Count < 1)
             {
-                if (!IsVertical && children.Count > 0)
-                    ImGui.SameLine();
-
                 var height = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
                 ImGuiEx.PushFontScale(ImGuiEx.GetFontScale() * Config.FontScale);
                 if (ImGui.Button("+", new Vector2(Config.ButtonWidth * globalSize * Config.Scale, height)))
@@ -498,7 +483,9 @@ namespace QoLBar
                 ImGuiEx.SetItemTooltip("Add a new shortcut.\nRight click this (or the bar background) for options.\nRight click other shortcuts to edit them.", ImGuiHoveredFlags.AllowWhenBlockedByPopup);
                 ImGuiEx.PopFontScale();
 
-                MaxWidth = ImGui.GetItemRectSize().X;
+                var size = ImGui.GetItemRectMax() - ImGui.GetWindowPos();
+                MaxWidth = size.X;
+                MaxHeight = size.Y;
 
                 //ImGui.OpenPopupContextItem($"BarConfig##{barNumber}"); // Technically unneeded
             }
@@ -626,23 +613,24 @@ namespace QoLBar
                             if (Config.DockSide == BarDock.Undocked || Config.DockSide == BarDock.UndockedV)
                                 Config.Visibility = BarVisibility.Always;
                             QoLBar.Config.Save();
-                            SetupPosition();
+                            SetupPivot();
                         }
 
                         if (IsDocked)
                         {
+                            var topbottom = Config.DockSide == BarDock.Top || Config.DockSide == BarDock.Bottom;
                             var _align = (int)Config.Alignment;
                             ImGui.Text("Alignment");
-                            ImGui.RadioButton(IsVertical ? "Top" : "Left", ref _align, 0);
+                            ImGui.RadioButton(topbottom ? "Left" : "Top", ref _align, 0);
                             ImGui.SameLine(ImGui.GetWindowWidth() / 3);
                             ImGui.RadioButton("Center", ref _align, 1);
                             ImGui.SameLine(ImGui.GetWindowWidth() / 3 * 2);
-                            ImGui.RadioButton(IsVertical ? "Bottom" : "Right", ref _align, 2);
+                            ImGui.RadioButton(topbottom ? "Right" : "Bottom", ref _align, 2);
                             if (_align != (int)Config.Alignment)
                             {
                                 Config.Alignment = (BarAlign)_align;
                                 QoLBar.Config.Save();
-                                SetupPosition();
+                                SetupPivot();
                             }
 
                             var _visibility = (int)Config.Visibility;
@@ -695,7 +683,7 @@ namespace QoLBar
                                 Config.Position[1] = Math.Min(pos.Y / window.Y, 1);
                                 QoLBar.Config.Save();
                                 if (IsDocked)
-                                    SetupPosition();
+                                    SetupPivot();
                                 else
                                     _setPos = true;
                             }
@@ -713,6 +701,11 @@ namespace QoLBar
 
                     if (ImGui.BeginTabItem("Style"))
                     {
+                        if (ImGui.SliderInt("Columns", ref Config.Columns, 0, 12))
+                            QoLBar.Config.Save();
+                        ImGuiEx.SetItemTooltip("Number of shortcuts in each row before starting another.\n" +
+                            "Set to 0 to specify infinite.");
+
                         if (ImGui.DragFloat("Scale", ref Config.Scale, 0.002f, 0.7f, 2.0f, "%.2f"))
                             QoLBar.Config.Save();
 
@@ -762,17 +755,11 @@ namespace QoLBar
 
         private void SetBarSize()
         {
-            barSize.Y = ImGui.GetCursorPosY() + Style.WindowPadding.Y - Style.ItemSpacing.Y;
-            if (!IsVertical)
-            {
-                ImGui.SameLine();
-                barSize.X = ImGui.GetCursorPosX() + Style.WindowPadding.X - Style.ItemSpacing.X;
-            }
-            else
-            {
-                barSize.X = MaxWidth + (Style.WindowPadding.X * 2);
-                MaxWidth = 0;
-            }
+            var winPad = Style.WindowPadding;
+            barSize.X = MaxWidth + winPad.X;
+            barSize.Y = MaxHeight + winPad.Y;
+            MaxWidth = 0;
+            MaxHeight = 0;
         }
 
         private void SetBarPosition()

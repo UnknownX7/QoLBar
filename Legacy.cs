@@ -123,6 +123,20 @@ namespace QoLBar
                 _ => (BarCfg.BarAlign)Alignment
             };
 
+            switch (DockSide)
+            {
+                case BarDock.Top:
+                case BarDock.Bottom:
+                case BarDock.UndockedH:
+                    bar.Columns = 0;
+                    break;
+                case BarDock.Left:
+                case BarDock.Right:
+                case BarDock.UndockedV:
+                    bar.Columns = 1;
+                    break;
+            }
+
             foreach (var sh in ShortcutList)
                 bar.ShortcutList.Add(sh.Upgrade(this, false));
 
@@ -184,7 +198,7 @@ namespace QoLBar
                 IconOffset = new[] { IconOffset.X, IconOffset.Y },
                 CategoryWidth = CategoryWidth,
                 CategoryStaysOpen = CategoryStaysOpen,
-                CategoryColumns = CategoryColumns,
+                CategoryColumns = Math.Max(CategoryColumns, 1),
                 CategorySpacing = new[] { (int)bar.CategorySpacing.X, (int)bar.CategorySpacing.Y },
                 CategoryScale = bar.CategoryScale,
                 CategoryFontScale = bar.CategoryFontScale,

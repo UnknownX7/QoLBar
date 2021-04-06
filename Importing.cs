@@ -139,7 +139,6 @@ namespace QoLBar
             {
                 if (sh.Mode != ShCfg.ShortcutMode.Default)
                     sh.Command = sh.GetDefaultValue(x => x.Command);
-                sh.CategoryColumns = Math.Max(sh.CategoryColumns, 1);
                 CleanShortcut(sh.SubList);
             }
 
