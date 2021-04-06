@@ -308,7 +308,13 @@ namespace QoLBar
                 {
                     if (IsDocked)
                     {
-                        if (ImGuiEx.OnStartWindowDrag())
+                        // I greatly dislike this
+                        var dragging = !IsDragging
+                            ? ImGui.IsWindowFocused() && ImGui.IsWindowHovered() && !ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.IsMouseDragging(ImGuiMouseButton.Left, 0)
+                            : IsDragging && !ImGui.IsMouseReleased(ImGuiMouseButton.Left);
+
+                        // Began dragging
+                        if (dragging && dragging != IsDragging)
                             IsDragging = true;
 
                         if (IsDragging)
@@ -321,7 +327,8 @@ namespace QoLBar
                             SetupPosition();
                         }
 
-                        if (ImGuiEx.OnStopWindowDrag())
+                        // Stopped dragging
+                        if (!dragging && dragging != IsDragging)
                         {
                             IsDragging = false;
                             QoLBar.Config.Save();
@@ -523,6 +530,7 @@ namespace QoLBar
 
         public void SetCategoryPosition() => ImGui.SetNextWindowPos(_catpos, ImGuiCond.Appearing, _catpiv);
 
+        // TODO: dupe code remove somehow
         private void ItemCreatePopup()
         {
             if (ImGui.BeginPopup("addItem"))

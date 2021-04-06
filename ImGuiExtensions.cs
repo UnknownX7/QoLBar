@@ -43,13 +43,14 @@ namespace QoLBar
             ImGui.SetWindowPos(new Vector2(x, y));
         }
 
-        //public static bool IsWindowDragging() => ImGui.IsWindowHovered() && !ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.IsMouseDragging(ImGuiMouseButton.Left, 0.0f);
+        // Doesn't really work
+        /*public static bool IsWindowDragging() => ImGui.IsWindowFocused() && !ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.IsMouseDragging(ImGuiMouseButton.Left, 0);
 
         private static bool _beganDrag = false;
         public static bool OnStartWindowDrag()
         {
             if (!_beganDrag)
-                return _beganDrag = ImGui.IsWindowHovered() && !ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.IsMouseDragging(ImGuiMouseButton.Left, 0);
+                return _beganDrag = IsWindowDragging();
             else
                 return false;
         }
@@ -60,6 +61,6 @@ namespace QoLBar
                 return !(_beganDrag = !ImGui.IsMouseReleased(ImGuiMouseButton.Left));
             else
                 return false;
-        }
+        }*/
     }
 }
