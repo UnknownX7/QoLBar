@@ -121,6 +121,8 @@ namespace QoLBar
             Vector2 textsize = new Vector2(-1, 0);
             float textx = 0.0f;
 
+            var letterButtonSize = new Vector2(ImGui.CalcTextSize("O").X + ImGui.GetStyle().FramePadding.X * 2, 0);
+
             ImGui.Columns(3, "QoLBarsList", false);
             for (int i = 0; i < bars.Count; i++)
             {
@@ -141,12 +143,13 @@ namespace QoLBar
 
                 ImGui.NextColumn();
 
-                if (ImGui.Button("O"))
+                if (ImGui.Button("O", letterButtonSize))
                     ImGui.OpenPopup($"BarConfig##{i}");
                 ImGuiEx.SetItemTooltip("Options");
                 bars[i].BarConfigPopup();
                 ImGui.SameLine();
-                if (ImGui.Button(bar.Hidden ? "R" : "H"))
+                ImGui.SetNextItemWidth(27 * ImGui.GetIO().FontGlobalScale);
+                if (ImGui.Button(bar.Hidden ? "R" : "H", letterButtonSize))
                     bars[i].IsHidden = !bars[i].IsHidden;
                 ImGuiEx.SetItemTooltip(bar.Hidden ? "Reveal" : "Hide");
                 ImGui.SameLine();
