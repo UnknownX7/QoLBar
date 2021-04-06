@@ -8,14 +8,18 @@ namespace QoLBar
 {
     public class ShortcutUI : IDisposable
     {
-        public int ID { get; private set; }
-        //public ShCfg shConfig => (parent != null) ? parent.shConfig.SubList[shNumber] : parentBar.barConfig.ShortcutList[shNumber];
-        public ShCfg Config { get; private set; }
-        public void SetShortcutNumber(int n)
+        private int _id;
+        public int ID
         {
-            ID = n;
-            Config = (parent != null) ? parent.Config.SubList[n] : parentBar.Config.ShortcutList[n];
+            get => _id;
+            set
+            {
+                _id = value;
+                Config = (parent != null) ? parent.Config.SubList[value] : parentBar.Config.ShortcutList[value];
+            }
         }
+        //public ShCfg Config => (parent != null) ? parent.shConfig.SubList[shNumber] : parentBar.barConfig.ShortcutList[shNumber];
+        public ShCfg Config { get; private set; }
 
         private static ImGuiStylePtr Style => ImGui.GetStyle();
 
@@ -32,7 +36,7 @@ namespace QoLBar
         public ShortcutUI(BarUI bar)
         {
             parentBar = bar;
-            SetShortcutNumber(bar.children.Count);
+            ID = bar.children.Count;
             Initialize();
         }
 
@@ -40,7 +44,7 @@ namespace QoLBar
         {
             parentBar = sh.parentBar;
             parent = sh;
-            SetShortcutNumber(sh.children.Count);
+            ID = sh.children.Count;
             Initialize();
         }
 
@@ -583,7 +587,7 @@ namespace QoLBar
         private void RefreshShortcutIDs()
         {
             for (int i = 0; i < children.Count; i++)
-                children[i].SetShortcutNumber(i);
+                children[i].ID = i;
         }
 
         public void DeleteThis()

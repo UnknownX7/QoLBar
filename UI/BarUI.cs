@@ -8,14 +8,18 @@ namespace QoLBar
 {
     public class BarUI : IDisposable
     {
-        public int ID { get; private set; }
-        public BarCfg Config { get; private set; }
-        public void SetBarNumber(int n)
+        private int _id;
+        public int ID
         {
-            ID = n;
-            Config = QoLBar.Config.BarCfgs[n];
-            SetupPosition();
+            get => _id;
+            set
+            {
+                _id = value;
+                Config = QoLBar.Config.BarCfgs[value];
+                SetupPosition();
+            }
         }
+        public BarCfg Config { get; private set; }
 
         public bool IsVisible => !IsHidden && CheckConditionSet();
         public bool IsHidden
@@ -71,7 +75,7 @@ namespace QoLBar
 
         public BarUI(int n)
         {
-            SetBarNumber(n);
+            ID = n;
 
             for (int i = 0; i < Config.ShortcutList.Count; i++)
                 children.Add(new ShortcutUI(this));
@@ -819,7 +823,7 @@ namespace QoLBar
         private void RefreshShortcutIDs()
         {
             for (int i = 0; i < children.Count; i++)
-                children[i].SetShortcutNumber(i);
+                children[i].ID = i;
         }
 
         public void Dispose()

@@ -482,7 +482,7 @@ namespace QoLBar
         private void RefreshBarIndexes()
         {
             for (int i = 0; i < bars.Count; i++)
-                bars[i].SetBarNumber(i);
+                bars[i].ID = i;
         }
 
         public void SetBarHidden(int i, bool toggle, bool b = false)
