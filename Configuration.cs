@@ -19,7 +19,6 @@ namespace QoLBar
             Right,
             Bottom,
             Left,
-            Center, // thoughts?
             Undocked, // TODO: use this to change positioning to be screenwide
             UndockedV
         }

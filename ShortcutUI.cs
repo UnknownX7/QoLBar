@@ -302,6 +302,9 @@ namespace QoLBar
                     ImGuiEx.SetItemTooltip("Add a new shortcut.");
                 }
 
+                if (ImGui.IsWindowHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right) && ImGui.GetIO().KeyShift)
+                    ImGui.OpenPopup("addItem");
+
                 ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, PluginUI.defaultSpacing);
                 ImGuiEx.PushFontScale(1);
                 DrawAdd();

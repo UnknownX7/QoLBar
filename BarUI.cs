@@ -300,8 +300,7 @@ namespace QoLBar
 
                 DrawItems();
 
-                if (Config.Editing || children.Count < 1)
-                    DrawAddButton();
+                DrawAddButton();
 
                 if (!_firstframe && !Config.LockedPosition)
                 {
@@ -454,20 +453,26 @@ namespace QoLBar
 
         private void DrawAddButton()
         {
-            if (!IsVertical && children.Count > 0)
-                ImGui.SameLine();
+            if (Config.Editing || children.Count < 1)
+            {
+                if (!IsVertical && children.Count > 0)
+                    ImGui.SameLine();
 
-            var height = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
-            ImGuiEx.PushFontScale(ImGuiEx.GetFontScale() * Config.FontScale);
-            if (ImGui.Button("+", new Vector2(Config.ButtonWidth * globalSize * Config.Scale, height)))
+                var height = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
+                ImGuiEx.PushFontScale(ImGuiEx.GetFontScale() * Config.FontScale);
+                if (ImGui.Button("+", new Vector2(Config.ButtonWidth * globalSize * Config.Scale, height)))
+                    ImGui.OpenPopup("addItem");
+                ImGuiEx.SetItemTooltip("Add a new shortcut.\nRight click this (or the bar background) for options.\nRight click other shortcuts to edit them.", ImGuiHoveredFlags.AllowWhenBlockedByPopup);
+                ImGuiEx.PopFontScale();
+
+                if (_maxW < ImGui.GetItemRectSize().X)
+                    _maxW = ImGui.GetItemRectSize().X;
+
+                //ImGui.OpenPopupContextItem($"BarConfig##{barNumber}"); // Technically unneeded
+            }
+
+            if (ImGui.IsWindowHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right) && ImGui.GetIO().KeyShift)
                 ImGui.OpenPopup("addItem");
-            ImGuiEx.SetItemTooltip("Add a new shortcut.\nRight click this (or the bar background) for options.\nRight click other shortcuts to edit them.", ImGuiHoveredFlags.AllowWhenBlockedByPopup);
-            ImGuiEx.PopFontScale();
-
-            if (_maxW < ImGui.GetItemRectSize().X)
-                _maxW = ImGui.GetItemRectSize().X;
-
-            //ImGui.OpenPopupContextItem($"BarConfig##{barNumber}"); // Technically unneeded
 
             ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, PluginUI.defaultSpacing);
             ImGuiEx.PushFontScale(1);
