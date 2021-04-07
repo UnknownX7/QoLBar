@@ -161,11 +161,6 @@ namespace QoLBar
                 PrintError("Usage: /qolvisible [on|off|toggle] <bar>");
         }
 
-        [DoNotShowInHelp]
-        [Command("/qoltoggle")]
-        [HelpMessage("DEPRECATED: use /qolvisible")]
-        private void OnQoLToggle(string command, string argument) => PrintError($"Please use \"/qolvisible t {argument}\" instead.");
-
         public static bool IsLoggedIn() => ConditionCache.GetCondition(DisplayCondition.ConditionType.Misc, 0);
 
         private static float _runTime = 0;
