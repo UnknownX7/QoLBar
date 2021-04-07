@@ -610,8 +610,10 @@ namespace QoLBar
                         if (ImGui.Combo("Side", ref _dock, "Top\0Right\0Bottom\0Left"))
                         {
                             Config.DockSide = (BarDock)_dock;
-                            if (Config.DockSide == BarDock.Undocked || Config.DockSide == BarDock.UndockedV)
+                            if (Config.DockSide == BarDock.Undocked && Config.Visibility == BarVisibility.Slide)
                                 Config.Visibility = BarVisibility.Always;
+                            Config.Position[0] = 0;
+                            Config.Position[1] = 0;
                             QoLBar.Config.Save();
                             SetupPivot();
                         }
@@ -666,7 +668,7 @@ namespace QoLBar
                         if (ImGui.Checkbox("Edit Mode", ref Config.Editing))
                         {
                             if (!Config.Editing)
-                                QoLBar.Plugin.ExecuteCommand("/echo <se> You can right click on the bar itself (the black background) to reopen this settings menu!");
+                                QoLBar.Plugin.ExecuteCommand("/echo <se> You can right click on the bar itself (the black background) to reopen this settings menu! You can also use shift + right click to add a new shortcut as well.");
                             QoLBar.Config.Save();
                         }
                         ImGui.SameLine(ImGui.GetWindowWidth() / 2);
