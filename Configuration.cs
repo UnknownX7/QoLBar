@@ -19,8 +19,7 @@ namespace QoLBar
             Right,
             Bottom,
             Left,
-            Undocked, // TODO: use this to change positioning to be screenwide
-            UndockedV
+            Undocked // TODO: use this to change positioning to be screenwide
         }
         public enum BarAlign
         {
@@ -274,7 +273,7 @@ namespace QoLBar
         {
             if (displayUpdateWindow)
             {
-                var window = ImGui.GetIO().DisplaySize;
+                var window = Dalamud.Interface.ImGuiHelpers.MainViewport.Size;
                 ImGui.SetNextWindowPos(new System.Numerics.Vector2(window.X / 2, window.Y / 2), ImGuiCond.Appearing, new System.Numerics.Vector2(0.5f));
                 ImGui.SetNextWindowSize(new System.Numerics.Vector2(550, 280) * ImGui.GetIO().FontGlobalScale);
                 ImGui.Begin("QoL Bar Updated!", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoSavedSettings);

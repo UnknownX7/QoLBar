@@ -75,7 +75,7 @@ namespace QoLBar
 
         private void DrawPluginConfig()
         {
-            ImGui.SetNextWindowSizeConstraints(new Vector2(588, 500), ImGui.GetIO().DisplaySize);
+            ImGui.SetNextWindowSizeConstraints(new Vector2(588, 500), Dalamud.Interface.ImGuiHelpers.MainViewport.Size);
             ImGui.Begin("QoL Bar Configuration", ref configOpen);
 
             if (ImGui.BeginTabBar("Config Tabs"))

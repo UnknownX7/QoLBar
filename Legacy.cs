@@ -59,7 +59,7 @@ namespace QoLBar
 
         public BarCfg Upgrade()
         {
-            var window = ImGui.GetIO().DisplaySize; // TODO: this will need to be changed to main viewport size
+            var window = Dalamud.Interface.ImGuiHelpers.MainViewport.Size;
             var oldPos = Position / window;
 
             var oldOffset = Offset * ImGui.GetIO().FontGlobalScale;
@@ -98,7 +98,7 @@ namespace QoLBar
                 ButtonWidth = ButtonWidth,
                 Editing = !HideAdd,
                 Position = (DockSide == BarDock.UndockedH || DockSide == BarDock.UndockedV) ? new[] { oldPos.X, oldPos.Y } : new[] { oldOffset.X, oldOffset.Y },
-                LockedPosition = LockedPosition,
+                LockedPosition = DockSide != BarDock.UndockedH && DockSide != BarDock.UndockedV || LockedPosition,
                 Scale = Scale,
                 RevealAreaScale = RevealAreaScale,
                 FontScale = FontScale,

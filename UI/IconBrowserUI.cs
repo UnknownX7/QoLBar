@@ -29,7 +29,7 @@ namespace QoLBar
             }
 
             var iconSize = 48 * ImGui.GetIO().FontGlobalScale;
-            ImGui.SetNextWindowSizeConstraints(new Vector2((iconSize + ImGui.GetStyle().ItemSpacing.X) * 11 + ImGui.GetStyle().WindowPadding.X * 2 + 8), ImGui.GetIO().DisplaySize); // whyyyyyyyyyyyyyyyyyyyy
+            ImGui.SetNextWindowSizeConstraints(new Vector2((iconSize + ImGui.GetStyle().ItemSpacing.X) * 11 + ImGui.GetStyle().WindowPadding.X * 2 + 8), Dalamud.Interface.ImGuiHelpers.MainViewport.Size); // whyyyyyyyyyyyyyyyyyyyy
             ImGui.Begin("Icon Browser", ref iconBrowserOpen);
             if (ImGui.BeginTabBar("Icon Tabs", ImGuiTabBarFlags.NoTooltip))
             {

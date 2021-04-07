@@ -259,7 +259,7 @@ namespace QoLBar
             Interface.UnsubscribeAny();
         }
 
-        // I'm too dumb to do any of this so its (almost) all taken from here https://git.sr.ht/~jkcclemens/CCMM/tree/master/Custom%20Commands%20and%20Macro%20Macros/GameFunctions.cs
+        // I'm too dumb to do any of this so its (almost) all taken from here https://git.sr.ht/~jkcclemens/CCMM/tree/master/Macrology/GameFunctions.cs
         #region Chat Injection
         private delegate IntPtr GetUIModuleDelegate(IntPtr basePtr);
         private delegate void EasierProcessChatBoxDelegate(IntPtr uiModule, IntPtr message, IntPtr unused, byte a4);

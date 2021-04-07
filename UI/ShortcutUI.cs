@@ -2,6 +2,7 @@ using System;
 using System.Numerics;
 using System.Collections.Generic;
 using ImGuiNET;
+using Dalamud.Interface;
 using static QoLBar.ShCfg;
 
 namespace QoLBar
@@ -255,7 +256,7 @@ namespace QoLBar
                 }
             }
 
-            ImGui.OpenPopupContextItem("editItem");
+            ImGui.OpenPopupOnItemClick("editItem", ImGuiPopupFlags.MouseButtonRight);
 
             if (sh.Type == ShortcutType.Category)
             {
@@ -275,6 +276,9 @@ namespace QoLBar
 
         private void DrawCategory()
         {
+            if (parentBar.IsDocked)
+                ImGuiHelpers.ForceMainViewport();
+
             parentBar.SetCategoryPosition();
             if (ImGui.BeginPopup("ShortcutCategory", (Config.CategoryNoBackground ? ImGuiWindowFlags.NoBackground : ImGuiWindowFlags.None) | ImGuiWindowFlags.NoMove))
             {
@@ -319,7 +323,7 @@ namespace QoLBar
                 ImGuiEx.PopFontScale();
                 ImGui.PopStyleVar();
 
-                ImGuiEx.ClampWindowPos(ImGui.GetIO().DisplaySize);
+                ImGuiEx.ClampWindowPos(parentBar.UsableArea);
 
                 ImGui.EndPopup();
             }
@@ -327,6 +331,9 @@ namespace QoLBar
 
         private void DrawAdd()
         {
+            if (parentBar.IsDocked)
+                ImGuiHelpers.ForceMainViewport();
+
             if (ImGui.BeginPopup("addItem"))
             {
                 parentBar.Reveal();
@@ -359,7 +366,7 @@ namespace QoLBar
                 ImGuiEx.SetItemTooltip("Import a shortcut from the clipboard,\n" +
                     "or import all of another bar's shortcuts.");
 
-                ImGuiEx.ClampWindowPos(ImGui.GetIO().DisplaySize);
+                ImGuiEx.ClampWindowPos(parentBar.UsableArea);
 
                 ImGui.EndPopup();
             }
@@ -367,6 +374,9 @@ namespace QoLBar
 
         private void DrawConfig(bool hasIcon)
         {
+            if (parentBar.IsDocked)
+                ImGuiHelpers.ForceMainViewport();
+
             if (ImGui.BeginPopup("editItem"))
             {
                 parentBar.Reveal();
@@ -547,7 +557,7 @@ namespace QoLBar
                     "Clicking on one will copy text to be pasted into the \"Name\" field of a shortcut.\n" +
                     "Additionally, while the browser is open it will autofill the \"Name\" of shortcuts.");
 
-                ImGuiEx.ClampWindowPos(ImGui.GetIO().DisplaySize);
+                ImGuiEx.ClampWindowPos(parentBar.UsableArea);
 
                 ImGui.EndPopup();
             }
