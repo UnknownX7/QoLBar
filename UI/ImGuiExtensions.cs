@@ -2,6 +2,7 @@ using System;
 using System.Numerics;
 using System.Collections.Generic;
 using ImGuiNET;
+using Dalamud.Interface;
 
 namespace QoLBar
 {
@@ -32,6 +33,16 @@ namespace QoLBar
 
         public static float GetFontScale() => _curScale;
 
+        public static void ClampWindowPosToViewport()
+        {
+            var viewport = ImGui.GetWindowViewport();
+            if (viewport.ID == ImGuiHelpers.MainViewport.ID)
+            {
+                var pos = viewport.Pos;
+                ClampWindowPos(pos, pos + viewport.Size);
+            }
+        }
+
         public static void ClampWindowPos(Vector2 max) => ClampWindowPos(Vector2.Zero, max);
 
         public static void ClampWindowPos(Vector2 min, Vector2 max)
@@ -42,6 +53,8 @@ namespace QoLBar
             var y = Math.Min(Math.Max(pos.Y, min.Y), max.Y - size.Y);
             ImGui.SetWindowPos(new Vector2(x, y));
         }
+
+        public static bool IsWindowInMainViewport() => ImGui.GetWindowViewport().ID == ImGuiHelpers.MainViewport.ID;
 
         // Doesn't really work
         /*public static bool IsWindowDragging() => ImGui.IsWindowFocused() && !ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.IsMouseDragging(ImGuiMouseButton.Left, 0);

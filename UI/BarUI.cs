@@ -593,7 +593,7 @@ namespace QoLBar
                 ImGuiEx.SetItemTooltip("Import a shortcut from the clipboard,\n" +
                     "or import all of another bar's shortcuts.");
 
-                ImGuiEx.ClampWindowPos(UsableArea);
+                ImGuiEx.ClampWindowPosToViewport();
 
                 ImGui.EndPopup();
             }
@@ -759,7 +759,7 @@ namespace QoLBar
                 if (ImGui.Button("QoL Bar Config"))
                     QoLBar.Plugin.ToggleConfig();
 
-                ImGuiEx.ClampWindowPos(UsableArea);
+                ImGuiEx.ClampWindowPosToViewport();
 
                 ImGui.EndPopup();
             }

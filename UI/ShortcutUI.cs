@@ -323,7 +323,7 @@ namespace QoLBar
                 ImGuiEx.PopFontScale();
                 ImGui.PopStyleVar();
 
-                ImGuiEx.ClampWindowPos(parentBar.UsableArea);
+                ImGuiEx.ClampWindowPosToViewport();
 
                 ImGui.EndPopup();
             }
@@ -366,7 +366,7 @@ namespace QoLBar
                 ImGuiEx.SetItemTooltip("Import a shortcut from the clipboard,\n" +
                     "or import all of another bar's shortcuts.");
 
-                ImGuiEx.ClampWindowPos(parentBar.UsableArea);
+                ImGuiEx.ClampWindowPosToViewport();
 
                 ImGui.EndPopup();
             }
@@ -557,7 +557,7 @@ namespace QoLBar
                     "Clicking on one will copy text to be pasted into the \"Name\" field of a shortcut.\n" +
                     "Additionally, while the browser is open it will autofill the \"Name\" of shortcuts.");
 
-                ImGuiEx.ClampWindowPos(parentBar.UsableArea);
+                ImGuiEx.ClampWindowPosToViewport();
 
                 ImGui.EndPopup();
             }
