@@ -1,6 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using Dalamud.Interface;
@@ -18,24 +16,6 @@ namespace QoLBar
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool GetKeyboardState(byte[] lpKeyState);
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
-        private static extern IntPtr GetForegroundWindow();
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern int GetWindowThreadProcessId(IntPtr handle, out int processId);
-
-        public static bool GameHasFocus() // Should probably move this elsewhere
-        {
-            var activatedHandle = GetForegroundWindow();
-            if (activatedHandle == IntPtr.Zero)
-                return false;
-
-            var procId = Process.GetCurrentProcess().Id;
-            GetWindowThreadProcessId(activatedHandle, out int activeProcId);
-
-            return activeProcId == procId;
-        }
 
         public static void Run(bool gameInputActive)
         {
@@ -63,7 +43,7 @@ namespace QoLBar
 
         private static void DoHotkeys(bool gameInputActive)
         {
-            if (gameInputActive || !GameHasFocus() || ImGui.GetIO().WantCaptureKeyboard) { hotkeys.Clear(); return; }
+            if (gameInputActive || !QoLBar.IsGameFocused || ImGui.GetIO().WantCaptureKeyboard) { hotkeys.Clear(); return; }
 
             if (hotkeys.Count > 0)
             {

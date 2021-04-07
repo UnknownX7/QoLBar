@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Dynamic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using System.Diagnostics;
 using ImGuiNET;
 using Dalamud.Plugin;
 using QoLBar.Attributes;
@@ -33,11 +34,27 @@ namespace QoLBar
         public readonly int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
         private readonly Queue<string> commandQueue = new Queue<string>();
 
-        public static readonly TextureDictionary textureDictionary = new TextureDictionary();
-
         public IntPtr textActiveBoolPtr = IntPtr.Zero;
         public unsafe bool GameTextInputActive => (textActiveBoolPtr != IntPtr.Zero) && *(bool*)textActiveBoolPtr;
 
+        [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)] private static extern IntPtr GetForegroundWindow();
+        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)] private static extern int GetWindowThreadProcessId(IntPtr handle, out int processId);
+        public static bool IsGameFocused
+        {
+            get
+            {
+                var activatedHandle = GetForegroundWindow();
+                if (activatedHandle == IntPtr.Zero)
+                    return false;
+
+                var procId = Process.GetCurrentProcess().Id;
+                GetWindowThreadProcessId(activatedHandle, out int activeProcId);
+
+                return activeProcId == procId;
+            }
+        }
+
+        public static readonly TextureDictionary textureDictionary = new TextureDictionary();
         public const int FrameIconID = 114_000;
         private const int SafeIconID = 1_000_000;
         public int GetSafeIconID(byte i) => SafeIconID + i;

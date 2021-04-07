@@ -212,7 +212,7 @@ namespace QoLBar
                 if (!clicked)
                 {
                     var isHoverEnabled = sh.CategoryOnHover && sh.Type == ShortcutType.Category;
-                    var allowHover = parentBar.IsFullyRevealed && !IsConfigPopupOpen() && !ImGui.IsPopupOpen("ShortcutCategory") && Keybind.GameHasFocus() && !ImGui.IsAnyMouseDown() && !ImGui.IsMouseReleased(ImGuiMouseButton.Right);
+                    var allowHover = parentBar.IsFullyRevealed && !IsConfigPopupOpen() && !ImGui.IsPopupOpen("ShortcutCategory") && QoLBar.IsGameFocused && !ImGui.IsAnyMouseDown() && !ImGui.IsMouseReleased(ImGuiMouseButton.Right);
                     if (isHoverEnabled && allowHover)
                     {
                         wasHovered = true;

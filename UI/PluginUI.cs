@@ -31,6 +31,8 @@ namespace QoLBar
 
         public static readonly Vector2 defaultSpacing = new Vector2(8, 4);
 
+        private static bool _displayOutsideMain = true;
+
         public PluginUI()
         {
             bars = new List<BarUI>();
@@ -75,8 +77,12 @@ namespace QoLBar
 
         private void DrawPluginConfig()
         {
+            if (!_displayOutsideMain) { _displayOutsideMain = QoLBar.IsGameFocused; return; }
+
             ImGui.SetNextWindowSizeConstraints(new Vector2(588, 500), Dalamud.Interface.ImGuiHelpers.MainViewport.Size);
             ImGui.Begin("QoL Bar Configuration", ref configOpen);
+
+            ImGuiEx.ShouldDrawInViewport(out _displayOutsideMain);
 
             if (ImGui.BeginTabBar("Config Tabs"))
             {

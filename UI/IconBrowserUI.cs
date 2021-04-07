@@ -17,20 +17,22 @@ namespace QoLBar
         private static float _iconSize;
         private static string _tooltip;
         private static List<(int, int)> _iconList;
+        private static bool _displayOutsideMain = true;
 
         public static void ToggleIconBrowser() => iconBrowserOpen = !iconBrowserOpen;
 
         public static void Draw()
         {
-            if (!iconBrowserOpen)
-            {
-                doPasteIcon = false;
-                return;
-            }
+            if (!_displayOutsideMain) { _displayOutsideMain = QoLBar.IsGameFocused; return; }
+
+            if (!iconBrowserOpen) { doPasteIcon = false; return; }
 
             var iconSize = 48 * ImGui.GetIO().FontGlobalScale;
             ImGui.SetNextWindowSizeConstraints(new Vector2((iconSize + ImGui.GetStyle().ItemSpacing.X) * 11 + ImGui.GetStyle().WindowPadding.X * 2 + 8), Dalamud.Interface.ImGuiHelpers.MainViewport.Size); // whyyyyyyyyyyyyyyyyyyyy
             ImGui.Begin("Icon Browser", ref iconBrowserOpen);
+
+            ImGuiEx.ShouldDrawInViewport(out _displayOutsideMain);
+
             if (ImGui.BeginTabBar("Icon Tabs", ImGuiTabBarFlags.NoTooltip))
             {
                 BeginIconList(" ★ ", iconSize);

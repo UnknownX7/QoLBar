@@ -22,7 +22,7 @@ namespace QoLBar
         }
         public BarCfg Config { get; private set; }
 
-        public bool IsVisible => !IsHidden && CheckConditionSet();
+        public bool IsVisible => !IsHidden && _displayOutsideMain && CheckConditionSet();
         public bool IsHidden
         {
             get => Config.Hidden;
@@ -58,6 +58,7 @@ namespace QoLBar
         private Vector2 piv = Vector2.Zero;
         private Vector2 hidePos = Vector2.Zero;
         private Vector2 revealPos = Vector2.Zero;
+        private bool _displayOutsideMain = true;
 
         private bool _reveal = false;
         public void Reveal() => _reveal = true;
@@ -268,7 +269,12 @@ namespace QoLBar
         {
             CheckGameResolution();
 
-            if (!IsVisible) return;
+            if (!IsVisible)
+            {
+                if (!_displayOutsideMain)
+                    _displayOutsideMain = QoLBar.IsGameFocused;
+                return;
+            }
 
             var io = ImGui.GetIO();
             mousePos = io.MousePos;
@@ -314,6 +320,10 @@ namespace QoLBar
 
                 SetupImGuiFlags();
                 ImGui.Begin($"QoLBar##{ID}", flags);
+
+                // Hide the bar if game isn't focused and it's outside the main viewport
+                if (!IsDocked)
+                    ImGuiEx.ShouldDrawInViewport(out _displayOutsideMain);
 
                 ImGuiEx.PushFontScale(Config.Scale);
 
@@ -616,7 +626,7 @@ namespace QoLBar
                             QoLBar.Config.Save();
 
                         var _dock = (int)Config.DockSide;
-                        if (ImGui.Combo("Side", ref _dock, "Top\0Right\0Bottom\0Left"))
+                        if (ImGui.Combo("Side", ref _dock, "Top\0Right\0Bottom\0Left\0Undocked"))
                         {
                             Config.DockSide = (BarDock)_dock;
                             if (Config.DockSide == BarDock.Undocked && Config.Visibility == BarVisibility.Slide)

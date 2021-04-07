@@ -56,6 +56,10 @@ namespace QoLBar
 
         public static bool IsWindowInMainViewport() => ImGui.GetWindowViewport().ID == ImGuiHelpers.MainViewport.ID;
 
+        public static bool ShouldDrawInViewport() => IsWindowInMainViewport() || QoLBar.IsGameFocused;
+
+        public static void ShouldDrawInViewport(out bool b) => b = ShouldDrawInViewport();
+
         // Doesn't really work
         /*public static bool IsWindowDragging() => ImGui.IsWindowFocused() && !ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.IsMouseDragging(ImGuiMouseButton.Left, 0);
 
