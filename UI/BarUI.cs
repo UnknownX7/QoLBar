@@ -292,7 +292,7 @@ namespace QoLBar
             {
                 ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0);
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0);
-                ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(Config.Spacing[0]));
+                ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(Config.Spacing[0], Config.Spacing[1]));
                 ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.286f, 0.286f, 0.286f, 0.9f));
 
                 if (IsDocked)
@@ -713,6 +713,10 @@ namespace QoLBar
 
                     if (ImGui.BeginTabItem("Style"))
                     {
+                        if (ImGui.SliderInt("Button Width", ref Config.ButtonWidth, 0, 200))
+                            QoLBar.Config.Save();
+                        ImGuiEx.SetItemTooltip("Set to 0 to use text width.");
+
                         if (ImGui.SliderInt("Columns", ref Config.Columns, 0, 12))
                             QoLBar.Config.Save();
                         ImGuiEx.SetItemTooltip("Number of shortcuts in each row before starting another.\n" +
@@ -721,16 +725,14 @@ namespace QoLBar
                         if (ImGui.DragFloat("Scale", ref Config.Scale, 0.002f, 0.7f, 2.0f, "%.2f"))
                             QoLBar.Config.Save();
 
-                        if (ImGui.SliderInt("Button Width", ref Config.ButtonWidth, 0, 200))
-                            QoLBar.Config.Save();
-                        ImGuiEx.SetItemTooltip("Set to 0 to use text width.");
-
                         if (ImGui.DragFloat("Font Scale", ref Config.FontScale, 0.0018f, 0.5f, 1.0f, "%.2f"))
                             QoLBar.Config.Save();
 
-                        if (ImGui.SliderInt("Spacing", ref Config.Spacing[0], 0, 32))
+                        var spacing = new Vector2(Config.Spacing[0], Config.Spacing[1]);
+                        if (ImGui.DragFloat2("Spacing", ref spacing, 0.12f, 0, 32, "%.f"))
                         {
-                            Config.Spacing[1] = Config.Spacing[0];
+                            Config.Spacing[0] = (int)spacing.X;
+                            Config.Spacing[1] = (int)spacing.Y;
                             QoLBar.Config.Save();
                         }
 

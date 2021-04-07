@@ -438,7 +438,7 @@ namespace QoLBar
 
                     if (Config.Type == ShortcutType.Category && ImGui.BeginTabItem("Category"))
                     {
-                        if (ImGui.SliderInt("Width", ref Config.CategoryWidth, 0, 200))
+                        if (ImGui.SliderInt("Button Width", ref Config.CategoryWidth, 0, 200))
                             QoLBar.Config.Save();
                         ImGuiEx.SetItemTooltip("Set to 0 to use text width.");
 
