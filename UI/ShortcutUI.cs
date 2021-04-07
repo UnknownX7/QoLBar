@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Numerics;
 using System.Collections.Generic;
 using ImGuiNET;
@@ -503,7 +503,7 @@ namespace QoLBar
                     ImGui.CloseCurrentPopup();
                 }
                 ImGui.SameLine();
-                if (ImGui.Button("↓") && ID < (parent.children.Count - 1))
+                if (ImGui.Button("↓") && ID < ((parent != null) ? (parent.children.Count - 1) : (parentBar.children.Count)))
                 {
                     ShiftThis(true);
                     ImGui.CloseCurrentPopup();
