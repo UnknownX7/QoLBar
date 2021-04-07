@@ -12,6 +12,8 @@ using ImGuiNET;
 using Dalamud.Plugin;
 using QoLBar.Attributes;
 
+#pragma warning disable IDE0060 // Remove unused parameter
+
 // I'm too lazy to make a file just for this
 [assembly: AssemblyTitle("QoLBar")]
 [assembly: AssemblyVersion("1.3.2.2")]

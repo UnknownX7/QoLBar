@@ -46,7 +46,7 @@ namespace QoLBar
         private bool _cached = false;
         private float _lastCache = 0;
         private int _currentPos = 0;
-        private DisplayCondition curCond => Conditions[_currentPos];
+        private DisplayCondition CurCond => Conditions[_currentPos];
 
         private static readonly Array conditionFlags = Enum.GetValues(typeof(ConditionFlag));
         public static Dictionary<uint, Lumina.Excel.GeneratedSheets.ClassJob> classDictionary;
@@ -77,7 +77,7 @@ namespace QoLBar
 
                 try
                 {
-                    if (curCond.IsNot())
+                    if (CurCond.IsNot())
                     {
                         _currentPos++;
                         b = !ParseBool();
@@ -87,18 +87,18 @@ namespace QoLBar
 
                     // AND is implicit
 
-                    if (curCond.IsOr())
+                    if (CurCond.IsOr())
                     {
                         _currentPos++;
                         return b || Parse();
                     }
-                    else if (curCond.IsXor())
+                    else if (CurCond.IsXor())
                     {
                         _currentPos++;
                         var next = Parse();
                         return b && !next || !b && next;
                     }
-                    else if (curCond.IsEquals())
+                    else if (CurCond.IsEquals())
                     {
                         _currentPos++;
                         return b == Parse();
@@ -114,7 +114,7 @@ namespace QoLBar
 
         private bool ParseBool()
         {
-            var b = curCond.CheckCondition();
+            var b = CurCond.CheckCondition();
             _currentPos++;
             return b;
         }

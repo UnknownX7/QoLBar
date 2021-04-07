@@ -12,13 +12,13 @@ namespace QoLBar
 {
     public class PluginCommandManager : IDisposable
     {
-        private DalamudPluginInterface pluginInterface => QoLBar.Interface;
+        private DalamudPluginInterface Interface => QoLBar.Interface;
         private readonly (string, CommandInfo)[] pluginCommands;
-        private QoLBar host => QoLBar.Plugin;
+        private QoLBar Host => QoLBar.Plugin;
 
         public PluginCommandManager()
         {
-            this.pluginCommands = host.GetType().GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
+            this.pluginCommands = Host.GetType().GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance)
                 .Where(method => method.GetCustomAttribute<CommandAttribute>() != null)
                 .SelectMany(GetCommandInfoTuple)
                 .ToArray();
@@ -35,7 +35,7 @@ namespace QoLBar
             for (var i = 0; i < this.pluginCommands.Length; i++)
             {
                 var (command, commandInfo) = this.pluginCommands[i];
-                this.pluginInterface.CommandManager.AddHandler(command, commandInfo);
+                this.Interface.CommandManager.AddHandler(command, commandInfo);
             }
         }
 
@@ -44,13 +44,13 @@ namespace QoLBar
             for (var i = 0; i < this.pluginCommands.Length; i++)
             {
                 var (command, _) = this.pluginCommands[i];
-                this.pluginInterface.CommandManager.RemoveHandler(command);
+                this.Interface.CommandManager.RemoveHandler(command);
             }
         }
 
         private IEnumerable<(string, CommandInfo)> GetCommandInfoTuple(MethodInfo method)
         {
-            var handlerDelegate = (HandlerDelegate)Delegate.CreateDelegate(typeof(HandlerDelegate), this.host, method);
+            var handlerDelegate = (HandlerDelegate)Delegate.CreateDelegate(typeof(HandlerDelegate), this.Host, method);
 
             var command = handlerDelegate.Method.GetCustomAttribute<CommandAttribute>();
             var aliases = handlerDelegate.Method.GetCustomAttribute<AliasesAttribute>();

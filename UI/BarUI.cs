@@ -206,7 +206,6 @@ namespace QoLBar
                     revealPos.X = Math.Max(hidePos.X + barSize.X + pos.X, GetHidePosition().X + 1);
                     revealPos.Y = hidePos.Y;
                     break;
-
             }
         }
 
