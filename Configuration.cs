@@ -133,9 +133,9 @@ namespace QoLBar
         {
             if (!string.IsNullOrEmpty(PrevPluginVersion))
             {
-                var v = new Version(PrevPluginVersion);
-                if (new Version("1.3.2.0") >= v)
-                    displayUpdateWindow = true;
+                //var v = new Version(PrevPluginVersion);
+                //if (new Version("1.3.2.0") >= v)
+                //    displayUpdateWindow = true;
             }
         }
 
@@ -149,6 +149,9 @@ namespace QoLBar
             }
 
 #pragma warning disable CS0612 // Type or member is obsolete
+            if (PluginVersion != ".INITIAL")
+                Legacy.UpdateConfig(this);
+
             if (Version == 0)
             {
                 for (int i = 0; i < BarConfigs.Count; i++)

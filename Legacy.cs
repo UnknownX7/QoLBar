@@ -5,6 +5,8 @@ using System.ComponentModel;
 using Newtonsoft.Json;
 using ImGuiNET;
 
+#pragma warning disable CS0612 // Type or member is obsolete
+
 namespace QoLBar
 {
     public class BarConfig
@@ -217,6 +219,47 @@ namespace QoLBar
             }
 
             return sh;
+        }
+    }
+
+    public static class Legacy
+    {
+        private static readonly Dictionary<string, Action<Configuration>> upgradeActions = new Dictionary<string, Action<Configuration>>
+        {
+            ["1.3.2.0"] = (config) =>
+            {
+                static void DeleteRecursive(Shortcut sh)
+                {
+                    if (sh.Type == Shortcut.ShortcutType.Category)
+                    {
+                        sh.Command = string.Empty;
+                        if (sh.SubList != null)
+                        {
+                            foreach (var sh2 in sh.SubList)
+                                DeleteRecursive(sh2);
+                        }
+                    }
+                }
+
+                foreach (var bar in config.BarConfigs)
+                {
+                    foreach (var sh in bar.ShortcutList)
+                        DeleteRecursive(sh);
+                }
+            }
+        };
+
+        public static void UpdateConfig(Configuration config)
+        {
+            if (!string.IsNullOrEmpty(config.PluginVersion))
+            {
+                var v = new Version(config.PluginVersion);
+                foreach (var kv in upgradeActions)
+                {
+                    if (new Version(kv.Key) >= v)
+                        kv.Value(config);
+                }
+            }
         }
     }
 }
