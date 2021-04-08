@@ -77,7 +77,7 @@ namespace QoLBar
 
         private void DrawPluginConfig()
         {
-            if (!_displayOutsideMain) { _displayOutsideMain = QoLBar.IsGameFocused; return; }
+            if (!ImGuiEx.SetBoolOnGameFocus(ref _displayOutsideMain)) return;
 
             ImGui.SetNextWindowSizeConstraints(new Vector2(588, 500), Dalamud.Interface.ImGuiHelpers.MainViewport.Size);
             ImGui.Begin("QoL Bar Configuration", ref configOpen);

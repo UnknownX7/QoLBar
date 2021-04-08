@@ -22,7 +22,7 @@ namespace QoLBar
         }
         public BarCfg Config { get; private set; }
 
-        public bool IsVisible => !IsHidden && _displayOutsideMain && CheckConditionSet();
+        public bool IsVisible => !IsHidden && CheckConditionSet();
         public bool IsHidden
         {
             get => Config.Hidden;
@@ -269,12 +269,7 @@ namespace QoLBar
         {
             CheckGameResolution();
 
-            if (!IsVisible)
-            {
-                if (!_displayOutsideMain)
-                    _displayOutsideMain = QoLBar.IsGameFocused;
-                return;
-            }
+            if (!IsVisible || !ImGuiEx.SetBoolOnGameFocus(ref _displayOutsideMain)) return;
 
             var io = ImGui.GetIO();
             mousePos = io.MousePos;

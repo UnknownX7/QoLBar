@@ -60,6 +60,14 @@ namespace QoLBar
 
         public static void ShouldDrawInViewport(out bool b) => b = ShouldDrawInViewport();
 
+        // Helper function for displaying / hiding windows outside of the main viewport when the game isn't focused, returns the bool to allow using it in if statements to reduce code
+        public static bool SetBoolOnGameFocus(ref bool b)
+        {
+            if (!b)
+                b = QoLBar.IsGameFocused;
+            return b;
+        }
+
         // Doesn't really work
         /*public static bool IsWindowDragging() => ImGui.IsWindowFocused() && !ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.IsMouseDragging(ImGuiMouseButton.Left, 0);
 

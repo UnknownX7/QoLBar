@@ -23,7 +23,7 @@ namespace QoLBar
 
         public static void Draw()
         {
-            if (!_displayOutsideMain) { _displayOutsideMain = QoLBar.IsGameFocused; return; }
+            if (!ImGuiEx.SetBoolOnGameFocus(ref _displayOutsideMain)) return;
 
             if (!iconBrowserOpen) { doPasteIcon = false; return; }
 
