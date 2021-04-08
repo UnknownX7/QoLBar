@@ -303,7 +303,7 @@ namespace QoLBar
 
                 if (IsDocked)
                 {
-                    ImGuiHelpers.ForceMainViewport();
+                    ImGuiHelpers.ForceNextWindowMainViewport();
                     ImGuiHelpers.SetNextWindowPosRelativeMainViewport(barPos, ImGuiCond.Always, piv);
                 }
                 else if (_setPos || Config.LockedPosition)
@@ -570,7 +570,7 @@ namespace QoLBar
         private void ItemCreatePopup()
         {
             if (IsDocked)
-                ImGuiHelpers.ForceMainViewport();
+                ImGuiHelpers.ForceNextWindowMainViewport();
 
             if (ImGui.BeginPopup("addItem"))
             {
@@ -612,7 +612,7 @@ namespace QoLBar
         public void BarConfigPopup()
         {
             if (IsDocked)
-                ImGuiHelpers.ForceMainViewport();
+                ImGuiHelpers.ForceNextWindowMainViewport();
 
             if (ImGui.BeginPopup($"BarConfig##{ID}"))
             {

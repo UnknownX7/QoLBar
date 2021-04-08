@@ -277,7 +277,7 @@ namespace QoLBar
         private void DrawCategory()
         {
             if (parentBar.IsDocked)
-                ImGuiHelpers.ForceMainViewport();
+                ImGuiHelpers.ForceNextWindowMainViewport();
 
             parentBar.SetCategoryPosition();
             if (ImGui.BeginPopup("ShortcutCategory", (Config.CategoryNoBackground ? ImGuiWindowFlags.NoBackground : ImGuiWindowFlags.None) | ImGuiWindowFlags.NoMove))
@@ -332,7 +332,7 @@ namespace QoLBar
         private void DrawAdd()
         {
             if (parentBar.IsDocked)
-                ImGuiHelpers.ForceMainViewport();
+                ImGuiHelpers.ForceNextWindowMainViewport();
 
             if (ImGui.BeginPopup("addItem"))
             {
@@ -375,7 +375,7 @@ namespace QoLBar
         private void DrawConfig(bool hasIcon)
         {
             if (parentBar.IsDocked)
-                ImGuiHelpers.ForceMainViewport();
+                ImGuiHelpers.ForceNextWindowMainViewport();
 
             if (ImGui.BeginPopup("editItem"))
             {
