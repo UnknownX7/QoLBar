@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using ImGuiNET;
 using Dalamud.Plugin;
+using Dalamud.Interface;
 
 namespace QoLBar
 {
@@ -31,7 +32,9 @@ namespace QoLBar
 
         public static readonly Vector2 defaultSpacing = new Vector2(8, 4);
 
-        private static bool _displayOutsideMain = true;
+        private bool _displayOutsideMain = true;
+
+        public static Vector2 mousePos = ImGui.GetMousePos();
 
         public PluginUI()
         {
@@ -61,6 +64,8 @@ namespace QoLBar
         {
             if (!IsVisible) return;
 
+            mousePos = ImGui.GetMousePos();
+
             IconBrowserUI.Draw();
 
             if (QoLBar.Config.AlwaysDisplayBars || QoLBar.IsLoggedIn())
@@ -79,7 +84,7 @@ namespace QoLBar
         {
             if (!ImGuiEx.SetBoolOnGameFocus(ref _displayOutsideMain)) return;
 
-            ImGui.SetNextWindowSizeConstraints(new Vector2(588, 500), Dalamud.Interface.ImGuiHelpers.MainViewport.Size);
+            ImGui.SetNextWindowSizeConstraints(new Vector2(588, 500), ImGuiHelpers.MainViewport.Size);
             ImGui.Begin("QoL Bar Configuration", ref configOpen);
 
             ImGuiEx.ShouldDrawInViewport(out _displayOutsideMain);
@@ -152,7 +157,7 @@ namespace QoLBar
                 if (ImGui.Button("O", letterButtonSize))
                     ImGui.OpenPopup($"BarConfig##{i}");
                 ImGuiEx.SetItemTooltip("Options");
-                bars[i].BarConfigPopup();
+                bars[i].DrawConfig();
                 ImGui.SameLine();
                 ImGui.SetNextItemWidth(27 * ImGui.GetIO().FontGlobalScale);
                 if (ImGui.Button(bar.Hidden ? "R" : "H", letterButtonSize))
@@ -558,6 +563,18 @@ namespace QoLBar
         {
             foreach (BarUI bar in bars)
                 bar.Dispose();
+        }
+
+        // Helper function
+        public static void DrawExternalWindow(Action draw, bool noViewport)
+        {
+            if (noViewport)
+                ImGuiHelpers.ForceNextWindowMainViewport();
+            ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, defaultSpacing);
+            ImGuiEx.PushFontScale(1);
+            draw();
+            ImGuiEx.PopFontScale();
+            ImGui.PopStyleVar();
         }
     }
 }

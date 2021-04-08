@@ -256,10 +256,12 @@ namespace QoLBar
                 }
             }
 
-            ImGui.OpenPopupOnItemClick("editItem", ImGuiPopupFlags.MouseButtonRight);
+            ImGui.OpenPopupOnItemClick("editShortcut", ImGuiPopupFlags.MouseButtonRight);
 
             if (sh.Type == ShortcutType.Category)
             {
+                if (parentBar.IsDocked)
+                    ImGuiHelpers.ForceNextWindowMainViewport();
                 ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(sh.CategorySpacing[0], sh.CategorySpacing[1]));
                 ImGuiEx.PushFontScale(sh.CategoryScale);
                 DrawCategory();
@@ -267,18 +269,11 @@ namespace QoLBar
                 ImGui.PopStyleVar();
             }
 
-            ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, PluginUI.defaultSpacing);
-            ImGuiEx.PushFontScale(1);
-            DrawConfig(useIcon);
-            ImGuiEx.PopFontScale();
-            ImGui.PopStyleVar();
+            PluginUI.DrawExternalWindow(() => DrawConfig(useIcon), parentBar.IsDocked);
         }
 
         private void DrawCategory()
         {
-            if (parentBar.IsDocked)
-                ImGuiHelpers.ForceNextWindowMainViewport();
-
             parentBar.SetCategoryPosition();
             if (ImGui.BeginPopup("ShortcutCategory", (Config.CategoryNoBackground ? ImGuiWindowFlags.NoBackground : ImGuiWindowFlags.None) | ImGuiWindowFlags.NoMove))
             {
@@ -308,63 +303,16 @@ namespace QoLBar
                     var height = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
                     ImGuiEx.PushFontScale(ImGuiEx.GetFontScale() * Config.CategoryFontScale);
                     if (ImGui.Button("+", new Vector2(width, height)))
-                        ImGui.OpenPopup("addItem");
+                        ImGui.OpenPopup("addShortcut");
                     ImGuiEx.PopFontScale();
                     ImGui.PopStyleColor();
                     ImGuiEx.SetItemTooltip("Add a new shortcut.");
                 }
 
                 if (ImGui.IsWindowHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right) && ImGui.GetIO().KeyShift)
-                    ImGui.OpenPopup("addItem");
+                    ImGui.OpenPopup("addShortcut");
 
-                ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, PluginUI.defaultSpacing);
-                ImGuiEx.PushFontScale(1);
-                DrawAdd();
-                ImGuiEx.PopFontScale();
-                ImGui.PopStyleVar();
-
-                ImGuiEx.ClampWindowPosToViewport();
-
-                ImGui.EndPopup();
-            }
-        }
-
-        private void DrawAdd()
-        {
-            if (parentBar.IsDocked)
-                ImGuiHelpers.ForceNextWindowMainViewport();
-
-            if (ImGui.BeginPopup("addItem"))
-            {
-                parentBar.Reveal();
-                SetConfigPopupOpen();
-
-                BarUI.tempSh ??= new ShCfg();
-                var newSh = BarUI.tempSh;
-                ItemBaseUI(newSh, false);
-
-                if (ImGui.Button("Create"))
-                {
-                    AddShortcut(newSh);
-                    BarUI.tempSh = null;
-                    ImGui.CloseCurrentPopup();
-                }
-                ImGui.SameLine();
-                if (ImGui.Button("Import"))
-                {
-                    var imports = Importing.TryImport(ImGui.GetClipboardText(), true);
-                    if (imports.shortcut != null)
-                        AddShortcut(imports.shortcut);
-                    else if (imports.bar != null)
-                    {
-                        foreach (var sh in imports.bar.ShortcutList)
-                            AddShortcut(sh);
-                    }
-                    QoLBar.Config.Save();
-                    ImGui.CloseCurrentPopup();
-                }
-                ImGuiEx.SetItemTooltip("Import a shortcut from the clipboard,\n" +
-                    "or import all of another bar's shortcuts.");
+                PluginUI.DrawExternalWindow(() => DrawAddShortcut(null, this), parentBar.IsDocked);
 
                 ImGuiEx.ClampWindowPosToViewport();
 
@@ -374,10 +322,7 @@ namespace QoLBar
 
         private void DrawConfig(bool hasIcon)
         {
-            if (parentBar.IsDocked)
-                ImGuiHelpers.ForceNextWindowMainViewport();
-
-            if (ImGui.BeginPopup("editItem"))
+            if (ImGui.BeginPopup("editShortcut"))
             {
                 parentBar.Reveal();
                 SetConfigPopupOpen();
@@ -718,6 +663,54 @@ namespace QoLBar
                 var height = ImGui.GetFontSize() * Math.Min(sh.Command.Split('\n').Length + 1, 7) + Style.FramePadding.Y * 2; // ImGui issue #238: can't disable multiline scrollbar and it appears a whole line earlier than it should, so thats cool I guess
                 if (ImGui.InputTextMultiline("Command##Input", ref sh.Command, 65535, new Vector2(0, height)) && editing)
                     QoLBar.Config.Save();
+            }
+        }
+
+        public static void DrawAddShortcut(BarUI barUI, ShortcutUI shUI)
+        {
+            if (ImGui.BeginPopup("addShortcut"))
+            {
+                barUI?.Reveal();
+                shUI?.parentBar.Reveal();
+                QoLBar.Plugin.ui.SetConfigPopupOpen();
+
+                BarUI.tempSh ??= new ShCfg();
+                var newSh = BarUI.tempSh;
+                ItemBaseUI(newSh, false);
+
+                if (ImGui.Button("Create"))
+                {
+                    barUI?.AddShortcut(newSh);
+                    shUI?.AddShortcut(newSh);
+                    BarUI.tempSh = null;
+                    ImGui.CloseCurrentPopup();
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Import"))
+                {
+                    var imports = Importing.TryImport(ImGui.GetClipboardText(), true);
+                    if (imports.shortcut != null)
+                    {
+                        barUI?.AddShortcut(imports.shortcut);
+                        shUI?.AddShortcut(imports.shortcut);
+                    }
+                    else if (imports.bar != null)
+                    {
+                        foreach (var sh in imports.bar.ShortcutList)
+                        {
+                            barUI?.AddShortcut(sh);
+                            shUI?.AddShortcut(sh);
+                        }
+                    }
+                    QoLBar.Config.Save();
+                    ImGui.CloseCurrentPopup();
+                }
+                ImGuiEx.SetItemTooltip("Import a shortcut from the clipboard,\n" +
+                    "or import all of another bar's shortcuts.");
+
+                ImGuiEx.ClampWindowPosToViewport();
+
+                ImGui.EndPopup();
             }
         }
 

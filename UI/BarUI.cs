@@ -22,6 +22,21 @@ namespace QoLBar
         }
         public BarCfg Config { get; private set; }
 
+        private static ImGuiStylePtr Style => ImGui.GetStyle();
+        private ImGuiWindowFlags WindowFlags
+        {
+            get
+            {
+                var flags = ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoFocusOnAppearing;
+                if (IsDocked || Config.LockedPosition) flags |= ImGuiWindowFlags.NoMove;
+                if (Config.NoBackground) flags |= ImGuiWindowFlags.NoBackground;
+                return flags;
+            }
+        }
+        private Vector2 VectorPosition => IsDocked
+            ? new Vector2((float)Math.Floor(Config.Position[0] * window.X), (float)Math.Floor(Config.Position[1] * window.Y)) //+ ImGuiHelpers.MainViewport.Pos
+            : new Vector2((float)Math.Floor(Config.Position[0] * monitor.X), (float)Math.Floor(Config.Position[1] * monitor.Y));
+
         public bool IsVisible => !IsHidden && CheckConditionSet();
         public bool IsHidden
         {
@@ -32,13 +47,6 @@ namespace QoLBar
                 QoLBar.Config.Save();
             }
         }
-
-        private static ImGuiStylePtr Style => ImGui.GetStyle();
-
-        private Vector2 VectorPosition => IsDocked
-            ? new Vector2((float)Math.Floor(Config.Position[0] * window.X), (float)Math.Floor(Config.Position[1] * window.Y)) //+ ImGuiHelpers.MainViewport.Pos
-            : new Vector2((float)Math.Floor(Config.Position[0] * monitor.X), (float)Math.Floor(Config.Position[1] * monitor.Y));
-
         public bool IsVertical => (Config.Columns > 0) && children.Count >= (Config.Columns * (Config.Columns - 1) + 1);
         public bool IsDocked { get; private set; } = true;
         public bool IsDragging { get; private set; } = false;
@@ -50,11 +58,8 @@ namespace QoLBar
         private Vector2 monitor = ImGui.GetPlatformIO().Monitors[0].MainSize;
         public Vector2 UsableArea => IsDocked ? window : monitor;
 
-        private static Vector2 mousePos = ImGui.GetIO().MousePos;
-        private static float globalSize = ImGuiHelpers.GlobalScale;
         private Vector2 barSize = new Vector2(200, 38);
         private Vector2 barPos;
-        private ImGuiWindowFlags flags;
         private Vector2 piv = Vector2.Zero;
         private Vector2 hidePos = Vector2.Zero;
         private Vector2 revealPos = Vector2.Zero;
@@ -95,7 +100,10 @@ namespace QoLBar
             set
             {
                 if (!value)
-                    ClearActivated();
+                {
+                    foreach (var ui in children)
+                        ui.ClearActivated();
+                }
                 _activated = value;
             }
         }
@@ -118,52 +126,35 @@ namespace QoLBar
                 children.Add(new ShortcutUI(this));
         }
 
-        private bool CheckConditionSet()
-        {
-            if (Config.ConditionSet >= 0 && Config.ConditionSet < QoLBar.Config.ConditionSets.Count)
-                return QoLBar.Config.ConditionSets[Config.ConditionSet].CheckConditions();
-            else
-                return true;
-        }
+        private bool CheckConditionSet() => Config.ConditionSet < 0 || Config.ConditionSet >= QoLBar.Config.ConditionSets.Count || QoLBar.Config.ConditionSets[Config.ConditionSet].CheckConditions();
 
         private void SetupPivot()
         {
-            var alignPiv = 0.0f;
-
-            switch (Config.Alignment)
+            var alignPiv = Config.Alignment switch
             {
-                case BarAlign.LeftOrTop:
-                    alignPiv = 0.0f;
-                    break;
-                case BarAlign.Center:
-                    alignPiv = 0.5f;
-                    break;
-                case BarAlign.RightOrBottom:
-                    alignPiv = 1.0f;
-                    break;
-            }
+                BarAlign.LeftOrTop => 0.0f,
+                BarAlign.Center => 0.5f,
+                BarAlign.RightOrBottom => 1.0f,
+                _ => 0
+            };
 
             switch (Config.DockSide)
             {
                 case BarDock.Top: //    0.0 1.0, 0.5 1.0, 1.0 1.0 // 0 0(+H),    winX/2 0(+H),    winX 0(+H)
                     piv.X = alignPiv;
                     piv.Y = 1.0f;
-                    IsDocked = true;
                     break;
                 case BarDock.Right: //  0.0 0.0, 0.0 0.5, 0.0 1.0 // winX(-W) 0, winX(-W) winY/2, winX(-W) winY
                     piv.X = 0.0f;
                     piv.Y = alignPiv;
-                    IsDocked = true;
                     break;
                 case BarDock.Bottom: // 0.0 0.0, 0.5 0.0, 1.0 0.0 // 0 winY(-H), winX/2 winY(-H), winX winY(-H)
                     piv.X = alignPiv;
                     piv.Y = 0.0f;
-                    IsDocked = true;
                     break;
                 case BarDock.Left: //   1.0 0.0, 1.0 0.5, 1.0 1.0 // 0(+W) 0,    0(+W) winY/2,    0(+W) winY
                     piv.X = 1.0f;
                     piv.Y = alignPiv;
-                    IsDocked = true;
                     break;
                 case BarDock.Undocked:
                     piv = Vector2.Zero;
@@ -172,6 +163,7 @@ namespace QoLBar
                     return;
             }
 
+            IsDocked = true;
             SetupPositions();
 
             barPos = hidePos;
@@ -210,44 +202,31 @@ namespace QoLBar
             }
         }
 
-        private void SetupImGuiFlags()
-        {
-            flags = ImGuiWindowFlags.None;
-
-            flags |= ImGuiWindowFlags.NoDecoration;
-            if (IsDocked || Config.LockedPosition)
-                flags |= ImGuiWindowFlags.NoMove;
-            flags |= ImGuiWindowFlags.NoScrollWithMouse;
-            if (Config.NoBackground)
-                flags |= ImGuiWindowFlags.NoBackground;
-            flags |= ImGuiWindowFlags.NoSavedSettings;
-            flags |= ImGuiWindowFlags.NoFocusOnAppearing;
-        }
-
         private Vector2 GetHidePosition()
         {
-            var _hidePos = hidePos;
             if (Config.Hint)
             {
-                var _winPad = Style.WindowPadding * 2;
-
+                var realHidePos = hidePos;
+                var winPad = Style.WindowPadding * 2;
                 switch (Config.DockSide)
                 {
                     case BarDock.Top:
-                        _hidePos.Y += _winPad.Y;
+                        realHidePos.Y += winPad.Y;
                         break;
                     case BarDock.Left:
-                        _hidePos.X += _winPad.X;
+                        realHidePos.X += winPad.X;
                         break;
                     case BarDock.Bottom:
-                        _hidePos.Y -= _winPad.Y;
+                        realHidePos.Y -= winPad.Y;
                         break;
                     case BarDock.Right:
-                        _hidePos.X -= _winPad.X;
+                        realHidePos.X -= winPad.X;
                         break;
                 }
+                return realHidePos;
             }
-            return _hidePos;
+            else
+                return hidePos;
         }
 
         public void SetupHotkeys()
@@ -256,12 +235,22 @@ namespace QoLBar
                 ui.SetupHotkeys();
         }
 
-        private void ClearActivated()
+        private void SetPosition()
         {
-            if (!WasActivated)
+            if (IsDocked)
             {
-                foreach (var ui in children)
-                    ui.ClearActivated();
+                ImGuiHelpers.ForceNextWindowMainViewport();
+                ImGuiHelpers.SetNextWindowPosRelativeMainViewport(barPos, ImGuiCond.Always, piv);
+            }
+            else if (_setPos || Config.LockedPosition)
+            {
+                if (!_firstframe)
+                {
+                    ImGui.SetNextWindowPos(VectorPosition);
+                    _setPos = false;
+                }
+                else
+                    ImGui.SetNextWindowPos(monitor);
             }
         }
 
@@ -271,10 +260,6 @@ namespace QoLBar
 
             if (!IsVisible || !ImGuiEx.SetBoolOnGameFocus(ref _displayOutsideMain)) return;
 
-            var io = ImGui.GetIO();
-            mousePos = io.MousePos;
-            globalSize = ImGuiHelpers.GlobalScale;
-
             if (IsDocked || Config.Visibility == BarVisibility.Immediate)
             {
                 SetupPositions();
@@ -283,11 +268,7 @@ namespace QoLBar
             else
                 Reveal();
 
-            if (!IsDocked && !_firstframe && !_reveal && !_lastReveal)
-            {
-                ClearActivated();
-                return;
-            }
+            if (!IsDocked && !_firstframe && !_reveal && !_lastReveal) { WasActivated = false; return; } // TODO: possibly make this look better
 
             if (_firstframe || _reveal || (barPos != hidePos) || (!IsDocked && _lastReveal)) // Don't bother to render when fully off screen
             {
@@ -296,25 +277,9 @@ namespace QoLBar
                 ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(Config.Spacing[0], Config.Spacing[1]));
                 ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.286f, 0.286f, 0.286f, 0.9f));
 
-                if (IsDocked)
-                {
-                    ImGuiHelpers.ForceNextWindowMainViewport();
-                    ImGuiHelpers.SetNextWindowPosRelativeMainViewport(barPos, ImGuiCond.Always, piv);
-                }
-                else if (_setPos || Config.LockedPosition)
-                {
-                    if (!_firstframe)
-                    {
-                        ImGui.SetNextWindowPos(VectorPosition);
-                        _setPos = false;
-                    }
-                    else
-                        ImGui.SetNextWindowPos(monitor);
-                }
+                SetPosition();
                 ImGui.SetNextWindowSize(barSize);
-
-                SetupImGuiFlags();
-                ImGui.Begin($"QoLBar##{ID}", flags);
+                ImGui.Begin($"QoLBar##{ID}", WindowFlags);
 
                 // Hide the bar if game isn't focused and it's outside the main viewport
                 if (!IsDocked)
@@ -324,62 +289,17 @@ namespace QoLBar
 
                 if (_mouseRevealed && ImGui.IsWindowHovered(ImGuiHoveredFlags.RectOnly))
                     Reveal();
-                if (ImGui.IsMouseReleased(ImGuiMouseButton.Right) && ImGui.IsWindowHovered())
+                if (ImGui.IsWindowHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right))
                     ImGui.OpenPopup($"BarConfig##{ID}");
 
-                DrawItems();
+                DrawShortcuts();
+                DrawAdd();
 
-                DrawAddButton();
+                CheckDrag();
 
-                if (!_firstframe && !Config.LockedPosition)
-                {
-                    if (IsDocked)
-                    {
-                        // I greatly dislike this
-                        var dragging = !IsDragging
-                            ? ImGui.IsWindowFocused() && ImGui.IsWindowHovered() && !ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.IsMouseDragging(ImGuiMouseButton.Left, 0)
-                            : IsDragging && !ImGui.IsMouseReleased(ImGuiMouseButton.Left);
+                PluginUI.DrawExternalWindow(() => DrawConfig(), IsDocked);
 
-                        // Began dragging
-                        if (dragging && dragging != IsDragging)
-                            IsDragging = true;
-
-                        if (IsDragging)
-                        {
-                            Reveal();
-                            var delta = ImGui.GetMouseDragDelta(ImGuiMouseButton.Left, 0) / UsableArea;
-                            ImGui.ResetMouseDragDelta();
-                            Config.Position[0] = Math.Min(Config.Position[0] + delta.X, 1);
-                            Config.Position[1] = Math.Min(Config.Position[1] + delta.Y, 1);
-                            SetupPivot();
-                        }
-
-                        // Stopped dragging
-                        if (!dragging && dragging != IsDragging)
-                        {
-                            IsDragging = false;
-                            QoLBar.Config.Save();
-                        }
-                    }
-                    else
-                    {
-                        if (ImGui.GetWindowPos() != VectorPosition)
-                        {
-                            var newPos = ImGui.GetWindowPos() / UsableArea;
-                            Config.Position[0] = newPos.X;
-                            Config.Position[1] = newPos.Y;
-                            QoLBar.Config.Save();
-                        }
-                    }
-                }
-
-                ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, PluginUI.defaultSpacing);
-                ImGuiEx.PushFontScale(1);
-                BarConfigPopup();
-                ImGuiEx.PopFontScale();
-                ImGui.PopStyleVar();
-
-                SetBarSize();
+                SetupSize();
 
                 ImGuiEx.PopFontScale();
 
@@ -394,7 +314,7 @@ namespace QoLBar
 
             if (IsDocked)
             {
-                SetBarPosition();
+                TweenBarPosition();
                 Hide(); // Allows other objects to reveal the bar
             }
             else
@@ -407,8 +327,8 @@ namespace QoLBar
 
         private void CheckGameResolution()
         {
-            var resolution = ImGuiHelpers.MainViewport.Size;
             // Fix bar positions when the game is resized
+            var resolution = ImGuiHelpers.MainViewport.Size;
             if (resolution != window)
             {
                 window = resolution;
@@ -426,8 +346,7 @@ namespace QoLBar
 
         private void CheckMousePosition()
         {
-            if (IsDocked && _reveal)
-                return;
+            if (IsDocked && _reveal) return;
 
             (var _min, var _max) = CalculateRevealPosition();
 
@@ -449,8 +368,8 @@ namespace QoLBar
                     break;
             }
 
-            var mX = mousePos.X;
-            var mY = mousePos.Y;
+            var mX = PluginUI.mousePos.X;
+            var mY = PluginUI.mousePos.Y;
 
             //if (ImGui.IsMouseHoveringRect(_min, _max, true)) // This only works in the context of a window... thanks ImGui
             if (Config.Visibility == BarVisibility.Always || (_min.X <= mX && mX < _max.X && _min.Y <= mY && mY < _max.Y))
@@ -462,10 +381,54 @@ namespace QoLBar
                 Hide();
         }
 
-        private void DrawItems()
+        private void CheckDrag()
+        {
+            if (_firstframe || Config.LockedPosition) return;
+
+            if (IsDocked)
+            {
+                // I greatly dislike this
+                var dragging = !IsDragging
+                    ? ImGui.IsWindowFocused() && ImGui.IsWindowHovered() && !ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.IsMouseDragging(ImGuiMouseButton.Left, 0)
+                    : IsDragging && !ImGui.IsMouseReleased(ImGuiMouseButton.Left);
+
+                // Began dragging
+                if (dragging && dragging != IsDragging)
+                    IsDragging = true;
+
+                if (IsDragging)
+                {
+                    Reveal();
+                    var delta = ImGui.GetMouseDragDelta(ImGuiMouseButton.Left, 0) / UsableArea;
+                    ImGui.ResetMouseDragDelta();
+                    Config.Position[0] = Math.Min(Config.Position[0] + delta.X, 1);
+                    Config.Position[1] = Math.Min(Config.Position[1] + delta.Y, 1);
+                    SetupPivot();
+                }
+
+                // Stopped dragging
+                if (!dragging && dragging != IsDragging)
+                {
+                    IsDragging = false;
+                    QoLBar.Config.Save();
+                }
+            }
+            else
+            {
+                if (ImGui.GetWindowPos() != VectorPosition)
+                {
+                    var newPos = ImGui.GetWindowPos() / UsableArea;
+                    Config.Position[0] = newPos.X;
+                    Config.Position[1] = newPos.Y;
+                    QoLBar.Config.Save();
+                }
+            }
+        }
+
+        private void DrawShortcuts()
         {
             var cols = Config.Columns;
-            var width = Config.ButtonWidth * globalSize * Config.Scale;
+            var width = Config.ButtonWidth * ImGuiHelpers.GlobalScale * Config.Scale;
             for (int i = 0; i < children.Count; i++)
             {
                 var ui = children[i];
@@ -480,32 +443,26 @@ namespace QoLBar
             }
         }
 
-        private void DrawAddButton()
+        private void DrawAdd()
         {
             if (Config.Editing || children.Count < 1)
             {
                 var height = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
                 ImGuiEx.PushFontScale(ImGuiEx.GetFontScale() * Config.FontScale);
-                if (ImGui.Button("+", new Vector2(Config.ButtonWidth * globalSize * Config.Scale, height)))
-                    ImGui.OpenPopup("addItem");
+                if (ImGui.Button("+", new Vector2(Config.ButtonWidth * ImGuiHelpers.GlobalScale * Config.Scale, height)))
+                    ImGui.OpenPopup("addShortcut");
                 ImGuiEx.SetItemTooltip("Add a new shortcut.\nRight click this (or the bar background) for options.\nRight click other shortcuts to edit them.", ImGuiHoveredFlags.AllowWhenBlockedByPopup);
                 ImGuiEx.PopFontScale();
 
                 var size = ImGui.GetItemRectMax() - ImGui.GetWindowPos();
                 MaxWidth = size.X;
                 MaxHeight = size.Y;
-
-                //ImGui.OpenPopupContextItem($"BarConfig##{barNumber}"); // Technically unneeded
             }
 
             if (ImGui.IsWindowHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right) && ImGui.GetIO().KeyShift)
-                ImGui.OpenPopup("addItem");
+                ImGui.OpenPopup("addShortcut");
 
-            ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, PluginUI.defaultSpacing);
-            ImGuiEx.PushFontScale(1);
-            ItemCreatePopup();
-            ImGuiEx.PopFontScale();
-            ImGui.PopStyleVar();
+            PluginUI.DrawExternalWindow(() => ShortcutUI.DrawAddShortcut(this, null), IsDocked);
         }
 
         // TODO: rewrite this, preferably insert into ShortcutUI
@@ -561,54 +518,8 @@ namespace QoLBar
 
         public void SetCategoryPosition() => ImGui.SetNextWindowPos(_catpos, ImGuiCond.Appearing, _catpiv);
 
-        // TODO: dupe code remove somehow
-        private void ItemCreatePopup()
+        public void DrawConfig()
         {
-            if (IsDocked)
-                ImGuiHelpers.ForceNextWindowMainViewport();
-
-            if (ImGui.BeginPopup("addItem"))
-            {
-                Reveal();
-                QoLBar.Plugin.ui.SetConfigPopupOpen();
-
-                tempSh ??= new ShCfg();
-                ShortcutUI.ItemBaseUI(tempSh, false);
-
-                if (ImGui.Button("Create"))
-                {
-                    AddShortcut(tempSh);
-                    tempSh = null;
-                    ImGui.CloseCurrentPopup();
-                }
-                ImGui.SameLine();
-                if (ImGui.Button("Import"))
-                {
-                    var imports = Importing.TryImport(ImGui.GetClipboardText(), true);
-                    if (imports.shortcut != null)
-                        AddShortcut(imports.shortcut);
-                    else if (imports.bar != null)
-                    {
-                        foreach (var sh in imports.bar.ShortcutList)
-                            AddShortcut(sh);
-                    }
-                    QoLBar.Config.Save();
-                    ImGui.CloseCurrentPopup();
-                }
-                ImGuiEx.SetItemTooltip("Import a shortcut from the clipboard,\n" +
-                    "or import all of another bar's shortcuts.");
-
-                ImGuiEx.ClampWindowPosToViewport();
-
-                ImGui.EndPopup();
-            }
-        }
-
-        public void BarConfigPopup()
-        {
-            if (IsDocked)
-                ImGuiHelpers.ForceNextWindowMainViewport();
-
             if (ImGui.BeginPopup($"BarConfig##{ID}"))
             {
                 Reveal();
@@ -772,7 +683,7 @@ namespace QoLBar
             }
         }
 
-        private void SetBarSize()
+        private void SetupSize()
         {
             var winPad = Style.WindowPadding;
             barSize.X = MaxWidth + winPad.X;
@@ -781,41 +692,36 @@ namespace QoLBar
             MaxHeight = 0;
         }
 
-        private void SetBarPosition()
-        {
-            if (Config.Visibility == BarVisibility.Slide)
-                TweenBarPosition();
-            else
-                barPos = _reveal ? revealPos : GetHidePosition();
-        }
-
         private void TweenBarPosition()
         {
-            var _hidePos = GetHidePosition();
-
-            if (_reveal != _lastReveal)
+            if (Config.Visibility == BarVisibility.Slide)
             {
-                _lastReveal = _reveal;
-                _tweenStart = barPos;
-                _tweenProgress = 0;
-            }
+                var _hidePos = GetHidePosition();
 
-            if (_tweenProgress >= 1)
-            {
-                barPos = _reveal ? revealPos : _hidePos;
+                if (_reveal != _lastReveal)
+                {
+                    _lastReveal = _reveal;
+                    _tweenStart = barPos;
+                    _tweenProgress = 0;
+                }
+
+                if (_tweenProgress >= 1)
+                    barPos = _reveal ? revealPos : _hidePos;
+                else
+                {
+                    var dt = ImGui.GetIO().DeltaTime * 2;
+                    _tweenProgress = Math.Min(_tweenProgress + dt, 1);
+
+                    var x = -1 * ((float)Math.Pow(_tweenProgress - 1, 4) - 1); // Quartic ease out
+                    var deltaX = ((_reveal ? revealPos.X : _hidePos.X) - _tweenStart.X) * x;
+                    var deltaY = ((_reveal ? revealPos.Y : _hidePos.Y) - _tweenStart.Y) * x;
+
+                    barPos.X = _tweenStart.X + deltaX;
+                    barPos.Y = _tweenStart.Y + deltaY;
+                }
             }
             else
-            {
-                var dt = ImGui.GetIO().DeltaTime * 2;
-                _tweenProgress = Math.Min(_tweenProgress + dt, 1);
-
-                var x = -1 * ((float)Math.Pow(_tweenProgress - 1, 4) - 1); // Quartic ease out
-                var deltaX = ((_reveal ? revealPos.X : _hidePos.X) - _tweenStart.X) * x;
-                var deltaY = ((_reveal ? revealPos.Y : _hidePos.Y) - _tweenStart.Y) * x;
-
-                barPos.X = _tweenStart.X + deltaX;
-                barPos.Y = _tweenStart.Y + deltaY;
-            }
+                barPos = _reveal ? revealPos : GetHidePosition();
         }
 
         public void AddShortcut(ShCfg sh)
