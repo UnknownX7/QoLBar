@@ -10,7 +10,6 @@ using Dalamud.Plugin;
 
 namespace QoLBar
 {
-    // TODO: go through and rename stuff
     public class BarCfg
     {
         public enum BarDock
@@ -19,7 +18,7 @@ namespace QoLBar
             Right,
             Bottom,
             Left,
-            Undocked // TODO: use this to change positioning to be screenwide
+            Undocked
         }
         public enum BarAlign
         {
