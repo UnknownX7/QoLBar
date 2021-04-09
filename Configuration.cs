@@ -104,6 +104,7 @@ namespace QoLBar
         public bool OptOutCutsceneHide = false;
         public bool OptOutGPoseHide = false;
         public bool NoConditionCache = false;
+        public int BackupTimer = 30;
 
         public string PluginVersion = ".INITIAL";
         [JsonIgnore] public string PrevPluginVersion = string.Empty;
@@ -112,10 +113,13 @@ namespace QoLBar
         [JsonIgnore] private static DirectoryInfo iconFolder;
         [JsonIgnore] private static DirectoryInfo backupFolder;
         [JsonIgnore] private static FileInfo tempConfig;
+        [JsonIgnore] private static FileInfo timedConfig;
         [JsonIgnore] public static FileInfo ConfigFile => QoLBar.Interface.ConfigFile;
 
         [JsonIgnore] private static bool displayUpdateWindow = false;
         [JsonIgnore] private static bool updateWindowAgree = false;
+
+        [JsonIgnore] private static float lastSave = float.MaxValue;
 
         public string GetVersion() => PluginVersion;
         public void UpdateVersion()
@@ -144,6 +148,7 @@ namespace QoLBar
                 iconFolder = new DirectoryInfo(Path.Combine(ConfigFolder.FullName, "icons"));
                 backupFolder = new DirectoryInfo(Path.Combine(ConfigFolder.FullName, "backups"));
                 tempConfig = new FileInfo(backupFolder.FullName + "\\temp.json");
+                timedConfig = new FileInfo(backupFolder.FullName + "\\timedBackup.json");
             }
 
 #pragma warning disable CS0612 // Type or member is obsolete
@@ -168,6 +173,7 @@ namespace QoLBar
             try
             {
                 QoLBar.Interface.SavePluginConfig(this);
+                lastSave = QoLBar.GetRunTime();
             }
             catch
             {
@@ -233,6 +239,7 @@ namespace QoLBar
                 UpdateVersion();
                 Save();
                 CheckDisplayUpdateWindow();
+                lastSave = float.MaxValue;
             }
 
             SaveTempConfig();
@@ -249,6 +256,30 @@ namespace QoLBar
             catch (Exception e)
             {
                 PluginLog.LogError(e, "Failed to save temp config!");
+            }
+        }
+
+        public void DoTimedBackup()
+        {
+            if ((BackupTimer > 0) && (QoLBar.GetRunTime() - (BackupTimer * 60)) > lastSave)
+            {
+                SaveTimedConfig();
+                lastSave = float.MaxValue; // Prevent from pointlessly saving if the config is never changed
+                PluginLog.Information("Performed timed backup!");
+            }
+        }
+
+        private void SaveTimedConfig()
+        {
+            try
+            {
+                if (!backupFolder.Exists)
+                    backupFolder.Create();
+                ConfigFile.CopyTo(timedConfig.FullName, true);
+            }
+            catch (Exception e)
+            {
+                PluginLog.LogError(e, "Failed to save timed backup!");
             }
         }
 

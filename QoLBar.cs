@@ -189,6 +189,7 @@ namespace QoLBar
             _frameCount++;
             _runTime += ImGui.GetIO().DeltaTime;
 
+            Config.DoTimedBackup();
             ReadyCommand();
             Keybind.Run(GameTextInputActive);
             Keybind.SetupHotkeys(ui.bars);

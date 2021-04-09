@@ -248,9 +248,11 @@ namespace QoLBar
 
         private void DrawSettingsMenu()
         {
+            var halfWidth = ImGui.GetWindowWidth() / 2;
+            var thirdWidth = ImGui.GetWindowWidth() / 3;
             if (ImGui.Checkbox("Export on Delete", ref QoLBar.Config.ExportOnDelete))
                 QoLBar.Config.Save();
-            ImGui.SameLine(ImGui.GetWindowWidth() / 2);
+            ImGui.SameLine(halfWidth);
             if (ImGui.Checkbox("Use Hotbar Frames on Icons", ref QoLBar.Config.UseIconFrame))
                 QoLBar.Config.Save();
             ImGuiEx.SetItemTooltip("This option will invert the ' f ' argument for all icons.");
@@ -258,10 +260,15 @@ namespace QoLBar
             if (ImGui.Checkbox("Always Display Bars", ref QoLBar.Config.AlwaysDisplayBars))
                 QoLBar.Config.Save();
             ImGuiEx.SetItemTooltip("Bars will remain visible even when logged out.");
-            ImGui.SameLine(ImGui.GetWindowWidth() / 2);
+            ImGui.SameLine(halfWidth);
             if (ImGui.Checkbox("Disable Condition Caching", ref QoLBar.Config.NoConditionCache))
                 QoLBar.Config.Save();
             ImGuiEx.SetItemTooltip("Disables the 100ms delay between checking conditions, increasing CPU load.");
+
+            ImGui.SetNextItemWidth(ImGui.GetWindowWidth() / 4);
+            if (ImGui.InputInt("Backup Timer", ref QoLBar.Config.BackupTimer))
+                QoLBar.Config.Save();
+            ImGuiEx.SetItemTooltip("Number of minutes since the last save to perform a backup. Set to 0 to disable.");
 
             ImGui.Spacing();
             ImGui.Spacing();
@@ -271,13 +278,13 @@ namespace QoLBar
                 QoLBar.Config.Save();
                 QoLBar.Plugin.CheckHideOptOuts();
             }
-            ImGui.SameLine(ImGui.GetWindowWidth() / 3);
+            ImGui.SameLine(thirdWidth);
             if (ImGui.Checkbox("In Cutscene", ref QoLBar.Config.OptOutCutsceneHide))
             {
                 QoLBar.Config.Save();
                 QoLBar.Plugin.CheckHideOptOuts();
             }
-            ImGui.SameLine(ImGui.GetWindowWidth() / 3 * 2);
+            ImGui.SameLine(thirdWidth * 2);
             if (ImGui.Checkbox("In /gpose", ref QoLBar.Config.OptOutGPoseHide))
             {
                 QoLBar.Config.Save();
@@ -288,7 +295,7 @@ namespace QoLBar
             ImGui.Spacing();
             ImGui.TextUnformatted("Temporary settings, ENABLE AT OWN RISK");
             ImGui.Checkbox("Allow importing conditions", ref Importing.allowImportConditions);
-            ImGui.SameLine(ImGui.GetWindowWidth() / 2);
+            ImGui.SameLine(halfWidth);
             ImGui.Checkbox("Allow importing hotkeys", ref Importing.allowImportHotkeys);
         }
 
