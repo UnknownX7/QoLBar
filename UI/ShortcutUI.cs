@@ -149,7 +149,7 @@ namespace QoLBar
 
             if (inCategory)
             {
-                if (useIcon || !ui.parent.Config.CategoryNoBackground)
+                if (useIcon || !parent.Config.CategoryNoBackground)
                     ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
                 else
                     ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.08f, 0.08f, 0.08f, 0.94f));
@@ -163,7 +163,7 @@ namespace QoLBar
             if (c.W > 1)
                 c = AnimateColor(c);
 
-            ImGuiEx.PushFontScale(ImGuiEx.GetFontScale() * (!inCategory ? parentBar.Config.FontScale : ui.parent.Config.CategoryFontScale));
+            ImGuiEx.PushFontScale(ImGuiEx.GetFontScale() * (!inCategory ? parentBar.Config.FontScale : parent.Config.CategoryFontScale));
             if (sh.Type == ShortcutType.Spacer)
             {
                 if (useIcon)
@@ -258,7 +258,7 @@ namespace QoLBar
 
             ImGui.OpenPopupOnItemClick("editShortcut", ImGuiPopupFlags.MouseButtonRight);
 
-            if (sh.Type == ShortcutType.Category)
+            if (Config.Type == ShortcutType.Category && Config.Mode == ShortcutMode.Default)
             {
                 if (parentBar.IsDocked)
                     ImGuiHelpers.ForceNextWindowMainViewport();
