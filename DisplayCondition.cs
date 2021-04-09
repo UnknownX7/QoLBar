@@ -16,7 +16,8 @@ namespace QoLBar
             Job,
             Role,
             Misc,
-            Zone
+            Zone,
+            ConditionSet
         }
 
         public ConditionType Type = ConditionType.Logic;
@@ -27,6 +28,8 @@ namespace QoLBar
         {
             if (Type == ConditionType.Logic)
                 return false;
+            else if (Type == ConditionType.ConditionSet)
+                return Condition >= 0 && Condition < QoLBar.Config.ConditionSets.Count && QoLBar.Config.ConditionSets[Condition].CheckConditions();
             else
                 return ConditionCache.GetCondition(Type, Condition, (Type == ConditionType.Misc) ? Arg : null);
         }
@@ -43,6 +46,7 @@ namespace QoLBar
         public string Name = string.Empty;
         public readonly List<DisplayCondition> Conditions = new List<DisplayCondition>();
 
+        private bool _locked = false;
         private bool _cached = false;
         private float _lastCache = 0;
         private int _currentPos = 0;
@@ -122,23 +126,26 @@ namespace QoLBar
         public bool CheckConditions()
         {
             ConditionCache.CheckCache();
-            if (ConditionCache.GetLastCache() == _lastCache)
+            if (_locked || ConditionCache.GetLastCache() == _lastCache)
                 return _cached;
 
+            _locked = true; // Prevents infinite looping from occurring
             _currentPos = 0;
             _cached = Parse();
             _lastCache = ConditionCache.GetLastCache();
+            _locked = false;
             return _cached;
         }
 
         public static void DrawEditor()
         {
             var config = QoLBar.Config;
-            for (int i = 0; i < config.ConditionSets.Count; i++)
+            var configSets = config.ConditionSets;
+            for (int i = 0; i < configSets.Count; i++)
             {
                 ImGui.PushID(i);
 
-                var set = config.ConditionSets[i];
+                var set = configSets[i];
 
                 var open = ImGui.TreeNodeEx($"#{i + 1}##Node", ImGuiTreeNodeFlags.FramePadding | ImGuiTreeNodeFlags.AllowItemOverlap | ImGuiTreeNodeFlags.NoTreePushOnOpen);
                 ImGui.SameLine();
@@ -159,7 +166,7 @@ namespace QoLBar
                     if (ImGui.Button("↑") && i > 0)
                         SwapConditionSet(i, i - 1);
                     ImGui.SameLine();
-                    if (ImGui.Button("↓") && i < (config.ConditionSets.Count - 1))
+                    if (ImGui.Button("↓") && i < (configSets.Count - 1))
                         SwapConditionSet(i, i + 1);
                 }
                 ImGui.SameLine();
@@ -379,6 +386,23 @@ namespace QoLBar
                                     ImGuiEx.SetItemTooltip($"ID: {cond.Condition}");
                                 }
                                 break;
+                            case DisplayCondition.ConditionType.ConditionSet:
+                                {
+                                    if (ImGui.BeginCombo("##Sets", (cond.Condition >= 0 && cond.Condition < configSets.Count) ? $"[{cond.Condition + 1}] {configSets[cond.Condition].Name}" : string.Empty))
+                                    {
+                                        for (int ind = 0; ind < configSets.Count; ind++)
+                                        {
+                                            var s = configSets[ind];
+                                            if (ImGui.Selectable($"[{ind + 1}] {s.Name}", ind == cond.Condition))
+                                            {
+                                                cond.Condition = ind;
+                                                config.Save();
+                                            }
+                                        }
+                                        ImGui.EndCombo();
+                                    }
+                                }
+                                break;
                         }
 
                         ImGui.NextColumn();
@@ -431,7 +455,7 @@ namespace QoLBar
 
             if (ImGui.Button("+", new Vector2(-1, 0)))
             {
-                config.ConditionSets.Add(new DisplayConditionSet());
+                configSets.Add(new DisplayConditionSet());
                 config.Save();
             }
         }
@@ -440,6 +464,7 @@ namespace QoLBar
         {
             var config = QoLBar.Config;
             var set = config.ConditionSets[from];
+
             foreach (var bar in config.BarCfgs)
             {
                 if (bar.ConditionSet == from)
@@ -447,6 +472,21 @@ namespace QoLBar
                 else if (bar.ConditionSet == to)
                     bar.ConditionSet = from;
             }
+
+            foreach (var s in config.ConditionSets)
+            {
+                foreach (var cond in s.Conditions)
+                {
+                    if (cond.Type == DisplayCondition.ConditionType.ConditionSet)
+                    {
+                        if (cond.Condition == from)
+                            cond.Condition = to;
+                        else if (cond.Condition == to)
+                            cond.Condition = from;
+                    }
+                }
+            }
+
             config.ConditionSets.RemoveAt(from);
             config.ConditionSets.Insert(to, set);
             config.Save();
@@ -455,6 +495,7 @@ namespace QoLBar
         private static void RemoveConditionSet(int i)
         {
             var config = QoLBar.Config;
+
             foreach (var bar in config.BarCfgs)
             {
                 if (bar.ConditionSet > i)
@@ -462,6 +503,22 @@ namespace QoLBar
                 else if (bar.ConditionSet == i)
                     bar.ConditionSet = -1;
             }
+
+            foreach (var s in config.ConditionSets)
+            {
+                for (int j = s.Conditions.Count - 1; j >= 0; j--)
+                {
+                    var cond = s.Conditions[j];
+                    if (cond.Type == DisplayCondition.ConditionType.ConditionSet)
+                    {
+                        if (cond.Condition > i)
+                            cond.Condition -= 1;
+                        else if (cond.Condition == i)
+                            s.Remove(j);
+                    }
+                }
+            }
+
             config.ConditionSets.RemoveAt(i);
             config.Save();
         }
