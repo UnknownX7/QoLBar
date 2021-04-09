@@ -539,6 +539,7 @@ namespace QoLBar
                                 Config.Visibility = BarVisibility.Always;
                             Config.Position[0] = 0;
                             Config.Position[1] = 0;
+                            Config.LockedPosition = false;
                             QoLBar.Config.Save();
                             SetupPivot();
                         }
