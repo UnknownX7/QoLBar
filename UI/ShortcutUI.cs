@@ -279,6 +279,12 @@ namespace QoLBar
             {
                 parentBar.Reveal();
 
+                if (ImGui.IsWindowHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right))
+                    ImGui.OpenPopup("editShortcut");
+
+                // Dupe code but only cause ImGui sucks
+                PluginUI.DrawExternalWindow(() => DrawConfig(Config.Name.StartsWith("::")), parentBar.IsDocked);
+
                 var cols = Config.CategoryColumns;
                 var width = Config.CategoryWidth * ImGui.GetIO().FontGlobalScale * Config.CategoryScale;
 
