@@ -103,21 +103,32 @@ namespace QoLBar
 
             public class PieMenu
             {
+                public class PieItem
+                {
+                    public bool m_oItemIsSubMenu;
+                    public string m_oItemName;
+                    public Vector2 m_oItemSize;
+                }
+
+                public PieMenu()
+                {
+                    for (int i = 0; i < m_oPieItems.Length; i++)
+                        m_oPieItems[i] = new PieItem();
+                }
+
+                public PieItem[] m_oPieItems = new PieItem[c_iMaxPieItemCount];
                 public int m_iCurrentIndex;
                 public float m_fMaxItemSqrDiameter;
                 public float m_fLastMaxItemSqrDiameter;
                 public int m_iHoveredItem;
                 public int m_iLastHoveredItem;
-                public bool[] m_oItemIsSubMenu = new bool[c_iMaxPieItemCount];
-                public string[] m_oItemNames = new string[c_iMaxPieItemCount];
-                public Vector2[] m_oItemSizes = new Vector2[c_iMaxPieItemCount];
             };
 
             public PieMenuContext()
             {
                 m_iCurrentIndex = -1;
                 m_iLastFrame = 0;
-                for (int i = 0; i < c_iMaxPieMenuStack; i++)
+                for (int i = 0; i < m_oPieMenuStack.Length; i++)
                     m_oPieMenuStack[i] = new PieMenu();
             }
 
@@ -231,7 +242,9 @@ namespace QoLBar
                 int item_hovered = -1;
                 for (int item_n = 0; item_n < oPieMenu.m_iCurrentIndex; item_n++)
                 {
-                    string item_label = oPieMenu.m_oItemNames[item_n];
+                    PieMenuContext.PieMenu.PieItem oPieItem = oPieMenu.m_oPieItems[item_n];
+
+                    string item_label = oPieItem.m_oItemName;
                     float fMinInnerSpacing = oStyle.ItemInnerSpacing.X / (fMinRadius * 2.0f);
                     float fMaxInnerSpacing = oStyle.ItemInnerSpacing.X / (fMaxRadius * 2.0f);
                     float fAddMinDrawAngle = item_arc_span * fMinInnerSpacing;
@@ -254,7 +267,7 @@ namespace QoLBar
                         if (drag_angle >= item_angle_min && drag_angle < item_angle_max)
                         {
                             hovered = true;
-                            bItemHovered = !oPieMenu.m_oItemIsSubMenu[item_n];
+                            bItemHovered = !oPieItem.m_oItemIsSubMenu;
                         }
                     }
 
@@ -302,7 +315,7 @@ namespace QoLBar
                     }
                     oArea = ImRect_Add(oArea, oOuterCenter);
 
-                    if (oPieMenu.m_oItemIsSubMenu[item_n])
+                    if (oPieItem.m_oItemIsSubMenu)
                     {
                         Vector2[] oTrianglePos = new Vector2[3];
 
@@ -319,7 +332,7 @@ namespace QoLBar
                         pDrawList.AddTriangleFilled(oTrianglePos[0], oTrianglePos[1], oTrianglePos[2], 0xFFFFFFFF);
                     }
 
-                    Vector2 text_size = oPieMenu.m_oItemSizes[item_n];
+                    Vector2 text_size = oPieItem.m_oItemSize;
                     Vector2 text_pos = new Vector2(
                         (float)(s_oPieMenuContext.m_oCenter.X + Math.Cos((item_inner_ang_min + item_inner_ang_max) * 0.5f) * (fMinRadius + fMaxRadius) * 0.5f - text_size.X * 0.5f),
                         (float)(s_oPieMenuContext.m_oCenter.Y + Math.Sin((item_inner_ang_min + item_inner_ang_max) * 0.5f) * (fMinRadius + fMaxRadius) * 0.5f - text_size.Y * 0.5f));
@@ -341,7 +354,7 @@ namespace QoLBar
                 oPieMenu.m_iLastHoveredItem = item_hovered;
 
                 fLastRotate = item_arc_span * oPieMenu.m_iLastHoveredItem + fRotate;
-                if (item_hovered == -1 || !oPieMenu.m_oItemIsSubMenu[item_hovered])
+                if (item_hovered == -1 || !oPieMenu.m_oPieItems[item_hovered].m_oItemIsSubMenu)
                 {
                     s_oPieMenuContext.m_iLastHoveredIndex = iIndex;
                     break;
@@ -385,9 +398,10 @@ namespace QoLBar
             //IM_ASSERT(s_oPieMenuContext.m_iCurrentIndex >= 0 && s_oPieMenuContext.m_iCurrentIndex < PieMenuContext.c_iMaxPieItemCount);
 
             PieMenuContext.PieMenu oPieMenu = s_oPieMenuContext.m_oPieMenuStack[s_oPieMenuContext.m_iCurrentIndex];
+            PieMenuContext.PieMenu.PieItem oPieItem = oPieMenu.m_oPieItems[oPieMenu.m_iCurrentIndex];
 
             Vector2 oTextSize = ImGui.CalcTextSize(pName, true);
-            oPieMenu.m_oItemSizes[oPieMenu.m_iCurrentIndex] = oTextSize;
+            oPieItem.m_oItemSize = oTextSize;
 
             float fSqrDiameter = oTextSize.X * oTextSize.X + oTextSize.Y * oTextSize.Y;
 
@@ -396,9 +410,9 @@ namespace QoLBar
                 oPieMenu.m_fMaxItemSqrDiameter = fSqrDiameter;
             }
 
-            oPieMenu.m_oItemIsSubMenu[oPieMenu.m_iCurrentIndex] = true;
+            oPieItem.m_oItemIsSubMenu = true;
 
-            oPieMenu.m_oItemNames[oPieMenu.m_iCurrentIndex] = pName;
+            oPieItem.m_oItemName = pName;
 
             if (oPieMenu.m_iLastHoveredItem == oPieMenu.m_iCurrentIndex)
             {
@@ -423,9 +437,10 @@ namespace QoLBar
             //IM_ASSERT(s_oPieMenuContext.m_iCurrentIndex >= 0 && s_oPieMenuContext.m_iCurrentIndex < PieMenuContext.c_iMaxPieItemCount);
 
             PieMenuContext.PieMenu oPieMenu = s_oPieMenuContext.m_oPieMenuStack[s_oPieMenuContext.m_iCurrentIndex];
+            PieMenuContext.PieMenu.PieItem oPieItem = oPieMenu.m_oPieItems[oPieMenu.m_iCurrentIndex];
 
             Vector2 oTextSize = ImGui.CalcTextSize(pName, true);
-            oPieMenu.m_oItemSizes[oPieMenu.m_iCurrentIndex] = oTextSize;
+            oPieItem.m_oItemSize = oTextSize;
 
             float fSqrDiameter = oTextSize.X * oTextSize.X + oTextSize.Y * oTextSize.Y;
 
@@ -434,9 +449,9 @@ namespace QoLBar
                 oPieMenu.m_fMaxItemSqrDiameter = fSqrDiameter;
             }
 
-            oPieMenu.m_oItemIsSubMenu[oPieMenu.m_iCurrentIndex] = false;
+            oPieItem.m_oItemIsSubMenu = false;
 
-            oPieMenu.m_oItemNames[oPieMenu.m_iCurrentIndex] = pName;
+            oPieItem.m_oItemName = pName;
 
             bool bActive = oPieMenu.m_iCurrentIndex == oPieMenu.m_iHoveredItem;
             ++oPieMenu.m_iCurrentIndex;
