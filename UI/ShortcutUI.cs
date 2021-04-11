@@ -232,19 +232,6 @@ namespace QoLBar
                     parentBar.WasActivated = true;
                 }
 
-                if (ui != this)
-                {
-                    switch (Config.Mode)
-                    {
-                        case ShortcutMode.Incremental:
-                            _i = (_i + 1) % children.Count;
-                            break;
-                        case ShortcutMode.Random:
-                            _i = (int)(QoLBar.GetFrameCount() % children.Count);
-                            break;
-                    }
-                }
-
                 if (!inCategory)
                     OnClick(parentBar.IsVertical, wasHovered);
                 else
