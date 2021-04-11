@@ -89,6 +89,7 @@ namespace QoLBar
         }*/
     }
 
+    // Modified version of https://gist.github.com/thennequin/64b4b996ec990c6ddc13a48c6a0ba68c
     public static class ImGuiPie
     {
         private class PieMenuContext
@@ -126,7 +127,7 @@ namespace QoLBar
             public int m_iMaxIndex;
             public int m_iLastFrame;
             public Vector2 m_oCenter;
-            public ImGuiMouseButton m_iMouseButton;
+            public bool m_bMaintainDraw;
             public bool m_bClose;
         };
 
@@ -142,7 +143,7 @@ namespace QoLBar
             PieMenuContext.PieMenu oPieMenu = s_oPieMenuContext.m_oPieMenuStack[s_oPieMenuContext.m_iCurrentIndex];
             oPieMenu.m_iCurrentIndex = 0;
             oPieMenu.m_fMaxItemSqrDiameter = 0.0f;
-            if (!ImGui.IsMouseReleased(s_oPieMenuContext.m_iMouseButton))
+            if (s_oPieMenuContext.m_bMaintainDraw)
                 oPieMenu.m_iHoveredItem = -1;
             if (s_oPieMenuContext.m_iCurrentIndex > 0)
                 oPieMenu.m_fMaxItemSqrDiameter = s_oPieMenuContext.m_oPieMenuStack[s_oPieMenuContext.m_iCurrentIndex - 1].m_fMaxItemSqrDiameter;
@@ -151,12 +152,10 @@ namespace QoLBar
         private static void EndPieMenuEx()
         {
             //IM_ASSERT(s_oPieMenuContext.m_iCurrentIndex >= 0);
-            //PieMenuContext.PieMenu oPieMenu = s_oPieMenuContext.m_oPieMenuStack[s_oPieMenuContext.m_iCurrentIndex];
-
             --s_oPieMenuContext.m_iCurrentIndex;
         }
 
-        public static bool BeginPiePopup(string pName, ImGuiMouseButton iMouseButton = ImGuiMouseButton.Left)
+        public static bool BeginPiePopup(string pName, bool bMaintain)
         {
             if (ImGui.IsPopupOpen(pName))
             {
@@ -165,10 +164,11 @@ namespace QoLBar
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0.0f);
                 ImGui.PushStyleVar(ImGuiStyleVar.Alpha, 1.0f);
 
-                s_oPieMenuContext.m_iMouseButton = iMouseButton;
+                s_oPieMenuContext.m_bMaintainDraw = bMaintain;
                 s_oPieMenuContext.m_bClose = false;
 
-                ImGui.SetNextWindowPos(new Vector2(-100), ImGuiCond.Appearing);
+                ImGuiHelpers.ForceNextWindowMainViewport();
+                ImGui.SetNextWindowPos(new Vector2(-100), ImGuiCond.Always);
                 bool bOpened = ImGui.BeginPopup(pName);
                 if (bOpened)
                 {
@@ -255,7 +255,7 @@ namespace QoLBar
                         }
                     }
 
-                    int arc_segments = (int)(32 * item_arc_span / (2 * Math.PI)) + 1;
+                    int arc_segments = (int)(64 * item_arc_span / (2 * Math.PI)) + 1;
 
                     // what black magic is happening here
                     uint iColor = hovered ? 0xFF966464 : 0xFF464646;
@@ -351,11 +351,11 @@ namespace QoLBar
 
             if (oArea.Min.X < 0.0f)
             {
-                s_oPieMenuContext.m_oCenter.X = (s_oPieMenuContext.m_oCenter.X - oArea.Min.X);
+                s_oPieMenuContext.m_oCenter.X -= oArea.Min.X;
             }
             if (oArea.Min.Y < 0.0f)
             {
-                s_oPieMenuContext.m_oCenter.Y = (s_oPieMenuContext.m_oCenter.Y - oArea.Min.Y);
+                s_oPieMenuContext.m_oCenter.Y -= oArea.Min.Y;
             }
 
             Vector2 oDisplaySize = ImGui.GetIO().DisplaySize;
@@ -369,7 +369,7 @@ namespace QoLBar
             }
 
             if (s_oPieMenuContext.m_bClose ||
-                (!bItemHovered && ImGui.IsMouseReleased(s_oPieMenuContext.m_iMouseButton)))
+                (!bItemHovered && !s_oPieMenuContext.m_bMaintainDraw))
             {
                 ImGui.CloseCurrentPopup();
             }
@@ -397,11 +397,6 @@ namespace QoLBar
 
             oPieMenu.m_oItemIsSubMenu[oPieMenu.m_iCurrentIndex] = true;
 
-            /*int iLen = strlen(pName);
-            ImVector<char> oName = oPieMenu.m_oItemNames[oPieMenu.m_iCurrentIndex];
-            oName.resize(iLen + 1);
-            oName[iLen] = '\0';
-            memcpy(oName.Data, pName, iLen);*/
             oPieMenu.m_oItemNames[oPieMenu.m_iCurrentIndex] = pName;
 
             if (oPieMenu.m_iLastHoveredItem == oPieMenu.m_iCurrentIndex)
@@ -440,11 +435,6 @@ namespace QoLBar
 
             oPieMenu.m_oItemIsSubMenu[oPieMenu.m_iCurrentIndex] = false;
 
-            /*int iLen = strlen(pName);
-            ImVector<char> oName = oPieMenu.m_oItemNames[oPieMenu.m_iCurrentIndex];
-            oName.resize(iLen + 1);
-            oName[iLen] = '\0';
-            memcpy(oName.Data, pName, iLen);*/
             oPieMenu.m_oItemNames[oPieMenu.m_iCurrentIndex] = pName;
 
             bool bActive = oPieMenu.m_iCurrentIndex == oPieMenu.m_iHoveredItem;
