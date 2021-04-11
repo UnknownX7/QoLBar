@@ -108,7 +108,6 @@ namespace QoLBar
                 public float m_fLastMaxItemSqrDiameter;
                 public int m_iHoveredItem;
                 public int m_iLastHoveredItem;
-                public int m_iClickedItem;
                 public bool[] m_oItemIsSubMenu = new bool[c_iMaxPieItemCount];
                 public string[] m_oItemNames = new string[c_iMaxPieItemCount];
                 public Vector2[] m_oItemSizes = new Vector2[c_iMaxPieItemCount];
@@ -126,6 +125,7 @@ namespace QoLBar
             public int m_iCurrentIndex;
             public int m_iMaxIndex;
             public int m_iLastFrame;
+            public int m_iLastHoveredIndex;
             public Vector2 m_oCenter;
             public bool m_bMaintainDraw;
             public bool m_bClose;
@@ -232,23 +232,26 @@ namespace QoLBar
                 for (int item_n = 0; item_n < oPieMenu.m_iCurrentIndex; item_n++)
                 {
                     string item_label = oPieMenu.m_oItemNames[item_n];
-                    float inner_spacing = oStyle.ItemInnerSpacing.X / fMinRadius / 2;
                     float fMinInnerSpacing = oStyle.ItemInnerSpacing.X / (fMinRadius * 2.0f);
                     float fMaxInnerSpacing = oStyle.ItemInnerSpacing.X / (fMaxRadius * 2.0f);
-                    float item_inner_ang_min = item_arc_span * (item_n - 0.5f + fMinInnerSpacing) + fRotate;
-                    float item_inner_ang_max = item_arc_span * (item_n + 0.5f - fMinInnerSpacing) + fRotate;
-                    float item_outer_ang_min = item_arc_span * (item_n - 0.5f + fMaxInnerSpacing) + fRotate;
-                    float item_outer_ang_max = item_arc_span * (item_n + 0.5f - fMaxInnerSpacing) + fRotate;
+                    float fAddMinDrawAngle = item_arc_span * fMinInnerSpacing;
+                    float fAddMaxDrawAngle = item_arc_span * fMaxInnerSpacing;
+                    float item_angle_min = item_arc_span * (item_n - 0.5f) + fRotate;
+                    float item_angle_max = item_arc_span * (item_n + 0.5f) + fRotate;
+                    float item_inner_ang_min = item_angle_min + fAddMinDrawAngle;
+                    float item_inner_ang_max = item_angle_max - fAddMinDrawAngle;
+                    float item_outer_ang_min = item_angle_min + fAddMaxDrawAngle;
+                    float item_outer_ang_max = item_angle_max - fAddMaxDrawAngle;
 
                     bool hovered = false;
-                    if (fDragDistSqr >= fMinRadius * fMinRadius && fDragDistSqr < fMaxRadius * fMaxRadius)
+                    if (fDragDistSqr >= fMinRadius * fMinRadius && ((s_oPieMenuContext.m_iLastHoveredIndex == iIndex) || fDragDistSqr < fMaxRadius * fMaxRadius))
                     {
-                        while ((drag_angle - item_inner_ang_min) < 0.0f)
+                        while ((drag_angle - item_angle_min) < 0.0f)
                             drag_angle += (float)(2.0f * Math.PI);
-                        while ((drag_angle - item_inner_ang_min) > 2.0f * Math.PI)
+                        while ((drag_angle - item_angle_min) > 2.0f * Math.PI)
                             drag_angle -= (float)(2.0f * Math.PI);
 
-                        if (drag_angle >= item_inner_ang_min && drag_angle < item_inner_ang_max)
+                        if (drag_angle >= item_angle_min && drag_angle < item_angle_max)
                         {
                             hovered = true;
                             bItemHovered = !oPieMenu.m_oItemIsSubMenu[item_n];
@@ -337,14 +340,17 @@ namespace QoLBar
 
                 oPieMenu.m_iHoveredItem = item_hovered;
 
-                if (fDragDistSqr >= fMaxRadius * fMaxRadius)
+                if (s_oPieMenuContext.m_iLastHoveredIndex != iIndex && fDragDistSqr >= fMaxRadius * fMaxRadius)
                     item_hovered = oPieMenu.m_iLastHoveredItem;
 
                 oPieMenu.m_iLastHoveredItem = item_hovered;
 
                 fLastRotate = item_arc_span * oPieMenu.m_iLastHoveredItem + fRotate;
                 if (item_hovered == -1 || !oPieMenu.m_oItemIsSubMenu[item_hovered])
+                {
+                    s_oPieMenuContext.m_iLastHoveredIndex = iIndex;
                     break;
+                }
             }
 
             pDrawList.PopClipRect();
