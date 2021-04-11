@@ -34,8 +34,8 @@ namespace QoLBar
         public readonly int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
         private readonly Queue<string> commandQueue = new Queue<string>();
 
-        public IntPtr textActiveBoolPtr = IntPtr.Zero;
-        public unsafe bool GameTextInputActive => (textActiveBoolPtr != IntPtr.Zero) && *(bool*)textActiveBoolPtr;
+        public static IntPtr textActiveBoolPtr = IntPtr.Zero;
+        public static unsafe bool GameTextInputActive => (textActiveBoolPtr != IntPtr.Zero) && *(bool*)textActiveBoolPtr;
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)] private static extern IntPtr GetForegroundWindow();
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)] private static extern int GetWindowThreadProcessId(IntPtr handle, out int processId);
@@ -191,7 +191,7 @@ namespace QoLBar
 
             Config.DoTimedBackup();
             ReadyCommand();
-            Keybind.Run(GameTextInputActive);
+            Keybind.Run();
             Keybind.SetupHotkeys(ui.bars);
         }
 

@@ -12,15 +12,16 @@ namespace QoLBar
         private static readonly byte[] keyState = new byte[256];
         private static readonly bool[] prevKeyState = new bool[keyState.Length];
         private static readonly bool[] keyPressed = new bool[keyState.Length];
+        private static bool Disabled => QoLBar.GameTextInputActive || !QoLBar.IsGameFocused || ImGui.GetIO().WantCaptureKeyboard;
 
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool GetKeyboardState(byte[] lpKeyState);
 
-        public static void Run(bool gameInputActive)
+        public static void Run()
         {
             GetKeyState();
-            DoHotkeys(gameInputActive);
+            DoHotkeys();
         }
 
         public static void SetupHotkeys(List<BarUI> bars)
@@ -35,35 +36,62 @@ namespace QoLBar
             GetKeyboardState(keyState);
             for (int i = 0; i < keyState.Length; i++)
             {
-                var down = (keyState[i] & 0x80) != 0;
+                var down = IsKeyDown(i);
                 keyPressed[i] = down && !prevKeyState[i];
                 prevKeyState[i] = down;
             }
         }
 
-        private static void DoHotkeys(bool gameInputActive)
+        public static bool IsKeyDown(int i) => (keyState[i] & 0x80) != 0;
+
+        public static int GetModifiers()
         {
-            if (gameInputActive || !QoLBar.IsGameFocused || ImGui.GetIO().WantCaptureKeyboard) { hotkeys.Clear(); return; }
+            var key = 0;
+            var io = ImGui.GetIO();
+            if (io.KeyShift)
+                key |= (int)Keys.Shift;
+            if (io.KeyCtrl)
+                key |= (int)Keys.Control;
+            if (io.KeyAlt)
+                key |= (int)Keys.Alt;
+            return key;
+        }
+
+        public static bool IsHotkeyDown(int hotkey, bool blockGame = false)
+        {
+            if (Disabled) return false;
+
+            var key = hotkey & ~(int)Keys.Modifiers;
+            var isDown = IsKeyDown(key) && hotkey == (key | GetModifiers());
+            if (blockGame && isDown)
+                BlockGameKey(key);
+            return isDown;
+        }
+
+        public static void BlockGameKey(int key)
+        {
+            if (key <= 160)
+                QoLBar.Interface.ClientState.KeyState[key] = false;
+        }
+
+        private static void DoHotkeys()
+        {
+            if (Disabled) { hotkeys.Clear(); return; }
 
             if (hotkeys.Count > 0)
             {
-                var key = 0;
-                if (ImGui.GetIO().KeyShift)
-                    key |= (int)Keys.Shift;
-                if (ImGui.GetIO().KeyCtrl)
-                    key |= (int)Keys.Control;
-                if (ImGui.GetIO().KeyAlt)
-                    key |= (int)Keys.Alt;
+                var key = GetModifiers();
                 for (var k = 0; k < keyState.Length; k++)
                 {
                     if (16 <= k && k <= 18) continue;
 
                     if (keyPressed[k])
                     {
+                        var hotkey = (key | k);
                         foreach ((var bar, var sh) in hotkeys)
                         {
                             var cfg = sh.Config;
-                            if (cfg.Hotkey == (key | k))
+                            if (cfg.Hotkey == hotkey)
                             {
                                 if (cfg.Type == ShCfg.ShortcutType.Category && cfg.Mode == ShCfg.ShortcutMode.Default)
                                 {

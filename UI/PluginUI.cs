@@ -374,9 +374,9 @@ namespace QoLBar
             ImGui.NextColumn();
             ImGui.TextUnformatted("Game Text Input Active");
             ImGui.NextColumn();
-            ImGui.TextUnformatted($"{QoLBar.Plugin.textActiveBoolPtr.ToString("X")}");
+            ImGui.TextUnformatted($"{QoLBar.textActiveBoolPtr.ToString("X")}");
             ImGui.NextColumn();
-            ImGui.TextUnformatted($"{QoLBar.Plugin.GameTextInputActive}");
+            ImGui.TextUnformatted($"{QoLBar.GameTextInputActive}");
 
             ImGui.Columns(1);
             ImGui.Unindent();
