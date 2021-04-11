@@ -260,12 +260,7 @@ namespace QoLBar
 
                     int arc_segments = (int)(64 * item_arc_span / (2 * Math.PI)) + 1;
 
-                    // what black magic is happening here
-                    uint iColor = hovered ? 0xFF966464 : 0xFF464646;
-                    iColor = ImGui.GetColorU32(hovered ? ImGuiCol.HeaderHovered : ImGuiCol.FrameBg);
-                    iColor = ImGui.GetColorU32(hovered ? ImGuiCol.Button : ImGuiCol.ButtonHovered);
-                    //iColor |= 0xFF000000;
-
+                    uint iColor = ImGui.GetColorU32(hovered ? ImGuiCol.Button : ImGuiCol.ButtonHovered);
                     float fAngleStepInner = (item_inner_ang_max - item_inner_ang_min) / arc_segments;
                     float fAngleStepOuter = (item_outer_ang_max - item_outer_ang_min) / arc_segments;
                     pDrawList.PrimReserve(arc_segments * 6, (arc_segments + 1) * 2);
@@ -328,7 +323,7 @@ namespace QoLBar
                     Vector2 text_pos = new Vector2(
                         (float)(s_oPieMenuContext.m_oCenter.X + Math.Cos((item_inner_ang_min + item_inner_ang_max) * 0.5f) * (fMinRadius + fMaxRadius) * 0.5f - text_size.X * 0.5f),
                         (float)(s_oPieMenuContext.m_oCenter.Y + Math.Sin((item_inner_ang_min + item_inner_ang_max) * 0.5f) * (fMinRadius + fMaxRadius) * 0.5f - text_size.Y * 0.5f));
-                    pDrawList.AddText(text_pos, 0xFFFFFFFF, item_label);
+                    pDrawList.AddText(text_pos, ImGui.GetColorU32(ImGuiCol.Text), item_label);
 
                     if (hovered)
                         item_hovered = item_n;
