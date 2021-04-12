@@ -34,6 +34,7 @@ namespace QoLBar
         }
 
         [JsonProperty("n")]  [DefaultValue("")]                   public string Name = string.Empty;
+        [JsonProperty("k")]  [DefaultValue(0)]                    public int Hotkey = 0;
         [JsonProperty("sL")] [DefaultValue(null)]                 public List<ShCfg> ShortcutList = new List<ShCfg>();
         [JsonProperty("h")]  [DefaultValue(false)]                public bool Hidden = false;
         [JsonProperty("d")]  [DefaultValue(BarDock.Bottom)]       public BarDock DockSide = BarDock.Bottom;

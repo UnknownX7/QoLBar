@@ -78,6 +78,8 @@ namespace QoLBar
 
             if (configOpen)
                 DrawPluginConfig();
+
+            PieUI.Draw();
         }
 
         private void DrawPluginConfig()

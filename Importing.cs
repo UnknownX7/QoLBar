@@ -322,8 +322,11 @@ namespace QoLBar
                     }
 
                     if (imported.b2 != null)
+                    {
+                        imported.b2.Hotkey = imported.b2.GetDefaultValue(x => x.Hotkey);
                         foreach (var sh in imported.b2.ShortcutList)
                             removeHotkeys(sh);
+                    }
 
                     if (imported.s2 != null)
                         removeHotkeys(imported.s2);

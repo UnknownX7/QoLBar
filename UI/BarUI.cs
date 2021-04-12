@@ -63,6 +63,8 @@ namespace QoLBar
         private Vector2 piv = Vector2.Zero;
         private Vector2 hidePos = Vector2.Zero;
         private Vector2 revealPos = Vector2.Zero;
+        public int tempDisableHotkey = 0;
+        public bool openPie = false;
         private bool _displayOutsideMain = true;
 
         private bool _reveal = false;
@@ -126,7 +128,7 @@ namespace QoLBar
                 children.Add(new ShortcutUI(this));
         }
 
-        private bool CheckConditionSet() => Config.ConditionSet < 0 || Config.ConditionSet >= QoLBar.Config.ConditionSets.Count || QoLBar.Config.ConditionSets[Config.ConditionSet].CheckConditions();
+        public bool CheckConditionSet() => Config.ConditionSet < 0 || Config.ConditionSet >= QoLBar.Config.ConditionSets.Count || QoLBar.Config.ConditionSets[Config.ConditionSet].CheckConditions();
 
         private void SetupPivot()
         {
@@ -590,6 +592,9 @@ namespace QoLBar
                                 QoLBar.Config.Save();
                             }
                         }
+
+                        if (Keybind.KeybindInput(Config))
+                            tempDisableHotkey = 3; // Takes 2 frames before the game detects this as being held down
 
                         if (ImGui.Checkbox("Edit Mode", ref Config.Editing))
                         {

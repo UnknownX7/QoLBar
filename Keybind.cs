@@ -21,6 +21,7 @@ namespace QoLBar
         public static void Run()
         {
             GetKeyState();
+            DoPieHotkeys();
             DoHotkeys();
         }
 
@@ -74,6 +75,31 @@ namespace QoLBar
                 QoLBar.Interface.ClientState.KeyState[key] = false;
         }
 
+        private static void DoPieHotkeys()
+        {
+            if (!PieUI.enabled) return;
+
+            foreach (var bar in QoLBar.Plugin.ui.bars)
+            {
+                if (bar.Config.Hotkey > 0 && bar.CheckConditionSet())
+                {
+                    if (IsHotkeyDown(bar.Config.Hotkey, true))
+                    {
+                        if (bar.tempDisableHotkey <= 0)
+                        {
+                            bar.openPie = true;
+                            return;
+                        }
+                    }
+                    else if (bar.tempDisableHotkey > 0)
+                        --bar.tempDisableHotkey;
+                    bar.openPie = false;
+                }
+            }
+
+            PieUI.enabled = false; // Used to disable all pies if the UI is hidden
+        }
+
         private static void DoHotkeys()
         {
             if (Disabled) { hotkeys.Clear(); return; }
@@ -120,10 +146,10 @@ namespace QoLBar
 
         public static void AddHotkey(ShortcutUI sh) => hotkeys.Add((sh.parentBar, sh));
 
-        public static void KeybindInput(ShCfg sh)
+        private static bool InputHotkey(string id, ref int hotkey)
         {
-            var dispKey = GetKeyName(sh.Hotkey);
-            ImGui.InputText($"Hotkey##{sh.Hotkey}", ref dispKey, 200, ImGuiInputTextFlags.ReadOnly | ImGuiInputTextFlags.AllowTabInput); // delete the box to delete focus 4head
+            var dispKey = GetKeyName(hotkey);
+            ImGui.InputText($"{id}##{hotkey}", ref dispKey, 200, ImGuiInputTextFlags.ReadOnly | ImGuiInputTextFlags.AllowTabInput); // delete the box to delete focus 4head
             if (ImGui.IsItemActive())
             {
                 var keysDown = ImGui.GetIO().KeysDown;
@@ -141,17 +167,27 @@ namespace QoLBar
                     if (keysDown[k] && ImGui.GetIO().KeysDownDuration[k] == 0)
                     {
                         key |= k;
-                        sh.Hotkey = key;
-                        QoLBar.Config.Save();
-                        break;
+                        hotkey = key;
+                        return true;
                     }
                 }
             }
             if (ImGui.IsItemDeactivated() && ImGui.GetIO().KeysDown[(int)Keys.Escape])
             {
-                sh.Hotkey = 0;
-                sh.KeyPassthrough = false;
+                hotkey = 0;
+                return true;
+            }
+
+            return false;
+        }
+
+        public static bool KeybindInput(ShCfg sh)
+        {
+            var ret = false;
+            if (InputHotkey("Hotkey", ref sh.Hotkey))
+            {
                 QoLBar.Config.Save();
+                ret = true;
             }
             ImGuiEx.SetItemTooltip("Press escape to clear the hotkey.");
 
@@ -162,6 +198,20 @@ namespace QoLBar
                 ImGuiEx.SetItemTooltip("Disables the hotkey from blocking the game input.\n" +
                     "Some keys are unable to be blocked.");
             }
+            return ret;
+        }
+
+        public static bool KeybindInput(BarCfg bar)
+        {
+            var ret = false;
+            if (InputHotkey("Pie Hotkey", ref bar.Hotkey))
+            {
+                QoLBar.Config.Save();
+                ret = true;
+            }
+            ImGuiEx.SetItemTooltip("Use this to specify a held hotkey to bring the bar up as a pie menu.\n" +
+                "Press escape to clear the hotkey.");
+            return ret;
         }
 
         public static void DrawDebug()
