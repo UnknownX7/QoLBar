@@ -103,8 +103,6 @@ namespace QoLBar
             var bar = ui.parentBar.Config;
             return (Vector2 center, bool hovered) =>
             {
-                ImGui.SetWindowFontScale(bar.Scale);
-
                 var name = sh.Name;
                 var useIcon = ShortcutUI.ParseName(ref name, out string tooltip, out int icon, out string args);
 
@@ -117,6 +115,8 @@ namespace QoLBar
                 var drawList = ImGui.GetWindowDrawList();
                 if (useIcon)
                 {
+                    ImGui.SetWindowFontScale(bar.Scale);
+
                     var texd = QoLBar.textureDictionary;
                     var tex = texd[icon];
                     if (tex != null)
@@ -163,6 +163,8 @@ namespace QoLBar
                 }
                 else
                 {
+                    ImGui.SetWindowFontScale(bar.Scale * bar.FontScale);
+
                     var textSize = ImGui.CalcTextSize(name);
                     drawList.AddText(center - (textSize / 2), color, name);
                 }
