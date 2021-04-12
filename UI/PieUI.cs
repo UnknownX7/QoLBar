@@ -2,12 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using ImGuiNET;
+using Dalamud.Interface;
 using static QoLBar.ShCfg;
 
 namespace QoLBar
 {
     public static class PieUI
     {
+        // No reason anyone should want or need more than this, and it starts to look horrible
+        public const int maxLevels = 3;
+        public const int maxItems = 6;
+
         public static bool enabled = false;
         public static void Draw()
         {
@@ -27,6 +32,8 @@ namespace QoLBar
 
                     if (ImGuiPie.BeginPiePopup("PieBar", bar.openPie))
                     {
+                        ImGuiPie.SetPieRadius(50);
+                        ImGuiPie.SetPieScale(ImGuiHelpers.GlobalScale * bar.Config.Scale);
                         ImGuiPie.DisableRepositioning();
                         DrawChildren(bar.children);
                         ImGuiPie.EndPiePopup();
@@ -39,18 +46,16 @@ namespace QoLBar
             ImGui.PopStyleColor(2);
         }
 
-        static int totalLevels = 1;
+        static int totalLevels = 0;
         public static void DrawChildren(List<ShortcutUI> children)
         {
-            if (totalLevels >= ImGuiPie.PieMenuContext.c_iMaxPieMenuStack) return;
-
             ++totalLevels;
             var totalItems = 0;
             foreach (var sh in children)
             {
                 ImGui.PushID(sh.ID);
 
-                if (sh.Config.Type == ShortcutType.Category)
+                if (sh.Config.Type == ShortcutType.Category && totalLevels < maxLevels)
                 {
                     if (ImGuiPie.BeginPieMenu($"{sh.Config.Name}"))
                     {
@@ -61,11 +66,11 @@ namespace QoLBar
                         DrawChildren(sh.children);
 
                         ImGuiPie.EndPieMenu();
-
-                        totalItems++;
                     }
+
+                    totalItems++;
                 }
-                else if (sh.Config.Type == ShortcutType.Command)
+                else if (sh.Config.Type != ShortcutType.Spacer)
                 {
                     if (ImGuiPie.PieMenuItem($"{sh.Config.Name}"))
                         sh.OnClick(false, false);
@@ -76,9 +81,8 @@ namespace QoLBar
 
                 ImGui.PopID();
 
-                if (totalItems >= ImGuiPie.PieMenuContext.c_iMaxPieItemCount) { --totalLevels; return; }
+                if (totalItems >= maxItems) break;
             }
-
             --totalLevels;
         }
 

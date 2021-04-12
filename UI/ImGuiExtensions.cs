@@ -142,6 +142,7 @@ namespace QoLBar
             public int m_iLastHoveredIndex;
             public Vector2 m_oCenter;
             public bool m_bAdjustPosition;
+            public float m_fRadiusOverride;
             public float m_fScale;
             public bool m_bMaintainDraw;
             public bool m_bClose;
@@ -198,6 +199,7 @@ namespace QoLBar
                     s_oPieMenuContext.m_bAdjustPosition = true;
 
                     s_oPieMenuContext.m_iMaxIndex = -1;
+                    s_oPieMenuContext.m_fRadiusOverride = 0.0f;
                     s_oPieMenuContext.m_fScale = 1.0f;
                     BeginPieMenuEx();
 
@@ -238,10 +240,18 @@ namespace QoLBar
             {
                 PieMenuContext.PieMenu oPieMenu = s_oPieMenuContext.m_oPieMenuStack[iIndex];
 
-                float fMenuHeight = (float)Math.Sqrt(oPieMenu.m_fMaxItemSqrDiameter);
-
                 float fMinRadius = fCurrentRadius;
-                float fMaxRadius = fMinRadius + (fMenuHeight * oPieMenu.m_iCurrentIndex) / (2.0f);
+
+                float fMaxRadius;
+                if (s_oPieMenuContext.m_fRadiusOverride > 0)
+                {
+                    fMaxRadius = fCurrentRadius + (s_oPieMenuContext.m_fRadiusOverride * s_oPieMenuContext.m_fScale);
+                }
+                else
+                {
+                    float fMenuHeight = (float)Math.Sqrt(oPieMenu.m_fMaxItemSqrDiameter);
+                    fMaxRadius = fMinRadius + (fMenuHeight * oPieMenu.m_iCurrentIndex) / (2.0f);
+                }
 
                 float item_arc_span = (float)(2 * Math.PI / Math.Max(PieMenuContext.c_iMinItemCount + PieMenuContext.c_iMinItemCountPerLevel * iIndex, oPieMenu.m_iCurrentIndex));
                 float drag_angle = (float)Math.Atan2(oDragDelta.Y, oDragDelta.X);
@@ -430,11 +440,14 @@ namespace QoLBar
             Vector2 oTextSize = ImGui.CalcTextSize(pName);
             oPieItem.m_oItemSize = oTextSize;
 
-            float fSqrDiameter = oTextSize.X * oTextSize.X / 2 * s_oPieMenuContext.m_fScale;
-
-            if (fSqrDiameter > oPieMenu.m_fMaxItemSqrDiameter)
+            if (s_oPieMenuContext.m_fRadiusOverride <= 0)
             {
-                oPieMenu.m_fMaxItemSqrDiameter = fSqrDiameter;
+                float fSqrDiameter = oTextSize.X * oTextSize.X / 2 * s_oPieMenuContext.m_fScale;
+
+                if (fSqrDiameter > oPieMenu.m_fMaxItemSqrDiameter)
+                {
+                    oPieMenu.m_fMaxItemSqrDiameter = fSqrDiameter;
+                }
             }
 
             oPieItem.m_oItemIsSubMenu = true;
@@ -475,11 +488,14 @@ namespace QoLBar
             Vector2 oTextSize = ImGui.CalcTextSize(pName);
             oPieItem.m_oItemSize = oTextSize;
 
-            float fSqrDiameter = oTextSize.X * oTextSize.X / 2 * s_oPieMenuContext.m_fScale;
-
-            if (fSqrDiameter > oPieMenu.m_fMaxItemSqrDiameter)
+            if (s_oPieMenuContext.m_fRadiusOverride <= 0)
             {
-                oPieMenu.m_fMaxItemSqrDiameter = fSqrDiameter;
+                float fSqrDiameter = oTextSize.X * oTextSize.X / 2 * s_oPieMenuContext.m_fScale;
+
+                if (fSqrDiameter > oPieMenu.m_fMaxItemSqrDiameter)
+                {
+                    oPieMenu.m_fMaxItemSqrDiameter = fSqrDiameter;
+                }
             }
 
             oPieItem.m_oItemIsSubMenu = false;
@@ -507,6 +523,8 @@ namespace QoLBar
 
             oPieItem.m_aDrawOverride = a;
         }
+
+        public static void SetPieRadius(float size) => s_oPieMenuContext.m_fRadiusOverride = size;
 
         public static void SetPieScale(float scale) => s_oPieMenuContext.m_fScale = scale;
 
