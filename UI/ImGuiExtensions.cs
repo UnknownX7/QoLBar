@@ -92,7 +92,7 @@ namespace QoLBar
     // Modified version of https://gist.github.com/thennequin/64b4b996ec990c6ddc13a48c6a0ba68c
     public static class ImGuiPie
     {
-        private class PieMenuContext
+        public class PieMenuContext
         {
             public const int c_iMaxPieMenuStack = 8;
             public const int c_iMaxPieItemCount = 12;
@@ -142,6 +142,7 @@ namespace QoLBar
             public int m_iLastFrame;
             public int m_iLastHoveredIndex;
             public Vector2 m_oCenter;
+            public float m_fScale;
             public bool m_bMaintainDraw;
             public bool m_bClose;
         };
@@ -195,6 +196,7 @@ namespace QoLBar
                     s_oPieMenuContext.m_iLastFrame = iCurrentFrame;
 
                     s_oPieMenuContext.m_iMaxIndex = -1;
+                    s_oPieMenuContext.m_fScale = 1.0f;
                     BeginPieMenuEx();
 
                     return true;
@@ -419,10 +421,10 @@ namespace QoLBar
             PieMenuContext.PieMenu oPieMenu = s_oPieMenuContext.m_oPieMenuStack[s_oPieMenuContext.m_iCurrentIndex];
             PieMenuContext.PieMenu.PieItem oPieItem = oPieMenu.m_oPieItems[oPieMenu.m_iCurrentIndex];
 
-            Vector2 oTextSize = ImGui.CalcTextSize(pName, true);
+            Vector2 oTextSize = ImGui.CalcTextSize(pName);
             oPieItem.m_oItemSize = oTextSize;
 
-            float fSqrDiameter = oTextSize.X * oTextSize.X + oTextSize.Y * oTextSize.Y;
+            float fSqrDiameter = oTextSize.X * oTextSize.X / 2 * s_oPieMenuContext.m_fScale;
 
             if (fSqrDiameter > oPieMenu.m_fMaxItemSqrDiameter)
             {
@@ -464,10 +466,10 @@ namespace QoLBar
             PieMenuContext.PieMenu oPieMenu = s_oPieMenuContext.m_oPieMenuStack[s_oPieMenuContext.m_iCurrentIndex];
             PieMenuContext.PieMenu.PieItem oPieItem = oPieMenu.m_oPieItems[oPieMenu.m_iCurrentIndex];
 
-            Vector2 oTextSize = ImGui.CalcTextSize(pName, true);
+            Vector2 oTextSize = ImGui.CalcTextSize(pName);
             oPieItem.m_oItemSize = oTextSize;
 
-            float fSqrDiameter = oTextSize.X * oTextSize.X + oTextSize.Y * oTextSize.Y;
+            float fSqrDiameter = oTextSize.X * oTextSize.X / 2 * s_oPieMenuContext.m_fScale;
 
             if (fSqrDiameter > oPieMenu.m_fMaxItemSqrDiameter)
             {
@@ -499,5 +501,7 @@ namespace QoLBar
 
             oPieItem.m_aDrawOverride = a;
         }
+
+        public static void SetPieScale(float scale) => s_oPieMenuContext.m_fScale = scale;
     }
 }
