@@ -490,6 +490,8 @@ namespace QoLBar
             config.ConditionSets.RemoveAt(from);
             config.ConditionSets.Insert(to, set);
             config.Save();
+
+            QoLBar.SendIPCMovedCondition(from, to);
         }
 
         private static void RemoveConditionSet(int i)
@@ -521,6 +523,8 @@ namespace QoLBar
 
             config.ConditionSets.RemoveAt(i);
             config.Save();
+
+            QoLBar.SendIPCDeletedCondition(i);
         }
     }
 

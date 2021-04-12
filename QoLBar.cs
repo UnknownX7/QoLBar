@@ -247,6 +247,33 @@ namespace QoLBar
                     PluginLog.LogInformation($"Received message from {pluginName} for: {msg.Action}");
                     if (msg.Action == "Import")
                         ui.ImportBar(msg.Import);
+                    else if (msg.Action == "CheckCondition")
+                    {
+                        int i = msg.Index;
+                        var b = i >= 0 && i < Config.ConditionSets.Count && Config.ConditionSets[i].CheckConditions();
+
+                        dynamic response = new ExpandoObject();
+                        response.Sender = "QoLBar";
+                        response.Receiver = pluginName;
+                        response.Action = "ReturnCondition";
+                        response.Return = b;
+                        if (!Interface.SendMessage(pluginName, response))
+                            Interface.SendMessage(response);
+                    }
+                    else if (msg.Action == "GetConditionSets")
+                    {
+                        var names = new string[Config.ConditionSets.Count];
+                        for (int i = 0; i < Config.ConditionSets.Count; i++)
+                            names[i] = Config.ConditionSets[i].Name;
+
+                        dynamic response = new ExpandoObject();
+                        response.Sender = "QoLBar";
+                        response.Receiver = pluginName;
+                        response.Action = "ReturnConditionSets";
+                        response.Return = names;
+                        if (!Interface.SendMessage(pluginName, response))
+                            Interface.SendMessage(response);
+                    }
                     else if (msg.Action == "ping")
                     {
                         dynamic response = new ExpandoObject();
@@ -263,6 +290,25 @@ namespace QoLBar
             {
                 PluginLog.LogError(e, $"Received message from {pluginName}, but it was invalid!");
             }
+        }
+
+        public static void SendIPCMovedCondition(int from, int to)
+        {
+            dynamic msg = new ExpandoObject();
+            msg.Sender = "QoLBar";
+            msg.Action = "MovedCondition";
+            msg.Index = from;
+            msg.NewIndex = to;
+            Interface.SendMessage(msg);
+        }
+
+        public static void SendIPCDeletedCondition(int i)
+        {
+            dynamic msg = new ExpandoObject();
+            msg.Sender = "QoLBar";
+            msg.Action = "DeletedCondition";
+            msg.Index = i;
+            Interface.SendMessage(msg);
         }
 
         private void DisposeIPC()
