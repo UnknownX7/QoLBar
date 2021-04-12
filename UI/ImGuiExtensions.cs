@@ -123,7 +123,6 @@ namespace QoLBar
                 public PieItem[] m_oPieItems = new PieItem[c_iMaxPieItemCount];
                 public int m_iCurrentIndex;
                 public float m_fMaxItemSqrDiameter;
-                public float m_fLastMaxItemSqrDiameter;
                 public int m_iHoveredItem;
                 public int m_iLastHoveredItem;
             };
@@ -142,6 +141,7 @@ namespace QoLBar
             public int m_iLastFrame;
             public int m_iLastHoveredIndex;
             public Vector2 m_oCenter;
+            public bool m_bAdjustPosition;
             public float m_fScale;
             public bool m_bMaintainDraw;
             public bool m_bClose;
@@ -191,9 +191,11 @@ namespace QoLBar
                     int iCurrentFrame = ImGui.GetFrameCount();
                     if (s_oPieMenuContext.m_iLastFrame < (iCurrentFrame - 1))
                     {
-                        s_oPieMenuContext.m_oCenter = ImGui.GetIO().MousePos;
+                        s_oPieMenuContext.m_oCenter = ImGui.GetMousePos();
                     }
                     s_oPieMenuContext.m_iLastFrame = iCurrentFrame;
+
+                    s_oPieMenuContext.m_bAdjustPosition = true;
 
                     s_oPieMenuContext.m_iMaxIndex = -1;
                     s_oPieMenuContext.m_fScale = 1.0f;
@@ -220,7 +222,7 @@ namespace QoLBar
             ImDrawListPtr pDrawList = ImGui.GetWindowDrawList();
             pDrawList.PushClipRectFullScreen();
 
-            Vector2 oMousePos = ImGui.GetIO().MousePos;
+            Vector2 oMousePos = ImGui.GetMousePos();
             Vector2 oDragDelta = new Vector2(oMousePos.X - s_oPieMenuContext.m_oCenter.X, oMousePos.Y - s_oPieMenuContext.m_oCenter.Y);
             float fDragDistSqr = oDragDelta.X * oDragDelta.X + oDragDelta.Y * oDragDelta.Y;
 
@@ -307,19 +309,22 @@ namespace QoLBar
                     Vector2 oOuterCenter = new Vector2((float)(s_oPieMenuContext.m_oCenter.X + Math.Cos(fRadCenter) * fMaxRadius), (float)(s_oPieMenuContext.m_oCenter.Y + Math.Sin(fRadCenter) * fMaxRadius));
 
                     // idk lol
-                    static (Vector2, Vector2) ImRect_Add((Vector2 Min, Vector2 Max) rect, Vector2 p)
+                    if (s_oPieMenuContext.m_bAdjustPosition)
                     {
-                        if (rect.Min.X > p.X)
-                            rect.Min.X = p.X;
-                        if (rect.Min.Y > p.Y)
-                            rect.Min.Y = p.Y;
-                        if (rect.Max.X < p.X)
-                            rect.Max.X = p.X;
-                        if (rect.Max.Y < p.Y)
-                            rect.Max.Y = p.Y;
-                        return rect;
+                        static (Vector2, Vector2) ImRect_Add((Vector2 Min, Vector2 Max) rect, Vector2 p)
+                        {
+                            if (rect.Min.X > p.X)
+                                rect.Min.X = p.X;
+                            if (rect.Min.Y > p.Y)
+                                rect.Min.Y = p.Y;
+                            if (rect.Max.X < p.X)
+                                rect.Max.X = p.X;
+                            if (rect.Max.Y < p.Y)
+                                rect.Max.Y = p.Y;
+                            return rect;
+                        }
+                        oArea = ImRect_Add(oArea, oOuterCenter);
                     }
-                    oArea = ImRect_Add(oArea, oOuterCenter);
 
                     uint iTextColor = oPieItem.m_iTextColor;
 
@@ -365,8 +370,6 @@ namespace QoLBar
 
                 fCurrentRadius = fMaxRadius;
 
-                oPieMenu.m_fLastMaxItemSqrDiameter = oPieMenu.m_fMaxItemSqrDiameter;
-
                 oPieMenu.m_iHoveredItem = item_hovered;
 
                 if (s_oPieMenuContext.m_iLastHoveredIndex != iIndex && fDragDistSqr >= fMaxRadius * fMaxRadius)
@@ -384,23 +387,26 @@ namespace QoLBar
 
             pDrawList.PopClipRect();
 
-            if (oArea.Min.X < 0.0f)
+            if (s_oPieMenuContext.m_bAdjustPosition)
             {
-                s_oPieMenuContext.m_oCenter.X -= oArea.Min.X;
-            }
-            if (oArea.Min.Y < 0.0f)
-            {
-                s_oPieMenuContext.m_oCenter.Y -= oArea.Min.Y;
-            }
+                if (oArea.Min.X < 0.0f)
+                {
+                    s_oPieMenuContext.m_oCenter.X -= oArea.Min.X;
+                }
+                if (oArea.Min.Y < 0.0f)
+                {
+                    s_oPieMenuContext.m_oCenter.Y -= oArea.Min.Y;
+                }
 
-            Vector2 oDisplaySize = ImGui.GetIO().DisplaySize;
-            if (oArea.Max.X > oDisplaySize.X)
-            {
-                s_oPieMenuContext.m_oCenter.X = (s_oPieMenuContext.m_oCenter.X - oArea.Max.X) + oDisplaySize.X;
-            }
-            if (oArea.Max.Y > oDisplaySize.Y)
-            {
-                s_oPieMenuContext.m_oCenter.Y = (s_oPieMenuContext.m_oCenter.Y - oArea.Max.Y) + oDisplaySize.Y;
+                Vector2 oDisplaySize = ImGui.GetMainViewport().Size;
+                if (oArea.Max.X > oDisplaySize.X)
+                {
+                    s_oPieMenuContext.m_oCenter.X = (s_oPieMenuContext.m_oCenter.X - oArea.Max.X) + oDisplaySize.X;
+                }
+                if (oArea.Max.Y > oDisplaySize.Y)
+                {
+                    s_oPieMenuContext.m_oCenter.Y = (s_oPieMenuContext.m_oCenter.Y - oArea.Max.Y) + oDisplaySize.Y;
+                }
             }
 
             if (s_oPieMenuContext.m_bClose ||
@@ -414,7 +420,7 @@ namespace QoLBar
             ImGui.PopStyleVar(2);
         }
 
-        public static bool BeginPieMenu(string pName, bool bEnabled = true)
+        public static bool BeginPieMenu(string pName)
         {
             //IM_ASSERT(s_oPieMenuContext.m_iCurrentIndex >= 0 && s_oPieMenuContext.m_iCurrentIndex < PieMenuContext.c_iMaxPieItemCount);
 
@@ -459,7 +465,7 @@ namespace QoLBar
             --s_oPieMenuContext.m_iCurrentIndex;
         }
 
-        public static bool PieMenuItem(string pName, bool bEnabled = true)
+        public static bool PieMenuItem(string pName)
         {
             //IM_ASSERT(s_oPieMenuContext.m_iCurrentIndex >= 0 && s_oPieMenuContext.m_iCurrentIndex < PieMenuContext.c_iMaxPieItemCount);
 
@@ -503,5 +509,7 @@ namespace QoLBar
         }
 
         public static void SetPieScale(float scale) => s_oPieMenuContext.m_fScale = scale;
+
+        public static void DisableRepositioning() => s_oPieMenuContext.m_bAdjustPosition = false;
     }
 }

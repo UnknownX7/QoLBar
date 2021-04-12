@@ -13,6 +13,9 @@ namespace QoLBar
         {
             enabled = true;
 
+            ImGui.PushStyleColor(ImGuiCol.Button, 0x70000000);
+            ImGui.PushStyleColor(ImGuiCol.ButtonHovered, 0xC0404040);
+
             foreach (var bar in QoLBar.Plugin.ui.bars)
             {
                 if (bar.Config.Hotkey > 0 && bar.CheckConditionSet())
@@ -24,6 +27,7 @@ namespace QoLBar
 
                     if (ImGuiPie.BeginPiePopup("PieBar", bar.openPie))
                     {
+                        ImGuiPie.DisableRepositioning();
                         DrawChildren(bar.children);
                         ImGuiPie.EndPiePopup();
                     }
@@ -31,6 +35,8 @@ namespace QoLBar
                     ImGui.PopID();
                 }
             }
+
+            ImGui.PopStyleColor(2);
         }
 
         static int totalLevels = 1;
