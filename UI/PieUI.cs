@@ -18,9 +18,6 @@ namespace QoLBar
         {
             enabled = true;
 
-            ImGui.PushStyleColor(ImGuiCol.Button, 0x70000000);
-            ImGui.PushStyleColor(ImGuiCol.ButtonHovered, 0xC0404040);
-
             foreach (var bar in QoLBar.Plugin.ui.bars)
             {
                 if (bar.Config.Hotkey > 0 && bar.CheckConditionSet())
@@ -32,18 +29,29 @@ namespace QoLBar
 
                     if (ImGuiPie.BeginPiePopup("PieBar", bar.openPie))
                     {
+                        if (!bar.Config.NoBackground)
+                        {
+                            ImGui.PushStyleColor(ImGuiCol.Button, 0x70000000);
+                            ImGui.PushStyleColor(ImGuiCol.ButtonHovered, 0xC0404040);
+                        }
+                        else
+                        {
+                            ImGui.PushStyleColor(ImGuiCol.Button, 0);
+                            ImGui.PushStyleColor(ImGuiCol.ButtonHovered, 0);
+                        }
+
                         ImGuiPie.SetPieRadius(50);
                         ImGuiPie.SetPieScale(ImGuiHelpers.GlobalScale * bar.Config.Scale);
                         ImGuiPie.DisableRepositioning();
                         DrawChildren(bar.children);
                         ImGuiPie.EndPiePopup();
+
+                        ImGui.PopStyleColor(2);
                     }
 
                     ImGui.PopID();
                 }
             }
-
-            ImGui.PopStyleColor(2);
         }
 
         static int totalLevels = 0;
@@ -147,9 +155,9 @@ namespace QoLBar
                             var _sizeInc = size * 0.075f;
                             var _rMin = texMin - _sizeInc;
                             var _rMax = texMax + _sizeInc;
-                            ImGui.GetWindowDrawList().AddImage(_buttonshine.ImGuiHandle, _rMin, _rMax, _uvMin, _uvMax); // Frame
+                            drawList.AddImage(_buttonshine.ImGuiHandle, _rMin, _rMax, _uvMin, _uvMax); // Frame
                             if (hovered)
-                                ImGui.GetWindowDrawList().AddImage(_buttonshine.ImGuiHandle, _rMin, _rMax, _uvMinHover, _uvMaxHover, 0x85FFFFFF); // Frame Center Glow
+                                drawList.AddImage(_buttonshine.ImGuiHandle, _rMin, _rMax, _uvMinHover, _uvMaxHover, 0x85FFFFFF); // Frame Center Glow
                         }
                     }
                 }
