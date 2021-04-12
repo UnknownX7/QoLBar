@@ -136,6 +136,7 @@ namespace QoLBar
             }
 
             public PieMenu[] m_oPieMenuStack = new PieMenu[c_iMaxPieMenuStack];
+            public PieMenu.PieItem m_oCurrentItem;
             public int m_iCurrentIndex;
             public int m_iMaxIndex;
             public int m_iLastFrame;
@@ -460,6 +461,8 @@ namespace QoLBar
             oPieItem.m_iButtonHoveredColor = ImGui.GetColorU32(ImGuiCol.Button);
             oPieItem.m_iTextColor = ImGui.GetColorU32(ImGuiCol.Text);
 
+            s_oPieMenuContext.m_oCurrentItem = oPieItem;
+
             if (oPieMenu.m_iLastHoveredItem == oPieMenu.m_iCurrentIndex)
             {
                 ++oPieMenu.m_iCurrentIndex;
@@ -508,6 +511,8 @@ namespace QoLBar
             oPieItem.m_iButtonHoveredColor = ImGui.GetColorU32(ImGuiCol.Button);
             oPieItem.m_iTextColor = ImGui.GetColorU32(ImGuiCol.Text);
 
+            s_oPieMenuContext.m_oCurrentItem = oPieItem;
+
             bool bActive = oPieMenu.m_iCurrentIndex == oPieMenu.m_iHoveredItem;
             ++oPieMenu.m_iCurrentIndex;
 
@@ -516,13 +521,7 @@ namespace QoLBar
             return bActive;
         }
 
-        public static void PieDrawOverride(Action<Vector2, bool> a)
-        {
-            PieMenuContext.PieMenu oPieMenu = s_oPieMenuContext.m_oPieMenuStack[s_oPieMenuContext.m_iCurrentIndex];
-            PieMenuContext.PieMenu.PieItem oPieItem = oPieMenu.m_oPieItems[oPieMenu.m_iCurrentIndex];
-
-            oPieItem.m_aDrawOverride = a;
-        }
+        public static void PieDrawOverride(Action<Vector2, bool> a) => s_oPieMenuContext.m_oCurrentItem.m_aDrawOverride = a;
 
         public static void SetPieRadius(float size) => s_oPieMenuContext.m_fRadiusOverride = size;
 
