@@ -266,7 +266,7 @@ namespace QoLBar
             {
                 SaveTimedConfig();
                 lastSave = float.MaxValue; // Prevent from pointlessly saving if the config is never changed
-                PluginLog.Information("Performed timed backup!");
+                PluginLog.LogInformation("Performed timed backup!");
             }
         }
 

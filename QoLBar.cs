@@ -244,7 +244,7 @@ namespace QoLBar
             {
                 if (!string.IsNullOrEmpty(msg.Action))
                 {
-                    PluginLog.LogInformation($"Received message from {pluginName} for: {msg.Action}");
+                    PluginLog.LogVerbose($"Received message from {pluginName} for: {msg.Action}");
                     if (msg.Action == "Import")
                         ui.ImportBar(msg.Import);
                     else if (msg.Action == "CheckCondition")
