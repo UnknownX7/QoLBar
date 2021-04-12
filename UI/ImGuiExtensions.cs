@@ -108,6 +108,10 @@ namespace QoLBar
                     public bool m_oItemIsSubMenu;
                     public string m_oItemName;
                     public Vector2 m_oItemSize;
+                    public Action<Vector2, bool> m_aDrawOverride;
+                    public uint m_iButtonColor;
+                    public uint m_iButtonHoveredColor;
+                    public uint m_iTextColor;
                 }
 
                 public PieMenu()
@@ -273,7 +277,7 @@ namespace QoLBar
 
                     int arc_segments = (int)(64 * item_arc_span / (2 * Math.PI)) + 1;
 
-                    uint iColor = ImGui.GetColorU32(hovered ? ImGuiCol.Button : ImGuiCol.ButtonHovered);
+                    uint iColor = hovered ? oPieItem.m_iButtonColor : oPieItem.m_iButtonHoveredColor;
                     float fAngleStepInner = (item_inner_ang_max - item_inner_ang_min) / arc_segments;
                     float fAngleStepOuter = (item_outer_ang_max - item_outer_ang_min) / arc_segments;
                     pDrawList.PrimReserve(arc_segments * 6, (arc_segments + 1) * 2);
@@ -315,6 +319,8 @@ namespace QoLBar
                     }
                     oArea = ImRect_Add(oArea, oOuterCenter);
 
+                    uint iTextColor = oPieItem.m_iTextColor;
+
                     if (oPieItem.m_oItemIsSubMenu)
                     {
                         Vector2[] oTrianglePos = new Vector2[3];
@@ -329,14 +335,27 @@ namespace QoLBar
                         oTrianglePos[2].X = (float)(s_oPieMenuContext.m_oCenter.X + Math.Cos(fRadRight) * (fMaxRadius - 10.0f));
                         oTrianglePos[2].Y = (float)(s_oPieMenuContext.m_oCenter.Y + Math.Sin(fRadRight) * (fMaxRadius - 10.0f));
 
-                        pDrawList.AddTriangleFilled(oTrianglePos[0], oTrianglePos[1], oTrianglePos[2], 0xFFFFFFFF);
+                        pDrawList.AddTriangleFilled(oTrianglePos[0], oTrianglePos[1], oTrianglePos[2], iTextColor);
                     }
 
-                    Vector2 text_size = oPieItem.m_oItemSize;
-                    Vector2 text_pos = new Vector2(
-                        (float)(s_oPieMenuContext.m_oCenter.X + Math.Cos((item_inner_ang_min + item_inner_ang_max) * 0.5f) * (fMinRadius + fMaxRadius) * 0.5f - text_size.X * 0.5f),
-                        (float)(s_oPieMenuContext.m_oCenter.Y + Math.Sin((item_inner_ang_min + item_inner_ang_max) * 0.5f) * (fMinRadius + fMaxRadius) * 0.5f - text_size.Y * 0.5f));
-                    pDrawList.AddText(text_pos, ImGui.GetColorU32(ImGuiCol.Text), item_label);
+                    float fAngleOffsetTheta = (item_inner_ang_min + item_inner_ang_max) * 0.5f;
+                    float fRadiusOffset = (fMinRadius + fMaxRadius) * 0.5f;
+                    if (oPieItem.m_aDrawOverride != null)
+                    {
+                        oPieItem.m_aDrawOverride(
+                            new Vector2(
+                                (float)(s_oPieMenuContext.m_oCenter.X + Math.Cos(fAngleOffsetTheta) * fRadiusOffset),
+                                (float)(s_oPieMenuContext.m_oCenter.Y + Math.Sin(fAngleOffsetTheta) * fRadiusOffset)),
+                            hovered);
+                    }
+                    else
+                    {
+                        Vector2 text_size = oPieItem.m_oItemSize;
+                        Vector2 text_pos = new Vector2(
+                            (float)(s_oPieMenuContext.m_oCenter.X + Math.Cos(fAngleOffsetTheta) * fRadiusOffset - text_size.X * 0.5f),
+                            (float)(s_oPieMenuContext.m_oCenter.Y + Math.Sin(fAngleOffsetTheta) * fRadiusOffset - text_size.Y * 0.5f));
+                        pDrawList.AddText(text_pos, iTextColor, item_label);
+                    }
 
                     if (hovered)
                         item_hovered = item_n;
@@ -414,6 +433,12 @@ namespace QoLBar
 
             oPieItem.m_oItemName = pName;
 
+            oPieItem.m_aDrawOverride = null;
+
+            oPieItem.m_iButtonColor = ImGui.GetColorU32(ImGuiCol.ButtonHovered);
+            oPieItem.m_iButtonHoveredColor = ImGui.GetColorU32(ImGuiCol.Button);
+            oPieItem.m_iTextColor = ImGui.GetColorU32(ImGuiCol.Text);
+
             if (oPieMenu.m_iLastHoveredItem == oPieMenu.m_iCurrentIndex)
             {
                 ++oPieMenu.m_iCurrentIndex;
@@ -453,12 +478,26 @@ namespace QoLBar
 
             oPieItem.m_oItemName = pName;
 
+            oPieItem.m_aDrawOverride = null;
+
+            oPieItem.m_iButtonColor = ImGui.GetColorU32(ImGuiCol.ButtonHovered);
+            oPieItem.m_iButtonHoveredColor = ImGui.GetColorU32(ImGuiCol.Button);
+            oPieItem.m_iTextColor = ImGui.GetColorU32(ImGuiCol.Text);
+
             bool bActive = oPieMenu.m_iCurrentIndex == oPieMenu.m_iHoveredItem;
             ++oPieMenu.m_iCurrentIndex;
 
             if (bActive)
                 s_oPieMenuContext.m_bClose = true;
             return bActive;
+        }
+
+        public static void PieDrawOverride(Action<Vector2, bool> a)
+        {
+            PieMenuContext.PieMenu oPieMenu = s_oPieMenuContext.m_oPieMenuStack[s_oPieMenuContext.m_iCurrentIndex];
+            PieMenuContext.PieMenu.PieItem oPieItem = oPieMenu.m_oPieItems[oPieMenu.m_iCurrentIndex];
+
+            oPieItem.m_aDrawOverride = a;
         }
     }
 }
