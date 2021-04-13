@@ -526,6 +526,8 @@ namespace QoLBar
 
         public static void PieDrawOverride(Action<Vector2, bool> a) => s_oPieMenuContext.m_oCurrentItem.m_aDrawOverride = a;
 
+        public static void SetPieCenter(Vector2 center) => s_oPieMenuContext.m_oCenter = center;
+
         public static void SetPieRadius(float size) => s_oPieMenuContext.m_fRadiusOverride = size;
 
         public static void SetPieScale(float scale) => s_oPieMenuContext.m_fScale = scale;
