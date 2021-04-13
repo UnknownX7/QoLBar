@@ -63,7 +63,7 @@ namespace QoLBar
             {
                 ImGui.PushID(sh.ID);
 
-                if (sh.Config.Type == ShortcutType.Category && totalLevels < maxLevels)
+                if (totalLevels < maxLevels && sh.Config.Type == ShortcutType.Category && sh.Config.Mode == ShortcutMode.Default)
                 {
                     var open = ImGuiPie.BeginPieMenu($"{sh.Config.Name}");
                     ImGuiPie.PieDrawOverride(DrawShortcut(sh));
@@ -100,7 +100,7 @@ namespace QoLBar
         private static Vector2 _uvMin, _uvMax, _uvMinHover, _uvMaxHover;//, _uvMinHover2, _uvMaxHover2;
         public static Action<Vector2, bool> DrawShortcut(ShortcutUI ui)
         {
-            var sh = ui.Config;
+            var sh = ui.DisplayedUI.Config;
             var bar = ui.parentBar.Config;
             return (Vector2 center, bool hovered) =>
             {

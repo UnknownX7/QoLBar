@@ -32,6 +32,8 @@ namespace QoLBar
         private void SetConfigPopupOpen() => QoLBar.Plugin.ui.SetConfigPopupOpen();
 
         private int _i = 0;
+        public ShortcutUI DisplayedUI => (Config.Type == ShortcutType.Category && Config.Mode != ShortcutMode.Default && children.Count > 0) ? children[Math.Min(_i, children.Count - 1)] : this;
+
         public bool _activated = false;
 
         public ShortcutUI(BarUI bar)
@@ -139,9 +141,7 @@ namespace QoLBar
         public void DrawShortcut(float width)
         {
             var inCategory = parent != null;
-            var ui = this;
-            if (Config.Type == ShortcutType.Category && Config.Mode != ShortcutMode.Default && children.Count > 0)
-                ui = children[Math.Min(_i, children.Count - 1)];
+            var ui = DisplayedUI;
             var sh = ui.Config;
 
             var name = sh.Name;
