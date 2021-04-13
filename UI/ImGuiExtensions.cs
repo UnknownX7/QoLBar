@@ -143,6 +143,7 @@ namespace QoLBar
             public int m_iLastFrame;
             public int m_iLastHoveredIndex;
             public Vector2 m_oCenter;
+            public bool m_bAppearing;
             public bool m_bAdjustPosition;
             public float m_fRadiusOverride;
             public float m_fScale;
@@ -195,6 +196,11 @@ namespace QoLBar
                     if (s_oPieMenuContext.m_iLastFrame < (iCurrentFrame - 1))
                     {
                         s_oPieMenuContext.m_oCenter = ImGui.GetMousePos();
+                        s_oPieMenuContext.m_bAppearing = true;
+                    }
+                    else
+                    {
+                        s_oPieMenuContext.m_bAppearing = false;
                     }
                     s_oPieMenuContext.m_iLastFrame = iCurrentFrame;
 
@@ -533,6 +539,8 @@ namespace QoLBar
         public static void SetPieScale(float scale) => s_oPieMenuContext.m_fScale = scale;
 
         public static void DisableRepositioning() => s_oPieMenuContext.m_bAdjustPosition = false;
+
+        public static bool IsPieAppearing() => s_oPieMenuContext.m_bAppearing;
 
         public static bool IsItemActivated() => s_oPieMenuContext.m_oCurrentItem.m_bActivated;
     }
