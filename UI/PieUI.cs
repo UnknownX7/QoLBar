@@ -69,7 +69,8 @@ namespace QoLBar
                     ImGuiPie.PieDrawOverride(DrawShortcut(sh));
                     if (open)
                     {
-                        // TODO: category commands
+                        if (ImGuiPie.IsItemActivated())
+                            sh.OnClick(false, false);
 
                         DrawChildren(sh.children);
 

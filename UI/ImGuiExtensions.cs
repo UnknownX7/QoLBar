@@ -112,6 +112,7 @@ namespace QoLBar
                     public uint m_iButtonColor;
                     public uint m_iButtonHoveredColor;
                     public uint m_iTextColor;
+                    public bool m_bActivated;
                 }
 
                 public PieMenu()
@@ -463,7 +464,9 @@ namespace QoLBar
 
             s_oPieMenuContext.m_oCurrentItem = oPieItem;
 
-            if (oPieMenu.m_iLastHoveredItem == oPieMenu.m_iCurrentIndex)
+            oPieItem.m_bActivated = oPieMenu.m_iCurrentIndex == oPieMenu.m_iHoveredItem;
+
+            if (oPieMenu.m_iCurrentIndex == oPieMenu.m_iLastHoveredItem)
             {
                 ++oPieMenu.m_iCurrentIndex;
 
@@ -513,12 +516,12 @@ namespace QoLBar
 
             s_oPieMenuContext.m_oCurrentItem = oPieItem;
 
-            bool bActive = oPieMenu.m_iCurrentIndex == oPieMenu.m_iHoveredItem;
+            oPieItem.m_bActivated = oPieMenu.m_iCurrentIndex == oPieMenu.m_iHoveredItem;
             ++oPieMenu.m_iCurrentIndex;
 
-            if (bActive)
+            if (oPieItem.m_bActivated)
                 s_oPieMenuContext.m_bClose = true;
-            return bActive;
+            return oPieItem.m_bActivated;
         }
 
         public static void PieDrawOverride(Action<Vector2, bool> a) => s_oPieMenuContext.m_oCurrentItem.m_aDrawOverride = a;
@@ -528,5 +531,7 @@ namespace QoLBar
         public static void SetPieScale(float scale) => s_oPieMenuContext.m_fScale = scale;
 
         public static void DisableRepositioning() => s_oPieMenuContext.m_bAdjustPosition = false;
+
+        public static bool IsItemActivated() => s_oPieMenuContext.m_oCurrentItem.m_bActivated;
     }
 }
