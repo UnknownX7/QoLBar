@@ -580,7 +580,7 @@ namespace QoLBar
             }
         }
 
-        private static unsafe bool IsWeaponDrawn(Dalamud.Game.ClientState.Actors.Types.PlayerCharacter player) => (*(byte*)(player.Address + 0x1980) & 0b100) > 0;
+        private static unsafe bool IsWeaponDrawn(Dalamud.Game.ClientState.Actors.Types.PlayerCharacter player) => (*(byte*)(player.Address + 0x19A0) & 0b100) > 0;
 
         private static unsafe DateTimeOffset GetEorzeaTime() => DateTimeOffset.FromUnixTimeSeconds(*(long*)(QoLBar.Interface.Framework.Address.BaseAddress + 0x1608));
 
