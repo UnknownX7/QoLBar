@@ -114,7 +114,7 @@ namespace QoLBar
                 BarDock.Bottom => BarCfg.BarDock.Bottom,
                 BarDock.Right => BarCfg.BarDock.Right,
                 BarDock.UndockedH => BarCfg.BarDock.Top,
-                BarDock.UndockedV => BarCfg.BarDock.Left,
+                BarDock.UndockedV => BarCfg.BarDock.Top,
                 _ => BarCfg.BarDock.Top
             };
 
