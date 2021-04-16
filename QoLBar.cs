@@ -24,6 +24,8 @@ namespace QoLBar
 {
     public class QoLBar : IDalamudPlugin
     {
+        public string Name => "QoL Bar";
+
         public static DalamudPluginInterface Interface { get; private set; }
         private PluginCommandManager commandManager;
         public static Configuration Config { get; private set; }
@@ -34,8 +36,10 @@ namespace QoLBar
         public readonly int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
         private readonly Queue<string> commandQueue = new Queue<string>();
 
-        public static IntPtr textActiveBoolPtr = IntPtr.Zero;
-        public static unsafe bool GameTextInputActive => (textActiveBoolPtr != IntPtr.Zero) && *(bool*)textActiveBoolPtr;
+        public static readonly TextureDictionary textureDictionary = new TextureDictionary();
+        public const int FrameIconID = 114_000;
+        private const int SafeIconID = 1_000_000;
+        public int GetSafeIconID(byte i) => SafeIconID + i;
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)] private static extern IntPtr GetForegroundWindow();
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)] private static extern int GetWindowThreadProcessId(IntPtr handle, out int processId);
@@ -54,12 +58,20 @@ namespace QoLBar
             }
         }
 
-        public static readonly TextureDictionary textureDictionary = new TextureDictionary();
-        public const int FrameIconID = 114_000;
-        private const int SafeIconID = 1_000_000;
-        public int GetSafeIconID(byte i) => SafeIconID + i;
+        public static IntPtr textActiveBoolPtr = IntPtr.Zero;
+        public static unsafe bool GameTextInputActive => (textActiveBoolPtr != IntPtr.Zero) && *(bool*)textActiveBoolPtr;
 
-        public string Name => "QoL Bar";
+        // Command Execution
+        private delegate void ProcessChatBoxDelegate(IntPtr uiModule, IntPtr message, IntPtr unused, byte a4);
+        private delegate IntPtr GetUIModuleDelegate(IntPtr basePtr);
+        private ProcessChatBoxDelegate ProcessChatBox;
+        public IntPtr uiModule = IntPtr.Zero;
+
+        // Macro Execution
+        private delegate void ExecuteMacroDelegate(IntPtr raptureShellModule, IntPtr macro);
+        private ExecuteMacroDelegate ExecuteMacro;
+        public IntPtr raptureShellModule = IntPtr.Zero;
+        public IntPtr raptureMacroModule = IntPtr.Zero;
 
         public void Initialize(DalamudPluginInterface pInterface)
         {
@@ -98,10 +110,33 @@ namespace QoLBar
             try
             {
                 var dataptr = Interface.TargetModuleScanner.GetStaticAddressFromSig("48 8B 05 ?? ?? ?? ?? 48 8B 48 28 80 B9 8E 18 00 00 00");
-                if (dataptr != IntPtr.Zero)
-                    textActiveBoolPtr = *(IntPtr*)(*(IntPtr*)dataptr + 0x28) + 0x188E;
+                textActiveBoolPtr = *(IntPtr*)(*(IntPtr*)dataptr + 0x28) + 0x188E;
             }
-            catch { }
+            catch { PluginLog.Error("Failed loading textActiveBoolPtr"); }
+
+            try
+            {
+                var getUIModulePtr = Interface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? 48 83 7F ?? 00 48 8B F0");
+                var easierProcessChatBoxPtr = Interface.TargetModuleScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9");
+                var uiModulePtr = Interface.TargetModuleScanner.GetStaticAddressFromSig("48 8B 0D ?? ?? ?? ?? 48 8D 54 24 ?? 48 83 C1 10 E8");
+
+                var GetUIModule = Marshal.GetDelegateForFunctionPointer<GetUIModuleDelegate>(getUIModulePtr);
+
+                uiModule = GetUIModule(*(IntPtr*)uiModulePtr);
+                ProcessChatBox = Marshal.GetDelegateForFunctionPointer<ProcessChatBoxDelegate>(easierProcessChatBoxPtr);
+
+                try
+                {
+                    var executeMacroPtr = Interface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28");
+                    ExecuteMacro = Marshal.GetDelegateForFunctionPointer<ExecuteMacroDelegate>(executeMacroPtr);
+
+                    // TODO: Fix these to not break easily
+                    raptureShellModule = uiModule + 0xA9548;
+                    raptureMacroModule = uiModule + 0x4428;
+                }
+                catch { PluginLog.Error("Failed loading ExecuteMacro"); }
+            }
+            catch { PluginLog.Error("Failed loading ExecuteCommand"); }
         }
 
         public void ReadyPlugin()
@@ -110,7 +145,6 @@ namespace QoLBar
             textureDictionary.AddTex(FrameIconID, "ui/uld/icona_frame.tex");
             textureDictionary.LoadTexture(FrameIconID);
             AddUserIcons();
-            InitCommands();
             pluginReady = true;
         }
 
@@ -320,33 +354,7 @@ namespace QoLBar
             Interface.UnsubscribeAny();
         }
 
-        // I'm too dumb to do any of this so its (almost) all taken from here https://git.sr.ht/~jkcclemens/CCMM/tree/master/Macrology/GameFunctions.cs
-        #region Chat Injection
-        private delegate IntPtr GetUIModuleDelegate(IntPtr basePtr);
-        private delegate void EasierProcessChatBoxDelegate(IntPtr uiModule, IntPtr message, IntPtr unused, byte a4);
-
-        private GetUIModuleDelegate GetUIModule;
-        private EasierProcessChatBoxDelegate _EasierProcessChatBox;
-
-        public IntPtr uiModulePtr;
-
-        private void InitCommands()
-        {
-            try
-            {
-                var getUIModulePtr = Interface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? 48 83 7F ?? 00 48 8B F0");
-                var easierProcessChatBoxPtr = Interface.TargetModuleScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9");
-                uiModulePtr = Interface.TargetModuleScanner.GetStaticAddressFromSig("48 8B 0D ?? ?? ?? ?? 48 8D 54 24 ?? 48 83 C1 10 E8 ?? ?? ?? ??");
-
-                GetUIModule = Marshal.GetDelegateForFunctionPointer<GetUIModuleDelegate>(getUIModulePtr);
-                _EasierProcessChatBox = Marshal.GetDelegateForFunctionPointer<EasierProcessChatBoxDelegate>(easierProcessChatBoxPtr);
-            }
-            catch
-            {
-                PrintError("Error with loading signatures");
-            }
-        }
-
+        // Command Execution, taken from https://git.sr.ht/~jkcclemens/CCMM/tree/master/Macrology/GameFunctions.cs
         private void ReadyCommand()
         {
             commandReady = true;
@@ -365,47 +373,52 @@ namespace QoLBar
 
         private void ExecuteCommand()
         {
-            if (!commandReady || commandQueue.Count == 0)
-                return;
-
-            try
+            while (commandQueue.Count > 0 && commandReady)
             {
-                if (uiModulePtr == null || uiModulePtr == IntPtr.Zero)
-                    InitCommands();
-
-                var uiModule = GetUIModule(Marshal.ReadIntPtr(uiModulePtr));
-
-                if (uiModule == IntPtr.Zero)
-                {
-                    throw new ApplicationException("uiModule was null");
-                }
-
                 commandReady = false;
                 var command = commandQueue.Dequeue();
 
-                var bytes = Encoding.UTF8.GetBytes(command);
+                if (command.StartsWith("//"))
+                {
+                    command = command.Substring(2).ToLower();
+                    switch (command[0])
+                    {
+                        case 'm': // Execute Macro
+                            if (int.TryParse(command.Substring(1), out var macro) && 0 <= macro && macro < 200)
+                                ExecuteMacro(raptureShellModule, raptureMacroModule + 0x58 + (0x688 * macro));
+                            else
+                                PrintError("Invalid macro. Usage: \"//m0\" for individual macro #0, \"//m100\" for shared macro #0, valid up to 199");
+                            break;
+                        case ' ': // Comment
+                            commandReady = true;
+                            break;
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        var bytes = Encoding.UTF8.GetBytes(command);
 
-                var mem1 = Marshal.AllocHGlobal(400);
-                var mem2 = Marshal.AllocHGlobal(bytes.Length + 30);
+                        var mem1 = Marshal.AllocHGlobal(400);
+                        var mem2 = Marshal.AllocHGlobal(bytes.Length + 30);
 
-                Marshal.Copy(bytes, 0, mem2, bytes.Length);
-                Marshal.WriteByte(mem2 + bytes.Length, 0);
-                Marshal.WriteInt64(mem1, mem2.ToInt64());
-                Marshal.WriteInt64(mem1 + 8, 64);
-                Marshal.WriteInt64(mem1 + 8 + 8, bytes.Length + 1);
-                Marshal.WriteInt64(mem1 + 8 + 8 + 8, 0);
+                        Marshal.Copy(bytes, 0, mem2, bytes.Length);
+                        Marshal.WriteByte(mem2 + bytes.Length, 0);
+                        Marshal.WriteInt64(mem1, mem2.ToInt64());
+                        Marshal.WriteInt64(mem1 + 8, 64);
+                        Marshal.WriteInt64(mem1 + 8 + 8, bytes.Length + 1);
+                        Marshal.WriteInt64(mem1 + 8 + 8 + 8, 0);
 
-                _EasierProcessChatBox(uiModule, mem1, IntPtr.Zero, 0);
+                        ProcessChatBox(uiModule, mem1, IntPtr.Zero, 0);
 
-                Marshal.FreeHGlobal(mem1);
-                Marshal.FreeHGlobal(mem2);
-            }
-            catch
-            {
-                PrintError("Error with injecting command");
+                        Marshal.FreeHGlobal(mem1);
+                        Marshal.FreeHGlobal(mem2);
+                    }
+                    catch { PrintError("Failed injecting command"); }
+                }
             }
         }
-        #endregion
 
         #region IDisposable Support
         protected virtual void Dispose(bool disposing)

@@ -385,12 +385,24 @@ namespace QoLBar
             ImGui.Indent();
             ImGui.Columns(3, "DebugPointers", false);
 
-            ImGui.TextUnformatted("Chat UI Module");
+            ImGui.TextUnformatted("UI Module");
             ImGui.NextColumn();
-            ImGui.TextUnformatted($"{QoLBar.Plugin.uiModulePtr.ToString("X")}");
+            ImGui.TextUnformatted($"{QoLBar.Plugin.uiModule.ToString("X")}");
+            ImGui.NextColumn();
             ImGui.NextColumn();
 
+            ImGui.TextUnformatted("Rapture Shell Module");
             ImGui.NextColumn();
+            ImGui.TextUnformatted($"{QoLBar.Plugin.raptureShellModule.ToString("X")}");
+            ImGui.NextColumn();
+            ImGui.NextColumn();
+
+            ImGui.TextUnformatted("Rapture Macro Module");
+            ImGui.NextColumn();
+            ImGui.TextUnformatted($"{QoLBar.Plugin.raptureMacroModule.ToString("X")}");
+            ImGui.NextColumn();
+            ImGui.NextColumn();
+
             ImGui.TextUnformatted("Game Text Input Active");
             ImGui.NextColumn();
             ImGui.TextUnformatted($"{QoLBar.textActiveBoolPtr.ToString("X")}");
