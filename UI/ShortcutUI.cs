@@ -772,11 +772,9 @@ namespace QoLBar
                         //ImGui.GetWindowDrawList().AddImage(_buttonshine.ImGuiHandle, _rMin - (_sizeInc * 1.5f), _rMax + (_sizeInc * 1.5f), _uvMinHover2, _uvMaxHover2); // Edge glow // TODO: Probably somewhat impossible as is, but fix glow being clipped
                     }
                     // TODO: Find a way to do the click animation
-
-                    ImGui.PopStyleColor(2);
                 }
 
-                ImGui.PopStyleColor();
+                ImGui.PopStyleColor(frameArg ? 3 : 1);
                 if (retExists)
                     ret = true;
             }
