@@ -107,6 +107,10 @@ namespace QoLBar
         public bool NoConditionCache = false;
         public bool UseHRIcons = false;
         public int BackupTimer = 30;
+        public bool PiesAlwaysCenter = false;
+        public bool PiesMoveMouse = false;
+        public bool PiesReturnMouse = false;
+        public bool PiesReadjustMouse = false;
 
         public string PluginVersion = ".INITIAL";
         [JsonIgnore] public string PrevPluginVersion = string.Empty;

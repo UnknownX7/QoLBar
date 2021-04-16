@@ -295,6 +295,42 @@ namespace QoLBar
 
             ImGui.Spacing();
             ImGui.Spacing();
+            ImGui.TextUnformatted("Pie Settings");
+            if (ImGui.Checkbox("Appear in Center", ref QoLBar.Config.PiesAlwaysCenter))
+            {
+                if (!QoLBar.Config.PiesAlwaysCenter)
+                {
+                    QoLBar.Config.PiesMoveMouse = false;
+                    QoLBar.Config.PiesReturnMouse = false;
+                    QoLBar.Config.PiesReadjustMouse = false;
+                }
+                QoLBar.Config.Save();
+            }
+            ImGui.SameLine(halfWidth);
+            if (QoLBar.Config.PiesAlwaysCenter && ImGui.Checkbox("Center Mouse on Open", ref QoLBar.Config.PiesMoveMouse))
+            {
+                if (!QoLBar.Config.PiesMoveMouse)
+                {
+                    QoLBar.Config.PiesReturnMouse = false;
+                    QoLBar.Config.PiesReadjustMouse = false;
+                }
+                QoLBar.Config.Save();
+            }
+
+            if (QoLBar.Config.PiesMoveMouse && ImGui.Checkbox("Return Mouse on Close", ref QoLBar.Config.PiesReturnMouse))
+            {
+                if (!QoLBar.Config.PiesReturnMouse)
+                    QoLBar.Config.PiesReadjustMouse = false;
+                QoLBar.Config.Save();
+            }
+            ImGui.SameLine(halfWidth);
+            if (QoLBar.Config.PiesReturnMouse && ImGui.Checkbox("Recorrect Old Mouse Position", ref QoLBar.Config.PiesReadjustMouse))
+                QoLBar.Config.Save();
+            ImGui.SameLine();
+
+            ImGui.Spacing();
+            ImGui.Spacing();
+            ImGui.Spacing();
             ImGui.TextUnformatted("Opt out of Dalamud settings for hiding UI");
             if (ImGui.Checkbox("Game UI Toggled", ref QoLBar.Config.OptOutGameUIOffHide))
             {

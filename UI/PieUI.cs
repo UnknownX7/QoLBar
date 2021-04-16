@@ -14,6 +14,7 @@ namespace QoLBar
         public const int maxItems = 6;
 
         public static bool enabled = false;
+        private static Vector2 _prevMousePos;
         public static void Draw()
         {
             enabled = true;
@@ -29,6 +30,20 @@ namespace QoLBar
 
                     if (ImGuiPie.BeginPiePopup("PieBar", bar.openPie))
                     {
+                        if (ImGuiPie.IsPieAppearing() && QoLBar.Config.PiesAlwaysCenter)
+                        {
+                            ImGuiPie.SetPieCenter(ImGuiHelpers.MainViewport.GetCenter());
+
+                            if (QoLBar.Config.PiesMoveMouse)
+                            {
+                                var io = ImGui.GetIO();
+                                _prevMousePos = io.MousePos;
+
+                                io.WantSetMousePos = true;
+                                io.MousePos = ImGuiHelpers.MainViewport.GetCenter();
+                            }
+                        }
+
                         if (!bar.Config.NoBackground)
                         {
                             ImGui.PushStyleColor(ImGuiCol.Button, 0x70000000);
@@ -43,10 +58,19 @@ namespace QoLBar
                         ImGuiPie.SetPieRadius(50);
                         ImGuiPie.SetPieScale(ImGuiHelpers.GlobalScale * bar.Config.Scale);
                         ImGuiPie.DisableRepositioning();
+
                         DrawChildren(bar.children);
+
                         ImGuiPie.EndPiePopup();
 
                         ImGui.PopStyleColor(2);
+
+                        if (!bar.openPie && QoLBar.Config.PiesReturnMouse)
+                        {
+                            var io = ImGui.GetIO();
+                            io.WantSetMousePos = true;
+                            io.MousePos = QoLBar.Config.PiesReadjustMouse ? (_prevMousePos + (io.MousePos - ImGuiHelpers.MainViewport.GetCenter())) : _prevMousePos;
+                        }
                     }
 
                     ImGui.PopID();
