@@ -143,7 +143,7 @@ namespace QoLBar
 
                         if (frameArg && texd[QoLBar.FrameIconID] != null)
                         {
-                            if (_buttonshine == null)
+                            if (_buttonshine == null || _buttonshine.ImGuiHandle == IntPtr.Zero)
                             {
                                 _buttonshine = texd[QoLBar.FrameIconID];
                                 _uvMin = new Vector2(1f / _buttonshine.Width, 0f / _buttonshine.Height);
