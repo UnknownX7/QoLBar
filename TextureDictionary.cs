@@ -131,10 +131,13 @@ namespace QoLBar
             return (iconTex == null) ? null : QoLBar.Interface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
         });
 
-        public void AddTex(int iconSlot, string path)
+        public void AddTex(int iconSlot, string path, bool overwrite = false)
         {
             TryDispose(iconSlot);
-            textureOverrides.Add(iconSlot, path);
+            if (overwrite)
+                textureOverrides[iconSlot] = path;
+            else
+                textureOverrides.Add(iconSlot, path);
         }
 
         private void LoadTex(int iconSlot, string path, bool overwrite) => LoadTextureWrap(iconSlot, overwrite, false, () =>

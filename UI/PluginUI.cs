@@ -271,6 +271,10 @@ namespace QoLBar
                 else
                 {
                     QoLBar.Config.UseHRIcons = _;
+                    if (_)
+                        QoLBar.textureDictionary.AddTex(QoLBar.FrameIconID, "ui/uld/icona_frame.tex", true);
+                    else
+                        QoLBar.textureDictionary.AddTex(QoLBar.FrameIconID, "ui/uld/icona_frame_hr1.tex", true);
                     QoLBar.textureDictionary.TryEmpty();
                     QoLBar.Config.Save();
                 }

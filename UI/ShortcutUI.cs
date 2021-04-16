@@ -755,12 +755,12 @@ namespace QoLBar
                     if (_buttonshine == null || _buttonshine.ImGuiHandle == IntPtr.Zero)
                     {
                         _buttonshine = texd[QoLBar.FrameIconID];
-                        _uvMin = new Vector2(1f / _buttonshine.Width, 0f / _buttonshine.Height);
-                        _uvMax = new Vector2(47f / _buttonshine.Width, 46f / _buttonshine.Height);
-                        _uvMinHover = new Vector2(49f / _buttonshine.Width, 97f / _buttonshine.Height);
-                        _uvMaxHover = new Vector2(95f / _buttonshine.Width, 143f / _buttonshine.Height);
-                        //_uvMinHover2 = new Vector2(248f / _buttonshine.Width, 8f / _buttonshine.Height);
-                        //_uvMaxHover2 = new Vector2(304f / _buttonshine.Width, 64f / _buttonshine.Height);
+                        _uvMin = new Vector2(1f / 426f, 0f / 144f);
+                        _uvMax = new Vector2(47f / 426f, 46f / 144f);
+                        _uvMinHover = new Vector2(49f / 426f, 97f / 144f);
+                        _uvMaxHover = new Vector2(95f / 426f, 143f / 144f);
+                        //_uvMinHover2 = new Vector2(248f / 426f, 8f / 144f);
+                        //_uvMaxHover2 = new Vector2(304f / 426f, 64f / 144f);
                     }
                     var _sizeInc = size * 0.075f;
                     var _rMin = ImGui.GetItemRectMin() - _sizeInc;

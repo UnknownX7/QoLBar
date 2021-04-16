@@ -142,7 +142,10 @@ namespace QoLBar
         public void ReadyPlugin()
         {
             textureDictionary.LoadTexture(46); // Magnifying glass / Search
-            textureDictionary.AddTex(FrameIconID, "ui/uld/icona_frame.tex");
+            if (Config.UseHRIcons)
+                textureDictionary.AddTex(FrameIconID, "ui/uld/icona_frame.tex");
+            else
+                textureDictionary.AddTex(FrameIconID, "ui/uld/icona_frame_hr1.tex");
             textureDictionary.LoadTexture(FrameIconID);
             AddUserIcons();
             pluginReady = true;
