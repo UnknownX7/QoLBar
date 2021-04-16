@@ -18,12 +18,15 @@ namespace QoLBar
         private static readonly TextureWrap disposedTexture = new GLTextureWrap(0, 0, 0);
         private readonly ConcurrentQueue<(bool, Task)> loadQueue = new ConcurrentQueue<(bool, Task)>();
         private Task loadTask;
+        public bool IsEmptying { get; private set; } = false;
 
         public new TextureWrap this[int k]
         {
             get
             {
-                if (TryGetValue(k, out var tex) && tex?.ImGuiHandle != IntPtr.Zero)
+                if (IsEmptying)
+                    return null;
+                else if (TryGetValue(k, out var tex) && tex?.ImGuiHandle != IntPtr.Zero)
                     return tex;
                 else
                 {
@@ -50,10 +53,9 @@ namespace QoLBar
 
         private async void DoLoadQueueAsync()
         {
-            while (loadQueue.TryDequeue(out var t))
+            while (!IsEmptying && loadQueue.TryDequeue(out var t))
             {
-                //while (loadingTasks > 100)
-                //    await Task.Delay(1000);
+                //while (loadingTasks > 100) ;
                 if (!t.Item1)
                 {
                     Interlocked.Increment(ref loadingTasks);
@@ -81,6 +83,8 @@ namespace QoLBar
                 {
                     try
                     {
+                        if (IsEmptying) { TryUpdate(i, disposedTexture, null); return; }
+
                         var tex = loadFunc();
                         if (tex != null && tex.ImGuiHandle != IntPtr.Zero)
                             TryUpdate(i, tex, null);
@@ -123,8 +127,8 @@ namespace QoLBar
 
         private void LoadIcon(int icon, bool overwrite) => LoadTextureWrap(icon, overwrite, false, () =>
         {
-            var iconTex = QoLBar.Interface.Data.GetIcon(icon);
-            return QoLBar.Interface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
+            var iconTex = (QoLBar.Config.UseHRIcons) ? GetHRIcon(icon) : QoLBar.Interface.Data.GetIcon(icon);
+            return (iconTex == null) ? null : QoLBar.Interface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
         });
 
         public void AddTex(int iconSlot, string path)
@@ -136,7 +140,7 @@ namespace QoLBar
         private void LoadTex(int iconSlot, string path, bool overwrite) => LoadTextureWrap(iconSlot, overwrite, false, () =>
         {
             var iconTex = QoLBar.Interface.Data.GetFile<Lumina.Data.Files.TexFile>(path);
-            return QoLBar.Interface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
+            return (iconTex == null) ? null : QoLBar.Interface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
         });
 
         public void AddImage(int iconSlot, string path)
@@ -147,6 +151,12 @@ namespace QoLBar
 
         // Seems to cause a nvwgf2umx.dll crash (System Access Violation Exception) if used async
         private void LoadImage(int iconSlot, string path, bool overwrite) => LoadTextureWrap(iconSlot, overwrite, true, () => QoLBar.Interface.UiBuilder.LoadImage(path));
+
+        private Lumina.Data.Files.TexFile GetHRIcon(int icon)
+        {
+            var path = $"ui/icon/{icon / 1000 * 1000:000000}/{icon:000000}_hr1.tex";
+            return QoLBar.Interface.Data.GetFile<Lumina.Data.Files.TexFile>(path) ?? QoLBar.Interface.Data.GetIcon(icon);
+        }
 
         public Dictionary<int, string> GetUserIcons() => userIcons;
 
@@ -175,6 +185,19 @@ namespace QoLBar
             }
 
             return true;
+        }
+
+        public void TryEmpty()
+        {
+            if (IsEmptying) return;
+
+            IsEmptying = true;
+            Task.Run(async () => {
+                while (IsTextureLoading() || loadTask?.IsCompleted == false)
+                    await Task.Delay(1000);
+                Dispose();
+                IsEmptying = false;
+            });
         }
 
         public void Dispose()

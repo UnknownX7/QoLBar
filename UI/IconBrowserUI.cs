@@ -17,6 +17,7 @@ namespace QoLBar
         private static float _iconSize;
         private static string _tooltip;
         private static List<(int, int)> _iconList;
+        private static bool _cleanIconsOnClose = false;
         private static bool _displayOutsideMain = true;
 
         public static void ToggleIconBrowser() => iconBrowserOpen = !iconBrowserOpen;
@@ -146,7 +147,7 @@ namespace QoLBar
                 AddIcons(150_000, 180_000, "Tutorials");
                 EndIconList();
 
-                BeginIconList("Spoilers", iconSize);
+                BeginIconList("Spoilers", iconSize, QoLBar.Config.UseHRIcons);
                 AddIcons(82_100, 83_000, "Triple Triad"); // Out of order because people might want to use these
                 AddIcons(71_500, 72_000, "Credits");
                 AddIcons(82_060, 82_100, "Trusts");
@@ -162,9 +163,15 @@ namespace QoLBar
                 ImGui.EndTabBar();
             }
             ImGui.End();
+
+            if (!iconBrowserOpen && _cleanIconsOnClose)
+            {
+                QoLBar.textureDictionary.TryEmpty();
+                _cleanIconsOnClose = false;
+            }
         }
 
-        private static bool BeginIconList(string name, float iconSize)
+        private static bool BeginIconList(string name, float iconSize, bool cleanIcons = false)
         {
             _tooltip = "Contains:";
             if (ImGui.BeginTabItem(name))
@@ -175,6 +182,9 @@ namespace QoLBar
                 _columns = (int)((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / (iconSize + ImGui.GetStyle().ItemSpacing.X)); // WHYYYYYYYYYYYYYYYYYYYYY
                 _iconSize = iconSize;
                 _iconList = new List<(int, int)>();
+
+                if (cleanIcons)
+                    _cleanIconsOnClose = true;
             }
             else
                 _tabExists = false;

@@ -105,6 +105,7 @@ namespace QoLBar
         public bool OptOutCutsceneHide = false;
         public bool OptOutGPoseHide = false;
         public bool NoConditionCache = false;
+        public bool UseHRIcons = false;
         public int BackupTimer = 30;
 
         public string PluginVersion = ".INITIAL";

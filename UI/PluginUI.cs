@@ -255,18 +255,35 @@ namespace QoLBar
             if (ImGui.Checkbox("Export on Delete", ref QoLBar.Config.ExportOnDelete))
                 QoLBar.Config.Save();
             ImGui.SameLine(halfWidth);
-            if (ImGui.Checkbox("Use Hotbar Frames on Icons", ref QoLBar.Config.UseIconFrame))
-                QoLBar.Config.Save();
-            ImGuiEx.SetItemTooltip("This option will invert the ' f ' argument for all icons.");
-
             if (ImGui.Checkbox("Always Display Bars", ref QoLBar.Config.AlwaysDisplayBars))
                 QoLBar.Config.Save();
             ImGuiEx.SetItemTooltip("Bars will remain visible even when logged out.");
+
+            if (ImGui.Checkbox("Use Hotbar Frames on Icons", ref QoLBar.Config.UseIconFrame))
+                QoLBar.Config.Save();
+            ImGuiEx.SetItemTooltip("This option will invert the ' f ' argument for all icons.");
             ImGui.SameLine(halfWidth);
+            var _ = QoLBar.Config.UseHRIcons;
+            if (ImGui.Checkbox("Use HR Icons", ref _))
+            {
+                if (IconBrowserUI.iconBrowserOpen)
+                    QoLBar.PrintError("Please close the Icon Browser to change this option.");
+                else
+                {
+                    QoLBar.Config.UseHRIcons = _;
+                    QoLBar.textureDictionary.TryEmpty();
+                    QoLBar.Config.Save();
+                }
+            }
+            ImGuiEx.SetItemTooltip("Loads the high resolution icons instead. Be aware that the Icon Browser will use\n" +
+                "up to 5GB of memory until closed if you open the \"Spoilers\" tab!\n" +
+                "Rarely causes a crash or missing icons upon toggling so it's recommended to restart\n" +
+                "or reload QoL Bar, additionally, the Icon Browser must be closed to toggle it.");
+
             if (ImGui.Checkbox("Disable Condition Caching", ref QoLBar.Config.NoConditionCache))
                 QoLBar.Config.Save();
             ImGuiEx.SetItemTooltip("Disables the 100ms delay between checking conditions, increasing CPU load.");
-
+            ImGui.SameLine(halfWidth);
             ImGui.SetNextItemWidth(ImGui.GetWindowWidth() / 4);
             if (ImGui.InputInt("Backup Timer", ref QoLBar.Config.BackupTimer))
                 QoLBar.Config.Save();
