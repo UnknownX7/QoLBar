@@ -191,7 +191,7 @@ namespace QoLBar
                 else
                 {
                     PluginLog.LogError("Failed to save again :(");
-                    QoLBar.PrintError("[QoLBar] Error saving config, is something else writing to it?");
+                    QoLBar.PrintError("Error saving config, is something else writing to it?");
                 }
             }
         }
