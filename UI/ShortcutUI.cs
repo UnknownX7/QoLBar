@@ -488,14 +488,7 @@ namespace QoLBar
                     }
                 }
 
-                var iconSize = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
-                ImGui.SameLine(ImGui.GetWindowContentRegionWidth() + Style.WindowPadding.X - iconSize);
-                if (DrawIcon(46, new Vector2(iconSize), 1.0f, Vector2.Zero, Vector4.One, false))
-                    QoLBar.Plugin.ToggleIconBrowser();
-                ImGuiEx.SetItemTooltip("Opens up a list of all icons you can use instead of text.\n" +
-                    "Warning: This will load EVERY icon available so it will probably lag for a moment.\n" +
-                    "Clicking on one will copy text to be pasted into the \"Name\" field of a shortcut.\n" +
-                    "Additionally, while the browser is open it will autofill the \"Name\" of shortcuts.");
+                DrawIconBrowserButton();
 
                 ImGuiEx.ClampWindowPosToViewport();
 
@@ -623,6 +616,18 @@ namespace QoLBar
                 return false;
         }
 
+        public static void DrawIconBrowserButton()
+        {
+            var iconSize = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
+            ImGui.SameLine(ImGui.GetWindowContentRegionWidth() + Style.WindowPadding.X - iconSize);
+            if (DrawIcon(46, new Vector2(iconSize), 1.0f, Vector2.Zero, Vector4.One, false, "l"))
+                QoLBar.Plugin.ToggleIconBrowser();
+            ImGuiEx.SetItemTooltip("Opens up a list of all icons you can use instead of text.\n" +
+                "Warning: This will load EVERY icon available so it will probably lag for a moment.\n" +
+                "Clicking on one will copy text to be pasted into the \"Name\" field of a shortcut.\n" +
+                "Additionally, while the browser is open it will autofill the \"Name\" of shortcuts.");
+        }
+
         public static void ItemBaseUI(ShCfg sh, bool editing)
         {
             if (IconBrowserUI.iconBrowserOpen && IconBrowserUI.doPasteIcon)
@@ -704,6 +709,8 @@ namespace QoLBar
                 }
                 ImGuiEx.SetItemTooltip("Import a shortcut from the clipboard,\n" +
                     "or import all of another bar's shortcuts.");
+
+                DrawIconBrowserButton();
 
                 ImGuiEx.ClampWindowPosToViewport();
 

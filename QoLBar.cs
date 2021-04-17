@@ -148,7 +148,6 @@ namespace QoLBar
             textureDictionaryHR.AddUserIcons(iconPath);
 
             textureDictionaryLR.LoadTexture(46); // Magnifying glass / Search
-            textureDictionaryHR.LoadTexture(46);
             textureDictionaryLR.AddTex(FrameIconID, "ui/uld/icona_frame.tex");
             textureDictionaryHR.AddTex(FrameIconID, "ui/uld/icona_frame_hr1.tex");
             textureDictionaryLR.LoadTexture(FrameIconID);
