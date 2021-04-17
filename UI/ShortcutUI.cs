@@ -238,8 +238,8 @@ namespace QoLBar
                 {
                     var cols = parent.Config.CategoryColumns;
                     OnClick(cols > 0 && parent.children.Count >= (cols * (cols - 1) + 1), wasHovered);
-                    if (!parent.Config.CategoryStaysOpen && sh.Type != ShortcutType.Category && sh.Type != ShortcutType.Spacer)
-                        ImGui.CloseCurrentPopup();
+                    if (!parent.Config.CategoryStaysOpen && sh.Type == ShortcutType.Command)
+                        ImGui.SetWindowFocus(null);
                 }
             }
 
