@@ -266,23 +266,17 @@ namespace QoLBar
             var _ = QoLBar.Config.UseHRIcons;
             if (ImGui.Checkbox("Use HR Icons", ref _))
             {
-                if (IconBrowserUI.iconBrowserOpen)
+                if (IconBrowserUI.cleaningIconsOnClose)
                     QoLBar.PrintError("Please close the Icon Browser to change this option.");
                 else
                 {
                     QoLBar.Config.UseHRIcons = _;
-                    if (_)
-                        QoLBar.textureDictionary.AddTex(QoLBar.FrameIconID, "ui/uld/icona_frame.tex", true);
-                    else
-                        QoLBar.textureDictionary.AddTex(QoLBar.FrameIconID, "ui/uld/icona_frame_hr1.tex", true);
-                    QoLBar.textureDictionary.TryEmpty();
                     QoLBar.Config.Save();
                 }
             }
             ImGuiEx.SetItemTooltip("Loads the high resolution icons instead. Be aware that the Icon Browser will use\n" +
                 "up to 5GB of memory until closed if you open the \"Spoilers\" tab!\n" +
-                "Rarely causes a crash or missing icons upon toggling so it's recommended to restart\n" +
-                "or reload QoL Bar, additionally, the Icon Browser must be closed to toggle it.");
+                "The Icon Browser may need to be closed in some cases to toggle it.");
 
             if (ImGui.Checkbox("Disable Condition Caching", ref QoLBar.Config.NoConditionCache))
                 QoLBar.Config.Save();

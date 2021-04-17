@@ -120,8 +120,6 @@ namespace QoLBar
         }
 
         // TODO: what the fuck
-        private static ImGuiScene.TextureWrap _buttonshine;
-        private static Vector2 _uvMin, _uvMax, _uvMinHover, _uvMaxHover;//, _uvMinHover2, _uvMaxHover2;
         public static Action<Vector2, bool> DrawShortcut(ShortcutUI ui)
         {
             var sh = ui.DisplayedUI.Config;
@@ -142,7 +140,18 @@ namespace QoLBar
                 {
                     ImGui.SetWindowFontScale(bar.Scale);
 
-                    var texd = QoLBar.textureDictionary;
+                    var hasArgs = args != "_";
+
+                    TextureDictionary texd = null;
+                    if (hasArgs)
+                    {
+                        if (args.Contains("l"))
+                            texd = QoLBar.textureDictionaryLR;
+                        else if (args.Contains("h"))
+                            texd = QoLBar.textureDictionaryHR;
+                    }
+
+                    texd ??= QoLBar.TextureDictionary;
                     var tex = texd[icon];
                     if (tex != null)
                     {
@@ -158,7 +167,7 @@ namespace QoLBar
                         drawList.AddImage(tex.ImGuiHandle, texMin, texMax, uv0, uv1, color);
 
                         var frameArg = false;
-                        if (args != "_")
+                        if (hasArgs)
                         {
                             frameArg = args.Contains("f");
                             if (QoLBar.Config.UseIconFrame)
@@ -167,22 +176,12 @@ namespace QoLBar
 
                         if (frameArg && texd[QoLBar.FrameIconID] != null)
                         {
-                            if (_buttonshine == null || _buttonshine.ImGuiHandle == IntPtr.Zero)
-                            {
-                                _buttonshine = texd[QoLBar.FrameIconID];
-                                _uvMin = new Vector2(1f / 426f, 0f / 144f);
-                                _uvMax = new Vector2(47f / 426f, 46f / 144f);
-                                _uvMinHover = new Vector2(49f / 426f, 97f / 144f);
-                                _uvMaxHover = new Vector2(95f / 426f, 143f / 144f);
-                                //_uvMinHover2 = new Vector2(248f / 426f, 8f / 144f);
-                                //_uvMaxHover2 = new Vector2(304f / 426f, 64f / 144f);
-                            }
                             var _sizeInc = size * 0.075f;
                             var _rMin = texMin - _sizeInc;
                             var _rMax = texMax + _sizeInc;
-                            drawList.AddImage(_buttonshine.ImGuiHandle, _rMin, _rMax, _uvMin, _uvMax); // Frame
+                            drawList.AddImage(QoLBar.TextureDictionary[QoLBar.FrameIconID].ImGuiHandle, _rMin, _rMax, ShortcutUI.iconFrameUV0, ShortcutUI.iconFrameUV1); // Frame
                             if (hovered)
-                                drawList.AddImage(_buttonshine.ImGuiHandle, _rMin, _rMax, _uvMinHover, _uvMaxHover, 0x85FFFFFF); // Frame Center Glow
+                                drawList.AddImage(QoLBar.TextureDictionary[QoLBar.FrameIconID].ImGuiHandle, _rMin, _rMax, ShortcutUI.iconHoverUV0, ShortcutUI.iconHoverUV1, 0x85FFFFFF); // Frame Center Glow
                         }
                     }
                 }

@@ -10,6 +10,7 @@ namespace QoLBar
         public static bool iconBrowserOpen = false;
         public static bool doPasteIcon = false;
         public static int pasteIcon = 0;
+        public static bool cleaningIconsOnClose = false;
 
         private static bool _tabExists = false;
         private static int _i, _columns;
@@ -17,7 +18,6 @@ namespace QoLBar
         private static float _iconSize;
         private static string _tooltip;
         private static List<(int, int)> _iconList;
-        private static bool _cleanIconsOnClose = false;
         private static bool _displayOutsideMain = true;
 
         public static void ToggleIconBrowser() => iconBrowserOpen = !iconBrowserOpen;
@@ -164,10 +164,10 @@ namespace QoLBar
             }
             ImGui.End();
 
-            if (!iconBrowserOpen && _cleanIconsOnClose)
+            if (!iconBrowserOpen && cleaningIconsOnClose)
             {
-                QoLBar.textureDictionary.TryEmpty();
-                _cleanIconsOnClose = false;
+                QoLBar.TextureDictionary.TryEmpty();
+                cleaningIconsOnClose = false;
             }
         }
 
@@ -184,7 +184,7 @@ namespace QoLBar
                 _iconList = new List<(int, int)>();
 
                 if (cleanIcons)
-                    _cleanIconsOnClose = true;
+                    cleaningIconsOnClose = true;
             }
             else
                 _tabExists = false;

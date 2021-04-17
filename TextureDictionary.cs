@@ -18,7 +18,10 @@ namespace QoLBar
         private static readonly TextureWrap disposedTexture = new GLTextureWrap(0, 0, 0);
         private readonly ConcurrentQueue<(bool, Task)> loadQueue = new ConcurrentQueue<(bool, Task)>();
         private Task loadTask;
+        private readonly bool useHR = false;
         public bool IsEmptying { get; private set; } = false;
+
+        public TextureDictionary(bool hr) => useHR = hr;
 
         public new TextureWrap this[int k]
         {
@@ -127,7 +130,7 @@ namespace QoLBar
 
         private void LoadIcon(int icon, bool overwrite) => LoadTextureWrap(icon, overwrite, false, () =>
         {
-            var iconTex = (QoLBar.Config.UseHRIcons) ? GetHRIcon(icon) : QoLBar.Interface.Data.GetIcon(icon);
+            var iconTex = useHR ? GetHRIcon(icon) : QoLBar.Interface.Data.GetIcon(icon);
             return (iconTex == null) ? null : QoLBar.Interface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
         });
 

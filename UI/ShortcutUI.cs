@@ -426,6 +426,8 @@ namespace QoLBar
                             QoLBar.Config.Save();
                         ImGuiEx.SetItemTooltip("Icons accept arguments between \"::\" and their ID. I.e. \"::f21\".\n" +
                             "\t' f ' - Applies the hotbar frame (or removes it if applied globally).\n" +
+                            "\t' l ' - Uses the low resolution icon.\n" +
+                            "\t' h ' - Uses the high resolution icon if it exists.\n" +
                             "\t' _ ' - Disables arguments, including implicit ones. Cannot be used with others.");
 
                         if (ImGui.DragFloat("Zoom", ref Config.IconZoom, 0.005f, 1.0f, 5.0f, "%.2f"))
@@ -600,6 +602,8 @@ namespace QoLBar
                                 done = true;
                                 break;
                             case 'f': // Use game icon frame
+                            case 'l': // Use LR icon
+                            case 'h': // Use HR icon
                                 args += arg;
                                 substart++;
                                 break;
@@ -707,12 +711,29 @@ namespace QoLBar
             }
         }
 
-        private static ImGuiScene.TextureWrap _buttonshine;
-        private static Vector2 _uvMin, _uvMax, _uvMinHover, _uvMaxHover;//, _uvMinHover2, _uvMaxHover2;
+        public static Vector2 iconFrameUV0 = new Vector2(1f / 426f, 0f / 144f);
+        public static Vector2 iconFrameUV1 = new Vector2(47f / 426f, 46f / 144f);
+        public static Vector2 iconHoverUV0 = new Vector2(49f / 426f, 97f / 144f);
+        public static Vector2 iconHoverUV1 = new Vector2(95f / 426f, 143f / 144f);
+        //public static Vector2 iconHoverFrameUV0 = new Vector2(248f / 426f, 8f / 144f);
+        //public static Vector2 iconHoverFrameUV1 = new Vector2(304f / 426f, 64f / 144f);
+
         public static bool DrawIcon(int icon, Vector2 size, float zoom, Vector2 offset, Vector4 tint, bool invertFrame, string args = "_", bool retExists = false, bool noButton = false)
         {
             bool ret = false;
-            var texd = QoLBar.textureDictionary;
+
+            var hasArgs = args != "_";
+
+            TextureDictionary texd = null;
+            if (hasArgs)
+            {
+                if (args.Contains("l"))
+                    texd = QoLBar.textureDictionaryLR;
+                else if (args.Contains("h"))
+                    texd = QoLBar.textureDictionaryHR;
+            }
+
+            texd ??= QoLBar.TextureDictionary;
             var tex = texd[icon];
             if (tex == null)
             {
@@ -727,7 +748,7 @@ namespace QoLBar
             else
             {
                 var frameArg = false;
-                if (args != "_")
+                if (hasArgs)
                 {
                     frameArg = args.Contains("f");
                     if (invertFrame)
@@ -752,24 +773,14 @@ namespace QoLBar
 
                 if (frameArg && texd[QoLBar.FrameIconID] != null)
                 {
-                    if (_buttonshine == null || _buttonshine.ImGuiHandle == IntPtr.Zero)
-                    {
-                        _buttonshine = texd[QoLBar.FrameIconID];
-                        _uvMin = new Vector2(1f / 426f, 0f / 144f);
-                        _uvMax = new Vector2(47f / 426f, 46f / 144f);
-                        _uvMinHover = new Vector2(49f / 426f, 97f / 144f);
-                        _uvMaxHover = new Vector2(95f / 426f, 143f / 144f);
-                        //_uvMinHover2 = new Vector2(248f / 426f, 8f / 144f);
-                        //_uvMaxHover2 = new Vector2(304f / 426f, 64f / 144f);
-                    }
                     var _sizeInc = size * 0.075f;
                     var _rMin = ImGui.GetItemRectMin() - _sizeInc;
                     var _rMax = ImGui.GetItemRectMax() + _sizeInc;
-                    ImGui.GetWindowDrawList().AddImage(_buttonshine.ImGuiHandle, _rMin, _rMax, _uvMin, _uvMax); // Frame
+                    ImGui.GetWindowDrawList().AddImage(QoLBar.TextureDictionary[QoLBar.FrameIconID].ImGuiHandle, _rMin, _rMax, iconFrameUV0, iconFrameUV1); // Frame
                     if (!noButton && ImGui.IsItemHovered(ImGuiHoveredFlags.RectOnly))
                     {
-                        ImGui.GetWindowDrawList().AddImage(_buttonshine.ImGuiHandle, _rMin, _rMax, _uvMinHover, _uvMaxHover, 0x85FFFFFF); // Frame Center Glow
-                        //ImGui.GetWindowDrawList().AddImage(_buttonshine.ImGuiHandle, _rMin - (_sizeInc * 1.5f), _rMax + (_sizeInc * 1.5f), _uvMinHover2, _uvMaxHover2); // Edge glow // TODO: Probably somewhat impossible as is, but fix glow being clipped
+                        ImGui.GetWindowDrawList().AddImage(QoLBar.TextureDictionary[QoLBar.FrameIconID].ImGuiHandle, _rMin, _rMax, iconHoverUV0, iconHoverUV1, 0x85FFFFFF); // Frame Center Glow
+                        //ImGui.GetWindowDrawList().AddImage(_buttonshine.ImGuiHandle, _rMin - (_sizeInc * 1.5f), _rMax + (_sizeInc * 1.5f), iconHoverFrameUV0, iconHoverFrameUV1); // Edge glow // TODO: Probably somewhat impossible as is, but fix glow being clipped
                     }
                     // TODO: Find a way to do the click animation
                 }

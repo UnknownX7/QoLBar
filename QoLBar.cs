@@ -36,7 +36,9 @@ namespace QoLBar
         public readonly int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
         private readonly Queue<string> commandQueue = new Queue<string>();
 
-        public static readonly TextureDictionary textureDictionary = new TextureDictionary();
+        public static TextureDictionary TextureDictionary => Config.UseHRIcons ? textureDictionaryHR : textureDictionaryLR;
+        public static readonly TextureDictionary textureDictionaryLR = new TextureDictionary(false);
+        public static readonly TextureDictionary textureDictionaryHR = new TextureDictionary(true);
         public const int FrameIconID = 114_000;
         private const int SafeIconID = 1_000_000;
         public int GetSafeIconID(byte i) => SafeIconID + i;
@@ -141,13 +143,16 @@ namespace QoLBar
 
         public void ReadyPlugin()
         {
-            textureDictionary.LoadTexture(46); // Magnifying glass / Search
-            if (Config.UseHRIcons)
-                textureDictionary.AddTex(FrameIconID, "ui/uld/icona_frame.tex");
-            else
-                textureDictionary.AddTex(FrameIconID, "ui/uld/icona_frame_hr1.tex");
-            textureDictionary.LoadTexture(FrameIconID);
-            AddUserIcons();
+            var iconPath = Config.GetPluginIconPath();
+            textureDictionaryLR.AddUserIcons(iconPath);
+            textureDictionaryHR.AddUserIcons(iconPath);
+
+            textureDictionaryLR.LoadTexture(46); // Magnifying glass / Search
+            textureDictionaryHR.LoadTexture(46);
+            textureDictionaryLR.AddTex(FrameIconID, "ui/uld/icona_frame.tex");
+            textureDictionaryHR.AddTex(FrameIconID, "ui/uld/icona_frame_hr1.tex");
+            textureDictionaryLR.LoadTexture(FrameIconID);
+            textureDictionaryHR.LoadTexture(FrameIconID);
             pluginReady = true;
         }
 
@@ -256,10 +261,10 @@ namespace QoLBar
             Interface.UiBuilder.DisableGposeUiHide = Config.OptOutGPoseHide;
         }
 
-        public static Dictionary<int, string> GetUserIcons() => textureDictionary.GetUserIcons();
+        public static Dictionary<int, string> GetUserIcons() => TextureDictionary.GetUserIcons();
 
         bool _addUserIcons = false;
-        private bool AddUserIcons(ref bool b) => b = !textureDictionary.AddUserIcons(Config.GetPluginIconPath());
+        private bool AddUserIcons(ref bool b) => b = !TextureDictionary.AddUserIcons(Config.GetPluginIconPath());
         public void AddUserIcons() => _addUserIcons = true;
 
         public static void PrintEcho(string message) => Interface.Framework.Gui.Chat.Print($"[QoLBar] {message}");
@@ -443,8 +448,8 @@ namespace QoLBar
 
             ui.Dispose();
 
-            foreach (var t in textureDictionary)
-                t.Value?.Dispose();
+            textureDictionaryLR.Dispose();
+            textureDictionaryHR.Dispose();
         }
 
         public void Dispose()
