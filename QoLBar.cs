@@ -269,6 +269,7 @@ namespace QoLBar
         public static void PrintEcho(string message) => Interface.Framework.Gui.Chat.Print($"[QoLBar] {message}");
         public static void PrintError(string message) => Interface.Framework.Gui.Chat.PrintError($"[QoLBar] {message}");
 
+#pragma warning disable CS0618 // Type or member is obsolete
         private void SetupIPC()
         {
             Interface.SubscribeAny(OnReceiveMessage);
@@ -360,6 +361,7 @@ namespace QoLBar
             Interface.SendMessage(msg);
             Interface.UnsubscribeAny();
         }
+#pragma warning restore CS0618 // Type or member is obsolete
 
         // Command Execution, taken from https://git.sr.ht/~jkcclemens/CCMM/tree/master/Macrology/GameFunctions.cs
         private void ReadyCommand()
