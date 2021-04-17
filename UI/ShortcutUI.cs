@@ -747,7 +747,7 @@ namespace QoLBar
                 if (!retExists)
                 {
                     if (icon == 66001)
-                        ret = ImGui.Button("  X  ##FailedTexture");
+                        ret = ImGui.Button("X##FailedTexture", size);
                     else
                         ret = DrawIcon(66001, size, zoom, offset, tint, invertFrame, args);
                 }
@@ -778,18 +778,22 @@ namespace QoLBar
                 else
                     ImGui.Image(tex.ImGuiHandle, size, uv0, uv1, tint);
 
-                if (frameArg && texd[QoLBar.FrameIconID] != null)
+                if (frameArg)
                 {
-                    var _sizeInc = size * 0.075f;
-                    var _rMin = ImGui.GetItemRectMin() - _sizeInc;
-                    var _rMax = ImGui.GetItemRectMax() + _sizeInc;
-                    ImGui.GetWindowDrawList().AddImage(QoLBar.TextureDictionary[QoLBar.FrameIconID].ImGuiHandle, _rMin, _rMax, iconFrameUV0, iconFrameUV1); // Frame
-                    if (!noButton && ImGui.IsItemHovered(ImGuiHoveredFlags.RectOnly))
+                    var frame = QoLBar.TextureDictionary[QoLBar.FrameIconID];
+                    if (frame != null && frame.ImGuiHandle != IntPtr.Zero)
                     {
-                        ImGui.GetWindowDrawList().AddImage(QoLBar.TextureDictionary[QoLBar.FrameIconID].ImGuiHandle, _rMin, _rMax, iconHoverUV0, iconHoverUV1, 0x85FFFFFF); // Frame Center Glow
-                        //ImGui.GetWindowDrawList().AddImage(_buttonshine.ImGuiHandle, _rMin - (_sizeInc * 1.5f), _rMax + (_sizeInc * 1.5f), iconHoverFrameUV0, iconHoverFrameUV1); // Edge glow // TODO: Probably somewhat impossible as is, but fix glow being clipped
+                        var _sizeInc = size * 0.075f;
+                        var _rMin = ImGui.GetItemRectMin() - _sizeInc;
+                        var _rMax = ImGui.GetItemRectMax() + _sizeInc;
+                        ImGui.GetWindowDrawList().AddImage(frame.ImGuiHandle, _rMin, _rMax, iconFrameUV0, iconFrameUV1); // Frame
+                        if (!noButton && ImGui.IsItemHovered(ImGuiHoveredFlags.RectOnly))
+                        {
+                            ImGui.GetWindowDrawList().AddImage(frame.ImGuiHandle, _rMin, _rMax, iconHoverUV0, iconHoverUV1, 0x85FFFFFF); // Frame Center Glow
+                            //ImGui.GetWindowDrawList().AddImage(_buttonshine.ImGuiHandle, _rMin - (_sizeInc * 1.5f), _rMax + (_sizeInc * 1.5f), iconHoverFrameUV0, iconHoverFrameUV1); // Edge glow // TODO: Probably somewhat impossible as is, but fix glow being clipped
+                        }
+                        // TODO: Find a way to do the click animation
                     }
-                    // TODO: Find a way to do the click animation
                 }
 
                 ImGui.PopStyleColor(frameArg ? 3 : 1);

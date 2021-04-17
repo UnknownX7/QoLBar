@@ -174,14 +174,18 @@ namespace QoLBar
                                 frameArg = !frameArg;
                         }
 
-                        if (frameArg && texd[QoLBar.FrameIconID] != null)
+                        if (frameArg)
                         {
-                            var _sizeInc = size * 0.075f;
-                            var _rMin = texMin - _sizeInc;
-                            var _rMax = texMax + _sizeInc;
-                            drawList.AddImage(QoLBar.TextureDictionary[QoLBar.FrameIconID].ImGuiHandle, _rMin, _rMax, ShortcutUI.iconFrameUV0, ShortcutUI.iconFrameUV1); // Frame
-                            if (hovered)
-                                drawList.AddImage(QoLBar.TextureDictionary[QoLBar.FrameIconID].ImGuiHandle, _rMin, _rMax, ShortcutUI.iconHoverUV0, ShortcutUI.iconHoverUV1, 0x85FFFFFF); // Frame Center Glow
+                            var frame = QoLBar.TextureDictionary[QoLBar.FrameIconID];
+                            if (frame != null && frame.ImGuiHandle != IntPtr.Zero)
+                            {
+                                var _sizeInc = size * 0.075f;
+                                var _rMin = texMin - _sizeInc;
+                                var _rMax = texMax + _sizeInc;
+                                drawList.AddImage(frame.ImGuiHandle, _rMin, _rMax, ShortcutUI.iconFrameUV0, ShortcutUI.iconFrameUV1); // Frame
+                                if (hovered)
+                                    drawList.AddImage(frame.ImGuiHandle, _rMin, _rMax, ShortcutUI.iconHoverUV0, ShortcutUI.iconHoverUV1, 0x85FFFFFF); // Frame Center Glow
+                            }
                         }
                     }
                 }
