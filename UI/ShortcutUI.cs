@@ -167,7 +167,7 @@ namespace QoLBar
             if (sh.Type == ShortcutType.Spacer)
             {
                 if (useIcon)
-                    DrawIcon(icon, new Vector2(height), sh.IconZoom, new Vector2(sh.IconOffset[0], sh.IconOffset[1]), c, QoLBar.Config.UseIconFrame, args, true, true);
+                    DrawIcon(icon, new Vector2(height), sh.IconZoom, new Vector2(sh.IconOffset[0], sh.IconOffset[1]), c, QoLBar.Config.UseIconFrame, args, false, true);
                 else
                 {
                     var wantedSize = ImGui.GetFontSize();
@@ -747,9 +747,14 @@ namespace QoLBar
                 if (!retExists)
                 {
                     if (icon == 66001)
-                        ret = ImGui.Button("X##FailedTexture", size);
+                    {
+                        if (noButton)
+                            ImGui.Dummy(size);
+                        else
+                            ret = ImGui.Button("X##FailedTexture", size);
+                    }
                     else
-                        ret = DrawIcon(66001, size, zoom, offset, tint, invertFrame, args);
+                        ret = DrawIcon(66001, size, zoom, offset, tint, invertFrame, args, retExists, noButton);
                 }
             }
             else
