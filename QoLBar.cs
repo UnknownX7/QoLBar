@@ -65,7 +65,6 @@ namespace QoLBar
 
         // Command Execution
         private delegate void ProcessChatBoxDelegate(IntPtr uiModule, IntPtr message, IntPtr unused, byte a4);
-        private delegate IntPtr GetUIModuleDelegate();
         private delegate IntPtr GetModuleDelegate(IntPtr basePtr);
         private ProcessChatBoxDelegate ProcessChatBox;
         public IntPtr uiModule = IntPtr.Zero;
@@ -114,19 +113,12 @@ namespace QoLBar
 
             try
             {
-                // Backup signatures
-                //var unknownPtr = Interface.TargetModuleScanner.GetStaticAddressFromSig("48 8B 0D ?? ?? ?? ?? 48 8D 54 24 ?? 48 83 C1 10 E8");
-                //var GetUIModule = Marshal.GetDelegateForFunctionPointer<GetModuleDelegate>(Interface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? 48 83 7F ?? 00 48 8B F0"));
-                //uiModule = GetUIModule(*(IntPtr*)unknownPtr);
-
                 ProcessChatBox = Marshal.GetDelegateForFunctionPointer<ProcessChatBoxDelegate>(Interface.TargetModuleScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9"));
-                var GetUIModule = Marshal.GetDelegateForFunctionPointer<GetUIModuleDelegate>(Interface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? 48 8B C8 48 8B 10 FF 52 40 80 88 ?? ?? ?? ?? 01 E9"));
-                uiModule = GetUIModule();
+                uiModule = Interface.Framework.Gui.GetUIModule();
 
                 try
                 {
-                    var executeMacroPtr = Interface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28");
-                    ExecuteMacro = Marshal.GetDelegateForFunctionPointer<ExecuteMacroDelegate>(executeMacroPtr);
+                    ExecuteMacro = Marshal.GetDelegateForFunctionPointer<ExecuteMacroDelegate>(Interface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28"));
 
                     var vtbl = (IntPtr*)(*(IntPtr*)uiModule);
                     var GetRaptureShellModule = Marshal.GetDelegateForFunctionPointer<GetModuleDelegate>(*(vtbl + 9)); // Client__UI__UIModule_GetRaptureShellModule / vf9
