@@ -76,7 +76,7 @@ namespace QoLBar
         public IntPtr raptureShellModule = IntPtr.Zero;
         public IntPtr raptureMacroModule = IntPtr.Zero;
 
-        public void Initialize(DalamudPluginInterface pInterface)
+        public async void Initialize(DalamudPluginInterface pInterface)
         {
             Plugin = this;
 
@@ -96,16 +96,12 @@ namespace QoLBar
 
             commandManager = new PluginCommandManager();
 
+            while (!Config.AlwaysDisplayBars && !ui.configOpen && !IsLoggedIn())
+                await Task.Delay(1000);
+
+            ReadyPlugin();
+
             SetupIPC();
-
-            InitializePointers();
-
-            Task.Run(async () =>
-            {
-                while (!Config.AlwaysDisplayBars && !ui.configOpen && !IsLoggedIn())
-                    await Task.Delay(1000);
-                ReadyPlugin();
-            });
         }
 
         private unsafe void InitializePointers()
@@ -156,6 +152,9 @@ namespace QoLBar
             textureDictionaryHR.AddTex(FrameIconID, "ui/uld/icona_frame_hr1.tex");
             textureDictionaryLR.LoadTexture(FrameIconID);
             textureDictionaryHR.LoadTexture(FrameIconID);
+
+            InitializePointers();
+
             pluginReady = true;
         }
 
