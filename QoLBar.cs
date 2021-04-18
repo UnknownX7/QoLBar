@@ -100,7 +100,6 @@ namespace QoLBar
                 await Task.Delay(1000);
 
             ReadyPlugin();
-
             SetupIPC();
         }
 
@@ -233,6 +232,8 @@ namespace QoLBar
             _frameCount++;
             _runTime += ImGui.GetIO().DeltaTime;
 
+            if (!pluginReady) return;
+
             Config.DoTimedBackup();
             ReadyCommand();
             Keybind.Run();
@@ -248,11 +249,10 @@ namespace QoLBar
 
             _drawTime += ImGui.GetIO().DeltaTime;
 
-            if (pluginReady)
-            {
-                Config.DrawUpdateWindow();
-                ui.Draw();
-            }
+            if (!pluginReady) return;
+
+            Config.DrawUpdateWindow();
+            ui.Draw();
         }
 
         public void CheckHideOptOuts()
