@@ -207,7 +207,7 @@ namespace QoLBar
                         ImGui.SetClipboardText(ExportBar(i, true));
                 }
 
-                if (i > 0)
+                if (bars.Count > 1)
                 {
                     ImGui.SameLine();
                     if (ImGui.Button(QoLBar.Config.ExportOnDelete ? "Cut" : "Delete"))
