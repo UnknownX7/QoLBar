@@ -176,7 +176,10 @@ namespace QoLBar
                 {
                     ImGui.SetTooltip($"Right click this button to delete this set!");
                     if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
+                    {
+                        ImGui.SetWindowFocus(null);
                         RemoveConditionSet(i);
+                    }
                 }
 
                 if (open)
@@ -428,6 +431,7 @@ namespace QoLBar
                             ImGui.SetTooltip($"Right click this button to delete this condition!");
                             if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
                             {
+                                ImGui.SetWindowFocus(null);
                                 set.Remove(j);
                                 config.Save();
                             }

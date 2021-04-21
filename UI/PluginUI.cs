@@ -218,7 +218,10 @@ namespace QoLBar
                             (QoLBar.Config.ExportOnDelete ? "\nThe bar will be exported to clipboard first." : ""));
 
                         if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
+                        {
+                            ImGui.SetWindowFocus(null); // Kill focus to prevent ImGui from overwriting text box on deletes
                             RemoveBar(i);
+                        }
                     }
                 }
 
