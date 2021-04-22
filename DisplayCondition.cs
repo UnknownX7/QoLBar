@@ -457,11 +457,14 @@ namespace QoLBar
                 ImGui.PopID();
             }
 
-            if (ImGui.Button("+", new Vector2(-1, 0)))
+            if (ImGui.Button("+", new Vector2((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) / 2, 0)))
             {
                 configSets.Add(new DisplayConditionSet());
                 config.Save();
             }
+            ImGui.SameLine();
+            if (ImGui.Button("Open Condition Data", new Vector2(ImGui.GetContentRegionAvail().X, 0)))
+                QoLBar.Plugin.ExecuteCommand("/xldata condition");
         }
 
         private static void SwapConditionSet(int from, int to)
