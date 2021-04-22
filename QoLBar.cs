@@ -104,11 +104,7 @@ namespace QoLBar
 
         private unsafe void InitializePointers()
         {
-            try
-            {
-                var dataptr = Interface.TargetModuleScanner.GetStaticAddressFromSig("48 8B 05 ?? ?? ?? ?? 48 8B 48 28 80 B9 8E 18 00 00 00");
-                textActiveBoolPtr = *(IntPtr*)(*(IntPtr*)dataptr + 0x28) + 0x188E;
-            }
+            try { textActiveBoolPtr = *(IntPtr*)(Interface.Framework.Gui.GetBaseUIObject() + 0x28) + 0x188E; }
             catch { PluginLog.Error("Failed loading textActiveBoolPtr"); }
 
             try
@@ -391,7 +387,7 @@ namespace QoLBar
                             if (int.TryParse(command.Substring(1), out var macro) && 0 <= macro && macro < 200)
                                 ExecuteMacro(raptureShellModule, raptureMacroModule + 0x58 + (0x688 * macro));
                             else
-                                PrintError("Invalid macro. Usage: \"//m0\" for individual macro #0, \"//m100\" for shared macro #0, valid up to 199");
+                                PrintError("Invalid macro. Usage: \"//m0\" for individual macro #0, \"//m100\" for shared macro #0, valid up to 199.");
                             break;
                         case ' ': // Comment
                             commandReady = true;
