@@ -40,9 +40,9 @@ namespace QoLBar
         public static TextureDictionary TextureDictionary => Config.UseHRIcons ? textureDictionaryHR : textureDictionaryLR;
         public static readonly TextureDictionary textureDictionaryLR = new TextureDictionary(false);
         public static readonly TextureDictionary textureDictionaryHR = new TextureDictionary(true);
-        public const int FrameIconID = 114_000;
-        private const int SafeIconID = 1_000_000;
-        public int GetSafeIconID(byte i) => SafeIconID + i;
+        public const int FrameIconID = 1_000_000;
+        private const int SafeIconID = 1_000_001;
+        public int GetSafeIconID(ushort i) => SafeIconID + i;
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)] private static extern IntPtr GetForegroundWindow();
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)] private static extern int GetWindowThreadProcessId(IntPtr handle, out int processId);
@@ -136,8 +136,14 @@ namespace QoLBar
             textureDictionaryHR.AddUserIcons(iconPath);
 
             textureDictionaryLR.LoadTexture(46); // Magnifying glass / Search
-            textureDictionaryLR.AddTex(FrameIconID, "ui/uld/icona_frame.tex");
-            textureDictionaryHR.AddTex(FrameIconID, "ui/uld/icona_frame_hr1.tex");
+
+            static void AddTexSheet(int id, string path, bool noHR = false)
+            {
+                textureDictionaryLR.AddTex(id, path + ".tex");
+                textureDictionaryHR.AddTex(id, path + (!noHR ? "_hr1.tex" : ".tex"));
+            }
+
+            AddTexSheet(FrameIconID, "ui/uld/icona_frame");
             textureDictionaryLR.LoadTexture(FrameIconID);
             textureDictionaryHR.LoadTexture(FrameIconID);
 
