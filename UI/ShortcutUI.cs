@@ -718,12 +718,12 @@ namespace QoLBar
             }
         }
 
-        public static Vector2 iconFrameUV0 = new Vector2(1f / 426f, 0f / 144f);
-        public static Vector2 iconFrameUV1 = new Vector2(47f / 426f, 46f / 144f);
-        public static Vector2 iconHoverUV0 = new Vector2(49f / 426f, 97f / 144f);
-        public static Vector2 iconHoverUV1 = new Vector2(95f / 426f, 143f / 144f);
-        //public static Vector2 iconHoverFrameUV0 = new Vector2(248f / 426f, 8f / 144f);
-        //public static Vector2 iconHoverFrameUV1 = new Vector2(304f / 426f, 64f / 144f);
+        public static Vector2 iconFrameUV0 = new Vector2(1f / 426f, 141f / 426f);
+        public static Vector2 iconFrameUV1 = new Vector2(47f / 426f, 187f / 426f);
+        public static Vector2 iconHoverUV0 = new Vector2(49f / 426f, 238f / 426f);
+        public static Vector2 iconHoverUV1 = new Vector2(95f / 426f, 284f / 426f);
+        //public static Vector2 iconHoverFrameUV0 = new Vector2(248f / 426f, 149f / 426f);
+        //public static Vector2 iconHoverFrameUV1 = new Vector2(304f / 426f, 205f / 426f);
 
         public static bool DrawIcon(int icon, Vector2 size, float zoom, Vector2 offset, Vector4 tint, bool invertFrame, string args = "_", bool retExists = false, bool noButton = false)
         {

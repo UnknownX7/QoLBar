@@ -133,7 +133,7 @@ namespace QoLBar
                 AddIcons(10_000, 20_000);
                 EndIconList();
 
-                BeginIconList("Garbage", iconSize);
+                BeginIconList("Garbage", iconSize, QoLBar.Config.UseHRIcons);
                 AddIcons(61_000, 61_100, "Splash Logos");
                 AddIcons(62_620, 62_800, "World Map");
                 AddIcons(63_200, 63_900, "Zone Maps");
@@ -149,7 +149,7 @@ namespace QoLBar
                 AddIcons(150_000, 180_000, "Tutorials");
                 EndIconList();
 
-                BeginIconList("Spoilers", iconSize);
+                BeginIconList("Spoilers", iconSize, true);
                 AddIcons(82_100, 83_000, "Triple Triad"); // Out of order because people might want to use these
                 AddIcons(82_060, 82_100, "Trusts");
                 AddIcons(120_000, 130_000, "Popup Texts");
@@ -159,7 +159,7 @@ namespace QoLBar
                 AddIcons(181_500, 200_000, "Placeholder");
                 EndIconList();
 
-                BeginIconList("Spoilers 2", iconSize, QoLBar.Config.UseHRIcons);
+                BeginIconList("Spoilers 2", iconSize, true);
                 AddIcons(71_500, 72_000, "Credits");
                 AddIcons(100_000, 114_000, "Quest Images");
                 AddIcons(114_100, 120_000, "New Game+");

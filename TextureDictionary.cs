@@ -131,7 +131,7 @@ namespace QoLBar
         private void LoadIcon(int icon, bool overwrite) => LoadTextureWrap(icon, overwrite, false, () =>
         {
             var iconTex = useHR ? GetHRIcon(icon) : QoLBar.Interface.Data.GetIcon(icon);
-            return (iconTex == null) ? null : QoLBar.Interface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
+            return (iconTex == null) ? null : LoadTextureWrapSquare(iconTex);
         });
 
         public void AddTex(int iconSlot, string path, bool overwrite = false)
@@ -146,7 +146,7 @@ namespace QoLBar
         private void LoadTex(int iconSlot, string path, bool overwrite) => LoadTextureWrap(iconSlot, overwrite, false, () =>
         {
             var iconTex = QoLBar.Interface.Data.GetFile<Lumina.Data.Files.TexFile>(path);
-            return (iconTex == null) ? null : QoLBar.Interface.UiBuilder.LoadImageRaw(iconTex.GetRgbaImageData(), iconTex.Header.Width, iconTex.Header.Height, 4);
+            return (iconTex == null) ? null : LoadTextureWrapSquare(iconTex);
         });
 
         public void AddImage(int iconSlot, string path)
@@ -162,6 +162,43 @@ namespace QoLBar
         {
             var path = $"ui/icon/{icon / 1000 * 1000:000000}/{icon:000000}_hr1.tex";
             return QoLBar.Interface.Data.GetFile<Lumina.Data.Files.TexFile>(path) ?? QoLBar.Interface.Data.GetIcon(icon);
+        }
+
+        private TextureWrap LoadTextureWrapSquare(Lumina.Data.Files.TexFile tex)
+        {
+            if (tex.Header.Width > tex.Header.Height)
+            {
+                var imageData = tex.GetRgbaImageData();
+                var newData = new byte[tex.Header.Width * tex.Header.Width * 4];
+                var diff = (int)Math.Floor((tex.Header.Width - tex.Header.Height) / 2f);
+                imageData.CopyTo(newData, diff * tex.Header.Width * 4);
+                return QoLBar.Interface.UiBuilder.LoadImageRaw(newData, tex.Header.Width, tex.Header.Width, 4);
+            }
+            else if (tex.Header.Width < tex.Header.Height)
+            {
+                var imageData = tex.GetRgbaImageData();
+                var newData = new byte[tex.Header.Height * tex.Header.Height * 4];
+                var length = newData.Length / 4;
+                var imageDataPos = 0;
+                var diff = (tex.Header.Height - tex.Header.Width) / 2f;
+                for (int i = 0; i < length; i++)
+                {
+                    var column = i % tex.Header.Height;
+                    if (Math.Floor(diff) <= column && column < tex.Header.Height - Math.Ceiling(diff))
+                    {
+                        var pixel = i * 4;
+                        newData[pixel] = imageData[imageDataPos++];
+                        newData[pixel + 1] = imageData[imageDataPos++];
+                        newData[pixel + 2] = imageData[imageDataPos++];
+                        newData[pixel + 3] = imageData[imageDataPos++];
+                    }
+                }
+                return QoLBar.Interface.UiBuilder.LoadImageRaw(newData, tex.Header.Height, tex.Header.Height, 4);
+            }
+            else
+            {
+                return QoLBar.Interface.UiBuilder.LoadImageRaw(tex.GetRgbaImageData(), tex.Header.Width, tex.Header.Height, 4);
+            }
         }
 
         public Dictionary<int, string> GetUserIcons() => userIcons;

@@ -278,7 +278,7 @@ namespace QoLBar
                 }
             }
             ImGuiEx.SetItemTooltip("Loads the high resolution icons instead. Be aware that the Icon Browser will use\n" +
-                "up to 5GB of memory until closed if you open the \"Spoilers 2\" tab!\n" +
+                "up to 5GB of memory until closed if you open the \"Spoilers\" tabs!\n" +
                 "The Icon Browser may need to be closed in some cases to toggle it.");
 
             if (ImGui.Checkbox("Disable Condition Caching", ref QoLBar.Config.NoConditionCache))
