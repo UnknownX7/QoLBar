@@ -12,8 +12,8 @@ namespace QoLBar
 {
     public class TextureDictionary : ConcurrentDictionary<int, TextureWrap>, IDisposable
     {
-        public const int FrameIconID = 1_000_000;
-        private const int SafeIconID = 1_000_100;
+        public const int FrameIconID = 10_000_000;
+        public const int SafeIconID = 10_000_100;
         public static int GetSafeIconID(ushort i) => SafeIconID + i;
 
         private readonly Dictionary<int, string> userIcons = new Dictionary<int, string>();

@@ -43,7 +43,7 @@ namespace QoLBar
                 AddIcons(66_000, 66_400, "Macros");
                 AddIcons(90_000, 100_000, "FC Crests/Symbols");
                 AddIcons(114_000, 114_100, "New Game+");
-                AddIcons(1_000_000, 1_001_000, "Extra");
+                AddIcons(TextureDictionary.FrameIconID, TextureDictionary.FrameIconID + 1000, "Extra");
                 EndIconList();
 
                 BeginIconList("Custom", iconSize);
