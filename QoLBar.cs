@@ -32,7 +32,8 @@ namespace QoLBar
         public static QoLBar Plugin { get; private set; }
         public PluginUI ui;
         private bool commandReady = true;
-        private bool pluginReady = false;
+        private bool _pluginReady = false;
+        private bool PluginReady => _pluginReady && Interface.Framework.Gui.GetBaseUIObject() != IntPtr.Zero;
         public readonly int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
         private readonly Queue<string> commandQueue = new Queue<string>();
 
@@ -142,7 +143,7 @@ namespace QoLBar
 
             InitializePointers();
 
-            pluginReady = true;
+            _pluginReady = true;
         }
 
         public void Reload()
@@ -220,7 +221,7 @@ namespace QoLBar
             _frameCount++;
             _runTime += ImGui.GetIO().DeltaTime;
 
-            if (!pluginReady) return;
+            if (!PluginReady) return;
 
             Config.DoTimedBackup();
             ReadyCommand();
@@ -237,7 +238,7 @@ namespace QoLBar
 
             _drawTime += ImGui.GetIO().DeltaTime;
 
-            if (!pluginReady) return;
+            if (!PluginReady) return;
 
             Config.DrawUpdateWindow();
             ui.Draw();
