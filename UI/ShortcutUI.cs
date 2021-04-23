@@ -785,7 +785,7 @@ namespace QoLBar
 
                 if (frameArg)
                 {
-                    var frame = QoLBar.TextureDictionary[QoLBar.FrameIconID];
+                    var frame = QoLBar.TextureDictionary[TextureDictionary.FrameIconID];
                     if (frame != null && frame.ImGuiHandle != IntPtr.Zero)
                     {
                         var _sizeInc = size * 0.075f;

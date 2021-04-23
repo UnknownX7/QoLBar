@@ -12,6 +12,10 @@ namespace QoLBar
 {
     public class TextureDictionary : ConcurrentDictionary<int, TextureWrap>, IDisposable
     {
+        public const int FrameIconID = 1_000_000;
+        private const int SafeIconID = 1_000_100;
+        public static int GetSafeIconID(ushort i) => SafeIconID + i;
+
         private readonly Dictionary<int, string> userIcons = new Dictionary<int, string>();
         private readonly Dictionary<int, string> textureOverrides = new Dictionary<int, string>();
         private int loadingTasks = 0;
@@ -247,6 +251,168 @@ namespace QoLBar
         {
             foreach (var t in this)
                 t.Value?.Dispose();
+        }
+
+        public static void AddExtraTextures(TextureDictionary lr, TextureDictionary hr)
+        {
+            void AddTexSheet(int id, string path, bool noHR = false)
+            {
+                lr.AddTex(id, path + ".tex");
+                hr.AddTex(id, path + (!noHR ? "_hr1.tex" : ".tex"));
+            }
+
+            AddTexSheet(FrameIconID, "ui/uld/icona_frame");
+            AddTexSheet(FrameIconID + 1, "ui/uld/icona_recast");
+            AddTexSheet(FrameIconID + 2, "ui/uld/icona_recast2");
+            lr.LoadTexture(FrameIconID);
+            hr.LoadTexture(FrameIconID);
+
+            AddTexSheet(GetSafeIconID(0), "ui/uld/achievement");
+            AddTexSheet(GetSafeIconID(1), "ui/uld/actionbar");
+            AddTexSheet(GetSafeIconID(2), "ui/uld/actioncross");
+            AddTexSheet(GetSafeIconID(3), "ui/uld/actionmenu");
+            AddTexSheet(GetSafeIconID(4), "ui/uld/adventurenotebook");
+            AddTexSheet(GetSafeIconID(5), "ui/uld/alarm");
+            AddTexSheet(GetSafeIconID(6), "ui/uld/aozbriefing");
+            AddTexSheet(GetSafeIconID(7), "ui/uld/aoznotebook");
+            AddTexSheet(GetSafeIconID(8), "ui/uld/aquariumsetting");
+            AddTexSheet(GetSafeIconID(9), "ui/uld/areamap");
+            AddTexSheet(GetSafeIconID(10), "ui/uld/armouryboard");
+            AddTexSheet(GetSafeIconID(11), "ui/uld/camerasettings");
+            AddTexSheet(GetSafeIconID(12), "ui/uld/cardtripletriad");
+            AddTexSheet(GetSafeIconID(13), "ui/uld/character");
+            AddTexSheet(GetSafeIconID(14), "ui/uld/charactergearset");
+            AddTexSheet(GetSafeIconID(15), "ui/uld/charamake");
+            AddTexSheet(GetSafeIconID(16), "ui/uld/charamake_dataimport");
+            AddTexSheet(GetSafeIconID(17), "ui/uld/charaselect");
+            AddTexSheet(GetSafeIconID(18), "ui/uld/circlebuttons");
+            AddTexSheet(GetSafeIconID(19), "ui/uld/circlefinder");
+            AddTexSheet(GetSafeIconID(20), "ui/uld/colosseumresult");
+            AddTexSheet(GetSafeIconID(21), "ui/uld/companycraftrecipe");
+            AddTexSheet(GetSafeIconID(22), "ui/uld/concentration");
+            AddTexSheet(GetSafeIconID(23), "ui/uld/configbackup");
+            AddTexSheet(GetSafeIconID(24), "ui/uld/contentsfinder");
+            AddTexSheet(GetSafeIconID(25), "ui/uld/contentsinfo");
+            AddTexSheet(GetSafeIconID(26), "ui/uld/contentsnotebook");
+            AddTexSheet(GetSafeIconID(27), "ui/uld/contentsreplayplayer");
+            AddTexSheet(GetSafeIconID(28), "ui/uld/contentsreplaysetting");
+            AddTexSheet(GetSafeIconID(29), "ui/uld/creditplayer");
+            AddTexSheet(GetSafeIconID(30), "ui/uld/cursor");
+            AddTexSheet(GetSafeIconID(31), "ui/uld/deepdungeonclassjob");
+            AddTexSheet(GetSafeIconID(32), "ui/uld/deepdungeonnavimap_ankh");
+            AddTexSheet(GetSafeIconID(33), "ui/uld/deepdungeonnavimap_key");
+            AddTexSheet(GetSafeIconID(34), "ui/uld/deepdungeonresult");
+            AddTexSheet(GetSafeIconID(35), "ui/uld/deepdungeonsavedata");
+            AddTexSheet(GetSafeIconID(36), "ui/uld/deepdungeontopmenu");
+            AddTexSheet(GetSafeIconID(37), "ui/uld/description");
+            AddTexSheet(GetSafeIconID(38), "ui/uld/dtr");
+            AddTexSheet(GetSafeIconID(39), "ui/uld/emjicon");
+            AddTexSheet(GetSafeIconID(40), "ui/uld/emjicon2");
+            AddTexSheet(GetSafeIconID(41), "ui/uld/emjicon3");
+            AddTexSheet(GetSafeIconID(42), "ui/uld/emjparts");
+            AddTexSheet(GetSafeIconID(43), "ui/uld/emote");
+            AddTexSheet(GetSafeIconID(44), "ui/uld/enemylist");
+            AddTexSheet(GetSafeIconID(45), "ui/uld/eurekaelementaledit");
+            AddTexSheet(GetSafeIconID(46), "ui/uld/eurekaelementalhud");
+            AddTexSheet(GetSafeIconID(47), "ui/uld/eurekalogosshardlist");
+            AddTexSheet(GetSafeIconID(48), "ui/uld/exp_gauge");
+            AddTexSheet(GetSafeIconID(49), "ui/uld/explorationdetail");
+            AddTexSheet(GetSafeIconID(50), "ui/uld/explorationship");
+            AddTexSheet(GetSafeIconID(51), "ui/uld/fashioncheck");
+            AddTexSheet(GetSafeIconID(52), "ui/uld/fashioncheckscoregauge");
+            AddTexSheet(GetSafeIconID(53), "ui/uld/fashioncheckscoregaugenum");
+            AddTexSheet(GetSafeIconID(54), "ui/uld/fate");
+            AddTexSheet(GetSafeIconID(55), "ui/uld/fishingnotebook");
+            AddTexSheet(GetSafeIconID(56), "ui/uld/freecompany");
+            AddTexSheet(GetSafeIconID(57), "ui/uld/gateresult");
+            AddTexSheet(GetSafeIconID(58), "ui/uld/gatherercraftericon");
+            AddTexSheet(GetSafeIconID(59), "ui/uld/gcarmy");
+            AddTexSheet(GetSafeIconID(60), "ui/uld/gcarmychangeclass");
+            AddTexSheet(GetSafeIconID(61), "ui/uld/gcarmychangemirageprism");
+            AddTexSheet(GetSafeIconID(62), "ui/uld/gcarmyclass");
+            AddTexSheet(GetSafeIconID(63), "ui/uld/gcarmyexpedition");
+            AddTexSheet(GetSafeIconID(64), "ui/uld/gcarmyexpeditionforecast");
+            AddTexSheet(GetSafeIconID(65), "ui/uld/gcarmyexpeditionresult");
+            AddTexSheet(GetSafeIconID(66), "ui/uld/gcarmymemberprofile");
+            AddTexSheet(GetSafeIconID(67), "ui/uld/goldsaucercarddeckedit");
+            AddTexSheet(GetSafeIconID(68), "ui/uld/housing");
+            AddTexSheet(GetSafeIconID(69), "ui/uld/housinggoods");
+            AddTexSheet(GetSafeIconID(70), "ui/uld/housingguestbook");
+            AddTexSheet(GetSafeIconID(71), "ui/uld/housingguestbook2");
+            AddTexSheet(GetSafeIconID(72), "ui/uld/howto");
+            AddTexSheet(GetSafeIconID(73), "ui/uld/iconverminion");
+            AddTexSheet(GetSafeIconID(74), "ui/uld/image2");
+            AddTexSheet(GetSafeIconID(75), "ui/uld/inventory");
+            AddTexSheet(GetSafeIconID(76), "ui/uld/itemdetail");
+            AddTexSheet(GetSafeIconID(77), "ui/uld/jobhudacn0");
+            AddTexSheet(GetSafeIconID(78), "ui/uld/jobhudast0");
+            AddTexSheet(GetSafeIconID(79), "ui/uld/jobhudblm0");
+            AddTexSheet(GetSafeIconID(80), "ui/uld/jobhudbrd0");
+            AddTexSheet(GetSafeIconID(81), "ui/uld/jobhuddnc0");
+            AddTexSheet(GetSafeIconID(82), "ui/uld/jobhuddrg0");
+            AddTexSheet(GetSafeIconID(83), "ui/uld/jobhuddrk0");
+            AddTexSheet(GetSafeIconID(84), "ui/uld/jobhuddrk1");
+            AddTexSheet(GetSafeIconID(85), "ui/uld/jobhudgnb");
+            AddTexSheet(GetSafeIconID(86), "ui/uld/jobhudmch0");
+            AddTexSheet(GetSafeIconID(87), "ui/uld/jobhudmnk1");
+            AddTexSheet(GetSafeIconID(88), "ui/uld/jobhudnin1");
+            AddTexSheet(GetSafeIconID(89), "ui/uld/jobhudpld");
+            AddTexSheet(GetSafeIconID(90), "ui/uld/jobhudsam1");
+            AddTexSheet(GetSafeIconID(91), "ui/uld/jobhudsch0");
+            AddTexSheet(GetSafeIconID(92), "ui/uld/jobhudsimple_stacka");
+            AddTexSheet(GetSafeIconID(93), "ui/uld/jobhudsimple_stackb");
+            AddTexSheet(GetSafeIconID(94), "ui/uld/jobhudsmn0");
+            AddTexSheet(GetSafeIconID(95), "ui/uld/jobhudsmn1");
+            AddTexSheet(GetSafeIconID(96), "ui/uld/jobhudwar");
+            AddTexSheet(GetSafeIconID(97), "ui/uld/jobhudwhm");
+            AddTexSheet(GetSafeIconID(98), "ui/uld/journal");
+            AddTexSheet(GetSafeIconID(99), "ui/uld/journal_detail");
+            AddTexSheet(GetSafeIconID(100), "ui/uld/letterlist", true);
+            AddTexSheet(GetSafeIconID(101), "ui/uld/letterlist2");
+            AddTexSheet(GetSafeIconID(102), "ui/uld/letterlist3");
+            AddTexSheet(GetSafeIconID(103), "ui/uld/letterviewer");
+            AddTexSheet(GetSafeIconID(104), "ui/uld/levelup2");
+            AddTexSheet(GetSafeIconID(105), "ui/uld/lfg");
+            AddTexSheet(GetSafeIconID(106), "ui/uld/linkshell");
+            AddTexSheet(GetSafeIconID(107), "ui/uld/lotterydaily");
+            AddTexSheet(GetSafeIconID(108), "ui/uld/lotteryweekly");
+            AddTexSheet(GetSafeIconID(109), "ui/uld/lovmheader");
+            AddTexSheet(GetSafeIconID(110), "ui/uld/lovmheadernum");
+            AddTexSheet(GetSafeIconID(111), "ui/uld/lovmpalette");
+            AddTexSheet(GetSafeIconID(112), "ui/uld/maincommand_icon");
+            AddTexSheet(GetSafeIconID(113), "ui/uld/minerbotanist");
+            AddTexSheet(GetSafeIconID(114), "ui/uld/minionnotebook");
+            AddTexSheet(GetSafeIconID(115), "ui/uld/minionnotebookykw");
+            AddTexSheet(GetSafeIconID(116), "ui/uld/mirageprismplate2");
+            AddTexSheet(GetSafeIconID(117), "ui/uld/navimap");
+            AddTexSheet(GetSafeIconID(118), "ui/uld/negotiation");
+            AddTexSheet(GetSafeIconID(119), "ui/uld/nikuaccepted");
+            AddTexSheet(GetSafeIconID(120), "ui/uld/numericstepperb");
+            AddTexSheet(GetSafeIconID(121), "ui/uld/orchestrionplaylist");
+            AddTexSheet(GetSafeIconID(122), "ui/uld/partyfinder");
+            AddTexSheet(GetSafeIconID(123), "ui/uld/performance");
+            AddTexSheet(GetSafeIconID(124), "ui/uld/puzzle");
+            AddTexSheet(GetSafeIconID(125), "ui/uld/pvpduelrequest");
+            AddTexSheet(GetSafeIconID(126), "ui/uld/pvprankpromotionqualifier");
+            AddTexSheet(GetSafeIconID(127), "ui/uld/pvpscreeninformation");
+            AddTexSheet(GetSafeIconID(128), "ui/uld/pvpsimulationheader2");
+            AddTexSheet(GetSafeIconID(129), "ui/uld/pvpsimulationmachineselect");
+            AddTexSheet(GetSafeIconID(130), "ui/uld/pvpteam");
+            AddTexSheet(GetSafeIconID(131), "ui/uld/racechocoboranking");
+            AddTexSheet(GetSafeIconID(132), "ui/uld/racechocoboresult");
+            AddTexSheet(GetSafeIconID(133), "ui/uld/readycheck");
+            AddTexSheet(GetSafeIconID(134), "ui/uld/recipenotebook");
+            AddTexSheet(GetSafeIconID(135), "ui/uld/relic2growth");
+            AddTexSheet(GetSafeIconID(136), "ui/uld/retainer");
+            AddTexSheet(GetSafeIconID(137), "ui/uld/rhythmaction");
+            AddTexSheet(GetSafeIconID(138), "ui/uld/rhythmactionstatus");
+            AddTexSheet(GetSafeIconID(139), "ui/uld/roadstone");
+            AddTexSheet(GetSafeIconID(140), "ui/uld/satisfactionsupplyicon");
+            AddTexSheet(GetSafeIconID(141), "ui/uld/teleport");
+            AddTexSheet(GetSafeIconID(142), "ui/uld/todolist");
+            AddTexSheet(GetSafeIconID(143), "ui/uld/togglebutton");
+            AddTexSheet(GetSafeIconID(144), "ui/uld/weeklybingo");
+            AddTexSheet(GetSafeIconID(145), "ui/uld/worldtransrate");
         }
     }
 }
