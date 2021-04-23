@@ -1,4 +1,4 @@
-﻿using System.Numerics;
+using System.Numerics;
 using System.Collections.Generic;
 using System.Diagnostics;
 using ImGuiNET;
@@ -232,7 +232,17 @@ namespace QoLBar
                             pasteIcon = icon;
                             ImGui.SetClipboardText($"::{icon}");
                         }
-                        ImGuiEx.SetItemTooltip($"{icon}");
+                        if (ImGui.IsItemHovered())
+                        {
+                            if (!ImGui.IsMouseDown(ImGuiMouseButton.Right))
+                                ImGui.SetTooltip($"{icon}");
+                            else
+                            {
+                                ImGui.BeginTooltip();
+                                ImGui.Image(QoLBar.TextureDictionary[icon].ImGuiHandle, new Vector2(700 * Dalamud.Interface.ImGuiHelpers.GlobalScale));
+                                ImGui.EndTooltip();
+                            }
+                        }
                         if (_i % _columns != _columns - 1)
                             ImGui.SameLine();
                         _i++;
