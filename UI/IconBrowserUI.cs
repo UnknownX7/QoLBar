@@ -38,11 +38,12 @@ namespace QoLBar
             {
                 BeginIconList(" ★ ", iconSize);
                 AddIcons(0, 100, "System");
-                AddIcons(62_000, 62_600, "Class/Job Icons");
+                AddIcons(62_000, 62_600, "Class/Job");
                 AddIcons(62_800, 62_900, "Gearsets");
                 AddIcons(66_000, 66_400, "Macros");
                 AddIcons(90_000, 100_000, "FC Crests/Symbols");
-                AddIcons(114_000, 114_100, "New Game+ Icons");
+                AddIcons(114_000, 114_100, "New Game+");
+                AddIcons(1_000_000, 1_001_000, "Icon Sheets");
                 EndIconList();
 
                 BeginIconList("Custom", iconSize);
@@ -68,7 +69,7 @@ namespace QoLBar
                 AddIcons(61_290, 61_390, "Markers 2");
                 AddIcons(61_390, 62_000, "UI 2");
                 AddIcons(62_600, 62_620, "HQ FC Banners");
-                AddIcons(63_900, 64_000, "Map Icons");
+                AddIcons(63_900, 64_000, "Map Markers");
                 AddIcons(64_500, 64_600, "Stamps");
                 AddIcons(65_000, 65_900, "Currencies");
                 AddIcons(76_300, 78_000, "Group Pose");
@@ -83,7 +84,7 @@ namespace QoLBar
                 AddIcons(71_000, 71_500, "Quests");
                 AddIcons(72_000, 72_500, "BLU UI");
                 AddIcons(72_500, 76_000, "Bozja UI");
-                AddIcons(76_000, 76_300, "Mahjong");
+                AddIcons(76_000, 76_200, "Mahjong");
                 AddIcons(80_000, 80_200, "Quest Log");
                 AddIcons(80_730, 81_000, "Relic Log");
                 AddIcons(83_000, 84_000, "FC Ranks");
@@ -139,6 +140,7 @@ namespace QoLBar
                 AddIcons(66_500, 67_000, "Gardening Log");
                 AddIcons(69_000, 70_000, "Mount/Minion Footprints");
                 AddIcons(70_200, 71_000, "DoH/DoL Logs");
+                AddIcons(76_200, 76_300, "Fan Festival");
                 AddIcons(78_000, 80_000, "Fishing Log");
                 AddIcons(80_200, 80_730, "Notebooks");
                 AddIcons(81_000, 82_060, "Notebooks 2");
@@ -147,17 +149,20 @@ namespace QoLBar
                 AddIcons(150_000, 180_000, "Tutorials");
                 EndIconList();
 
-                BeginIconList("Spoilers", iconSize, QoLBar.Config.UseHRIcons);
+                BeginIconList("Spoilers", iconSize);
                 AddIcons(82_100, 83_000, "Triple Triad"); // Out of order because people might want to use these
-                AddIcons(71_500, 72_000, "Credits");
                 AddIcons(82_060, 82_100, "Trusts");
-                AddIcons(100_000, 114_000, "Quest Images");
-                AddIcons(114_100, 120_000, "New Game+");
                 AddIcons(120_000, 130_000, "Popup Texts");
                 AddIcons(142_000, 150_000, "Japanese Popup Texts");
                 AddIcons(180_060, 180_100, "Trusts Names");
                 AddIcons(181_000, 181_500, "Boss Titles");
                 AddIcons(181_500, 200_000, "Placeholder");
+                EndIconList();
+
+                BeginIconList("Spoilers 2", iconSize, QoLBar.Config.UseHRIcons);
+                AddIcons(71_500, 72_000, "Credits");
+                AddIcons(100_000, 114_000, "Quest Images");
+                AddIcons(114_100, 120_000, "New Game+");
                 EndIconList();
 
                 ImGui.EndTabBar();
