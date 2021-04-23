@@ -101,7 +101,7 @@ namespace QoLBar
             get => _activated;
             set
             {
-                if (!value)
+                if (!value && !_activated)
                 {
                     foreach (var ui in children)
                         ui.ClearActivated();
