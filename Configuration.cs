@@ -114,6 +114,7 @@ namespace QoLBar
 
         public string PluginVersion = ".INITIAL";
         [JsonIgnore] public string PrevPluginVersion = string.Empty;
+        [JsonIgnore] public bool FirstStart = false;
 
         [JsonIgnore] public static DirectoryInfo ConfigFolder => QoLBar.Interface.ConfigDirectory;
         [JsonIgnore] private static DirectoryInfo iconFolder;
@@ -171,7 +172,7 @@ namespace QoLBar
 #pragma warning restore CS0612 // Type or member is obsolete
 
             if (BarCfgs.Count < 1)
-                BarCfgs.Add(new BarCfg { Editing = true });
+                FirstStart = true;
         }
 
         public void Save(bool failed = false)
