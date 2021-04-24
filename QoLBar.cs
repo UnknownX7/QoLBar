@@ -62,19 +62,20 @@ namespace QoLBar
         }
 
         public static IntPtr textActiveBoolPtr = IntPtr.Zero;
-        public static unsafe bool GameTextInputActive => (textActiveBoolPtr != IntPtr.Zero) && *(bool*)textActiveBoolPtr;
+        public static unsafe bool IsGameTextInputActive => (textActiveBoolPtr != IntPtr.Zero) && *(bool*)textActiveBoolPtr;
+        public static unsafe bool IsMacroRunning => *(int*)(raptureShellModule + 0x2C0) >= 0;
 
         // Command Execution
         private delegate void ProcessChatBoxDelegate(IntPtr uiModule, IntPtr message, IntPtr unused, byte a4);
         private delegate IntPtr GetModuleDelegate(IntPtr basePtr);
         private ProcessChatBoxDelegate ProcessChatBox;
-        public IntPtr uiModule = IntPtr.Zero;
+        public static IntPtr uiModule = IntPtr.Zero;
 
         // Macro Execution
         private delegate void ExecuteMacroDelegate(IntPtr raptureShellModule, IntPtr macro);
         private ExecuteMacroDelegate ExecuteMacro;
-        public IntPtr raptureShellModule = IntPtr.Zero;
-        public IntPtr raptureMacroModule = IntPtr.Zero;
+        public static IntPtr raptureShellModule = IntPtr.Zero;
+        public static IntPtr raptureMacroModule = IntPtr.Zero;
 
         public void Initialize(DalamudPluginInterface pInterface)
         {
@@ -363,8 +364,8 @@ namespace QoLBar
                 if (macroQueue.Count > 0)
                     CreateAndExecuteMacro();
 
-                // If we arent executing commands, slowly free the fake macro memory (possibly need to check if a macro is running as well)
-                if (freeMemQueue.Count > 0)
+                // If we arent executing commands, slowly free the fake macro memory
+                if (freeMemQueue.Count > 0 && !IsMacroRunning)
                     Marshal.FreeHGlobal(freeMemQueue.Dequeue());
             }
         }

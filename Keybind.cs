@@ -12,7 +12,7 @@ namespace QoLBar
         private static readonly byte[] keyState = new byte[256];
         private static readonly bool[] prevKeyState = new bool[keyState.Length];
         private static readonly bool[] keyPressed = new bool[keyState.Length];
-        private static bool Disabled => QoLBar.GameTextInputActive || !QoLBar.IsGameFocused || ImGui.GetIO().WantCaptureKeyboard;
+        private static bool Disabled => QoLBar.IsGameTextInputActive || !QoLBar.IsGameFocused || ImGui.GetIO().WantCaptureKeyboard;
 
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
