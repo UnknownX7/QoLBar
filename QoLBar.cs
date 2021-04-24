@@ -537,6 +537,9 @@ namespace QoLBar
 
             textureDictionaryLR.Dispose();
             textureDictionaryHR.Dispose();
+
+            while (freeMemQueue.Count > 0)
+                Marshal.FreeHGlobal(freeMemQueue.Dequeue());
         }
 
         public void Dispose()
