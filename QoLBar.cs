@@ -7,7 +7,6 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Dynamic;
 using System.Linq.Expressions;
-using System.Threading.Tasks;
 using System.Diagnostics;
 using ImGuiNET;
 using Dalamud.Plugin;
@@ -17,7 +16,7 @@ using QoLBar.Attributes;
 
 // I'm too lazy to make a file just for this
 [assembly: AssemblyTitle("QoLBar")]
-[assembly: AssemblyVersion("2.0.4.0")]
+[assembly: AssemblyVersion("2.0.4.1")]
 
 // Disclaimer: I have no idea what I'm doing.
 namespace QoLBar
@@ -73,7 +72,7 @@ namespace QoLBar
         public IntPtr raptureShellModule = IntPtr.Zero;
         public IntPtr raptureMacroModule = IntPtr.Zero;
 
-        public async void Initialize(DalamudPluginInterface pInterface)
+        public void Initialize(DalamudPluginInterface pInterface)
         {
             Plugin = this;
 
@@ -92,9 +91,6 @@ namespace QoLBar
             CheckHideOptOuts();
 
             commandManager = new PluginCommandManager();
-
-            while (!Config.AlwaysDisplayBars && !ui.configOpen && !IsLoggedIn())
-                await Task.Delay(1000);
 
             ReadyPlugin();
             SetupIPC();
