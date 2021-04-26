@@ -632,41 +632,11 @@ namespace QoLBar
                         frameArg = !frameArg;
                 }
 
-                ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
-
-                if (frameArg)
-                {
-                    ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Vector4.Zero);
-                    ImGui.PushStyleColor(ImGuiCol.ButtonActive, Vector4.Zero);
-                }
-
-                var z = 0.5f / zoom;
-                var uv0 = new Vector2(0.5f - z + offset.X, 0.5f - z + offset.Y);
-                var uv1 = new Vector2(0.5f + z + offset.X, 0.5f + z + offset.Y);
                 if (!noButton)
-                    ret = ImGui.ImageButton(tex.ImGuiHandle, size, uv0, uv1, 0, Vector4.Zero, tint);
+                    ret = ImGuiEx.IconButton(tex, size, zoom, offset, ImGui.ColorConvertFloat4ToU32(tint), frameArg);
                 else
-                    ImGui.Image(tex.ImGuiHandle, size, uv0, uv1, tint);
+                    ImGuiEx.Icon(tex, size, zoom, offset, ImGui.ColorConvertFloat4ToU32(tint), frameArg);
 
-                if (frameArg)
-                {
-                    var frame = QoLBar.TextureDictionary[TextureDictionary.FrameIconID];
-                    if (frame != null && frame.ImGuiHandle != IntPtr.Zero)
-                    {
-                        var _sizeInc = size * 0.075f;
-                        var _rMin = ImGui.GetItemRectMin() - _sizeInc;
-                        var _rMax = ImGui.GetItemRectMax() + _sizeInc;
-                        ImGui.GetWindowDrawList().AddImage(frame.ImGuiHandle, _rMin, _rMax, iconFrameUV0, iconFrameUV1); // Frame
-                        if (!noButton && ImGui.IsItemHovered(ImGuiHoveredFlags.RectOnly))
-                        {
-                            ImGui.GetWindowDrawList().AddImage(frame.ImGuiHandle, _rMin, _rMax, iconHoverUV0, iconHoverUV1, 0x85FFFFFF); // Frame Center Glow
-                            //ImGui.GetWindowDrawList().AddImage(_buttonshine.ImGuiHandle, _rMin - (_sizeInc * 1.5f), _rMax + (_sizeInc * 1.5f), iconHoverFrameUV0, iconHoverFrameUV1); // Edge glow // TODO: Probably somewhat impossible as is, but fix glow being clipped
-                        }
-                        // TODO: Find a way to do the click animation
-                    }
-                }
-
-                ImGui.PopStyleColor(frameArg ? 3 : 1);
                 if (retExists)
                     ret = true;
             }

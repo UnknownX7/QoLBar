@@ -68,25 +68,63 @@ namespace QoLBar
             return b;
         }
 
-        // Doesn't really work
-        /*public static bool IsWindowDragging() => ImGui.IsWindowFocused() && !ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.IsMouseDragging(ImGuiMouseButton.Left, 0);
-
-        private static bool _beganDrag = false;
-        public static bool OnStartWindowDrag()
+        public static void AddIcon(this ImDrawListPtr drawList, ImGuiScene.TextureWrap tex, Vector2 pos, Vector2 size, Vector2 uv1, Vector2 uv3, uint color, bool hovered, bool frame)
         {
-            if (!_beganDrag)
-                return _beganDrag = IsWindowDragging();
-            else
-                return false;
+            if (tex != null)
+            {
+                var p1 = pos;
+                var p2 = pos + new Vector2(size.X, 0);
+                var p3 = pos + size;
+                var p4 = pos + new Vector2(0, size.Y);
+                var uv2 = new Vector2(uv3.X, uv1.Y);
+                var uv4 = new Vector2(uv1.X, uv3.Y);
+
+                if (hovered && !frame)
+                    drawList.AddRectFilled(p1, p3, ImGui.GetColorU32(ImGuiCol.ButtonHovered));
+
+                drawList.AddImageQuad(tex.ImGuiHandle, p1, p2, p3, p4, uv1, uv2, uv3, uv4, color);
+
+                if (frame)
+                    drawList.AddIconFrame(pos, size, hovered);
+            }
         }
 
-        public static bool OnStopWindowDrag()
+        public static void AddIconFrame(this ImDrawListPtr drawList, Vector2 pos, Vector2 size, bool hovered)
         {
-            if (_beganDrag)
-                return !(_beganDrag = !ImGui.IsMouseReleased(ImGuiMouseButton.Left));
-            else
-                return false;
-        }*/
+            var frameSheet = QoLBar.TextureDictionary[TextureDictionary.FrameIconID];
+            if (frameSheet != null && frameSheet.ImGuiHandle != IntPtr.Zero)
+            {
+                var _sizeInc = size * 0.075f;
+                var _rMin = pos - _sizeInc;
+                var _rMax = pos + size + _sizeInc;
+                drawList.AddImage(frameSheet.ImGuiHandle, _rMin, _rMax, ShortcutUI.iconFrameUV0, ShortcutUI.iconFrameUV1); // Frame
+                if (hovered)
+                    drawList.AddImage(frameSheet.ImGuiHandle, _rMin, _rMax, ShortcutUI.iconHoverUV0, ShortcutUI.iconHoverUV1, 0x85FFFFFF); // Frame Center Glow
+                //drawList.AddImage(_buttonshine.ImGuiHandle, _rMin - (_sizeInc * 1.5f), _rMax + (_sizeInc * 1.5f), iconHoverFrameUV0, iconHoverFrameUV1); // Edge glow // TODO: Probably somewhat impossible as is, but fix glow being clipped
+                // TODO: Find a way to do the click animation
+            }
+        }
+
+        private static void DrawIcon(ImGuiScene.TextureWrap icon, Vector2 size, float zoom, Vector2 offset, uint color, bool hovered, bool frame)
+        {
+            var z = 0.5f / zoom;
+            var uv0 = new Vector2(0.5f - z + offset.X, 0.5f - z + offset.Y);
+            var uv1 = new Vector2(0.5f + z + offset.X, 0.5f + z + offset.Y);
+            ImGui.GetWindowDrawList().AddIcon(icon, ImGui.GetItemRectMin(), size, uv0, uv1, color, hovered, frame);
+        }
+
+        public static void Icon(ImGuiScene.TextureWrap icon, Vector2 size, float zoom, Vector2 offset, uint color, bool frame)
+        {
+            ImGui.Dummy(size);
+            DrawIcon(icon, size, zoom, offset, color, false, frame);
+        }
+
+        public static bool IconButton(ImGuiScene.TextureWrap icon, Vector2 size, float zoom, Vector2 offset, uint color, bool frame)
+        {
+            var ret = ImGui.InvisibleButton("IconInvisibleButton", size);
+            DrawIcon(icon, size, zoom, offset, color, ImGui.IsItemHovered(ImGuiHoveredFlags.RectOnly), frame);
+            return ret;
+        }
     }
 
     // Modified version of https://gist.github.com/thennequin/64b4b996ec990c6ddc13a48c6a0ba68c

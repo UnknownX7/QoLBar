@@ -159,12 +159,9 @@ namespace QoLBar
                         var offsetX = sh.IconOffset[0];
                         var offsetY = sh.IconOffset[1];
                         var size = new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2);
-                        var texMin = center - size / 2;
-                        var texMax = texMin + size;
+                        var pos = center - size / 2;
                         var uv0 = new Vector2(0.5f - z + offsetX, 0.5f - z + offsetY);
                         var uv1 = new Vector2(0.5f + z + offsetX, 0.5f + z + offsetY);
-
-                        drawList.AddImage(tex.ImGuiHandle, texMin, texMax, uv0, uv1, color);
 
                         var frameArg = false;
                         if (hasArgs)
@@ -174,19 +171,9 @@ namespace QoLBar
                                 frameArg = !frameArg;
                         }
 
-                        if (frameArg)
-                        {
-                            var frame = QoLBar.TextureDictionary[TextureDictionary.FrameIconID];
-                            if (frame != null && frame.ImGuiHandle != IntPtr.Zero)
-                            {
-                                var _sizeInc = size * 0.075f;
-                                var _rMin = texMin - _sizeInc;
-                                var _rMax = texMax + _sizeInc;
-                                drawList.AddImage(frame.ImGuiHandle, _rMin, _rMax, ShortcutUI.iconFrameUV0, ShortcutUI.iconFrameUV1); // Frame
-                                if (hovered)
-                                    drawList.AddImage(frame.ImGuiHandle, _rMin, _rMax, ShortcutUI.iconHoverUV0, ShortcutUI.iconHoverUV1, 0x85FFFFFF); // Frame Center Glow
-                            }
-                        }
+                        ImGui.PushStyleColor(ImGuiCol.ButtonHovered, 0);
+                        drawList.AddIcon(tex, pos, size, uv0, uv1, color, hovered, frameArg);
+                        ImGui.PopStyleColor();
                     }
                 }
                 else
