@@ -33,7 +33,7 @@ namespace QoLBar
                 return flags;
             }
         }
-        private Vector2 VectorPosition => IsDocked
+        public Vector2 VectorPosition => IsDocked
             ? new Vector2((float)Math.Floor(Config.Position[0] * window.X), (float)Math.Floor(Config.Position[1] * window.Y)) //+ ImGuiHelpers.MainViewport.Pos
             : new Vector2((float)Math.Floor(Config.Position[0] * monitor.X), (float)Math.Floor(Config.Position[1] * monitor.Y));
 
@@ -111,7 +111,7 @@ namespace QoLBar
         }
 
         private bool _firstframe = true;
-        private bool _setPos = true;
+        public bool _setPos = true; // TODO
         private bool _lastReveal = true;
         private bool _mouseRevealed = false;
         private Vector2 _tweenStart;
@@ -130,7 +130,7 @@ namespace QoLBar
 
         public bool CheckConditionSet() => Config.ConditionSet < 0 || Config.ConditionSet >= QoLBar.Config.ConditionSets.Count || QoLBar.Config.ConditionSets[Config.ConditionSet].CheckConditions();
 
-        private void SetupPivot()
+        public void SetupPivot()
         {
             var alignPiv = Config.Alignment switch
             {
@@ -530,137 +530,13 @@ namespace QoLBar
                 {
                     if (ImGui.BeginTabItem("General"))
                     {
-                        if (ImGui.InputText("Name", ref Config.Name, 256))
-                            QoLBar.Config.Save();
-
-                        var _dock = (int)Config.DockSide;
-                        if (ImGui.Combo("Side", ref _dock, "Top\0Right\0Bottom\0Left\0Undocked"))
-                        {
-                            Config.DockSide = (BarDock)_dock;
-                            if (Config.DockSide == BarDock.Undocked && Config.Visibility == BarVisibility.Slide)
-                                Config.Visibility = BarVisibility.Always;
-                            Config.Position[0] = 0;
-                            Config.Position[1] = 0;
-                            Config.LockedPosition = false;
-                            QoLBar.Config.Save();
-                            SetupPivot();
-                        }
-
-                        if (IsDocked)
-                        {
-                            var topbottom = Config.DockSide == BarDock.Top || Config.DockSide == BarDock.Bottom;
-                            var _align = (int)Config.Alignment;
-                            ImGui.Text("Alignment");
-                            ImGui.RadioButton(topbottom ? "Left" : "Top", ref _align, 0);
-                            ImGui.SameLine(ImGui.GetWindowWidth() / 3);
-                            ImGui.RadioButton("Center", ref _align, 1);
-                            ImGui.SameLine(ImGui.GetWindowWidth() / 3 * 2);
-                            ImGui.RadioButton(topbottom ? "Right" : "Bottom", ref _align, 2);
-                            if (_align != (int)Config.Alignment)
-                            {
-                                Config.Alignment = (BarAlign)_align;
-                                QoLBar.Config.Save();
-                                SetupPivot();
-                            }
-
-                            var _visibility = (int)Config.Visibility;
-                            ImGui.Text("Animation");
-                            ImGui.RadioButton("Slide", ref _visibility, 0);
-                            ImGui.SameLine(ImGui.GetWindowWidth() / 3);
-                            ImGui.RadioButton("Immediate", ref _visibility, 1);
-                            ImGui.SameLine(ImGui.GetWindowWidth() / 3 * 2);
-                            ImGui.RadioButton("Always Visible", ref _visibility, 2);
-                            if (_visibility != (int)Config.Visibility)
-                            {
-                                Config.Visibility = (BarVisibility)_visibility;
-                                QoLBar.Config.Save();
-                            }
-
-                            if ((Config.Visibility != BarVisibility.Always) && ImGui.DragFloat("Reveal Area Scale", ref Config.RevealAreaScale, 0.01f, 0.0f, 1.0f, "%.2f"))
-                                QoLBar.Config.Save();
-                        }
-                        else
-                        {
-                            var _visibility = (int)Config.Visibility;
-                            ImGui.Text("Animation");
-                            ImGui.RadioButton("Immediate", ref _visibility, 1);
-                            ImGui.SameLine(ImGui.GetWindowWidth() / 2);
-                            ImGui.RadioButton("Always Visible", ref _visibility, 2);
-                            if (_visibility != (int)Config.Visibility)
-                            {
-                                Config.Visibility = (BarVisibility)_visibility;
-                                QoLBar.Config.Save();
-                            }
-                        }
-
-                        if (Keybind.KeybindInput(Config))
-                            tempDisableHotkey = 3; // Takes 2 frames before the game detects this as being held down
-
-                        if (ImGui.Checkbox("Edit Mode", ref Config.Editing))
-                        {
-                            if (!Config.Editing)
-                                QoLBar.Plugin.ExecuteCommand("/echo <se> You can right click on the bar itself (the black background) to reopen this settings menu! You can also use shift + right click to add a new shortcut as well.");
-                            QoLBar.Config.Save();
-                        }
-                        ImGui.SameLine(ImGui.GetWindowWidth() / 2);
-                        if (ImGui.Checkbox("Lock Position", ref Config.LockedPosition))
-                            QoLBar.Config.Save();
-
-                        if (!Config.LockedPosition)
-                        {
-                            var pos = VectorPosition;
-                            var area = UsableArea;
-                            var max = (area.X > area.Y) ? area.X : area.Y;
-                            if (ImGui.DragFloat2(IsDocked ? "Offset" : "Position", ref pos, 1, -max, max, "%.f"))
-                            {
-                                Config.Position[0] = Math.Min(pos.X / area.X, 1);
-                                Config.Position[1] = Math.Min(pos.Y / area.Y, 1);
-                                QoLBar.Config.Save();
-                                if (IsDocked)
-                                    SetupPivot();
-                                else
-                                    _setPos = true;
-                            }
-                        }
-
-                        if (IsDocked && Config.Visibility != BarVisibility.Always)
-                        {
-                            if (ImGui.Checkbox("Hint", ref Config.Hint))
-                                QoLBar.Config.Save();
-                            ImGuiEx.SetItemTooltip("Will prevent the bar from sleeping, increasing CPU load.");
-                        }
-
+                        ConfigEditorUI.EditBarGeneralOptions(this);
                         ImGui.EndTabItem();
                     }
 
                     if (ImGui.BeginTabItem("Style"))
                     {
-                        if (ImGui.SliderInt("Button Width", ref Config.ButtonWidth, 0, 200))
-                            QoLBar.Config.Save();
-                        ImGuiEx.SetItemTooltip("Set to 0 to use text width.");
-
-                        if (ImGui.SliderInt("Columns", ref Config.Columns, 0, 12))
-                            QoLBar.Config.Save();
-                        ImGuiEx.SetItemTooltip("Number of shortcuts in each row before starting another.\n" +
-                            "Set to 0 to specify infinite.");
-
-                        if (ImGui.DragFloat("Scale", ref Config.Scale, 0.002f, 0.7f, 2.0f, "%.2f"))
-                            QoLBar.Config.Save();
-
-                        if (ImGui.DragFloat("Font Scale", ref Config.FontScale, 0.0018f, 0.5f, 1.0f, "%.2f"))
-                            QoLBar.Config.Save();
-
-                        var spacing = new Vector2(Config.Spacing[0], Config.Spacing[1]);
-                        if (ImGui.DragFloat2("Spacing", ref spacing, 0.12f, 0, 32, "%.f"))
-                        {
-                            Config.Spacing[0] = (int)spacing.X;
-                            Config.Spacing[1] = (int)spacing.Y;
-                            QoLBar.Config.Save();
-                        }
-
-                        if (ImGui.Checkbox("No Background", ref Config.NoBackground))
-                            QoLBar.Config.Save();
-
+                        ConfigEditorUI.EditBarStyleOptions(this);
                         ImGui.EndTabItem();
                     }
 

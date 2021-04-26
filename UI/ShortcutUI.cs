@@ -31,7 +31,7 @@ namespace QoLBar
         private bool IsConfigPopupOpen() => QoLBar.Plugin.ui.IsConfigPopupOpen();
         private void SetConfigPopupOpen() => QoLBar.Plugin.ui.SetConfigPopupOpen();
 
-        private int _i = 0;
+        public int _i = 0;
         public ShortcutUI DisplayedUI => (Config.Type == ShortcutType.Category && Config.Mode != ShortcutMode.Default && children.Count > 0) ? children[Math.Min(_i, children.Count - 1)] : this;
 
         public bool _activated = false;
@@ -324,49 +324,12 @@ namespace QoLBar
                 {
                     if (ImGui.BeginTabItem("Shortcut"))
                     {
-                        ItemBaseUI(Config, true);
+                        ConfigEditorUI.EditShortcutConfigBase(Config, true);
 
                         if (Config.Type != ShortcutType.Spacer)
-                        {
-                            var _m = (int)Config.Mode;
-                            ImGui.TextUnformatted("Mode");
-                            ImGuiEx.SetItemTooltip("Changes the behavior when pressed.\n" +
-                                "Note: Not intended to be used with categories containing subcategories.");
+                            ConfigEditorUI.EditShortcutMode(this);
 
-                            ImGui.RadioButton("Default", ref _m, 0);
-                            ImGuiEx.SetItemTooltip("Default behavior, categories must be set to this to edit their shortcuts!");
-
-                            ImGui.SameLine(ImGui.GetWindowWidth() / 3);
-                            ImGui.RadioButton("Incremental", ref _m, 1);
-                            ImGuiEx.SetItemTooltip("Executes each line/shortcut in order over multiple presses.");
-
-                            ImGui.SameLine(ImGui.GetWindowWidth() / 3 * 2);
-                            ImGui.RadioButton("Random", ref _m, 2);
-                            ImGuiEx.SetItemTooltip("Executes a random line/shortcut when pressed.");
-
-                            if (_m != (int)Config.Mode)
-                            {
-                                Config.Mode = (ShortcutMode)_m;
-                                QoLBar.Config.Save();
-
-                                if (Config.Mode == ShortcutMode.Random)
-                                {
-                                    var c = Math.Max(1, (Config.Type == ShortcutType.Category) ? children.Count : Config.Command.Split('\n').Length);
-                                    _i = (int)(QoLBar.GetFrameCount() % c);
-                                }
-                                else
-                                    _i = 0;
-                            }
-                        }
-
-                        var color = ImGui.ColorConvertU32ToFloat4(Config.Color);
-                        color.W += Config.ColorAnimation / 255f; // Temporary
-                        if (ImGui.ColorEdit4("Color", ref color, ImGuiColorEditFlags.NoDragDrop | ImGuiColorEditFlags.AlphaPreviewHalf))
-                        {
-                            Config.Color = ImGui.ColorConvertFloat4ToU32(color);
-                            Config.ColorAnimation = Math.Max((int)Math.Round(color.W * 255) - 255, 0);
-                            QoLBar.Config.Save();
-                        }
+                        ConfigEditorUI.EditShortcutColor(this);
 
                         if (Config.Type != ShortcutType.Spacer)
                             Keybind.KeybindInput(Config);
@@ -376,71 +339,13 @@ namespace QoLBar
 
                     if (Config.Type == ShortcutType.Category && ImGui.BeginTabItem("Category"))
                     {
-                        if (ImGui.SliderInt("Button Width", ref Config.CategoryWidth, 0, 200))
-                            QoLBar.Config.Save();
-                        ImGuiEx.SetItemTooltip("Set to 0 to use text width.");
-
-                        if (ImGui.SliderInt("Columns", ref Config.CategoryColumns, 0, 12))
-                            QoLBar.Config.Save();
-                        ImGuiEx.SetItemTooltip("Number of shortcuts in each row before starting another.\n" +
-                            "Set to 0 to specify infinite.");
-
-                        if (ImGui.DragFloat("Scale", ref Config.CategoryScale, 0.002f, 0.7f, 1.5f, "%.2f"))
-                            QoLBar.Config.Save();
-
-                        if (ImGui.DragFloat("Font Scale", ref Config.CategoryFontScale, 0.0018f, 0.5f, 1.0f, "%.2f"))
-                            QoLBar.Config.Save();
-
-                        var spacing = new Vector2(Config.CategorySpacing[0], Config.CategorySpacing[1]);
-                        if (ImGui.DragFloat2("Spacing", ref spacing, 0.12f, 0, 32, "%.f"))
-                        {
-                            Config.CategorySpacing[0] = (int)spacing.X;
-                            Config.CategorySpacing[1] = (int)spacing.Y;
-                            QoLBar.Config.Save();
-                        }
-
-                        if (ImGui.Checkbox("Open on Hover", ref Config.CategoryOnHover))
-                            QoLBar.Config.Save();
-                        ImGui.SameLine(ImGui.GetWindowWidth() / 2);
-                        if (ImGui.Checkbox("Stay Open on Selection", ref Config.CategoryStaysOpen))
-                            QoLBar.Config.Save();
-                        ImGuiEx.SetItemTooltip("Keeps the category open when pressing shortcuts within it.\nMay not work if the shortcut interacts with other plugins.");
-
-                        if (ImGui.Checkbox("No Background", ref Config.CategoryNoBackground))
-                            QoLBar.Config.Save();
-
+                        ConfigEditorUI.EditShortcutCategoryOptions(this);
                         ImGui.EndTabItem();
                     }
 
                     if (hasIcon && ImGui.BeginTabItem("Icon"))
                     {
-                        // Name is available here for ease of access since it pertains to the icon as well
-                        if (IconBrowserUI.iconBrowserOpen && IconBrowserUI.doPasteIcon)
-                        {
-                            var split = Config.Name.Split(new[] { "##" }, 2, StringSplitOptions.None);
-                            Config.Name = $"::{IconBrowserUI.pasteIcon}" + (split.Length > 1 ? $"##{split[1]}" : "");
-                            QoLBar.Config.Save();
-                            IconBrowserUI.doPasteIcon = false;
-                        }
-                        if (ImGui.InputText("Name", ref Config.Name, 256))
-                            QoLBar.Config.Save();
-                        ImGuiEx.SetItemTooltip("Icons accept arguments between \"::\" and their ID. I.e. \"::f21\".\n" +
-                            "\t' f ' - Applies the hotbar frame (or removes it if applied globally).\n" +
-                            "\t' l ' - Uses the low resolution icon.\n" +
-                            "\t' h ' - Uses the high resolution icon if it exists.\n" +
-                            "\t' _ ' - Disables arguments, including implicit ones. Cannot be used with others.");
-
-                        if (ImGui.DragFloat("Zoom", ref Config.IconZoom, 0.005f, 1.0f, 5.0f, "%.2f"))
-                            QoLBar.Config.Save();
-
-                        var offset = new Vector2(Config.IconOffset[0], Config.IconOffset[1]);
-                        if (ImGui.DragFloat2("Offset", ref offset, 0.002f, -0.5f, 0.5f, "%.2f"))
-                        {
-                            Config.IconOffset[0] = offset.X;
-                            Config.IconOffset[1] = offset.Y;
-                            QoLBar.Config.Save();
-                        }
-
+                        ConfigEditorUI.EditShortcutIconOptions(this);
                         ImGui.EndTabItem();
                     }
 
@@ -628,46 +533,6 @@ namespace QoLBar
                 "Additionally, while the browser is open it will autofill the \"Name\" of shortcuts.");
         }
 
-        public static void ItemBaseUI(ShCfg sh, bool editing)
-        {
-            if (IconBrowserUI.iconBrowserOpen && IconBrowserUI.doPasteIcon)
-            {
-                var split = sh.Name.Split(new[] { "##" }, 2, StringSplitOptions.None);
-                sh.Name = $"::{IconBrowserUI.pasteIcon}" + (split.Length > 1 ? $"##{split[1]}" : "");
-                if (editing)
-                    QoLBar.Config.Save();
-                IconBrowserUI.doPasteIcon = false;
-            }
-            if (ImGui.InputText("Name                    ", ref sh.Name, 256) && editing) // Not a bug... just want the window to not change width depending on which type it is...
-                QoLBar.Config.Save();
-            ImGuiEx.SetItemTooltip("Start the name with ::x where x is a number to use icons, i.e. \"::2914\".\n" +
-                "Use ## anywhere in the name to make the text afterwards into a tooltip,\ni.e. \"Name##This is a Tooltip\".");
-
-            var _t = (int)sh.Type;
-            ImGui.TextUnformatted("Type");
-            ImGui.RadioButton("Command", ref _t, 0);
-            ImGui.SameLine(ImGui.GetWindowWidth() / 3);
-            ImGui.RadioButton("Category", ref _t, 1);
-            ImGui.SameLine(ImGui.GetWindowWidth() / 3 * 2);
-            ImGui.RadioButton("Spacer", ref _t, 2);
-            if (_t != (int)sh.Type)
-            {
-                sh.Type = (ShortcutType)_t;
-                if (sh.Type == ShortcutType.Category)
-                    sh.SubList ??= new List<ShCfg>();
-
-                if (editing)
-                    QoLBar.Config.Save();
-            }
-
-            if (sh.Type != ShortcutType.Spacer && (sh.Type != ShortcutType.Category || sh.Mode == ShortcutMode.Default))
-            {
-                var height = ImGui.GetFontSize() * Math.Min(sh.Command.Split('\n').Length + 1, 7) + Style.FramePadding.Y * 2; // ImGui issue #238: can't disable multiline scrollbar and it appears a whole line earlier than it should, so thats cool I guess
-                if (ImGui.InputTextMultiline("Command##Input", ref sh.Command, 65535, new Vector2(0, height)) && editing)
-                    QoLBar.Config.Save();
-            }
-        }
-
         public static void DrawAddShortcut(BarUI barUI, ShortcutUI shUI)
         {
             if (ImGui.BeginPopup("addShortcut"))
@@ -678,7 +543,7 @@ namespace QoLBar
 
                 BarUI.tempSh ??= new ShCfg();
                 var newSh = BarUI.tempSh;
-                ItemBaseUI(newSh, false);
+                ConfigEditorUI.EditShortcutConfigBase(newSh, false);
 
                 if (ImGui.Button("Create"))
                 {
