@@ -136,13 +136,13 @@ namespace QoLBar
 
                     if (active)
                     {
-                        var animTime = ImGui.GetIO().MouseDownDuration[0] / 0.1f;
-                        if (animTime < 1)
+                        var animTime = ImGui.GetIO().MouseDownDuration[0] / 0.2f;
+                        if (animTime < 1.5)
                         {
                             var halfSize = size / 2;
                             var center = pos + halfSize;
                             var animSize = halfSize * animTime;
-                            drawList.AddImage(frameSheet.ImGuiHandle, center - animSize, center + animSize, iconClickUV0, iconClickUV1, 0x85FFFFFF); // Click
+                            drawList.AddImage(frameSheet.ImGuiHandle, center - animSize, center + animSize, iconClickUV0, iconClickUV1, ImGui.ColorConvertFloat4ToU32(new Vector4(1, 1, 1, 1 - 0.6f * animTime))); // Click
                         }
                     }
                 }
