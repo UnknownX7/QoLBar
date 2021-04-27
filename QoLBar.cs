@@ -41,8 +41,10 @@ namespace QoLBar
         private readonly Queue<IntPtr> freeMemQueue = new Queue<IntPtr>();
 
         public static TextureDictionary TextureDictionary => Config.UseHRIcons ? textureDictionaryHR : textureDictionaryLR;
-        public static readonly TextureDictionary textureDictionaryLR = new TextureDictionary(false);
-        public static readonly TextureDictionary textureDictionaryHR = new TextureDictionary(true);
+        public static readonly TextureDictionary textureDictionaryLR = new TextureDictionary(false, false);
+        public static readonly TextureDictionary textureDictionaryHR = new TextureDictionary(true, false);
+        public static readonly TextureDictionary textureDictionaryGSLR = new TextureDictionary(false, true);
+        public static readonly TextureDictionary textureDictionaryGSHR = new TextureDictionary(true, true);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)] private static extern IntPtr GetForegroundWindow();
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)] private static extern int GetWindowThreadProcessId(IntPtr handle, out int processId);
@@ -135,6 +137,7 @@ namespace QoLBar
 
             textureDictionaryLR.LoadTexture(46); // Magnifying glass / Search
             TextureDictionary.AddExtraTextures(textureDictionaryLR, textureDictionaryHR);
+            TextureDictionary.AddExtraTextures(textureDictionaryGSLR, textureDictionaryGSHR);
 
             InitializePointers();
 
@@ -252,6 +255,24 @@ namespace QoLBar
         bool _addUserIcons = false;
         private bool AddUserIcons(ref bool b) => b = !TextureDictionary.AddUserIcons(Config.GetPluginIconPath());
         public void AddUserIcons() => _addUserIcons = true;
+
+        public static void CleanTextures(bool disposing)
+        {
+            if (disposing)
+            {
+                textureDictionaryLR.Dispose();
+                textureDictionaryHR.Dispose();
+                textureDictionaryGSLR.Dispose();
+                textureDictionaryGSHR.Dispose();
+            }
+            else
+            {
+                textureDictionaryLR.TryEmpty();
+                textureDictionaryHR.TryEmpty();
+                textureDictionaryGSLR.TryEmpty();
+                textureDictionaryGSHR.TryEmpty();
+            }
+        }
 
         public static void PrintEcho(string message) => Interface.Framework.Gui.Chat.Print($"[QoLBar] {message}");
         public static void PrintError(string message) => Interface.Framework.Gui.Chat.PrintError($"[QoLBar] {message}");
@@ -535,8 +556,7 @@ namespace QoLBar
 
             ui.Dispose();
 
-            textureDictionaryLR.Dispose();
-            textureDictionaryHR.Dispose();
+            CleanTextures(true);
 
             while (freeMemQueue.Count > 0)
                 Marshal.FreeHGlobal(freeMemQueue.Dequeue());
@@ -558,6 +578,29 @@ namespace QoLBar
                 return (T2)attribute.Value;
             else
                 return default;
+        }
+
+        public static byte[] GetGrayscaleImageData(this Lumina.Data.Files.TexFile tex)
+        {
+            var rgba = Dalamud.Data.LuminaExtensions.TexFileExtensions.GetRgbaImageData(tex);
+            var pixels = rgba.Length / 4;
+            var newData = new byte[rgba.Length];
+            for (int i = 0; i < pixels; i++)
+            {
+                var pixel = i * 4;
+                var alpha = rgba[pixel + 3];
+
+                if (alpha > 0)
+                {
+                    var avg = (byte)(0.2125f * rgba[pixel] + 0.7154f * rgba[pixel + 1] + 0.0721f * rgba[pixel + 2]);
+                    newData[pixel] = avg;
+                    newData[pixel + 1] = avg;
+                    newData[pixel + 2] = avg;
+                }
+
+                newData[pixel + 3] = alpha;
+            }
+            return newData;
         }
     }
 }

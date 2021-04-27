@@ -171,7 +171,7 @@ namespace QoLBar
 
             if (!iconBrowserOpen && cleaningIconsOnClose)
             {
-                QoLBar.TextureDictionary.TryEmpty();
+                QoLBar.CleanTextures(false);
                 cleaningIconsOnClose = false;
             }
         }

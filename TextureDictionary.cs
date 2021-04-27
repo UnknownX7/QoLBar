@@ -22,9 +22,14 @@ namespace QoLBar
         private readonly ConcurrentQueue<(bool, Task)> loadQueue = new ConcurrentQueue<(bool, Task)>();
         private Task loadTask;
         private readonly bool useHR = false;
+        private readonly bool useGrayscale = false;
         public bool IsEmptying { get; private set; } = false;
 
-        public TextureDictionary(bool hr) => useHR = hr;
+        public TextureDictionary(bool hr, bool gs)
+        {
+            useHR = hr;
+            useGrayscale = gs;
+        }
 
         public new TextureWrap this[int k]
         {
@@ -169,9 +174,9 @@ namespace QoLBar
 
         private TextureWrap LoadTextureWrapSquare(Lumina.Data.Files.TexFile tex)
         {
+            var imageData = !useGrayscale ? tex.GetRgbaImageData() : tex.GetGrayscaleImageData();
             if (tex.Header.Width > tex.Header.Height)
             {
-                var imageData = tex.GetRgbaImageData();
                 var newData = new byte[tex.Header.Width * tex.Header.Width * 4];
                 var diff = (int)Math.Floor((tex.Header.Width - tex.Header.Height) / 2f);
                 imageData.CopyTo(newData, diff * tex.Header.Width * 4);
@@ -179,7 +184,6 @@ namespace QoLBar
             }
             else if (tex.Header.Width < tex.Header.Height)
             {
-                var imageData = tex.GetRgbaImageData();
                 var newData = new byte[tex.Header.Height * tex.Header.Height * 4];
                 var length = newData.Length / 4;
                 var imageDataPos = 0;
@@ -200,7 +204,7 @@ namespace QoLBar
             }
             else
             {
-                return QoLBar.Interface.UiBuilder.LoadImageRaw(tex.GetRgbaImageData(), tex.Header.Width, tex.Header.Height, 4);
+                return QoLBar.Interface.UiBuilder.LoadImageRaw(imageData, tex.Header.Width, tex.Header.Height, 4);
             }
         }
 

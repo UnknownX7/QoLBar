@@ -275,17 +275,11 @@ namespace QoLBar
             var _ = QoLBar.Config.UseHRIcons;
             if (ImGui.Checkbox("Use HR Icons", ref _))
             {
-                if (IconBrowserUI.cleaningIconsOnClose)
-                    QoLBar.PrintError("Please close the Icon Browser to change this option.");
-                else
-                {
-                    QoLBar.Config.UseHRIcons = _;
-                    QoLBar.Config.Save();
-                }
+                QoLBar.Config.UseHRIcons = _;
+                QoLBar.Config.Save();
             }
             ImGuiEx.SetItemTooltip("Loads the high resolution icons instead. Be aware that the Icon Browser will use\n" +
-                "up to 5GB of memory until closed if you open the \"Spoilers\" tabs!\n" +
-                "The Icon Browser may need to be closed in some cases to toggle it.");
+                "up to 5GB of memory until closed if you open the \"Spoilers\" tabs!");
 
             if (ImGui.Checkbox("Disable Condition Caching", ref QoLBar.Config.NoConditionCache))
                 QoLBar.Config.Save();
