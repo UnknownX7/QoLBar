@@ -177,7 +177,7 @@ namespace QoLBar
                         }
 
                         ImGui.PushStyleColor(ImGuiCol.ButtonHovered, 0);
-                        drawList.AddIcon(tex, pos, size, uv0, uv1, sh.IconRotation, hasArgs && args.Contains("r"), color, hovered, frameArg);
+                        drawList.AddIcon(tex, pos, size, uv0, uv1, sh.IconRotation, hasArgs && args.Contains("r"), color, hovered, false, frameArg);
                         ImGui.PopStyleColor();
                     }
                 }
