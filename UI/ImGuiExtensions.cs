@@ -77,7 +77,7 @@ namespace QoLBar
 
         public static Vector2 RotateVector(Vector2 v, float aCos, float aSin) => new Vector2(v.X * aCos - v.Y * aSin, v.X * aSin + v.Y * aCos);
 
-        public static void AddIcon(this ImDrawListPtr drawList, ImGuiScene.TextureWrap tex, Vector2 pos, Vector2 size, Vector2 uv1, Vector2 uv3, double rotation, uint color, bool hovered, bool frame)
+        public static void AddIcon(this ImDrawListPtr drawList, ImGuiScene.TextureWrap tex, Vector2 pos, Vector2 size, Vector2 uv1, Vector2 uv3, double rotation, bool flipped, uint color, bool hovered, bool frame)
         {
             if (tex != null)
             {
@@ -95,12 +95,22 @@ namespace QoLBar
                 if (hovered && !frame)
                     drawList.AddRectFilled(p1, p3, ImGui.GetColorU32(ImGuiCol.ButtonHovered));
 
-                drawList.AddImageQuad(tex.ImGuiHandle, p1, p2, p3, p4, uv1, uv2, uv3, uv4, color);
+                if (!flipped)
+                    drawList.AddImageQuad(tex.ImGuiHandle, p1, p2, p3, p4, uv1, uv2, uv3, uv4, color);
+                else
+                    drawList.AddImageQuad(tex.ImGuiHandle, p2, p1, p4, p3, uv1, uv2, uv3, uv4, color);
 
                 if (frame)
                     drawList.AddIconFrame(pos, size, hovered);
             }
         }
+
+        public static Vector2 iconFrameUV0 = new Vector2(1f / 426f, 141f / 426f);
+        public static Vector2 iconFrameUV1 = new Vector2(47f / 426f, 187f / 426f);
+        public static Vector2 iconHoverUV0 = new Vector2(49f / 426f, 238f / 426f);
+        public static Vector2 iconHoverUV1 = new Vector2(95f / 426f, 284f / 426f);
+        //public static Vector2 iconHoverFrameUV0 = new Vector2(248f / 426f, 149f / 426f);
+        //public static Vector2 iconHoverFrameUV1 = new Vector2(304f / 426f, 205f / 426f);
 
         public static void AddIconFrame(this ImDrawListPtr drawList, Vector2 pos, Vector2 size, bool hovered)
         {
@@ -110,32 +120,32 @@ namespace QoLBar
                 var _sizeInc = size * 0.075f;
                 var _rMin = pos - _sizeInc;
                 var _rMax = pos + size + _sizeInc;
-                drawList.AddImage(frameSheet.ImGuiHandle, _rMin, _rMax, ShortcutUI.iconFrameUV0, ShortcutUI.iconFrameUV1); // Frame
+                drawList.AddImage(frameSheet.ImGuiHandle, _rMin, _rMax, iconFrameUV0, iconFrameUV1); // Frame
                 if (hovered)
-                    drawList.AddImage(frameSheet.ImGuiHandle, _rMin, _rMax, ShortcutUI.iconHoverUV0, ShortcutUI.iconHoverUV1, 0x85FFFFFF); // Frame Center Glow
+                    drawList.AddImage(frameSheet.ImGuiHandle, _rMin, _rMax, iconHoverUV0, iconHoverUV1, 0x85FFFFFF); // Frame Center Glow
                 //drawList.AddImage(_buttonshine.ImGuiHandle, _rMin - (_sizeInc * 1.5f), _rMax + (_sizeInc * 1.5f), iconHoverFrameUV0, iconHoverFrameUV1); // Edge glow // TODO: Probably somewhat impossible as is, but fix glow being clipped
                 // TODO: Find a way to do the click animation
             }
         }
 
-        private static void DrawIcon(ImGuiScene.TextureWrap icon, Vector2 size, float zoom, Vector2 offset, double rotation, uint color, bool hovered, bool frame)
+        private static void DrawIcon(ImGuiScene.TextureWrap icon, Vector2 size, float zoom, Vector2 offset, double rotation, bool flipped, uint color, bool hovered, bool frame)
         {
             var z = 0.5f / zoom;
             var uv0 = new Vector2(0.5f - z + offset.X, 0.5f - z + offset.Y);
             var uv1 = new Vector2(0.5f + z + offset.X, 0.5f + z + offset.Y);
-            ImGui.GetWindowDrawList().AddIcon(icon, ImGui.GetItemRectMin(), size, uv0, uv1, rotation, color, hovered, frame);
+            ImGui.GetWindowDrawList().AddIcon(icon, ImGui.GetItemRectMin(), size, uv0, uv1, rotation, flipped, color, hovered, frame);
         }
 
-        public static void Icon(ImGuiScene.TextureWrap icon, Vector2 size, float zoom, Vector2 offset, double rotation, uint color, bool frame)
+        public static void Icon(ImGuiScene.TextureWrap icon, Vector2 size, float zoom, Vector2 offset, double rotation, bool flipped, uint color, bool frame)
         {
             ImGui.Dummy(size);
-            DrawIcon(icon, size, zoom, offset, rotation, color, false, frame);
+            DrawIcon(icon, size, zoom, offset, rotation, flipped, color, false, frame);
         }
 
-        public static bool IconButton(ImGuiScene.TextureWrap icon, Vector2 size, float zoom, Vector2 offset, double rotation, uint color, bool frame)
+        public static bool IconButton(ImGuiScene.TextureWrap icon, Vector2 size, float zoom, Vector2 offset, double rotation, bool flipped, uint color, bool frame)
         {
             var ret = ImGui.InvisibleButton("IconInvisibleButton", size);
-            DrawIcon(icon, size, zoom, offset, rotation, color, ImGui.IsItemHovered(ImGuiHoveredFlags.RectOnly), frame);
+            DrawIcon(icon, size, zoom, offset, rotation, flipped, color, ImGui.IsItemHovered(ImGuiHoveredFlags.RectOnly), frame);
             return ret;
         }
     }
