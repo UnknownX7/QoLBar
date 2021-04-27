@@ -112,22 +112,26 @@ namespace QoLBar
         public static Vector2 iconFrameUV1 = new Vector2(47f / 426f, 187f / 426f);
         public static Vector2 iconHoverUV0 = new Vector2(49f / 426f, 238f / 426f);
         public static Vector2 iconHoverUV1 = new Vector2(95f / 426f, 284f / 426f);
-        //public static Vector2 iconHoverFrameUV0 = new Vector2(248f / 426f, 149f / 426f);
-        //public static Vector2 iconHoverFrameUV1 = new Vector2(304f / 426f, 205f / 426f);
+        public static Vector2 iconHoverFrameUV0 = new Vector2(242f / 426f, 143f / 426f);
+        public static Vector2 iconHoverFrameUV1 = new Vector2(310f / 426f, 211f / 426f);
 
         public static void AddIconFrame(this ImDrawListPtr drawList, Vector2 pos, Vector2 size, bool hovered)
         {
             var frameSheet = QoLBar.TextureDictionary[TextureDictionary.FrameIconID];
             if (frameSheet != null && frameSheet.ImGuiHandle != IntPtr.Zero)
             {
-                var _sizeInc = size * 0.075f;
-                var _rMin = pos - _sizeInc;
-                var _rMax = pos + size + _sizeInc;
+                var frameSize = size * 0.075f;
+                var fMin = pos - frameSize;
+                var fMax = pos + size + frameSize;
                 drawList.PushClipRectFullScreen();
-                drawList.AddImage(frameSheet.ImGuiHandle, _rMin, _rMax, iconFrameUV0, iconFrameUV1); // Frame
+                drawList.AddImage(frameSheet.ImGuiHandle, fMin, fMax, iconFrameUV0, iconFrameUV1); // Frame
                 if (hovered)
-                    drawList.AddImage(frameSheet.ImGuiHandle, _rMin, _rMax, iconHoverUV0, iconHoverUV1, 0x85FFFFFF); // Frame Center Glow
-                //drawList.AddImage(_buttonshine.ImGuiHandle, _rMin - (_sizeInc * 1.5f), _rMax + (_sizeInc * 1.5f), iconHoverFrameUV0, iconHoverFrameUV1); // Edge glow // TODO: Probably somewhat impossible as is, but fix glow being clipped
+                {
+                    drawList.AddImage(frameSheet.ImGuiHandle, fMin, fMax, iconHoverUV0, iconHoverUV1, 0x85FFFFFF); // Frame Center Glow
+                    fMin.Y -= frameSize.Y * 0.2f; // I love rectangles
+                    fMax.Y += frameSize.Y * 1f;
+                    drawList.AddImage(frameSheet.ImGuiHandle, fMin - (frameSize * 3.0f), fMax + (frameSize * 3.0f), iconHoverFrameUV0, iconHoverFrameUV1); // Edge glow (its a fucking rectangle why)
+                }
                 // TODO: Find a way to do the click animation
                 drawList.PopClipRect();
             }
