@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using ImGuiNET;
@@ -162,9 +162,11 @@ namespace QoLBar
             EditShortcutName(sh);
             ImGuiEx.SetItemTooltip("Icons accept arguments between \"::\" and their ID. I.e. \"::f21\".\n" +
                 "\t' f ' - Applies the hotbar frame (or removes it if applied globally).\n" +
+                "\t' n ' - Removes the hotbar frame.\n" +
                 "\t' l ' - Uses the low resolution icon.\n" +
                 "\t' h ' - Uses the high resolution icon if it exists.\n" +
-                "\t' _ ' - Disables arguments, including implicit ones. Cannot be used with others.");
+                "\t' g ' - Changes the icon to grayscale.\n" +
+                "\t' r ' - Reverses the icon.");
 
             if (ImGui.DragFloat("Zoom", ref sh.Config.IconZoom, 0.005f, 1.0f, 5.0f, "%.2f"))
                 QoLBar.Config.Save();

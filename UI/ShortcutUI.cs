@@ -494,14 +494,12 @@ namespace QoLBar
                         var arg = name[substart];
                         switch (arg)
                         {
-                            case '_': // Disable all args
-                                args = "_";
-                                substart = 3;
-                                done = true;
-                                break;
-                            case 'f': // Use game icon frame
-                            case 'l': // Use LR icon
-                            case 'h': // Use HR icon
+                            case 'f': // Frame
+                            case 'n': // No frame
+                            case 'l': // LR icon
+                            case 'h': // HR icon
+                            case 'g': // Grayscale
+                            case 'r': // Reverse
                                 args += arg;
                                 substart++;
                                 break;
@@ -583,11 +581,11 @@ namespace QoLBar
             }
         }
 
-        public static bool DrawIcon(int icon, Vector2 size, float zoom, Vector2 offset, Vector4 tint, bool invertFrame, string args = "_", bool retExists = false, bool noButton = false)
+        public static bool DrawIcon(int icon, Vector2 size, float zoom, Vector2 offset, Vector4 tint, bool invertFrame, string args = null, bool retExists = false, bool noButton = false)
         {
             bool ret = false;
 
-            var hasArgs = args != "_";
+            var hasArgs = !string.IsNullOrEmpty(args);
 
             TextureDictionary texd = null;
             if (hasArgs)
@@ -599,6 +597,10 @@ namespace QoLBar
             }
 
             texd ??= QoLBar.TextureDictionary;
+
+            if (hasArgs && args.Contains("g"))
+                texd = (texd == QoLBar.textureDictionaryLR) ? QoLBar.textureDictionaryGSLR : QoLBar.textureDictionaryGSHR;
+
             var tex = texd[icon];
             if (tex == null)
             {
@@ -617,18 +619,19 @@ namespace QoLBar
             }
             else
             {
-                var frameArg = false;
+                var frameArg = QoLBar.Config.UseIconFrame;
                 if (hasArgs)
                 {
-                    frameArg = args.Contains("f");
-                    if (invertFrame)
-                        frameArg = !frameArg;
+                    if (args.Contains("f"))
+                        frameArg = true;
+                    else if (args.Contains("n"))
+                        frameArg = false;
                 }
 
                 if (!noButton)
-                    ret = ImGuiEx.IconButton(tex, size, zoom, offset, 0, false, ImGui.ColorConvertFloat4ToU32(tint), frameArg);
+                    ret = ImGuiEx.IconButton(tex, size, zoom, offset, 0, hasArgs && args.Contains("r"), ImGui.ColorConvertFloat4ToU32(tint), frameArg);
                 else
-                    ImGuiEx.Icon(tex, size, zoom, offset, 0, false, ImGui.ColorConvertFloat4ToU32(tint), frameArg);
+                    ImGuiEx.Icon(tex, size, zoom, offset, 0, hasArgs && args.Contains("r"), ImGui.ColorConvertFloat4ToU32(tint), frameArg);
 
                 if (retExists)
                     ret = true;

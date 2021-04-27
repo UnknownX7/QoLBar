@@ -224,7 +224,7 @@ namespace QoLBar
             {
                 for (int icon = start; icon < end; icon++)
                 {
-                    if (ShortcutUI.DrawIcon(icon, new Vector2(_iconSize), 1.0f, Vector2.Zero, Vector4.One, false, "_", true))
+                    if (ShortcutUI.DrawIcon(icon, new Vector2(_iconSize), 1.0f, Vector2.Zero, Vector4.One, false, null, true))
                     {
                         if (ImGui.IsItemClicked())
                         {

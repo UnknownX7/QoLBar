@@ -140,7 +140,7 @@ namespace QoLBar
                 {
                     ImGui.SetWindowFontScale(bar.Scale);
 
-                    var hasArgs = args != "_";
+                    var hasArgs = !string.IsNullOrEmpty(args);
 
                     TextureDictionary texd = null;
                     if (hasArgs)
@@ -152,6 +152,10 @@ namespace QoLBar
                     }
 
                     texd ??= QoLBar.TextureDictionary;
+
+                    if (hasArgs && args.Contains("g"))
+                        texd = (texd == QoLBar.textureDictionaryLR) ? QoLBar.textureDictionaryGSLR : QoLBar.textureDictionaryGSHR;
+
                     var tex = texd[icon];
                     if (tex != null)
                     {
@@ -163,16 +167,17 @@ namespace QoLBar
                         var uv0 = new Vector2(0.5f - z + offsetX, 0.5f - z + offsetY);
                         var uv1 = new Vector2(0.5f + z + offsetX, 0.5f + z + offsetY);
 
-                        var frameArg = false;
+                        var frameArg = QoLBar.Config.UseIconFrame;
                         if (hasArgs)
                         {
-                            frameArg = args.Contains("f");
-                            if (QoLBar.Config.UseIconFrame)
-                                frameArg = !frameArg;
+                            if (args.Contains("f"))
+                                frameArg = true;
+                            else if (args.Contains("n"))
+                                frameArg = false;
                         }
 
                         ImGui.PushStyleColor(ImGuiCol.ButtonHovered, 0);
-                        drawList.AddIcon(tex, pos, size, uv0, uv1, 0, false, color, hovered, frameArg);
+                        drawList.AddIcon(tex, pos, size, uv0, uv1, 0, hasArgs && args.Contains("r"), color, hovered, frameArg);
                         ImGui.PopStyleColor();
                     }
                 }
