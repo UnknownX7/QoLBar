@@ -167,7 +167,7 @@ namespace QoLBar
             if (sh.Type == ShortcutType.Spacer)
             {
                 if (useIcon)
-                    DrawIcon(icon, new Vector2(height), sh.IconZoom, new Vector2(sh.IconOffset[0], sh.IconOffset[1]), ImGui.ColorConvertFloat4ToU32(c), QoLBar.Config.UseIconFrame, args, false, true);
+                    DrawIcon(icon, new Vector2(height), sh.IconZoom, new Vector2(sh.IconOffset[0], sh.IconOffset[1]), sh.IconRotation, ImGui.ColorConvertFloat4ToU32(c), QoLBar.Config.UseIconFrame, args, false, true);
                 else
                 {
                     var wantedSize = ImGui.GetFontSize();
@@ -183,7 +183,7 @@ namespace QoLBar
                 }
             }
             else if (useIcon)
-                clicked = DrawIcon(icon, new Vector2(height), sh.IconZoom, new Vector2(sh.IconOffset[0], sh.IconOffset[1]), ImGui.ColorConvertFloat4ToU32(c), QoLBar.Config.UseIconFrame, args);
+                clicked = DrawIcon(icon, new Vector2(height), sh.IconZoom, new Vector2(sh.IconOffset[0], sh.IconOffset[1]), sh.IconRotation, ImGui.ColorConvertFloat4ToU32(c), QoLBar.Config.UseIconFrame, args);
             else
             {
                 ImGui.PushStyleColor(ImGuiCol.Text, c);
@@ -523,7 +523,7 @@ namespace QoLBar
         {
             var iconSize = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
             ImGui.SameLine(ImGui.GetWindowContentRegionWidth() + Style.WindowPadding.X - iconSize);
-            if (DrawIcon(46, new Vector2(iconSize), 1.0f, Vector2.Zero, 0xFFFFFFFF, false, "l"))
+            if (DrawIcon(46, new Vector2(iconSize), 1.0f, Vector2.Zero, 0, 0xFFFFFFFF, false, "l"))
                 QoLBar.Plugin.ToggleIconBrowser();
             ImGuiEx.SetItemTooltip("Opens up a list of all icons you can use instead of text.\n" +
                 "Warning: This will load EVERY icon available so it will probably lag for a moment.\n" +
@@ -581,7 +581,7 @@ namespace QoLBar
             }
         }
 
-        public static bool DrawIcon(int icon, Vector2 size, float zoom, Vector2 offset, uint color, bool invertFrame, string args = null, bool retExists = false, bool noButton = false)
+        public static bool DrawIcon(int icon, Vector2 size, float zoom, Vector2 offset, float rotation, uint color, bool invertFrame, string args = null, bool retExists = false, bool noButton = false)
         {
             bool ret = false;
 
@@ -614,7 +614,7 @@ namespace QoLBar
                             ret = ImGui.Button("X##FailedTexture", size);
                     }
                     else
-                        ret = DrawIcon(66001, size, zoom, offset, color, invertFrame, args, retExists, noButton);
+                        ret = DrawIcon(66001, size, zoom, offset, rotation, color, invertFrame, args, retExists, noButton);
                 }
             }
             else
@@ -629,9 +629,9 @@ namespace QoLBar
                 }
 
                 if (!noButton)
-                    ret = ImGuiEx.IconButton(tex, size, zoom, offset, 0, hasArgs && args.Contains("r"), color, frameArg);
+                    ret = ImGuiEx.IconButton(tex, size, zoom, offset, rotation, hasArgs && args.Contains("r"), color, frameArg);
                 else
-                    ImGuiEx.Icon(tex, size, zoom, offset, 0, hasArgs && args.Contains("r"), color, frameArg);
+                    ImGuiEx.Icon(tex, size, zoom, offset, rotation, hasArgs && args.Contains("r"), color, frameArg);
 
                 if (retExists)
                     ret = true;

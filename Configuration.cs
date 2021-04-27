@@ -81,6 +81,7 @@ namespace QoLBar
         [JsonProperty("clA")] [DefaultValue(0)]                    public int ColorAnimation = 0;
         [JsonProperty("iZ")]  [DefaultValue(1.0f)]                 public float IconZoom = 1.0f;
         [JsonProperty("iO")]  [DefaultValue(new[] { 0f, 0f })]     public float[] IconOffset = new float[2];
+        [JsonProperty("iR")]  [DefaultValue(0)]                    public float IconRotation = 0.0f;
         [JsonProperty("cW")]  [DefaultValue(140)]                  public int CategoryWidth = 140;
         [JsonProperty("cSO")] [DefaultValue(false)]                public bool CategoryStaysOpen = false;
         [JsonProperty("cC")]  [DefaultValue(1)]                    public int CategoryColumns = 1;

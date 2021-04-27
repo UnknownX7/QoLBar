@@ -178,6 +178,15 @@ namespace QoLBar
                 sh.Config.IconOffset[1] = offset.Y;
                 QoLBar.Config.Save();
             }
+
+            var r = (float)(sh.Config.IconRotation * 180 / Math.PI) % 360;
+            if (ImGui.DragFloat("Rotation", ref r, 0.2f, -360, 360, "%.f"))
+            {
+                if (r < 0)
+                    r += 360;
+                sh.Config.IconRotation = (float)(r / 180 * Math.PI);
+                QoLBar.Config.Save();
+            }
         }
 
         public static void EditBarGeneralOptions(BarUI bar)

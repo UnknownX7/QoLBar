@@ -89,16 +89,19 @@ namespace QoLBar
                 var p2 = center + RotateVector(new Vector2(halfSize.X, -halfSize.Y), rCos, rSin);
                 var p3 = center + RotateVector(halfSize, rCos, rSin);
                 var p4 = center + RotateVector(new Vector2(-halfSize.X, halfSize.Y), rCos, rSin);
+                var max = pos + size;
                 var uv2 = new Vector2(uv3.X, uv1.Y);
                 var uv4 = new Vector2(uv1.X, uv3.Y);
 
                 if (hovered && !frame)
-                    drawList.AddRectFilled(p1, p3, ImGui.GetColorU32(ImGuiCol.ButtonHovered));
+                    drawList.AddRectFilled(pos, max, ImGui.GetColorU32(ImGuiCol.ButtonHovered));
 
+                drawList.PushClipRect(pos, max);
                 if (!flipped)
                     drawList.AddImageQuad(tex.ImGuiHandle, p1, p2, p3, p4, uv1, uv2, uv3, uv4, color);
                 else
                     drawList.AddImageQuad(tex.ImGuiHandle, p2, p1, p4, p3, uv1, uv2, uv3, uv4, color);
+                drawList.PopClipRect();
 
                 if (frame)
                     drawList.AddIconFrame(pos, size, hovered);
@@ -120,11 +123,13 @@ namespace QoLBar
                 var _sizeInc = size * 0.075f;
                 var _rMin = pos - _sizeInc;
                 var _rMax = pos + size + _sizeInc;
+                drawList.PushClipRectFullScreen();
                 drawList.AddImage(frameSheet.ImGuiHandle, _rMin, _rMax, iconFrameUV0, iconFrameUV1); // Frame
                 if (hovered)
                     drawList.AddImage(frameSheet.ImGuiHandle, _rMin, _rMax, iconHoverUV0, iconHoverUV1, 0x85FFFFFF); // Frame Center Glow
                 //drawList.AddImage(_buttonshine.ImGuiHandle, _rMin - (_sizeInc * 1.5f), _rMax + (_sizeInc * 1.5f), iconHoverFrameUV0, iconHoverFrameUV1); // Edge glow // TODO: Probably somewhat impossible as is, but fix glow being clipped
                 // TODO: Find a way to do the click animation
+                drawList.PopClipRect();
             }
         }
 
