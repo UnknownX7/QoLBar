@@ -96,7 +96,7 @@ namespace QoLBar
                 if (hovered && !frame)
                     drawList.AddRectFilled(pos, max, active ? ImGui.GetColorU32(ImGuiCol.ButtonActive) : ImGui.GetColorU32(ImGuiCol.ButtonHovered));
 
-                drawList.PushClipRect(pos, max);
+                drawList.PushClipRect(pos, max, true);
                 if (!flipped)
                     drawList.AddImageQuad(tex.ImGuiHandle, p1, p2, p3, p4, uv1, uv2, uv3, uv4, color);
                 else
