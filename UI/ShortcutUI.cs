@@ -633,9 +633,9 @@ namespace QoLBar
                 }
 
                 if (!noButton)
-                    ret = ImGuiEx.IconButton(tex, size, zoom, offset, ImGui.ColorConvertFloat4ToU32(tint), frameArg);
+                    ret = ImGuiEx.IconButton(tex, size, zoom, offset, 0, ImGui.ColorConvertFloat4ToU32(tint), frameArg);
                 else
-                    ImGuiEx.Icon(tex, size, zoom, offset, ImGui.ColorConvertFloat4ToU32(tint), frameArg);
+                    ImGuiEx.Icon(tex, size, zoom, offset, 0, ImGui.ColorConvertFloat4ToU32(tint), frameArg);
 
                 if (retExists)
                     ret = true;

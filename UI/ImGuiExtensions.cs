@@ -68,14 +68,27 @@ namespace QoLBar
             return b;
         }
 
-        public static void AddIcon(this ImDrawListPtr drawList, ImGuiScene.TextureWrap tex, Vector2 pos, Vector2 size, Vector2 uv1, Vector2 uv3, uint color, bool hovered, bool frame)
+        public static Vector2 RotateVector(Vector2 v, float a)
+        {
+            var aCos = (float)Math.Cos(a);
+            var aSin = (float)Math.Sin(a);
+            return RotateVector(v, aCos, aSin);
+        }
+
+        public static Vector2 RotateVector(Vector2 v, float aCos, float aSin) => new Vector2(v.X * aCos - v.Y * aSin, v.X * aSin + v.Y * aCos);
+
+        public static void AddIcon(this ImDrawListPtr drawList, ImGuiScene.TextureWrap tex, Vector2 pos, Vector2 size, Vector2 uv1, Vector2 uv3, double rotation, uint color, bool hovered, bool frame)
         {
             if (tex != null)
             {
-                var p1 = pos;
-                var p2 = pos + new Vector2(size.X, 0);
-                var p3 = pos + size;
-                var p4 = pos + new Vector2(0, size.Y);
+                var rCos = (float)Math.Cos(rotation);
+                var rSin = (float)Math.Sin(rotation);
+                var halfSize = size / 2;
+                var center = pos + halfSize;
+                var p1 = center + RotateVector(-halfSize, rCos, rSin);
+                var p2 = center + RotateVector(new Vector2(halfSize.X, -halfSize.Y), rCos, rSin);
+                var p3 = center + RotateVector(halfSize, rCos, rSin);
+                var p4 = center + RotateVector(new Vector2(-halfSize.X, halfSize.Y), rCos, rSin);
                 var uv2 = new Vector2(uv3.X, uv1.Y);
                 var uv4 = new Vector2(uv1.X, uv3.Y);
 
@@ -105,24 +118,24 @@ namespace QoLBar
             }
         }
 
-        private static void DrawIcon(ImGuiScene.TextureWrap icon, Vector2 size, float zoom, Vector2 offset, uint color, bool hovered, bool frame)
+        private static void DrawIcon(ImGuiScene.TextureWrap icon, Vector2 size, float zoom, Vector2 offset, double rotation, uint color, bool hovered, bool frame)
         {
             var z = 0.5f / zoom;
             var uv0 = new Vector2(0.5f - z + offset.X, 0.5f - z + offset.Y);
             var uv1 = new Vector2(0.5f + z + offset.X, 0.5f + z + offset.Y);
-            ImGui.GetWindowDrawList().AddIcon(icon, ImGui.GetItemRectMin(), size, uv0, uv1, color, hovered, frame);
+            ImGui.GetWindowDrawList().AddIcon(icon, ImGui.GetItemRectMin(), size, uv0, uv1, rotation, color, hovered, frame);
         }
 
-        public static void Icon(ImGuiScene.TextureWrap icon, Vector2 size, float zoom, Vector2 offset, uint color, bool frame)
+        public static void Icon(ImGuiScene.TextureWrap icon, Vector2 size, float zoom, Vector2 offset, double rotation, uint color, bool frame)
         {
             ImGui.Dummy(size);
-            DrawIcon(icon, size, zoom, offset, color, false, frame);
+            DrawIcon(icon, size, zoom, offset, rotation, color, false, frame);
         }
 
-        public static bool IconButton(ImGuiScene.TextureWrap icon, Vector2 size, float zoom, Vector2 offset, uint color, bool frame)
+        public static bool IconButton(ImGuiScene.TextureWrap icon, Vector2 size, float zoom, Vector2 offset, double rotation, uint color, bool frame)
         {
             var ret = ImGui.InvisibleButton("IconInvisibleButton", size);
-            DrawIcon(icon, size, zoom, offset, color, ImGui.IsItemHovered(ImGuiHoveredFlags.RectOnly), frame);
+            DrawIcon(icon, size, zoom, offset, rotation, color, ImGui.IsItemHovered(ImGuiHoveredFlags.RectOnly), frame);
             return ret;
         }
     }
