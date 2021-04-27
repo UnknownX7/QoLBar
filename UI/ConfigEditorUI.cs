@@ -1,6 +1,8 @@
 using System;
-using System.Collections.Generic;
 using System.Numerics;
+using System.Text;
+using System.Collections.Generic;
+using System.Linq;
 using ImGuiNET;
 using Dalamud.Interface;
 using static QoLBar.BarCfg;
@@ -10,6 +12,75 @@ namespace QoLBar
 {
     public static class ConfigEditorUI
     {
+        private static int _inputPos = 0;
+        private static unsafe int GetCursorPosCallback(ImGuiInputTextCallbackData* data)
+        {
+            _inputPos = data->CursorPos;
+            return 0;
+        }
+
+        private static void DrawInsertPrivateCharPopup(ShCfg sh)
+        {
+            if (ImGui.BeginPopup("Private Use Popup"))
+            {
+                static void InsertString(ref string str, string ins)
+                {
+                    var bytes = Encoding.UTF8.GetBytes(str).ToList();
+                    _inputPos = Math.Min(_inputPos, bytes.Count);
+                    var newBytes = Encoding.UTF8.GetBytes(ins);
+                    for (int i = 0; i < newBytes.Length; i++)
+                        bytes.Insert(_inputPos++, newBytes[i]);
+                    str = Encoding.UTF8.GetString(bytes.ToArray());
+                }
+
+                var bI = 0;
+                void DrawButton(int i)
+                {
+                    if (bI % 15 != 0)
+                        ImGui.SameLine();
+
+                    var str = $"{(char)i}";
+                    ImGui.SetWindowFontScale(1.5f);
+                    if (ImGui.Button(str, new Vector2(36 * ImGuiHelpers.GlobalScale)))
+                    {
+                        InsertString(ref sh.Command, str);
+                        QoLBar.Config.Save();
+                    }
+                    ImGui.SetWindowFontScale(1);
+                    if (ImGui.IsItemHovered())
+                    {
+                        ImGui.BeginTooltip();
+                        ImGui.SetWindowFontScale(4);
+                        ImGui.TextUnformatted(str);
+                        ImGui.SetWindowFontScale(1);
+                        ImGui.TextUnformatted($"{(Dalamud.Game.Text.SeIconChar)i}");
+                        ImGui.EndTooltip();
+                    }
+
+                    bI++;
+                }
+
+
+                for (var i = 0xE020; i <= 0xE02B; i++)
+                    DrawButton(i);
+                for (var i = 0xE031; i <= 0xE035; i++)
+                    DrawButton(i);
+                for (var i = 0xE038; i <= 0xE044; i++)
+                    DrawButton(i);
+                for (var i = 0xE048; i <= 0xE04E; i++)
+                    DrawButton(i);
+                for (var i = 0xE050; i <= 0xE08A; i++)
+                    DrawButton(i);
+                for (var i = 0xE08F; i <= 0xE0C6; i++)
+                    DrawButton(i);
+                for (var i = 0xE0D0; i <= 0xE0DB; i++)
+                    DrawButton(i);
+
+
+                ImGui.EndPopup();
+            }
+        }
+
         public static void EditShortcutConfigBase(ShCfg sh, bool editing)
         {
             if (IconBrowserUI.iconBrowserOpen && IconBrowserUI.doPasteIcon)
@@ -45,8 +116,17 @@ namespace QoLBar
             if (sh.Type != ShortcutType.Spacer && (sh.Type != ShortcutType.Category || sh.Mode == ShortcutMode.Default))
             {
                 var height = ImGui.GetFontSize() * Math.Min(sh.Command.Split('\n').Length + 1, 7) + ImGui.GetStyle().FramePadding.Y * 2; // ImGui issue #238: can't disable multiline scrollbar and it appears a whole line earlier than it should, so thats cool I guess
-                if (ImGui.InputTextMultiline("Command##Input", ref sh.Command, 65535, new Vector2(0, height)) && editing)
-                    QoLBar.Config.Save();
+                
+                unsafe
+                {
+                    if (ImGui.InputTextMultiline("Command##Input", ref sh.Command, 65535, new Vector2(0, height), ImGuiInputTextFlags.CallbackAlways, new ImGuiInputTextCallback(GetCursorPosCallback)) && editing)
+                        QoLBar.Config.Save();
+                }
+
+                if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right))
+                    ImGui.OpenPopup("Private Use Popup");
+
+                DrawInsertPrivateCharPopup(sh);
             }
         }
 
