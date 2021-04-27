@@ -104,7 +104,7 @@ namespace QoLBar
                 drawList.PopClipRect();
 
                 if (frame)
-                    drawList.AddIconFrame(pos, size, hovered);
+                    drawList.AddIconFrame(pos, size, hovered, active);
             }
         }
 
@@ -114,8 +114,10 @@ namespace QoLBar
         public static Vector2 iconHoverUV1 = new Vector2(95f / 426f, 284f / 426f);
         public static Vector2 iconHoverFrameUV0 = new Vector2(242f / 426f, 143f / 426f);
         public static Vector2 iconHoverFrameUV1 = new Vector2(310f / 426f, 211f / 426f);
+        public static Vector2 iconClickUV0 = new Vector2(241f / 426f, 214f / 426f);
+        public static Vector2 iconClickUV1 = new Vector2(303f / 426f, 276f / 426f);
 
-        public static void AddIconFrame(this ImDrawListPtr drawList, Vector2 pos, Vector2 size, bool hovered)
+        public static void AddIconFrame(this ImDrawListPtr drawList, Vector2 pos, Vector2 size, bool hovered, bool active)
         {
             var frameSheet = QoLBar.TextureDictionary[TextureDictionary.FrameIconID];
             if (frameSheet != null && frameSheet.ImGuiHandle != IntPtr.Zero)
@@ -131,6 +133,18 @@ namespace QoLBar
                     fMin.Y -= frameSize.Y * 0.2f; // I love rectangles
                     fMax.Y += frameSize.Y * 1f;
                     drawList.AddImage(frameSheet.ImGuiHandle, fMin - (frameSize * 3.0f), fMax + (frameSize * 3.0f), iconHoverFrameUV0, iconHoverFrameUV1); // Edge glow (its a fucking rectangle why)
+
+                    if (active)
+                    {
+                        var animTime = ImGui.GetIO().MouseDownDuration[0] / 0.1f;
+                        if (animTime < 1)
+                        {
+                            var halfSize = size / 2;
+                            var center = pos + halfSize;
+                            var animSize = halfSize * animTime;
+                            drawList.AddImage(frameSheet.ImGuiHandle, center - animSize, center + animSize, iconClickUV0, iconClickUV1, 0x85FFFFFF); // Click
+                        }
+                    }
                 }
                 // TODO: Find a way to do the click animation
                 drawList.PopClipRect();
