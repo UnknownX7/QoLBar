@@ -36,6 +36,8 @@ namespace QoLBar
 
         public bool _activated = false;
 
+        private float _animTime = -1;
+
         public ShortcutUI(BarUI bar)
         {
             parentBar = bar;
@@ -80,6 +82,9 @@ namespace QoLBar
 
         public void ClearActivated()
         {
+            if (_animTime == 0)
+                _animTime = -1;
+
             _activated = false;
             if (Config.Type == ShortcutType.Category)
             {
@@ -88,8 +93,13 @@ namespace QoLBar
             }
         }
 
-        public void OnClick(bool v, bool wasHovered)
+        public void OnClick(bool v, bool mouse, bool wasHovered)
         {
+            if (mouse)
+                _animTime = -1;
+            else
+                _animTime = 0;
+
             var command = Config.Command;
             switch (Config.Type)
             {
@@ -118,12 +128,12 @@ namespace QoLBar
                     {
                         case ShortcutMode.Incremental:
                             if (0 <= _i && _i < children.Count)
-                                children[_i].OnClick(v, wasHovered);
+                                children[_i].OnClick(v, true, wasHovered);
                             _i = (_i + 1) % Math.Max(1, children.Count);
                             break;
                         case ShortcutMode.Random:
                             if (0 <= _i && _i < children.Count)
-                                children[_i].OnClick(v, wasHovered);
+                                children[_i].OnClick(v, true, wasHovered);
                             _i = (int)(QoLBar.GetFrameCount() % Math.Max(1, children.Count));
                             break;
                         default:
@@ -140,6 +150,11 @@ namespace QoLBar
         // TODO: rewrite these functions cause they suck
         public void DrawShortcut(float width)
         {
+            if (_animTime >= 0.35f)
+                _animTime = -1;
+            else if (_animTime >= 0)
+                _animTime += ImGui.GetIO().DeltaTime;
+
             var inCategory = parent != null;
             var ui = DisplayedUI;
             var sh = ui.Config;
@@ -167,7 +182,7 @@ namespace QoLBar
             if (sh.Type == ShortcutType.Spacer)
             {
                 if (useIcon)
-                    DrawIcon(icon, new Vector2(height), sh.IconZoom, new Vector2(sh.IconOffset[0], sh.IconOffset[1]), sh.IconRotation, ImGui.ColorConvertFloat4ToU32(c), QoLBar.Config.UseIconFrame, args, false, true);
+                    DrawIcon(icon, new Vector2(height), sh.IconZoom, new Vector2(sh.IconOffset[0], sh.IconOffset[1]), sh.IconRotation, ImGui.ColorConvertFloat4ToU32(c), _animTime, args, false, true);
                 else
                 {
                     var wantedSize = ImGui.GetFontSize();
@@ -183,7 +198,7 @@ namespace QoLBar
                 }
             }
             else if (useIcon)
-                clicked = DrawIcon(icon, new Vector2(height), sh.IconZoom, new Vector2(sh.IconOffset[0], sh.IconOffset[1]), sh.IconRotation, ImGui.ColorConvertFloat4ToU32(c), QoLBar.Config.UseIconFrame, args);
+                clicked = DrawIcon(icon, new Vector2(height), sh.IconZoom, new Vector2(sh.IconOffset[0], sh.IconOffset[1]), sh.IconRotation, ImGui.ColorConvertFloat4ToU32(c), _animTime, args);
             else
             {
                 ImGui.PushStyleColor(ImGuiCol.Text, c);
@@ -226,20 +241,20 @@ namespace QoLBar
 
             if (clicked && !parentBar.IsDragging)
             {
+                if (!inCategory)
+                    OnClick(parentBar.IsVertical, !_activated, wasHovered);
+                else
+                {
+                    var cols = parent.Config.CategoryColumns;
+                    OnClick(cols > 0 && parent.children.Count >= (cols * (cols - 1) + 1), !_activated, wasHovered);
+                    if (!parent.Config.CategoryStaysOpen && sh.Type == ShortcutType.Command)
+                        ImGui.SetWindowFocus(null);
+                }
+
                 if (_activated)
                 {
                     _activated = false;
                     parentBar.WasActivated = true;
-                }
-
-                if (!inCategory)
-                    OnClick(parentBar.IsVertical, wasHovered);
-                else
-                {
-                    var cols = parent.Config.CategoryColumns;
-                    OnClick(cols > 0 && parent.children.Count >= (cols * (cols - 1) + 1), wasHovered);
-                    if (!parent.Config.CategoryStaysOpen && sh.Type == ShortcutType.Command)
-                        ImGui.SetWindowFocus(null);
                 }
             }
 
@@ -523,7 +538,7 @@ namespace QoLBar
         {
             var iconSize = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
             ImGui.SameLine(ImGui.GetWindowContentRegionWidth() + Style.WindowPadding.X - iconSize);
-            if (DrawIcon(46, new Vector2(iconSize), 1.0f, Vector2.Zero, 0, 0xFFFFFFFF, false, "l"))
+            if (DrawIcon(46, new Vector2(iconSize), 1.0f, Vector2.Zero, 0, 0xFFFFFFFF, -1, "l"))
                 QoLBar.Plugin.ToggleIconBrowser();
             ImGuiEx.SetItemTooltip("Opens up a list of all icons you can use instead of text.\n" +
                 "Warning: This will load EVERY icon available so it will probably lag for a moment.\n" +
@@ -581,7 +596,7 @@ namespace QoLBar
             }
         }
 
-        public static bool DrawIcon(int icon, Vector2 size, float zoom, Vector2 offset, float rotation, uint color, bool invertFrame, string args = null, bool retExists = false, bool noButton = false)
+        public static bool DrawIcon(int icon, Vector2 size, float zoom, Vector2 offset, float rotation, uint color, float animTime, string args = null, bool retExists = false, bool noButton = false)
         {
             bool ret = false;
 
@@ -614,7 +629,7 @@ namespace QoLBar
                             ret = ImGui.Button("X##FailedTexture", size);
                     }
                     else
-                        ret = DrawIcon(66001, size, zoom, offset, rotation, color, invertFrame, args, retExists, noButton);
+                        ret = DrawIcon(66001, size, zoom, offset, rotation, color, animTime, args, retExists, noButton);
                 }
             }
             else
@@ -629,7 +644,7 @@ namespace QoLBar
                 }
 
                 if (!noButton)
-                    ret = ImGuiEx.IconButton(tex, size, zoom, offset, rotation, hasArgs && args.Contains("r"), color, frameArg);
+                    ret = ImGuiEx.IconButton("icon", tex, size, zoom, offset, rotation, hasArgs && args.Contains("r"), color, animTime, frameArg);
                 else
                     ImGuiEx.Icon(tex, size, zoom, offset, rotation, hasArgs && args.Contains("r"), color, frameArg);
 
