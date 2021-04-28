@@ -130,9 +130,8 @@ namespace QoLBar
                 if (hovered)
                 {
                     drawList.AddImage(frameSheet.ImGuiHandle, fMin, fMax, iconHoverUV0, iconHoverUV1, 0x85FFFFFF); // Frame Center Glow
-                    fMin.Y -= frameSize.Y * 0.2f; // I love rectangles
-                    fMax.Y += frameSize.Y * 1f;
-                    drawList.AddImage(frameSheet.ImGuiHandle, fMin - (frameSize * 3.0f), fMax + (frameSize * 3.0f), iconHoverFrameUV0, iconHoverFrameUV1); // Edge glow (its a fucking rectangle why)
+                    fMax.Y += frameSize.Y * 0.70f; // I love rectangles
+                    drawList.AddImage(frameSheet.ImGuiHandle, fMin - (frameSize * 3.5f), fMax + (frameSize * 3.5f), iconHoverFrameUV0, iconHoverFrameUV1); // Edge glow (its a fucking rectangle why)
 
                     if (active)
                     {
@@ -142,11 +141,10 @@ namespace QoLBar
                             var halfSize = size / 2;
                             var center = pos + halfSize;
                             var animSize = halfSize * animTime;
-                            drawList.AddImage(frameSheet.ImGuiHandle, center - animSize, center + animSize, iconClickUV0, iconClickUV1, ImGui.ColorConvertFloat4ToU32(new Vector4(1, 1, 1, 1 - 0.6f * animTime))); // Click
+                            drawList.AddImage(frameSheet.ImGuiHandle, center - animSize, center + animSize, iconClickUV0, iconClickUV1, ImGui.ColorConvertFloat4ToU32(new Vector4(1, 1, 1, 1 - 0.65f * animTime))); // Click
                         }
                     }
                 }
-                // TODO: Find a way to do the click animation
                 drawList.PopClipRect();
             }
         }
