@@ -93,7 +93,7 @@ namespace QoLBar
             }
         }
 
-        public void OnClick(bool v, bool mouse, bool wasHovered)
+        public void OnClick(bool v, bool mouse, bool wasHovered, bool outsideDraw = false)
         {
             if (mouse)
                 _animTime = -1;
@@ -128,19 +128,22 @@ namespace QoLBar
                     {
                         case ShortcutMode.Incremental:
                             if (0 <= _i && _i < children.Count)
-                                children[_i].OnClick(v, true, wasHovered);
+                                children[_i].OnClick(v, true, wasHovered, outsideDraw);
                             _i = (_i + 1) % Math.Max(1, children.Count);
                             break;
                         case ShortcutMode.Random:
                             if (0 <= _i && _i < children.Count)
-                                children[_i].OnClick(v, true, wasHovered);
+                                children[_i].OnClick(v, true, wasHovered, outsideDraw);
                             _i = (int)(QoLBar.GetFrameCount() % Math.Max(1, children.Count));
                             break;
                         default:
                             if (!wasHovered)
                                 QoLBar.Plugin.ExecuteCommand(command);
-                            parentBar.SetupCategoryPosition(v, parent != null);
-                            ImGui.OpenPopup("ShortcutCategory");
+                            if (!outsideDraw)
+                            {
+                                parentBar.SetupCategoryPosition(v, parent != null);
+                                ImGui.OpenPopup("ShortcutCategory");
+                            }
                             break;
                     }
                     break;

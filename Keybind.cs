@@ -132,7 +132,7 @@ namespace QoLBar
                                     sh._activated = true;
                                 }
                                 else
-                                    sh.OnClick(false, false, false);
+                                    sh.OnClick(false, false, false, true);
 
                                 if (!cfg.KeyPassthrough && k <= 160)
                                     QoLBar.Interface.ClientState.KeyState[k] = false;
