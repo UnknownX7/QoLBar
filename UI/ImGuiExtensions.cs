@@ -140,7 +140,7 @@ namespace QoLBar
                         {
                             var halfSize = size / 2;
                             var center = pos + halfSize;
-                            var animSize = halfSize * animScale;
+                            var animSize = new Vector2(1.5f) + halfSize * animScale;
                             drawList.AddImage(frameSheet.ImGuiHandle, center - animSize, center + animSize, iconClickUV0, iconClickUV1, ImGui.ColorConvertFloat4ToU32(new Vector4(1, 1, 1, 1 - 0.65f * animScale))); // Click
                         }
                     }
