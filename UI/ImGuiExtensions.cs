@@ -68,6 +68,12 @@ namespace QoLBar
             return b;
         }
 
+        public static string TryGetClipboardText()
+        {
+            try { return ImGui.GetClipboardText(); }
+            catch { return string.Empty; }
+        }
+
         public static Vector2 RotateVector(Vector2 v, float a)
         {
             var aCos = (float)Math.Cos(a);

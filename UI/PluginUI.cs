@@ -244,7 +244,7 @@ namespace QoLBar
             ImGui.NextColumn();
             ImGui.NextColumn();
             if (ImGui.Button("Import", textsize))
-                ImportBar(ImGui.GetClipboardText());
+                ImportBar(ImGuiEx.TryGetClipboardText());
             if (ImGui.IsItemHovered())
             {
                 ImGui.SetTooltip("Import a bar from the clipboard, or import a single shortcut as a new bar.\n" +

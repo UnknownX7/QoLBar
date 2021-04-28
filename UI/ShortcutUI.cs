@@ -568,7 +568,7 @@ namespace QoLBar
                 ImGui.SameLine();
                 if (ImGui.Button("Import"))
                 {
-                    var imports = Importing.TryImport(ImGui.GetClipboardText(), true);
+                    var imports = Importing.TryImport(ImGuiEx.TryGetClipboardText(), true);
                     if (imports.shortcut != null)
                     {
                         barUI?.AddShortcut(imports.shortcut);
