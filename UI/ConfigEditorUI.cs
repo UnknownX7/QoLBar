@@ -19,10 +19,11 @@ namespace QoLBar
             return 0;
         }
 
-        private static void DrawInsertPrivateCharPopup(ShCfg sh)
+        private static void DrawInsertPrivateCharPopup(ref string input)
         {
-            if (ImGui.BeginPopup("Private Use Popup"))
+            if (ImGui.BeginPopup($"Private Use Popup##{ImGui.GetCursorPos()}"))
             {
+                var temp = input;
                 static void InsertString(ref string str, string ins)
                 {
                     var bytes = Encoding.UTF8.GetBytes(str).ToList();
@@ -43,7 +44,7 @@ namespace QoLBar
                     ImGui.SetWindowFontScale(1.5f);
                     if (ImGui.Button(str, new Vector2(36 * ImGuiHelpers.GlobalScale)))
                     {
-                        InsertString(ref sh.Command, str);
+                        InsertString(ref temp, str);
                         QoLBar.Config.Save();
                     }
                     ImGui.SetWindowFontScale(1);
@@ -76,9 +77,18 @@ namespace QoLBar
                 for (var i = 0xE0D0; i <= 0xE0DB; i++)
                     DrawButton(i);
 
+                input = temp;
 
                 ImGui.EndPopup();
             }
+        }
+
+        public static void AddRightClickPrivateUsePopup(ref string input)
+        {
+            if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right))
+                ImGui.OpenPopup($"Private Use Popup##{ImGui.GetCursorPos()}");
+
+            DrawInsertPrivateCharPopup(ref input);
         }
 
         public static void EditShortcutConfigBase(ShCfg sh, bool editing)
@@ -91,10 +101,15 @@ namespace QoLBar
                     QoLBar.Config.Save();
                 IconBrowserUI.doPasteIcon = false;
             }
-            if (ImGui.InputText("Name                    ", ref sh.Name, 256) && editing) // Not a bug... just want the window to not change width depending on which type it is...
-                QoLBar.Config.Save();
+            unsafe
+            {
+                if (ImGui.InputText("Name                    ", ref sh.Name, 256, ImGuiInputTextFlags.CallbackAlways, new ImGuiInputTextCallback(GetCursorPosCallback)) && editing) // Not a bug... just want the window to not change width depending on which type it is...
+                    QoLBar.Config.Save();
+            }
             ImGuiEx.SetItemTooltip("Start the name with ::x where x is a number to use icons, i.e. \"::2914\".\n" +
                 "Use ## anywhere in the name to make the text afterwards into a tooltip,\ni.e. \"Name##This is a Tooltip\".");
+
+            AddRightClickPrivateUsePopup(ref sh.Name);
 
             var _t = (int)sh.Type;
             ImGui.TextUnformatted("Type");
@@ -122,11 +137,7 @@ namespace QoLBar
                     if (ImGui.InputTextMultiline("Command##Input", ref sh.Command, 65535, new Vector2(0, height), ImGuiInputTextFlags.CallbackAlways, new ImGuiInputTextCallback(GetCursorPosCallback)) && editing)
                         QoLBar.Config.Save();
                 }
-
-                if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right))
-                    ImGui.OpenPopup("Private Use Popup");
-
-                DrawInsertPrivateCharPopup(sh);
+                AddRightClickPrivateUsePopup(ref sh.Command);
             }
         }
 
