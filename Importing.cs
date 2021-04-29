@@ -295,6 +295,7 @@ namespace QoLBar
                 {
                     PluginLog.LogError("Invalid import string!");
                     PluginLog.LogError($"{e.GetType()}\n{e.Message}");
+                    QoLBar.PrintError("Failed to import from clipboard. Please make sure to fully copy the import text before clicking this button!");
                 }
             }
 
@@ -305,15 +306,29 @@ namespace QoLBar
                 else if (imported.s1 != null)
                     imported.s2 = imported.s1.Upgrade(new BarConfig(), false);
 
+                var conditionRemoved = false;
                 if (!allowImportConditions && imported.b2 != null)
-                    imported.b2.ConditionSet = imported.b2.GetDefaultValue(x => x.ConditionSet);
+                {
+                    var d = imported.b2.GetDefaultValue(x => x.ConditionSet);
+                    if (imported.b2.ConditionSet != d)
+                    {
+                        imported.b2.ConditionSet = d;
+                        conditionRemoved = true;
+                    }
+                }
 
+                var hotkeyRemoved = false;
                 if (!allowImportHotkeys)
                 {
-                    static void removeHotkeys(ShCfg sh)
+                    void removeHotkeys(ShCfg sh)
                     {
-                        sh.Hotkey = sh.GetDefaultValue(x => x.Hotkey);
-                        sh.KeyPassthrough = sh.GetDefaultValue(x => x.KeyPassthrough);
+                        var d = sh.GetDefaultValue(x => x.Hotkey);
+                        if (sh.Hotkey != d)
+                        {
+                            sh.Hotkey = d;
+                            sh.KeyPassthrough = sh.GetDefaultValue(x => x.KeyPassthrough);
+                            hotkeyRemoved = true;
+                        }
                         if (sh.SubList != null && sh.SubList.Count > 0)
                         {
                             foreach (var sub in sh.SubList)
@@ -323,13 +338,27 @@ namespace QoLBar
 
                     if (imported.b2 != null)
                     {
-                        imported.b2.Hotkey = imported.b2.GetDefaultValue(x => x.Hotkey);
+                        var d = imported.b2.GetDefaultValue(x => x.Hotkey);
+                        if (imported.b2.Hotkey != d)
+                        {
+                            imported.b2.Hotkey = d;
+                            hotkeyRemoved = true;
+                        }
                         foreach (var sh in imported.b2.ShortcutList)
                             removeHotkeys(sh);
                     }
 
                     if (imported.s2 != null)
                         removeHotkeys(imported.s2);
+                }
+
+                if (printError)
+                {
+                    var msg = "This import contained {0} automatically removed, please enable \"{1}\" inside the \"Settings\" tab on the plugin config and then try importing again if you did not intend to do this.";
+                    if (conditionRemoved)
+                        QoLBar.PrintEcho(string.Format(msg, "a condition set that was", "Allow importing conditions"));
+                    if (hotkeyRemoved)
+                        QoLBar.PrintEcho(string.Format(msg, "one or more hotkeys that were", "Allow importing hotkeys"));
                 }
             }
 
