@@ -252,7 +252,7 @@ namespace QoLBar
             // Name is available here for ease of access since it pertains to the icon as well
             EditShortcutName(sh);
             ImGuiEx.SetItemTooltip("Icons accept arguments between \"::\" and their ID. I.e. \"::f21\".\n" +
-                "\t' f ' - Applies the hotbar frame (or removes it if applied globally).\n" +
+                "\t' f ' - Applies the hotbar frame.\n" +
                 "\t' n ' - Removes the hotbar frame.\n" +
                 "\t' l ' - Uses the low resolution icon.\n" +
                 "\t' h ' - Uses the high resolution icon if it exists.\n" +

@@ -270,7 +270,6 @@ namespace QoLBar
 
             if (ImGui.Checkbox("Use Hotbar Frames on Icons", ref QoLBar.Config.UseIconFrame))
                 QoLBar.Config.Save();
-            ImGuiEx.SetItemTooltip("This option will invert the ' f ' argument for all icons.");
             ImGui.SameLine(halfWidth);
             var _ = QoLBar.Config.UseHRIcons;
             if (ImGui.Checkbox("Use HR Icons", ref _))
