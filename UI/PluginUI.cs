@@ -167,7 +167,7 @@ namespace QoLBar
                 ImGuiEx.SetItemTooltip("Options");
                 bars[i].DrawConfig();
                 ImGui.SameLine();
-                ImGui.SetNextItemWidth(27 * ImGui.GetIO().FontGlobalScale);
+                ImGui.SetNextItemWidth(27 * ImGuiHelpers.GlobalScale);
                 if (ImGui.Button(bar.Hidden ? "R" : "H", letterButtonSize))
                     bars[i].IsHidden = !bars[i].IsHidden;
                 ImGuiEx.SetItemTooltip(bar.Hidden ? "Reveal" : "Hide");

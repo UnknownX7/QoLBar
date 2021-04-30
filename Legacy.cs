@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using Newtonsoft.Json;
 using ImGuiNET;
+using Dalamud.Interface;
 
 #pragma warning disable CS0612 // Type or member is obsolete
 
@@ -59,10 +60,10 @@ namespace QoLBar
 
         public BarCfg Upgrade()
         {
-            var window = Dalamud.Interface.ImGuiHelpers.MainViewport.Size;
+            var window = ImGuiHelpers.MainViewport.Size;
             var oldPos = Position / window;
 
-            var oldOffset = Offset * ImGui.GetIO().FontGlobalScale;
+            var oldOffset = Offset * ImGuiHelpers.GlobalScale;
 
             var add = 0f;
             switch (Alignment)

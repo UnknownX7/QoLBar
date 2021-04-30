@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using ImGuiNET;
 using Dalamud.Configuration;
 using Dalamud.Plugin;
+using Dalamud.Interface;
 
 namespace QoLBar
 {
@@ -311,9 +312,9 @@ namespace QoLBar
         {
             if (displayUpdateWindow)
             {
-                var window = Dalamud.Interface.ImGuiHelpers.MainViewport.Size;
+                var window = ImGuiHelpers.MainViewport.Size;
                 ImGui.SetNextWindowPos(new System.Numerics.Vector2(window.X / 2, window.Y / 2), ImGuiCond.Appearing, new System.Numerics.Vector2(0.5f));
-                ImGui.SetNextWindowSize(new System.Numerics.Vector2(550, 280) * ImGui.GetIO().FontGlobalScale);
+                ImGui.SetNextWindowSize(new System.Numerics.Vector2(550, 280) * ImGuiHelpers.GlobalScale);
                 ImGui.Begin("QoL Bar Updated!", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoSavedSettings);
                 ImGui.TextWrapped("QoL Bar has a new feature where categories may now run commands like a normal shortcut, " +
                     "this may cause problems for people who were using the plugin BEFORE JANUARY 4TH, due to " +
