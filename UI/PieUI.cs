@@ -11,7 +11,7 @@ namespace QoLBar
     {
         // No reason anyone should want or need more than this, and it starts to look horrible
         public const int maxLevels = 3;
-        public const int maxItems = 6;
+        public const int maxItems = 12;
 
         public static bool enabled = false;
         private static Vector2 _prevMousePos;
