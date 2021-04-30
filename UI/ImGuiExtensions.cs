@@ -87,22 +87,24 @@ namespace QoLBar
         {
             if (tex != null)
             {
+                var p1 = pos;
+                var p2 = pos + new Vector2(size.X, 0);
+                var p3 = pos + size;
+                var p4 = pos + new Vector2(0, size.Y);
+
                 var rCos = (float)Math.Cos(rotation);
-                var rSin = (float)Math.Sin(rotation);
-                var halfSize = size / 2;
-                var center = pos + halfSize;
-                var p1 = center + RotateVector(-halfSize, rCos, rSin);
-                var p2 = center + RotateVector(new Vector2(halfSize.X, -halfSize.Y), rCos, rSin);
-                var p3 = center + RotateVector(halfSize, rCos, rSin);
-                var p4 = center + RotateVector(new Vector2(-halfSize.X, halfSize.Y), rCos, rSin);
-                var max = pos + size;
-                var uv2 = new Vector2(uv3.X, uv1.Y);
-                var uv4 = new Vector2(uv1.X, uv3.Y);
+                var rSin = (float)-Math.Sin(rotation);
+                var uvHalfSize = (uv3 - uv1) / 2;
+                var uvCenter = uv1 + uvHalfSize;
+                uv1 = uvCenter + RotateVector(-uvHalfSize, rCos, rSin);
+                var uv2 = uvCenter + RotateVector(new Vector2(uvHalfSize.X, -uvHalfSize.Y), rCos, rSin);
+                uv3 = uvCenter + RotateVector(uvHalfSize, rCos, rSin);
+                var uv4 = uvCenter + RotateVector(new Vector2(-uvHalfSize.X, uvHalfSize.Y), rCos, rSin);
 
                 if (hovered && !frame)
-                    drawList.AddRectFilled(pos, max, (activeTime > 0 || activeTime < 0) ? ImGui.GetColorU32(ImGuiCol.ButtonActive) : ImGui.GetColorU32(ImGuiCol.ButtonHovered));
+                    drawList.AddRectFilled(p1, p3, (activeTime > 0 || activeTime < 0) ? ImGui.GetColorU32(ImGuiCol.ButtonActive) : ImGui.GetColorU32(ImGuiCol.ButtonHovered));
 
-                drawList.PushClipRect(pos, max, true);
+                drawList.PushClipRect(p1, p3, true);
                 if (!flipped)
                     drawList.AddImageQuad(tex.ImGuiHandle, p1, p2, p3, p4, uv1, uv2, uv3, uv4, color);
                 else
@@ -110,7 +112,7 @@ namespace QoLBar
                 drawList.PopClipRect();
 
                 if (frame)
-                    drawList.AddIconFrame(pos, size, hovered, activeTime);
+                    drawList.AddIconFrame(p1, size, hovered, activeTime);
             }
         }
 
