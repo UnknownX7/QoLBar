@@ -430,7 +430,7 @@ namespace QoLBar
         private void DrawShortcuts()
         {
             var cols = Config.Columns;
-            var width = Config.ButtonWidth * ImGuiHelpers.GlobalScale * Config.Scale;
+            var width = (float)Math.Round(Config.ButtonWidth * ImGuiHelpers.GlobalScale * Config.Scale);
             for (int i = 0; i < children.Count; i++)
             {
                 var ui = children[i];

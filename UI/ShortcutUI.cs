@@ -291,7 +291,7 @@ namespace QoLBar
                 PluginUI.DrawExternalWindow(() => DrawConfig(Config.Name.StartsWith("::")), parentBar.IsDocked);
 
                 var cols = Config.CategoryColumns;
-                var width = Config.CategoryWidth * ImGui.GetIO().FontGlobalScale * Config.CategoryScale;
+                var width = (float)Math.Round(Config.CategoryWidth * ImGuiHelpers.GlobalScale * Config.CategoryScale);
 
                 for (int i = 0; i < children.Count; i++)
                 {
