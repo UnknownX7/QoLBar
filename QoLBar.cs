@@ -16,7 +16,7 @@ using QoLBar.Attributes;
 
 // I'm too lazy to make a file just for this
 [assembly: AssemblyTitle("QoLBar")]
-[assembly: AssemblyVersion("2.0.4.1")]
+[assembly: AssemblyVersion("2.1.0.0")]
 
 // Disclaimer: I have no idea what I'm doing.
 namespace QoLBar
@@ -32,7 +32,7 @@ namespace QoLBar
         public PluginUI ui;
         private bool commandReady = true;
         private bool _pluginReady = false;
-        private bool PluginReady => _pluginReady && Interface.Framework.Gui.GetBaseUIObject() != IntPtr.Zero;
+        private bool PluginReady => _pluginReady;
 
         public readonly int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
         private bool macroMode = false;
