@@ -74,6 +74,9 @@ namespace QoLBar
             catch { return string.Empty; }
         }
 
+        // ?????????
+        public static void PushClipRectFullScreen() => ImGui.GetWindowDrawList().PushClipRectFullScreen();
+
         public static Vector2 RotateVector(Vector2 v, float a)
         {
             var aCos = (float)Math.Cos(a);
@@ -104,12 +107,10 @@ namespace QoLBar
                 if (hovered && !frame)
                     drawList.AddRectFilled(p1, p3, (activeTime > 0 || activeTime < 0) ? ImGui.GetColorU32(ImGuiCol.ButtonActive) : ImGui.GetColorU32(ImGuiCol.ButtonHovered));
 
-                drawList.PushClipRect(p1, p3, true);
                 if (!flipped)
                     drawList.AddImageQuad(tex.ImGuiHandle, p1, p2, p3, p4, uv1, uv2, uv3, uv4, color);
                 else
                     drawList.AddImageQuad(tex.ImGuiHandle, p2, p1, p4, p3, uv1, uv2, uv3, uv4, color);
-                drawList.PopClipRect();
 
                 if (frame)
                     drawList.AddIconFrame(p1, size, hovered, activeTime);
@@ -133,7 +134,6 @@ namespace QoLBar
                 var frameSize = size * 0.075f;
                 var fMin = pos - frameSize;
                 var fMax = pos + size + frameSize;
-                drawList.PushClipRectFullScreen();
                 drawList.AddImage(frameSheet.ImGuiHandle, fMin, fMax, iconFrameUV0, iconFrameUV1); // Frame
                 if (hovered)
                 {
@@ -153,7 +153,6 @@ namespace QoLBar
                         }
                     }
                 }
-                drawList.PopClipRect();
             }
         }
 

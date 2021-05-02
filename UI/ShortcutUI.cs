@@ -185,7 +185,11 @@ namespace QoLBar
             if (sh.Type == ShortcutType.Spacer)
             {
                 if (useIcon)
+                {
+                    ImGuiEx.PushClipRectFullScreen();
                     DrawIcon(icon, new Vector2(height), sh.IconZoom, new Vector2(sh.IconOffset[0], sh.IconOffset[1]), sh.IconRotation, ImGui.ColorConvertFloat4ToU32(c), _animTime, args, false, true);
+                    ImGui.PopClipRect();
+                }
                 else
                 {
                     var wantedSize = ImGui.GetFontSize();
@@ -201,7 +205,11 @@ namespace QoLBar
                 }
             }
             else if (useIcon)
+            {
+                ImGuiEx.PushClipRectFullScreen();
                 clicked = DrawIcon(icon, new Vector2(height), sh.IconZoom, new Vector2(sh.IconOffset[0], sh.IconOffset[1]), sh.IconRotation, ImGui.ColorConvertFloat4ToU32(c), _animTime, args);
+                ImGui.PopClipRect();
+            }
             else
             {
                 ImGui.PushStyleColor(ImGuiCol.Text, c);
@@ -541,7 +549,7 @@ namespace QoLBar
         {
             var iconSize = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
             ImGui.SameLine(ImGui.GetWindowContentRegionWidth() + Style.WindowPadding.X - iconSize);
-            if (DrawIcon(46, new Vector2(iconSize), 1.0f, Vector2.Zero, 0, 0xFFFFFFFF, -1, "l"))
+            if (DrawIcon(46, new Vector2(iconSize), 1.0f, Vector2.Zero, 0, 0xFFFFFFFF, -1, "nl"))
                 QoLBar.Plugin.ToggleIconBrowser();
             ImGuiEx.SetItemTooltip("Opens up a list of all icons you can use instead of text.\n" +
                 "Warning: This will load EVERY icon available so it will probably lag for a moment.\n" +
