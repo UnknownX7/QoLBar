@@ -384,10 +384,6 @@ namespace QoLBar
                 // If the user forgot to close off the macro with "//m" then try to execute it now
                 if (macroQueue.Count > 0)
                     CreateAndExecuteMacro();
-
-                // If we arent executing commands, slowly free the fake macro memory
-                if (freeMemQueue.Count > 0 && !IsMacroRunning)
-                    Marshal.FreeHGlobal(freeMemQueue.Dequeue());
             }
         }
 
@@ -532,8 +528,12 @@ namespace QoLBar
                 //Marshal.WriteInt64(line + 0x60, 0); // String end (actual end is +0x61)
             }
 
-            freeMemQueue.Enqueue(macro);
             ExecuteMacro(raptureShellModule, macro);
+
+            // The game copies the macro to another location to be executed safely, so we can free it without worry
+            while (freeMemQueue.Count > 0)
+                Marshal.FreeHGlobal(freeMemQueue.Dequeue());
+            Marshal.FreeHGlobal(macro);
         }
 
         #region IDisposable Support
@@ -557,9 +557,6 @@ namespace QoLBar
             ui.Dispose();
 
             CleanTextures(true);
-
-            while (freeMemQueue.Count > 0)
-                Marshal.FreeHGlobal(freeMemQueue.Dequeue());
         }
 
         public void Dispose()
