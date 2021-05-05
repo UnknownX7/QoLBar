@@ -9,7 +9,9 @@ using System.Dynamic;
 using System.Linq.Expressions;
 using System.Diagnostics;
 using ImGuiNET;
+using Dalamud;
 using Dalamud.Plugin;
+using Dalamud.Hooking;
 using QoLBar.Attributes;
 
 #pragma warning disable IDE0060 // Remove unused parameter
@@ -35,7 +37,7 @@ namespace QoLBar
         private bool PluginReady => _pluginReady;
 
         public const int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
-        public const int maxMacroLines = 15; // Macro execution supports 30 lines, but macros themselves do not
+        public const int maxMacroLines = 30; // Macro execution supports 30 lines, but macros themselves do not
         public const int macroByteLength = 0x70 + (0x68 * maxMacroLines); // 0x688 (1672) normally
         private bool macroMode = false;
         private readonly Queue<string> commandQueue = new Queue<string>();
@@ -77,9 +79,38 @@ namespace QoLBar
 
         // Macro Execution
         private delegate void ExecuteMacroDelegate(IntPtr raptureShellModule, IntPtr macro);
-        private ExecuteMacroDelegate ExecuteMacro;
+        private Hook<ExecuteMacroDelegate> ExecuteMacroHook;
         public static IntPtr raptureShellModule = IntPtr.Zero;
         public static IntPtr raptureMacroModule = IntPtr.Zero;
+
+        private static IntPtr numCopiedMacroLinesPtr = IntPtr.Zero;
+        public static unsafe byte NumCopiedMacroLines
+        {
+            get => *(byte*)numCopiedMacroLinesPtr;
+            set
+            {
+                if (numCopiedMacroLinesPtr != IntPtr.Zero)
+                    SafeMemory.WriteBytes(numCopiedMacroLinesPtr, new[] { value });
+            }
+        }
+
+        private static IntPtr numExecutedMacroLinesPtr = IntPtr.Zero;
+        public static unsafe byte NumExecutedMacroLines
+        {
+            get => *(byte*)numExecutedMacroLinesPtr;
+            set
+            {
+                if (numExecutedMacroLinesPtr != IntPtr.Zero)
+                    SafeMemory.WriteBytes(numExecutedMacroLinesPtr, new[] { value });
+            }
+        }
+
+        private void ExecuteMacroDetour(IntPtr raptureShellModule, IntPtr macro)
+        {
+            NumCopiedMacroLines = 15;
+            NumExecutedMacroLines = 15;
+            ExecuteMacroHook.Original(raptureShellModule, macro);
+        }
 
         public void Initialize(DalamudPluginInterface pInterface)
         {
@@ -117,7 +148,11 @@ namespace QoLBar
 
                 try
                 {
-                    ExecuteMacro = Marshal.GetDelegateForFunctionPointer<ExecuteMacroDelegate>(Interface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28"));
+                    ExecuteMacroHook = new Hook<ExecuteMacroDelegate>(Interface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28"), new ExecuteMacroDelegate(ExecuteMacroDetour));
+                    ExecuteMacroHook.Enable();
+
+                    numCopiedMacroLinesPtr = Interface.TargetModuleScanner.ScanText("49 8D 5E 70 BF ?? 00 00 00") + 0x5;
+                    numExecutedMacroLinesPtr = Interface.TargetModuleScanner.ScanText("41 83 F8 ?? 0F 8D ?? ?? ?? ?? 49 6B C8 68") + 0x3;
 
                     var vtbl = (IntPtr*)(*(IntPtr*)uiModule);
                     var GetRaptureShellModule = Marshal.GetDelegateForFunctionPointer<GetModuleDelegate>(*(vtbl + 9)); // Client__UI__UIModule_GetRaptureShellModule / vf9
@@ -417,7 +452,7 @@ namespace QoLBar
                                 if (int.TryParse(command.Substring(1), out var macro))
                                 {
                                     if (0 <= macro && macro < 200)
-                                        ExecuteMacro(raptureShellModule, raptureMacroModule + 0x58 + (0x688 * macro));
+                                        ExecuteMacroHook.Original(raptureShellModule, raptureMacroModule + 0x58 + (0x688 * macro));
                                     else
                                         PrintError("Invalid macro. Usage: \"//m0\" for individual macro #0, \"//m100\" for shared macro #0, valid up to 199.");
                                 }
@@ -530,7 +565,12 @@ namespace QoLBar
                 //Marshal.WriteInt64(line + 0x60, 0); // String end (actual end is +0x61)
             }
 
-            ExecuteMacro(raptureShellModule, macro);
+            NumCopiedMacroLines = maxMacroLines;
+            NumExecutedMacroLines = maxMacroLines;
+
+            ExecuteMacroHook.Original(raptureShellModule, macro);
+
+            NumCopiedMacroLines = 15;
 
             // The game copies the macro to another location to be executed safely, so we can free it without worry
             while (freeMemQueue.Count > 0)
@@ -557,6 +597,10 @@ namespace QoLBar
             Interface.Dispose();
 
             ui.Dispose();
+
+            ExecuteMacroHook.Dispose();
+            NumCopiedMacroLines = 15;
+            NumExecutedMacroLines = 15;
 
             CleanTextures(true);
         }
