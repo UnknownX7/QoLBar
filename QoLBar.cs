@@ -34,7 +34,9 @@ namespace QoLBar
         private bool _pluginReady = false;
         private bool PluginReady => _pluginReady;
 
-        public readonly int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
+        public const int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
+        public const int maxMacroLines = 15; // Macro execution supports 30 lines, but macros themselves do not
+        public const int macroByteLength = 0x70 + (0x68 * maxMacroLines); // 0x688 (1672) normally
         private bool macroMode = false;
         private readonly Queue<string> commandQueue = new Queue<string>();
         private readonly Queue<string> macroQueue = new Queue<string>();
@@ -444,7 +446,7 @@ namespace QoLBar
                 {
                     if (macroMode)
                     {
-                        if (macroQueue.Count < 15)
+                        if (macroQueue.Count < maxMacroLines)
                         {
                             macroQueue.Enqueue(command + "\0");
                             commandReady = true;
@@ -476,7 +478,7 @@ namespace QoLBar
 
         private void CreateAndExecuteMacro()
         {
-            var macro = Marshal.AllocHGlobal(0x688); // 1672
+            var macro = Marshal.AllocHGlobal(macroByteLength);
             Marshal.WriteInt64(macro, 0x00000001000101D1); // 0xD1 0x01 0x01 0x00 0x01 0x00 0x00 0x00 (first 4 bytes are icon id, second 4 are a key in a separate file to prevent using other icons)
             Marshal.WriteIntPtr(macro + 0x8, macro + 0x2A); // Title string pointer
             Marshal.WriteInt64(macro + 0x10, 0x1); // Title byte capacity (unused)
@@ -492,7 +494,7 @@ namespace QoLBar
             Marshal.WriteInt64(macro + 0x60, 0);
             Marshal.WriteInt64(macro + 0x68, 0);
             // Begin macro line
-            for (int i = 0; i < 15; i++)
+            for (int i = 0; i < maxMacroLines; i++)
             {
                 var memStr = IntPtr.Zero;
                 var length = 1;
