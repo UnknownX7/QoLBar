@@ -37,12 +37,9 @@ namespace QoLBar
         private bool PluginReady => _pluginReady;
 
         public const int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
-        public const int maxMacroLines = 30; // Macro execution supports 30 lines, but macros themselves do not
-        public const int macroByteLength = 0x70 + (0x68 * maxMacroLines); // 0x688 (1672) normally
         private bool macroMode = false;
         private readonly Queue<string> commandQueue = new Queue<string>();
         private readonly Queue<string> macroQueue = new Queue<string>();
-        private readonly Queue<IntPtr> freeMemQueue = new Queue<IntPtr>();
 
         public static TextureDictionary TextureDictionary => Config.UseHRIcons ? textureDictionaryHR : textureDictionaryLR;
         public static readonly TextureDictionary textureDictionaryLR = new TextureDictionary(false, false);
@@ -107,8 +104,8 @@ namespace QoLBar
 
         private void ExecuteMacroDetour(IntPtr raptureShellModule, IntPtr macro)
         {
-            NumCopiedMacroLines = 15;
-            NumExecutedMacroLines = 15;
+            NumCopiedMacroLines = Structures.Macro.numLines;
+            NumExecutedMacroLines = Structures.Macro.numLines;
             ExecuteMacroHook.Original(raptureShellModule, macro);
         }
 
@@ -452,7 +449,7 @@ namespace QoLBar
                                 if (int.TryParse(command.Substring(1), out var macro))
                                 {
                                     if (0 <= macro && macro < 200)
-                                        ExecuteMacroHook.Original(raptureShellModule, raptureMacroModule + 0x58 + (0x688 * macro));
+                                        ExecuteMacroHook.Original(raptureShellModule, raptureMacroModule + 0x58 + (Structures.Macro.size * macro));
                                     else
                                         PrintError("Invalid macro. Usage: \"//m0\" for individual macro #0, \"//m100\" for shared macro #0, valid up to 199.");
                                 }
@@ -481,7 +478,7 @@ namespace QoLBar
                 {
                     if (macroMode)
                     {
-                        if (macroQueue.Count < maxMacroLines)
+                        if (macroQueue.Count < Structures.ExtendedMacro.numLines)
                         {
                             macroQueue.Enqueue(command + "\0");
                             commandReady = true;
@@ -491,21 +488,19 @@ namespace QoLBar
                     }
                     else
                     {
+                        var stringPtr = IntPtr.Zero;
+
                         try
                         {
-                            var bytes = Encoding.UTF8.GetBytes(command + "\0");
-                            var memStr = Marshal.AllocHGlobal(0x18 + bytes.Length);
+                            stringPtr = Marshal.AllocHGlobal(Structures.UTF8String.size);
+                            using var str = new Structures.UTF8String(stringPtr, command);
+                            Marshal.StructureToPtr(str, stringPtr, false);
 
-                            Marshal.WriteIntPtr(memStr, memStr + 0x18); // String pointer
-                            Marshal.WriteInt64(memStr + 0x8, bytes.Length); // Byte capacity (unused)
-                            Marshal.WriteInt64(memStr + 0x10, bytes.Length); // Byte length
-                            Marshal.Copy(bytes, 0, memStr + 0x18, bytes.Length); // String
-
-                            ProcessChatBox(uiModule, memStr, IntPtr.Zero, 0);
-
-                            Marshal.FreeHGlobal(memStr);
+                            ProcessChatBox(uiModule, stringPtr, IntPtr.Zero, 0);
                         }
                         catch { PrintError("Failed injecting command"); }
+
+                        Marshal.FreeHGlobal(stringPtr);
                     }
                 }
             }
@@ -513,69 +508,25 @@ namespace QoLBar
 
         private void CreateAndExecuteMacro()
         {
-            var macro = Marshal.AllocHGlobal(macroByteLength);
-            Marshal.WriteInt64(macro, 0x00000001000101D1); // 0xD1 0x01 0x01 0x00 0x01 0x00 0x00 0x00 (first 4 bytes are icon id, second 4 are a key in a separate file to prevent using other icons)
-            Marshal.WriteIntPtr(macro + 0x8, macro + 0x2A); // Title string pointer
-            Marshal.WriteInt64(macro + 0x10, 0x1); // Title byte capacity (unused)
-            Marshal.WriteInt64(macro + 0x18, 0x1); // Title byte length
-            Marshal.WriteInt64(macro + 0x20, 0); // ???
-            Marshal.WriteInt64(macro + 0x28, 0x0100); // Title (first 2 bytes are 0x00 0x01) (actual start is +0x2A)
-            //Marshal.WriteInt64(macro + 0x30, 0);
-            //Marshal.WriteInt64(macro + 0x38, 0); // Title end (actual end is +0x3E)
-            Marshal.WriteInt64(macro + 0x40, 0); // padding???
-            Marshal.WriteInt64(macro + 0x48, 0);
-            Marshal.WriteInt64(macro + 0x50, 0);
-            Marshal.WriteInt64(macro + 0x58, 0);
-            Marshal.WriteInt64(macro + 0x60, 0);
-            Marshal.WriteInt64(macro + 0x68, 0);
-            // Begin macro line
-            for (int i = 0; i < maxMacroLines; i++)
+            var macroPtr = IntPtr.Zero;
+
+            try
             {
-                var memStr = IntPtr.Zero;
-                var length = 1;
-                if (macroQueue.Count > 0)
-                {
-                    var bytes = Encoding.UTF8.GetBytes(macroQueue.Dequeue());
-                    length = bytes.Length;
-                    memStr = Marshal.AllocHGlobal(length);
-                    Marshal.Copy(bytes, 0, memStr, length);
+                macroPtr = Marshal.AllocHGlobal(Structures.ExtendedMacro.size);
+                using var macro = new Structures.ExtendedMacro(macroPtr, string.Empty, macroQueue.ToArray());
+                Marshal.StructureToPtr(macro, macroPtr, false);
 
-                    freeMemQueue.Enqueue(memStr);
-                }
+                NumCopiedMacroLines = Structures.ExtendedMacro.numLines;
+                NumExecutedMacroLines = Structures.ExtendedMacro.numLines;
 
-                var line = macro + 0x70 + (0x68 * i);
-                if (memStr == IntPtr.Zero)
-                    Marshal.WriteIntPtr(line, line + 0x22); // String pointer
-                else
-                    Marshal.WriteIntPtr(line, memStr);
-                Marshal.WriteInt64(line + 0x8, length); // Byte capacity (unused)
-                Marshal.WriteInt64(line + 0x10, length); // Byte length
-                Marshal.WriteInt64(line + 0x18, 0); // ???
-                if (memStr == IntPtr.Zero)
-                    Marshal.WriteInt64(line + 0x20, 0x0101); // Unused string (seems to start with 0x01 0x01 if its unused, else 0x00 0x01) (actual start is +0x22)
-                else
-                    Marshal.WriteInt64(line + 0x20, 0x0100);
-                //Marshal.WriteInt64(line + 0x28, 0);
-                //Marshal.WriteInt64(line + 0x30, 0);
-                //Marshal.WriteInt64(line + 0x38, 0);
-                //Marshal.WriteInt64(line + 0x40, 0);
-                //Marshal.WriteInt64(line + 0x48, 0);
-                //Marshal.WriteInt64(line + 0x50, 0);
-                //Marshal.WriteInt64(line + 0x58, 0);
-                //Marshal.WriteInt64(line + 0x60, 0); // String end (actual end is +0x61)
+                ExecuteMacroHook.Original(raptureShellModule, macroPtr);
+
+                NumCopiedMacroLines = Structures.Macro.numLines;
             }
+            catch { PrintError("Failed injecting macro"); }
 
-            NumCopiedMacroLines = maxMacroLines;
-            NumExecutedMacroLines = maxMacroLines;
-
-            ExecuteMacroHook.Original(raptureShellModule, macro);
-
-            NumCopiedMacroLines = 15;
-
-            // The game copies the macro to another location to be executed safely, so we can free it without worry
-            while (freeMemQueue.Count > 0)
-                Marshal.FreeHGlobal(freeMemQueue.Dequeue());
-            Marshal.FreeHGlobal(macro);
+            Marshal.FreeHGlobal(macroPtr);
+            macroQueue.Clear();
         }
 
         #region IDisposable Support
