@@ -171,7 +171,7 @@ namespace QoLBar
                 }
                 ImGui.SameLine();
                 if (ImGui.Button("Delete"))
-                    QoLBar.Plugin.ExecuteCommand("/echo <se> Right click to delete!");
+                    Game.ExecuteCommand("/echo <se> Right click to delete!");
                 if (ImGui.IsItemHovered())
                 {
                     ImGui.SetTooltip($"Right click this button to delete this set!");
@@ -425,7 +425,7 @@ namespace QoLBar
                         }
                         ImGui.SameLine();
                         if (ImGui.Button("Delete"))
-                            QoLBar.Plugin.ExecuteCommand("/echo <se> Right click to delete!");
+                            Game.ExecuteCommand("/echo <se> Right click to delete!");
                         if (ImGui.IsItemHovered())
                         {
                             ImGui.SetTooltip($"Right click this button to delete this condition!");
@@ -464,7 +464,7 @@ namespace QoLBar
             }
             ImGui.SameLine();
             if (ImGui.Button("Open Condition Data", new Vector2(ImGui.GetContentRegionAvail().X, 0)))
-                QoLBar.Plugin.ExecuteCommand("/xldata condition");
+                Game.ExecuteCommand("/xldata condition");
         }
 
         private static void SwapConditionSet(int from, int to)
@@ -548,7 +548,7 @@ namespace QoLBar
             var pluginInterface = QoLBar.Interface;
             CheckCache();
 
-            if (_conditionCache.TryGetValue((type, cond, arg), out var b))
+            if (_conditionCache.TryGetValue((type, cond, arg), out bool b)) // ReSharper / Rider hates this being a var for some reason
                 return b;
             else
             {
@@ -571,7 +571,7 @@ namespace QoLBar
                             1 => !(arg is string) && (ulong)arg == pluginInterface.ClientState.LocalContentId,
                             2 => pluginInterface.ClientState.Targets.CurrentTarget != null,
                             3 => pluginInterface.ClientState.Targets.FocusTarget != null,
-                            4 => (player != null) && IsWeaponDrawn(player),
+                            4 => (player != null) && Game.IsWeaponDrawn(player),
                             5 => arg is string && CheckEorzeaTimeCondition(arg),
                             6 => arg is string && CheckLocalTimeCondition(arg),
                             _ => false,
@@ -586,10 +586,6 @@ namespace QoLBar
                 return b;
             }
         }
-
-        private static unsafe bool IsWeaponDrawn(Dalamud.Game.ClientState.Actors.Types.PlayerCharacter player) => (*(byte*)(player.Address + 0x19A0) & 0b100) > 0;
-
-        private static unsafe DateTimeOffset GetEorzeaTime() => DateTimeOffset.FromUnixTimeSeconds(*(long*)(QoLBar.Interface.Framework.Address.BaseAddress + 0x1608));
 
         public static (double, double, double, double) ParseTime(string str) => str.Length switch {
             4 => (0, char.GetNumericValue(str[0]), char.GetNumericValue(str[2]), char.GetNumericValue(str[3])),
@@ -636,19 +632,13 @@ namespace QoLBar
         private static bool CheckEorzeaTimeCondition(string arg)
         {
             var reg = Regex.Match(arg, TimespanRegex);
-            if (reg.Success)
-                return IsTimeBetween(GetEorzeaTime().ToString("HH:mm"), reg.Groups[1].Value, reg.Groups[2].Value);
-            else
-                return false;
+            return reg.Success && IsTimeBetween(Game.EorzeaTime.ToString("HH:mm"), reg.Groups[1].Value, reg.Groups[2].Value);
         }
 
         private static bool CheckLocalTimeCondition(string arg)
         {
             var reg = Regex.Match(arg, TimespanRegex);
-            if (reg.Success)
-                return IsTimeBetween(DateTime.Now.ToString("HH:mm"), reg.Groups[1].Value, reg.Groups[2].Value);
-            else
-                return false;
+            return reg.Success && IsTimeBetween(DateTime.Now.ToString("HH:mm"), reg.Groups[1].Value, reg.Groups[2].Value);
         }
 
         public static bool CheckCache()

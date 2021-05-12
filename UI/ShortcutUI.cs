@@ -121,7 +121,7 @@ namespace QoLBar
                                 break;
                             }
                     }
-                    QoLBar.Plugin.ExecuteCommand(command);
+                    Game.QueueCommand(command);
                     break;
                 case ShortcutType.Category:
                     switch (Config.Mode)
@@ -138,7 +138,7 @@ namespace QoLBar
                             break;
                         default:
                             if (!wasHovered)
-                                QoLBar.Plugin.ExecuteCommand(command);
+                                Game.QueueCommand(command);
                             if (!outsideDraw)
                             {
                                 parentBar.SetupCategoryPosition(v, parent != null);
@@ -238,7 +238,7 @@ namespace QoLBar
                 if (!clicked)
                 {
                     var isHoverEnabled = sh.CategoryOnHover && sh.Type == ShortcutType.Category;
-                    var allowHover = parentBar.IsFullyRevealed && !IsConfigPopupOpen() && !ImGui.IsPopupOpen("ShortcutCategory") && QoLBar.IsGameFocused && !ImGui.IsAnyMouseDown() && !ImGui.IsMouseReleased(ImGuiMouseButton.Right);
+                    var allowHover = parentBar.IsFullyRevealed && !IsConfigPopupOpen() && !ImGui.IsPopupOpen("ShortcutCategory") && Game.IsGameFocused && !ImGui.IsAnyMouseDown() && !ImGui.IsMouseReleased(ImGuiMouseButton.Right);
                     if (isHoverEnabled && allowHover)
                     {
                         wasHovered = true;
@@ -402,7 +402,7 @@ namespace QoLBar
                 }
                 ImGui.SameLine();
                 if (ImGui.Button(QoLBar.Config.ExportOnDelete ? "Cut" : "Delete"))
-                    QoLBar.Plugin.ExecuteCommand("/echo <se> Right click to delete!");
+                    Game.ExecuteCommand("/echo <se> Right click to delete!");
                 //if (ImGui.IsItemClicked(1)) // Jesus christ I hate ImGui who made this function activate on PRESS AND NOT RELEASE??? THIS ISN'T A CLICK
                 if (ImGui.IsItemHovered())
                 {

@@ -1,5 +1,4 @@
 using System;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
@@ -7,9 +6,7 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Dynamic;
 using System.Linq.Expressions;
-using System.Diagnostics;
 using ImGuiNET;
-using Dalamud;
 using Dalamud.Plugin;
 using Dalamud.Hooking;
 using QoLBar.Attributes;
@@ -32,82 +29,14 @@ namespace QoLBar
         public static Configuration Config { get; private set; }
         public static QoLBar Plugin { get; private set; }
         public PluginUI ui;
-        private bool commandReady = true;
         private bool _pluginReady = false;
         private bool PluginReady => _pluginReady;
-
-        public const int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
-        private bool macroMode = false;
-        private readonly Queue<string> commandQueue = new Queue<string>();
-        private readonly Queue<string> macroQueue = new Queue<string>();
 
         public static TextureDictionary TextureDictionary => Config.UseHRIcons ? textureDictionaryHR : textureDictionaryLR;
         public static readonly TextureDictionary textureDictionaryLR = new TextureDictionary(false, false);
         public static readonly TextureDictionary textureDictionaryHR = new TextureDictionary(true, false);
         public static readonly TextureDictionary textureDictionaryGSLR = new TextureDictionary(false, true);
         public static readonly TextureDictionary textureDictionaryGSHR = new TextureDictionary(true, true);
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)] private static extern IntPtr GetForegroundWindow();
-        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)] private static extern int GetWindowThreadProcessId(IntPtr handle, out int processId);
-        public static bool IsGameFocused
-        {
-            get
-            {
-                var activatedHandle = GetForegroundWindow();
-                if (activatedHandle == IntPtr.Zero)
-                    return false;
-
-                var procId = Process.GetCurrentProcess().Id;
-                GetWindowThreadProcessId(activatedHandle, out int activeProcId);
-
-                return activeProcId == procId;
-            }
-        }
-
-        public static IntPtr textActiveBoolPtr = IntPtr.Zero;
-        public static unsafe bool IsGameTextInputActive => (textActiveBoolPtr != IntPtr.Zero) && *(bool*)textActiveBoolPtr;
-        public static unsafe bool IsMacroRunning => *(int*)(raptureShellModule + 0x2C0) >= 0;
-
-        // Command Execution
-        private delegate void ProcessChatBoxDelegate(IntPtr uiModule, IntPtr message, IntPtr unused, byte a4);
-        private delegate IntPtr GetModuleDelegate(IntPtr basePtr);
-        private ProcessChatBoxDelegate ProcessChatBox;
-        public static IntPtr uiModule = IntPtr.Zero;
-
-        // Macro Execution
-        private delegate void ExecuteMacroDelegate(IntPtr raptureShellModule, IntPtr macro);
-        private Hook<ExecuteMacroDelegate> ExecuteMacroHook;
-        public static IntPtr raptureShellModule = IntPtr.Zero;
-        public static IntPtr raptureMacroModule = IntPtr.Zero;
-
-        private static IntPtr numCopiedMacroLinesPtr = IntPtr.Zero;
-        public static unsafe byte NumCopiedMacroLines
-        {
-            get => *(byte*)numCopiedMacroLinesPtr;
-            set
-            {
-                if (numCopiedMacroLinesPtr != IntPtr.Zero)
-                    SafeMemory.WriteBytes(numCopiedMacroLinesPtr, new[] { value });
-            }
-        }
-
-        private static IntPtr numExecutedMacroLinesPtr = IntPtr.Zero;
-        public static unsafe byte NumExecutedMacroLines
-        {
-            get => *(byte*)numExecutedMacroLinesPtr;
-            set
-            {
-                if (numExecutedMacroLinesPtr != IntPtr.Zero)
-                    SafeMemory.WriteBytes(numExecutedMacroLinesPtr, new[] { value });
-            }
-        }
-
-        private void ExecuteMacroDetour(IntPtr raptureShellModule, IntPtr macro)
-        {
-            NumCopiedMacroLines = Structures.Macro.numLines;
-            NumExecutedMacroLines = Structures.Macro.numLines;
-            ExecuteMacroHook.Original(raptureShellModule, macro);
-        }
 
         public void Initialize(DalamudPluginInterface pInterface)
         {
@@ -133,30 +62,30 @@ namespace QoLBar
             SetupIPC();
         }
 
-        private unsafe void InitializePointers()
+        private static unsafe void InitializePointers()
         {
-            try { textActiveBoolPtr = *(IntPtr*)(Interface.Framework.Gui.GetBaseUIObject() + 0x28) + 0x188E; }
+            try { Game.textActiveBoolPtr = *(IntPtr*)(Interface.Framework.Gui.GetBaseUIObject() + 0x28) + 0x188E; }
             catch { PluginLog.Error("Failed loading textActiveBoolPtr"); }
 
             try
             {
-                ProcessChatBox = Marshal.GetDelegateForFunctionPointer<ProcessChatBoxDelegate>(Interface.TargetModuleScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9"));
-                uiModule = Interface.Framework.Gui.GetUIModule();
+                Game.ProcessChatBox = Marshal.GetDelegateForFunctionPointer<Game.ProcessChatBoxDelegate>(Interface.TargetModuleScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9"));
+                Game.uiModule = Interface.Framework.Gui.GetUIModule();
 
                 try
                 {
-                    ExecuteMacroHook = new Hook<ExecuteMacroDelegate>(Interface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28"), new ExecuteMacroDelegate(ExecuteMacroDetour));
-                    ExecuteMacroHook.Enable();
+                    Game.ExecuteMacroHook = new Hook<Game.ExecuteMacroDelegate>(Interface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28"), new Game.ExecuteMacroDelegate(Game.ExecuteMacroDetour));
+                    Game.ExecuteMacroHook.Enable();
 
-                    numCopiedMacroLinesPtr = Interface.TargetModuleScanner.ScanText("49 8D 5E 70 BF ?? 00 00 00") + 0x5;
-                    numExecutedMacroLinesPtr = Interface.TargetModuleScanner.ScanText("41 83 F8 ?? 0F 8D ?? ?? ?? ?? 49 6B C8 68") + 0x3;
+                    Game.numCopiedMacroLinesPtr = Interface.TargetModuleScanner.ScanText("49 8D 5E 70 BF ?? 00 00 00") + 0x5;
+                    Game.numExecutedMacroLinesPtr = Interface.TargetModuleScanner.ScanText("41 83 F8 ?? 0F 8D ?? ?? ?? ?? 49 6B C8 68") + 0x3;
 
-                    var vtbl = (IntPtr*)(*(IntPtr*)uiModule);
-                    var GetRaptureShellModule = Marshal.GetDelegateForFunctionPointer<GetModuleDelegate>(*(vtbl + 9)); // Client__UI__UIModule_GetRaptureShellModule / vf9
-                    var GetRaptureMacroModule = Marshal.GetDelegateForFunctionPointer<GetModuleDelegate>(*(vtbl + 12)); // Client__UI__UIModule_GetRaptureMacroModule / vf12
+                    var vtbl = (IntPtr*)(*(IntPtr*)Game.uiModule);
+                    var GetRaptureShellModule = Marshal.GetDelegateForFunctionPointer<Game.GetModuleDelegate>(*(vtbl + 9)); // Client__UI__UIModule_GetRaptureShellModule / vf9
+                    var GetRaptureMacroModule = Marshal.GetDelegateForFunctionPointer<Game.GetModuleDelegate>(*(vtbl + 12)); // Client__UI__UIModule_GetRaptureMacroModule / vf12
 
-                    raptureShellModule = GetRaptureShellModule(uiModule);
-                    raptureMacroModule = GetRaptureMacroModule(uiModule);
+                    Game.raptureShellModule = GetRaptureShellModule(Game.uiModule);
+                    Game.raptureMacroModule = GetRaptureMacroModule(Game.uiModule);
                 }
                 catch { PluginLog.Error("Failed loading ExecuteMacro"); }
             }
@@ -256,7 +185,7 @@ namespace QoLBar
             if (!PluginReady) return;
 
             Config.DoTimedBackup();
-            ReadyCommand();
+            Game.ReadyCommand();
             Keybind.Run();
             Keybind.SetupHotkeys(ui.bars);
         }
@@ -405,130 +334,6 @@ namespace QoLBar
         }
 #pragma warning restore CS0618 // Type or member is obsolete
 
-        // Command Execution, taken from https://git.sr.ht/~jkcclemens/CCMM/tree/master/Macrology/GameFunctions.cs
-        private void ReadyCommand()
-        {
-            commandReady = true;
-            ExecuteCommand();
-
-            if (commandReady)
-            {
-                macroMode = false;
-
-                // If the user forgot to close off the macro with "//m" then try to execute it now
-                if (macroQueue.Count > 0)
-                    CreateAndExecuteMacro();
-            }
-        }
-
-        public void ExecuteCommand(string command)
-        {
-            foreach (string c in command.Split('\n'))
-            {
-                if (!string.IsNullOrEmpty(c))
-                    commandQueue.Enqueue(c.Substring(0, Math.Min(c.Length, maxCommandLength)));
-            }
-            ExecuteCommand(); // Attempt to run immediately
-        }
-
-        private void ExecuteCommand()
-        {
-            while (commandQueue.Count > 0 && commandReady)
-            {
-                commandReady = false;
-                var command = commandQueue.Dequeue();
-
-                if (command.StartsWith("//"))
-                {
-                    command = command.Substring(2).ToLower();
-                    switch (command[0])
-                    {
-                        case 'm': // Execute Macro
-                            try
-                            {
-                                if (int.TryParse(command.Substring(1), out var macro))
-                                {
-                                    if (0 <= macro && macro < 200)
-                                        ExecuteMacroHook.Original(raptureShellModule, raptureMacroModule + 0x58 + (Structures.Macro.size * macro));
-                                    else
-                                        PrintError("Invalid macro. Usage: \"//m0\" for individual macro #0, \"//m100\" for shared macro #0, valid up to 199.");
-                                }
-                                else
-                                {
-                                    if (macroMode)
-                                    {
-                                        macroMode = false;
-                                        CreateAndExecuteMacro();
-                                    }
-                                    else
-                                    {
-                                        macroMode = true;
-                                        commandReady = true;
-                                    }
-                                }
-                            }
-                            catch { PrintError("Failed running macro"); }
-                            break;
-                        case ' ': // Comment
-                            commandReady = true;
-                            break;
-                    }
-                }
-                else
-                {
-                    if (macroMode)
-                    {
-                        if (macroQueue.Count < Structures.ExtendedMacro.numLines)
-                        {
-                            macroQueue.Enqueue(command + "\0");
-                            commandReady = true;
-                        }
-                        else
-                            PrintError("Failed to add command to macro, capacity reached. Please close off the macro with another \"//m\" if you didn't intend to do this.");
-                    }
-                    else
-                    {
-                        var stringPtr = IntPtr.Zero;
-
-                        try
-                        {
-                            stringPtr = Marshal.AllocHGlobal(Structures.UTF8String.size);
-                            using var str = new Structures.UTF8String(stringPtr, command);
-                            Marshal.StructureToPtr(str, stringPtr, false);
-
-                            ProcessChatBox(uiModule, stringPtr, IntPtr.Zero, 0);
-                        }
-                        catch { PrintError("Failed injecting command"); }
-
-                        Marshal.FreeHGlobal(stringPtr);
-                    }
-                }
-            }
-        }
-
-        private void CreateAndExecuteMacro()
-        {
-            var macroPtr = IntPtr.Zero;
-
-            try
-            {
-                macroPtr = Marshal.AllocHGlobal(Structures.ExtendedMacro.size);
-                using var macro = new Structures.ExtendedMacro(macroPtr, string.Empty, macroQueue.ToArray());
-                Marshal.StructureToPtr(macro, macroPtr, false);
-
-                NumCopiedMacroLines = Structures.ExtendedMacro.numLines;
-                NumExecutedMacroLines = Structures.ExtendedMacro.numLines;
-
-                ExecuteMacroHook.Original(raptureShellModule, macroPtr);
-
-                NumCopiedMacroLines = Structures.Macro.numLines;
-            }
-            catch { PrintError("Failed injecting macro"); }
-
-            Marshal.FreeHGlobal(macroPtr);
-            macroQueue.Clear();
-        }
-
         #region IDisposable Support
         protected virtual void Dispose(bool disposing)
         {
@@ -549,9 +354,9 @@ namespace QoLBar
 
             ui.Dispose();
 
-            ExecuteMacroHook.Dispose();
-            NumCopiedMacroLines = 15;
-            NumExecutedMacroLines = 15;
+            Game.ExecuteMacroHook.Dispose();
+            Game.NumCopiedMacroLines = 15;
+            Game.NumExecutedMacroLines = 15;
 
             CleanTextures(true);
         }

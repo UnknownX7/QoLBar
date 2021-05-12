@@ -217,7 +217,7 @@ namespace QoLBar
                 {
                     ImGui.SameLine();
                     if (ImGui.Button(QoLBar.Config.ExportOnDelete ? "Cut" : "Delete"))
-                        QoLBar.Plugin.ExecuteCommand("/echo <se> Right click to delete!");
+                        Game.ExecuteCommand("/echo <se> Right click to delete!");
                     if (ImGui.IsItemHovered())
                     {
                         ImGui.SetTooltip($"Right click this button to delete bar #{i + 1}!" +
@@ -393,7 +393,7 @@ namespace QoLBar
 
                         ImGui.SameLine();
                         if (ImGui.SmallButton("Delete"))
-                            QoLBar.Plugin.ExecuteCommand("/echo <se> Double right click to delete!");
+                            Game.ExecuteCommand("/echo <se> Double right click to delete!");
                         if (ImGui.IsItemHovered())
                         {
                             ImGui.SetTooltip($"Double right click this button to delete {file.Name}");
@@ -423,28 +423,28 @@ namespace QoLBar
 
             ImGui.TextUnformatted("UI Module");
             ImGui.NextColumn();
-            ImGui.TextUnformatted($"{QoLBar.uiModule.ToString("X")}");
+            ImGui.TextUnformatted($"{Game.uiModule.ToString("X")}");
             ImGui.NextColumn();
             ImGui.NextColumn();
 
             ImGui.TextUnformatted("Rapture Shell Module");
             ImGui.NextColumn();
-            ImGui.TextUnformatted($"{QoLBar.raptureShellModule.ToString("X")}");
+            ImGui.TextUnformatted($"{Game.raptureShellModule.ToString("X")}");
             ImGui.NextColumn();
             ImGui.NextColumn();
 
             ImGui.TextUnformatted("Rapture Macro Module");
             ImGui.NextColumn();
-            ImGui.TextUnformatted($"{QoLBar.raptureMacroModule.ToString("X")}");
+            ImGui.TextUnformatted($"{Game.raptureMacroModule.ToString("X")}");
             ImGui.NextColumn();
-            ImGui.TextUnformatted($"{QoLBar.IsMacroRunning}");
+            ImGui.TextUnformatted($"{Game.IsMacroRunning}");
             ImGui.NextColumn();
 
             ImGui.TextUnformatted("Game Text Input Active");
             ImGui.NextColumn();
-            ImGui.TextUnformatted($"{QoLBar.textActiveBoolPtr.ToString("X")}");
+            ImGui.TextUnformatted($"{Game.textActiveBoolPtr.ToString("X")}");
             ImGui.NextColumn();
-            ImGui.TextUnformatted($"{QoLBar.IsGameTextInputActive}");
+            ImGui.TextUnformatted($"{Game.IsGameTextInputActive}");
 
             ImGui.Columns(1);
             ImGui.Unindent();

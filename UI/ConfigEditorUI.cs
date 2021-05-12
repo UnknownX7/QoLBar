@@ -131,7 +131,7 @@ namespace QoLBar
             if (sh.Type != ShortcutType.Spacer && (sh.Type != ShortcutType.Category || sh.Mode == ShortcutMode.Default))
             {
                 var height = ImGui.GetFontSize() * Math.Min(sh.Command.Split('\n').Length + 1, 7) + ImGui.GetStyle().FramePadding.Y * 2; // ImGui issue #238: can't disable multiline scrollbar and it appears a whole line earlier than it should, so thats cool I guess
-                
+
                 unsafe
                 {
                     if (ImGui.InputTextMultiline("Command##Input", ref sh.Command, 65535, new Vector2(0, height), ImGuiInputTextFlags.CallbackAlways, new ImGuiInputTextCallback(GetCursorPosCallback)) && editing)
@@ -351,7 +351,7 @@ namespace QoLBar
             if (ImGui.Checkbox("Edit Mode", ref bar.Config.Editing))
             {
                 if (!bar.Config.Editing)
-                    QoLBar.Plugin.ExecuteCommand("/echo <se> You can right click on the bar itself (the black background) to reopen this settings menu! You can also use shift + right click to add a new shortcut as well.");
+                    Game.ExecuteCommand("/echo <se> You can right click on the bar itself (the black background) to reopen this settings menu! You can also use shift + right click to add a new shortcut as well.");
                 QoLBar.Config.Save();
             }
             ImGui.SameLine(ImGui.GetWindowWidth() / 2);
