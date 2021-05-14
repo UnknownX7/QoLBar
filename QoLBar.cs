@@ -9,7 +9,6 @@ using System.Linq.Expressions;
 using ImGuiNET;
 using Dalamud.Plugin;
 using Dalamud.Hooking;
-using QoLBar.Attributes;
 
 #pragma warning disable IDE0060 // Remove unused parameter
 

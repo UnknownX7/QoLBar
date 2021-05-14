@@ -1,12 +1,10 @@
 ﻿using Dalamud.Game.Command;
 using Dalamud.Plugin;
-using QoLBar.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using static Dalamud.Game.Command.CommandInfo;
-// ReSharper disable ForCanBeConvertedToForeach
 
 namespace QoLBar
 {
@@ -26,10 +24,6 @@ namespace QoLBar
             AddCommandHandlers();
         }
 
-        // http://codebetter.com/patricksmacchia/2008/11/19/an-easy-and-efficient-way-to-improve-net-code-performances/
-        // Benchmarking this myself gave similar results, so I'm doing this to somewhat counteract using reflection to access command attributes.
-        // I like the convenience of attributes, but in principle it's a bit slower to use them as opposed to just initializing CommandInfos directly.
-        // It's usually sub-1 millisecond anyways, though. It probably doesn't matter at all.
         private void AddCommandHandlers()
         {
             for (var i = 0; i < this.pluginCommands.Length; i++)
@@ -67,7 +61,6 @@ namespace QoLBar
             var commandInfoTuples = new List<(string, CommandInfo)> { (command.Command, commandInfo) };
             if (aliases != null)
             {
-                // ReSharper disable once LoopCanBeConvertedToQuery
                 for (var i = 0; i < aliases.Aliases.Length; i++)
                 {
                     commandInfoTuples.Add((aliases.Aliases[i], commandInfo));
@@ -82,4 +75,44 @@ namespace QoLBar
             RemoveCommandHandlers();
         }
     }
+
+    #region Attributes
+    [AttributeUsage(AttributeTargets.Method)]
+    public class AliasesAttribute : Attribute
+    {
+        public string[] Aliases { get; }
+
+        public AliasesAttribute(params string[] aliases)
+        {
+            Aliases = aliases;
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Method)]
+    public class CommandAttribute : Attribute
+    {
+        public string Command { get; }
+
+        public CommandAttribute(string command)
+        {
+            Command = command;
+        }
+    }
+
+    [AttributeUsage(AttributeTargets.Method)]
+    public class DoNotShowInHelpAttribute : Attribute
+    {
+    }
+
+    [AttributeUsage(AttributeTargets.Method)]
+    public class HelpMessageAttribute : Attribute
+    {
+        public string HelpMessage { get; }
+
+        public HelpMessageAttribute(string helpMessage)
+        {
+            HelpMessage = helpMessage;
+        }
+    }
+    #endregion
 }
