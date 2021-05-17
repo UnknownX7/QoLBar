@@ -12,21 +12,21 @@ namespace QoLBar
 {
     public class QoLSerializer : DefaultSerializationBinder
     {
-        private readonly static Type exportType = typeof(Importing.ExportInfo);
-        private readonly static Type barType = typeof(BarConfig);
-        private readonly static Type shortcutType = typeof(Shortcut);
-        private readonly static Type barType2 = typeof(BarCfg);
-        private readonly static Type shortcutType2 = typeof(ShCfg);
-        private readonly static Type vector2Type = typeof(Vector2);
-        private readonly static Type vector4Type = typeof(Vector4);
-        private readonly static string exportShortName = "e";
-        private readonly static string barShortName = "b";
-        private readonly static string shortcutShortName = "s";
-        private readonly static string barShortName2 = "b2";
-        private readonly static string shortcutShortName2 = "s2";
-        private readonly static string vector2ShortName = "2";
-        private readonly static string vector4ShortName = "4";
-        private readonly static Dictionary<string, Type> types = new Dictionary<string, Type>
+        private static readonly Type exportType = typeof(Importing.ExportInfo);
+        private static readonly Type barType = typeof(BarConfig);
+        private static readonly Type shortcutType = typeof(Shortcut);
+        private static readonly Type barType2 = typeof(BarCfg);
+        private static readonly Type shortcutType2 = typeof(ShCfg);
+        private static readonly Type vector2Type = typeof(Vector2);
+        private static readonly Type vector4Type = typeof(Vector4);
+        private static readonly string exportShortName = "e";
+        private static readonly string barShortName = "b";
+        private static readonly string shortcutShortName = "s";
+        private static readonly string barShortName2 = "b2";
+        private static readonly string shortcutShortName2 = "s2";
+        private static readonly string vector2ShortName = "2";
+        private static readonly string vector4ShortName = "4";
+        private static readonly Dictionary<string, Type> types = new Dictionary<string, Type>
         {
             [exportType.FullName] = exportType,
             [exportShortName] = exportType,
@@ -43,7 +43,7 @@ namespace QoLBar
             [vector4Type.FullName] = vector4Type,
             [vector4ShortName] = vector4Type
         };
-        private readonly static Dictionary<Type, string> typeNames = new Dictionary<Type, string>
+        private static readonly Dictionary<Type, string> typeNames = new Dictionary<Type, string>
         {
             [exportType] = exportShortName,
             [barType] = barShortName,
@@ -295,7 +295,18 @@ namespace QoLBar
                 {
                     PluginLog.LogError("Invalid import string!");
                     PluginLog.LogError($"{e.GetType()}\n{e.Message}");
-                    QoLBar.PrintError("Failed to import from clipboard. Please make sure to fully copy the import text before clicking this button!");
+                    switch (e)
+                    {
+                        case FormatException _:
+                            QoLBar.PrintError("Failed to import from clipboard! Import string is invalid or incomplete.");
+                            break;
+                        case JsonSerializationException _:
+                            QoLBar.PrintError("Failed to import from clipboard! Import string does not contain an importable object.");
+                            break;
+                        default:
+                            QoLBar.PrintError($"Failed to import from clipboard! {e.GetType()}");
+                            break;
+                    }
                 }
             }
 
