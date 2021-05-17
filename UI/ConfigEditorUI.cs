@@ -10,6 +10,7 @@ using static QoLBar.ShCfg;
 
 namespace QoLBar
 {
+    // I hate this file with a passion
     public static class ConfigEditorUI
     {
         private static int _inputPos = 0;
@@ -83,7 +84,7 @@ namespace QoLBar
             }
         }
 
-        public static void AddRightClickPrivateUsePopup(ref string input)
+        private static void AddRightClickPrivateUsePopup(ref string input)
         {
             if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right))
                 ImGui.OpenPopup($"Private Use Popup##{ImGui.GetCursorPos()}");
@@ -91,25 +92,22 @@ namespace QoLBar
             DrawInsertPrivateCharPopup(ref input);
         }
 
-        public static void EditShortcutConfigBase(ShCfg sh, bool editing)
+        public static void AutoPasteIcon(ShCfg sh)
         {
             if (IconBrowserUI.iconBrowserOpen && IconBrowserUI.doPasteIcon)
             {
                 var split = sh.Name.Split(new[] { "##" }, 2, StringSplitOptions.None);
                 sh.Name = $"::{IconBrowserUI.pasteIcon}" + (split.Length > 1 ? $"##{split[1]}" : "");
-                if (editing)
-                    QoLBar.Config.Save();
+                QoLBar.Config.Save();
                 IconBrowserUI.doPasteIcon = false;
             }
-            unsafe
-            {
-                if (ImGui.InputText("Name                    ", ref sh.Name, 256, ImGuiInputTextFlags.CallbackAlways, new ImGuiInputTextCallback(GetCursorPosCallback)) && editing) // Not a bug... just want the window to not change width depending on which type it is...
-                    QoLBar.Config.Save();
-            }
+        }
+
+        public static void EditShortcutConfigBase(ShCfg sh, bool editing)
+        {
+            EditShortcutName(sh, editing);
             ImGuiEx.SetItemTooltip("Start the name with ::x where x is a number to use icons, i.e. \"::2914\".\n" +
                 "Use ## anywhere in the name to make the text afterwards into a tooltip,\ni.e. \"Name##This is a Tooltip\".");
-
-            AddRightClickPrivateUsePopup(ref sh.Name);
 
             var _t = (int)sh.Type;
             ImGui.TextUnformatted("Type");
@@ -134,29 +132,22 @@ namespace QoLBar
 
                 unsafe
                 {
-                    if (ImGui.InputTextMultiline("Command##Input", ref sh.Command, 65535, new Vector2(0, height), ImGuiInputTextFlags.CallbackAlways, new ImGuiInputTextCallback(GetCursorPosCallback)) && editing)
+                    if (ImGui.InputTextMultiline("Command##Input", ref sh.Command, 65535, new Vector2(0, height), ImGuiInputTextFlags.CallbackAlways, GetCursorPosCallback) && editing)
                         QoLBar.Config.Save();
                 }
                 AddRightClickPrivateUsePopup(ref sh.Command);
             }
         }
 
-        public static bool EditShortcutName(ShortcutUI sh)
+        public static unsafe bool EditShortcutName(ShCfg sh, bool editing)
         {
-            if (IconBrowserUI.iconBrowserOpen && IconBrowserUI.doPasteIcon)
-            {
-                var split = sh.Config.Name.Split(new[] { "##" }, 2, StringSplitOptions.None);
-                sh.Config.Name = $"::{IconBrowserUI.pasteIcon}" + (split.Length > 1 ? $"##{split[1]}" : "");
+            var ret = ImGui.InputText("Name", ref sh.Name, 256, ImGuiInputTextFlags.CallbackAlways, GetCursorPosCallback);
+            AddRightClickPrivateUsePopup(ref sh.Name);
+
+            if (ret && editing)
                 QoLBar.Config.Save();
-                IconBrowserUI.doPasteIcon = false;
-            }
-            if (ImGui.InputText("Name", ref sh.Config.Name, 256))
-            {
-                QoLBar.Config.Save();
-                return true;
-            }
-            else
-                return false;
+
+            return ret;
         }
 
         public static bool EditShortcutMode(ShortcutUI sh)
@@ -250,7 +241,7 @@ namespace QoLBar
         public static void EditShortcutIconOptions(ShortcutUI sh)
         {
             // Name is available here for ease of access since it pertains to the icon as well
-            EditShortcutName(sh);
+            EditShortcutName(sh.Config, true);
             ImGuiEx.SetItemTooltip("Icons accept arguments between \"::\" and their ID. I.e. \"::f21\".\n" +
                 "\t' f ' - Applies the hotbar frame.\n" +
                 "\t' n ' - Removes the hotbar frame.\n" +

@@ -346,6 +346,8 @@ namespace QoLBar
                 parentBar.Reveal();
                 SetConfigPopupOpen();
 
+                ConfigEditorUI.AutoPasteIcon(Config);
+
                 if (ImGui.BeginTabBar("Config Tabs", ImGuiTabBarFlags.NoTooltip))
                 {
                     if (ImGui.BeginTabItem("Shortcut"))
@@ -567,6 +569,9 @@ namespace QoLBar
 
                 BarUI.tempSh ??= new ShCfg();
                 var newSh = BarUI.tempSh;
+
+                ConfigEditorUI.AutoPasteIcon(newSh);
+
                 ConfigEditorUI.EditShortcutConfigBase(newSh, false);
 
                 if (ImGui.Button("Create"))
