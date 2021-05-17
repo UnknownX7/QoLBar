@@ -292,7 +292,7 @@ namespace QoLBar
             {
                 parentBar.Reveal();
 
-                if (ImGui.IsWindowHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right))
+                if (ImGui.IsWindowHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right) && !ImGui.IsAnyItemHovered()) // Why are the ImGui hover flags just not working ???
                     ImGui.OpenPopup("editShortcut");
 
                 // Dupe code but only cause ImGui sucks
