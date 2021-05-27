@@ -28,7 +28,7 @@ To add a tooltip to a shortcut, put `##` at the end of its name to use the follo
 To use an icon from the game, use `::#` as the shortcut's name, where # is the icon's ID, e.g. `::1`. These can also utilize tooltips in the same manner as above.
 
 ### Icon Arguments
-Icons can have modifiers (`::x#`) which will change the way they display, these are detailed in the `Name` input tooltip under the `Icon` tab  when editing a shortcut. The most common use case is adding the glossy frame that the hotbar applies to all icons, i.e `::f2914`.
+Icons can have modifiers (`::x#`) which will change the way they display, these are detailed in the `Name` input tooltip under the `Icon` tab  when editing a shortcut. The most common use case is adding the glossy frame that the hotbar applies to all icons, i.e. `::f2914`.
 
 ### Icon Browser
 This plugin comes with a built-in browser for finding various icons, it can be accessed through the magnifying glass in the corner when editing / adding shortcuts, or through `/qolicons`. Clicking on these icons will copy their ID in the format `::#`, so that you can paste them into the name of shortcuts. Additionally, opening a shortcut's configuration while this menu is open will automatically change it to use the last clicked icon.
