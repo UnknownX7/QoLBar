@@ -254,7 +254,7 @@ namespace QoLBar
                 QoLBar.Config.Save();
 
             var offset = new Vector2(sh.Config.IconOffset[0], sh.Config.IconOffset[1]);
-            if (ImGui.DragFloat2("Offset", ref offset, 0.002f, -0.5f, 0.5f, "%.2f"))
+            if (ImGui.DragFloat2("Offset", ref offset, 0.0005f, -0.5f, 0.5f, "%.3f"))
             {
                 sh.Config.IconOffset[0] = offset.X;
                 sh.Config.IconOffset[1] = offset.Y;
