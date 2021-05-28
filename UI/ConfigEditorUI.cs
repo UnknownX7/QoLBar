@@ -103,11 +103,20 @@ namespace QoLBar
             }
         }
 
-        public static void EditShortcutConfigBase(ShCfg sh, bool editing)
+        public static void EditShortcutConfigBase(ShCfg sh, bool editing, bool hasIcon)
         {
             EditShortcutName(sh, editing);
             ImGuiEx.SetItemTooltip("Start the name with ::x where x is a number to use icons, i.e. \"::2914\".\n" +
-                "Use ## anywhere in the name to make the text afterwards into a tooltip,\ni.e. \"Name##This is a Tooltip\".");
+                "Use ## anywhere in the name to make the text afterwards into a tooltip,\ni.e. \"Name##This is a Tooltip\"."
+                + (hasIcon ?
+                    "\n\nIcons accept arguments between \"::\" and their ID. I.e. \"::f21\".\n" +
+                         "\t' f ' - Applies the hotbar frame.\n" +
+                         "\t' n ' - Removes the hotbar frame.\n" +
+                         "\t' l ' - Uses the low resolution icon.\n" +
+                         "\t' h ' - Uses the high resolution icon if it exists.\n" +
+                         "\t' g ' - Changes the icon to grayscale.\n" +
+                         "\t' r ' - Reverses the icon."
+                    : string.Empty));
 
             var _t = (int)sh.Type;
             ImGui.TextUnformatted("Type");
@@ -240,16 +249,6 @@ namespace QoLBar
 
         public static void EditShortcutIconOptions(ShortcutUI sh)
         {
-            // Name is available here for ease of access since it pertains to the icon as well
-            EditShortcutName(sh.Config, true);
-            ImGuiEx.SetItemTooltip("Icons accept arguments between \"::\" and their ID. I.e. \"::f21\".\n" +
-                "\t' f ' - Applies the hotbar frame.\n" +
-                "\t' n ' - Removes the hotbar frame.\n" +
-                "\t' l ' - Uses the low resolution icon.\n" +
-                "\t' h ' - Uses the high resolution icon if it exists.\n" +
-                "\t' g ' - Changes the icon to grayscale.\n" +
-                "\t' r ' - Reverses the icon.");
-
             if (ImGui.DragFloat("Zoom", ref sh.Config.IconZoom, 0.005f, 1.0f, 5.0f, "%.2f"))
                 QoLBar.Config.Save();
 

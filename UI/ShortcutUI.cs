@@ -352,7 +352,7 @@ namespace QoLBar
                 {
                     if (ImGui.BeginTabItem("Shortcut"))
                     {
-                        ConfigEditorUI.EditShortcutConfigBase(Config, true);
+                        ConfigEditorUI.EditShortcutConfigBase(Config, true, hasIcon);
 
                         if (Config.Type != ShortcutType.Spacer)
                             ConfigEditorUI.EditShortcutMode(this);
@@ -572,7 +572,7 @@ namespace QoLBar
 
                 ConfigEditorUI.AutoPasteIcon(newSh);
 
-                ConfigEditorUI.EditShortcutConfigBase(newSh, false);
+                ConfigEditorUI.EditShortcutConfigBase(newSh, false, false);
 
                 if (ImGui.Button("Create"))
                 {
