@@ -145,6 +145,14 @@ namespace QoLBar
                         QoLBar.Config.Save();
                 }
                 AddRightClickPrivateUsePopup(ref sh.Command);
+                ImGuiEx.SetItemTooltip("You can use right click to add special game symbols, additionally,\n" +
+                   "there are custom commands that only work from shortcuts.\n" +
+                   "\t' //m0 ' - Executes individual macro #0 (up to //m99).\n" +
+                   "\t' //m100 ' - Executes shared macro #0 (up to //m199).\n" +
+                   "\t' //m ' - Begins or ends a custom macro. The following lines\n" +
+                   "will execute as a macro instead of a shortcut (allowing for\n" +
+                   "/wait, /macrolock, etc), until //m is used again, up to 30 lines.\n" +
+                   "\t' // <Comment> ' - Adds a comment.");
             }
         }
 
