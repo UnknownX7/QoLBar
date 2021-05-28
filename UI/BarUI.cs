@@ -174,30 +174,31 @@ namespace QoLBar
 
         private void SetupPositions()
         {
+            hidePos = ImGuiHelpers.MainViewport.Pos;
             var pos = VectorPosition;
             switch (Config.DockSide)
             {
                 case BarDock.Top:
-                    hidePos.X = window.X * piv.X + pos.X;
-                    hidePos.Y = 0;
+                    hidePos.X += window.X * piv.X + pos.X;
+                    hidePos.Y += 0;
                     revealPos.X = hidePos.X;
                     revealPos.Y = Math.Max(hidePos.Y + barSize.Y + pos.Y, GetHidePosition().Y + 1);
                     break;
                 case BarDock.Right:
-                    hidePos.X = window.X;
-                    hidePos.Y = window.Y * piv.Y + pos.Y;
+                    hidePos.X += window.X;
+                    hidePos.Y += window.Y * piv.Y + pos.Y;
                     revealPos.X = Math.Min(hidePos.X - barSize.X + pos.X, GetHidePosition().X - 1);
                     revealPos.Y = hidePos.Y;
                     break;
                 case BarDock.Bottom:
-                    hidePos.X = window.X * piv.X + pos.X;
-                    hidePos.Y = window.Y;
+                    hidePos.X += window.X * piv.X + pos.X;
+                    hidePos.Y += window.Y;
                     revealPos.X = hidePos.X;
                     revealPos.Y = Math.Min(hidePos.Y - barSize.Y + pos.Y, GetHidePosition().Y - 1);
                     break;
                 case BarDock.Left:
-                    hidePos.X = 0;
-                    hidePos.Y = window.Y * piv.Y + pos.Y;
+                    hidePos.X += 0;
+                    hidePos.Y += window.Y * piv.Y + pos.Y;
                     revealPos.X = Math.Max(hidePos.X + barSize.X + pos.X, GetHidePosition().X + 1);
                     revealPos.Y = hidePos.Y;
                     break;
@@ -242,7 +243,7 @@ namespace QoLBar
             if (IsDocked)
             {
                 ImGuiHelpers.ForceNextWindowMainViewport();
-                ImGuiHelpers.SetNextWindowPosRelativeMainViewport(barPos, ImGuiCond.Always, piv);
+                ImGui.SetNextWindowPos(barPos, ImGuiCond.Always, piv);
             }
             else if (_setPos || Config.LockedPosition)
             {
@@ -341,8 +342,8 @@ namespace QoLBar
         private (Vector2, Vector2) CalculateRevealPosition()
         {
             var pos = IsDocked ? revealPos : VectorPosition;
-            var min = new Vector2(pos.X - (barSize.X * piv.X), pos.Y - (barSize.Y * piv.Y)) + ImGui.GetMainViewport().Pos;
-            var max = new Vector2(pos.X + (barSize.X * (1 - piv.X)), pos.Y + (barSize.Y * (1 - piv.Y))) + ImGui.GetMainViewport().Pos;
+            var min = new Vector2(pos.X - (barSize.X * piv.X), pos.Y - (barSize.Y * piv.Y));
+            var max = new Vector2(pos.X + (barSize.X * (1 - piv.X)), pos.Y + (barSize.Y * (1 - piv.Y)));
             return (min, max);
         }
 
@@ -350,7 +351,7 @@ namespace QoLBar
         {
             if (IsDocked && _reveal) return;
 
-            (var _min, var _max) = CalculateRevealPosition();
+            var (_min, _max) = CalculateRevealPosition();
 
             switch (Config.DockSide)
             {
@@ -365,8 +366,6 @@ namespace QoLBar
                     break;
                 case BarDock.Right:
                     _min.X = Math.Min(Math.Min(_min.X + barSize.X * (1 - Config.RevealAreaScale), _max.X - 1), GetHidePosition().X - 1);
-                    break;
-                default:
                     break;
             }
 
@@ -652,6 +651,33 @@ namespace QoLBar
         {
             foreach (var ui in children)
                 ui.Dispose();
+        }
+
+        private void DEBUG()
+        {
+            var (min, max) = CalculateRevealPosition();
+            ImGui.GetForegroundDrawList().AddRect(min, max, 0xFF0000FF); // Reveal position area
+
+            switch (Config.DockSide)
+            {
+                case BarDock.Top:
+                    max.Y = Math.Max(Math.Max(max.Y - barSize.Y * (1 - Config.RevealAreaScale), min.Y + 1), GetHidePosition().Y + 1);
+                    break;
+                case BarDock.Left:
+                    max.X = Math.Max(Math.Max(max.X - barSize.X * (1 - Config.RevealAreaScale), min.X + 1), GetHidePosition().X + 1);
+                    break;
+                case BarDock.Bottom:
+                    min.Y = Math.Min(Math.Min(min.Y + barSize.Y * (1 - Config.RevealAreaScale), max.Y - 1), GetHidePosition().Y - 1);
+                    break;
+                case BarDock.Right:
+                    min.X = Math.Min(Math.Min(min.X + barSize.X * (1 - Config.RevealAreaScale), max.X - 1), GetHidePosition().X - 1);
+                    break;
+            }
+
+            ImGui.GetForegroundDrawList().AddRect(min, max, 0xFF00FF00); // Mouse reveal area
+            //ImGui.GetForegroundDrawList().AddRect(_min, _max, 0xFFFF0000); // Unused
+            ImGui.GetForegroundDrawList().AddCircleFilled(revealPos, 5, 0xFFFFFF00); // Reveal position
+            ImGui.GetForegroundDrawList().AddCircleFilled(GetHidePosition(), 5, 0xFFFF00FF); // Hide position
         }
     }
 }
