@@ -86,6 +86,7 @@ namespace QoLBar
                 DrawPluginConfig();
 
             PieUI.Draw();
+            ImGuiEx.DoSlider();
         }
 
         private void DrawPluginConfig()

@@ -74,6 +74,66 @@ namespace QoLBar
             catch { return string.Empty; }
         }
 
+        private static bool _sliderEnabled = false;
+        private static bool _sliderVertical = false;
+        private static float _sliderInterval = 0;
+        private static int _lastHitInterval = 0;
+        private static Action<bool, bool, bool> _sliderAction;
+        public static void SetupSlider(bool vertical, float interval, Action<bool, bool, bool> action)
+        {
+            _sliderEnabled = true;
+            _sliderVertical = vertical;
+            _sliderInterval = interval;
+            _lastHitInterval = 0;
+            _sliderAction = action;
+        }
+
+        public static void DoSlider()
+        {
+            if (!_sliderEnabled) return;
+
+            // You can blame ImGui for this
+            var popupOpen = !ImGui.IsPopupOpen("_SLIDER") && ImGui.IsPopupOpen(null, ImGuiPopupFlags.AnyPopup);
+            if (!popupOpen)
+            {
+                ImGuiHelpers.ForceNextWindowMainViewport();
+                ImGui.SetNextWindowPos(new Vector2(-100));
+                ImGui.OpenPopup("_SLIDER", ImGuiPopupFlags.NoOpenOverItems);
+                if (!ImGui.BeginPopup("_SLIDER")) return;
+            }
+
+            var drag = _sliderVertical ? ImGui.GetMouseDragDelta().Y : ImGui.GetMouseDragDelta().X;
+            var dragInterval = (int)(drag / _sliderInterval);
+            var hit = false;
+            var increment = false;
+            if (dragInterval > _lastHitInterval)
+            {
+                hit = true;
+                increment = true;
+            }
+            else if (dragInterval < _lastHitInterval)
+                hit = true;
+
+            var closing = !ImGui.IsMouseDown(ImGuiMouseButton.Left);
+
+            if (_lastHitInterval != dragInterval)
+            {
+                while (_lastHitInterval != dragInterval)
+                {
+                    _lastHitInterval += increment ? 1 : -1;
+                    _sliderAction(hit, increment, closing && _lastHitInterval == dragInterval);
+                }
+            }
+            else
+                _sliderAction(false, false, closing);
+
+            if (closing)
+                _sliderEnabled = false;
+
+            if (!popupOpen)
+                ImGui.EndPopup();
+        }
+
         // ?????????
         public static void PushClipRectFullScreen() => ImGui.GetWindowDrawList().PushClipRectFullScreen();
 

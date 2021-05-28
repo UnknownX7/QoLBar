@@ -250,7 +250,7 @@ namespace QoLBar
                     ImGui.SetTooltip(tooltip);
             }
 
-            if (clicked && !parentBar.IsDragging)
+            if (clicked && !parentBar.IsDragging && !IsConfigPopupOpen())
             {
                 if (!inCategory)
                     OnClick(parentBar.IsVertical, !_activated, wasHovered);
@@ -380,17 +380,33 @@ namespace QoLBar
                     ImGui.EndTabBar();
                 }
 
-                if (ImGui.Button("↑") && ID > 0)
+                bool vertical;
+                if (parent != null)
                 {
-                    ShiftThis(false);
-                    ImGui.CloseCurrentPopup();
+                    var cols = parent.Config.CategoryColumns;
+                    vertical = cols > 0 && parent.children.Count >= (cols * (cols - 1) + 1);
                 }
-                ImGui.SameLine();
-                if (ImGui.Button("↓") && ID < ((parent != null) ? (parent.children.Count - 1) : (parentBar.children.Count)))
+                else
+                    vertical = parentBar.IsVertical;
+
+                ImGui.PushFont(UiBuilder.IconFont);
+                ImGui.Button(vertical ? FontAwesomeIcon.ArrowsAltV.ToIconString() : FontAwesomeIcon.ArrowsAltH.ToIconString(), new Vector2(30 * ImGuiHelpers.GlobalScale, 0));
+                ImGui.PopFont();
+                if (ImGui.IsItemActive() && ImGui.IsMouseDragging(ImGuiMouseButton.Left))
                 {
-                    ShiftThis(true);
                     ImGui.CloseCurrentPopup();
+
+                    ImGuiEx.SetupSlider(vertical, 32 * ImGuiHelpers.GlobalScale, (hitInterval, increment, closing) =>
+                    {
+                        parentBar.Reveal();
+                        SetConfigPopupOpen();
+
+                        if (hitInterval)
+                            ShiftThis(increment);
+                    });
                 }
+                ImGuiEx.SetItemTooltip("Drag to move the shortcut.");
+
                 ImGui.SameLine();
                 if (ImGui.Button("Export"))
                     ImGui.SetClipboardText(Importing.ExportShortcut(Config, false));
