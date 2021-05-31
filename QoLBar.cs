@@ -74,7 +74,6 @@ namespace QoLBar
                 try
                 {
                     Game.ExecuteMacroHook = new Hook<Game.ExecuteMacroDelegate>(Interface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28"), new Game.ExecuteMacroDelegate(Game.ExecuteMacroDetour));
-                    Game.ExecuteMacroHook.Enable();
 
                     Game.numCopiedMacroLinesPtr = Interface.TargetModuleScanner.ScanText("49 8D 5E 70 BF ?? 00 00 00") + 0x5;
                     Game.numExecutedMacroLinesPtr = Interface.TargetModuleScanner.ScanText("41 83 F8 ?? 0F 8D ?? ?? ?? ?? 49 6B C8 68") + 0x3;
@@ -85,6 +84,8 @@ namespace QoLBar
 
                     Game.raptureShellModule = GetRaptureShellModule(Game.uiModule);
                     Game.raptureMacroModule = GetRaptureMacroModule(Game.uiModule);
+
+                    Game.ExecuteMacroHook.Enable();
                 }
                 catch { PluginLog.Error("Failed loading ExecuteMacro"); }
             }
