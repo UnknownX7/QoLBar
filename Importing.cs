@@ -328,6 +328,7 @@ namespace QoLBar
                     }
                 }
 
+                var pieRemoved = false;
                 var hotkeyRemoved = false;
                 if (!allowImportHotkeys)
                 {
@@ -354,6 +355,7 @@ namespace QoLBar
                         {
                             imported.b2.Hotkey = d;
                             hotkeyRemoved = true;
+                            pieRemoved = true;
                         }
                         foreach (var sh in imported.b2.ShortcutList)
                             removeHotkeys(sh);
@@ -370,6 +372,8 @@ namespace QoLBar
                         QoLBar.PrintEcho(string.Format(msg, "a condition set that was", "Allow importing conditions"));
                     if (hotkeyRemoved)
                         QoLBar.PrintEcho(string.Format(msg, "one or more hotkeys that were", "Allow importing hotkeys"));
+                    if (pieRemoved)
+                        QoLBar.PrintEcho("It appears that this bar was meant to be used as a pie. You should add a hotkey to it by right clicking on the bar and clicking the \"Pie Hotkey\" input box.");
                 }
             }
 
