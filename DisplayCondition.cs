@@ -588,38 +588,29 @@ namespace QoLBar
             if (_conditionCache.TryGetValue((type, cond, arg), out bool b)) // ReSharper / Rider hates this being a var for some reason
                 return b;
 
-            var player = pluginInterface.ClientState.LocalPlayer;
-            switch (type)
+            b = type switch
             {
-                case DisplayCondition.ConditionType.ConditionFlag:
-                    b = pluginInterface.ClientState.Condition[(ConditionFlag)cond];
-                    break;
-                case DisplayCondition.ConditionType.Job:
-                    b = (player != null) && (player.ClassJob.Id == cond);
-                    break;
-                case DisplayCondition.ConditionType.Role:
-                    b = (player != null) && pluginInterface.Data.IsDataReady && (((cond < 30) ? player.ClassJob.GameData.Role : player.ClassJob.GameData.ClassJobCategory.Row) == cond);
-                    break;
-                case DisplayCondition.ConditionType.Misc:
-                    b = cond switch
-                    {
-                        0 => pluginInterface.ClientState.Condition.Any(),
-                        1 => arg is ulong id && id == pluginInterface.ClientState.LocalContentId,
-                        2 => pluginInterface.ClientState.Targets.CurrentTarget != null,
-                        3 => pluginInterface.ClientState.Targets.FocusTarget != null,
-                        4 => (player != null) && Game.IsWeaponDrawn(player),
-                        5 => arg is string range && CheckEorzeaTimeCondition(range),
-                        6 => arg is string range && CheckLocalTimeCondition(range),
-                        7 => arg is byte layout && layout == Game.CurrentHUDLayout,
-                        8 => arg is string addon && QoLBar.Interface.Framework.Gui.GetUiObjectByName(addon, 1) != IntPtr.Zero,
-                        9 => arg is string addon && QoLBar.Interface.Framework.Gui.GetAddonByName(addon, 1) is { Visible: true },
-                        _ => false
-                    };
-                    break;
-                case DisplayCondition.ConditionType.Zone:
-                    b = pluginInterface.ClientState.TerritoryType == cond;
-                    break;
-            }
+                DisplayCondition.ConditionType.ConditionFlag => pluginInterface.ClientState.Condition[(ConditionFlag)cond],
+                DisplayCondition.ConditionType.Job => pluginInterface.ClientState.LocalPlayer is {} player && (player.ClassJob.Id == cond),
+                DisplayCondition.ConditionType.Role => pluginInterface.ClientState.LocalPlayer is {} player
+                    && pluginInterface.Data.IsDataReady && (((cond < 30) ? player.ClassJob.GameData.Role : player.ClassJob.GameData.ClassJobCategory.Row) == cond),
+                DisplayCondition.ConditionType.Misc => cond switch
+                {
+                    0 => pluginInterface.ClientState.Condition.Any(),
+                    1 => arg is ulong id && id == pluginInterface.ClientState.LocalContentId,
+                    2 => pluginInterface.ClientState.Targets.CurrentTarget != null,
+                    3 => pluginInterface.ClientState.Targets.FocusTarget != null,
+                    4 => pluginInterface.ClientState.LocalPlayer is {} player && Game.IsWeaponDrawn(player),
+                    5 => arg is string range && CheckEorzeaTimeCondition(range),
+                    6 => arg is string range && CheckLocalTimeCondition(range),
+                    7 => arg is byte layout && layout == Game.CurrentHUDLayout,
+                    8 => arg is string addon && QoLBar.Interface.Framework.Gui.GetUiObjectByName(addon, 1) != IntPtr.Zero,
+                    9 => arg is string addon && QoLBar.Interface.Framework.Gui.GetAddonByName(addon, 1) is {Visible: true},
+                    _ => false
+                },
+                DisplayCondition.ConditionType.Zone => pluginInterface.ClientState.TerritoryType == cond,
+                _ => false
+            };
 
             _conditionCache[(type, cond, arg)] = b;
             return b;
