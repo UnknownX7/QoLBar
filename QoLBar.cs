@@ -1,6 +1,5 @@
 using System;
 using System.Text.RegularExpressions;
-using System.Runtime.InteropServices;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Reflection;
@@ -8,7 +7,6 @@ using System.Dynamic;
 using System.Linq.Expressions;
 using ImGuiNET;
 using Dalamud.Plugin;
-using Dalamud.Hooking;
 
 #pragma warning disable IDE0060 // Remove unused parameter
 
@@ -61,37 +59,6 @@ namespace QoLBar
             SetupIPC();
         }
 
-        private static unsafe void InitializePointers()
-        {
-            try { Game.textActiveBoolPtr = *(IntPtr*)(Interface.Framework.Gui.GetBaseUIObject() + 0x28) + 0x188E; }
-            catch { PluginLog.Error("Failed loading textActiveBoolPtr"); }
-
-            try
-            {
-                Game.ProcessChatBox = Marshal.GetDelegateForFunctionPointer<Game.ProcessChatBoxDelegate>(Interface.TargetModuleScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9"));
-                Game.uiModule = Interface.Framework.Gui.GetUIModule();
-
-                try
-                {
-                    Game.ExecuteMacroHook = new Hook<Game.ExecuteMacroDelegate>(Interface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28"), new Game.ExecuteMacroDelegate(Game.ExecuteMacroDetour));
-
-                    Game.numCopiedMacroLinesPtr = Interface.TargetModuleScanner.ScanText("49 8D 5E 70 BF ?? 00 00 00") + 0x5;
-                    Game.numExecutedMacroLinesPtr = Interface.TargetModuleScanner.ScanText("41 83 F8 ?? 0F 8D ?? ?? ?? ?? 49 6B C8 68") + 0x3;
-
-                    var vtbl = (IntPtr*)(*(IntPtr*)Game.uiModule);
-                    var GetRaptureShellModule = Marshal.GetDelegateForFunctionPointer<Game.GetModuleDelegate>(*(vtbl + 9)); // Client__UI__UIModule_GetRaptureShellModule / vf9
-                    var GetRaptureMacroModule = Marshal.GetDelegateForFunctionPointer<Game.GetModuleDelegate>(*(vtbl + 12)); // Client__UI__UIModule_GetRaptureMacroModule / vf12
-
-                    Game.raptureShellModule = GetRaptureShellModule(Game.uiModule);
-                    Game.raptureMacroModule = GetRaptureMacroModule(Game.uiModule);
-
-                    Game.ExecuteMacroHook.Enable();
-                }
-                catch { PluginLog.Error("Failed loading ExecuteMacro"); }
-            }
-            catch { PluginLog.Error("Failed loading ExecuteCommand"); }
-        }
-
         public void ReadyPlugin()
         {
             var iconPath = Config.GetPluginIconPath();
@@ -102,7 +69,7 @@ namespace QoLBar
             TextureDictionary.AddExtraTextures(textureDictionaryLR, textureDictionaryHR);
             TextureDictionary.AddExtraTextures(textureDictionaryGSLR, textureDictionaryGSHR);
 
-            InitializePointers();
+            Game.Initialize();
 
             _pluginReady = true;
         }

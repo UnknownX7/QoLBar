@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using Dalamud;
 using Dalamud.Game.ClientState.Actors.Types;
 using Dalamud.Hooking;
+using Dalamud.Plugin;
 using QoLBar.Structures;
 
 namespace QoLBar
@@ -73,6 +74,37 @@ namespace QoLBar
                 if (numExecutedMacroLinesPtr != IntPtr.Zero)
                     SafeMemory.WriteBytes(numExecutedMacroLinesPtr, new[] {value});
             }
+        }
+
+        public static unsafe void Initialize()
+        {
+            try { textActiveBoolPtr = *(IntPtr*)(QoLBar.Interface.Framework.Gui.GetBaseUIObject() + 0x28) + 0x188E; }
+            catch { PluginLog.Error("Failed loading textActiveBoolPtr"); }
+
+            try
+            {
+                ProcessChatBox = Marshal.GetDelegateForFunctionPointer<ProcessChatBoxDelegate>(QoLBar.Interface.TargetModuleScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9"));
+                uiModule = QoLBar.Interface.Framework.Gui.GetUIModule();
+
+                try
+                {
+                    ExecuteMacroHook = new Hook<ExecuteMacroDelegate>(QoLBar.Interface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28"), new ExecuteMacroDelegate(ExecuteMacroDetour));
+
+                    numCopiedMacroLinesPtr = QoLBar.Interface.TargetModuleScanner.ScanText("49 8D 5E 70 BF ?? 00 00 00") + 0x5;
+                    numExecutedMacroLinesPtr = QoLBar.Interface.TargetModuleScanner.ScanText("41 83 F8 ?? 0F 8D ?? ?? ?? ?? 49 6B C8 68") + 0x3;
+
+                    var vtbl = (IntPtr*)(*(IntPtr*)uiModule);
+                    var GetRaptureShellModule = Marshal.GetDelegateForFunctionPointer<GetModuleDelegate>(*(vtbl + 9)); // Client__UI__UIModule_GetRaptureShellModule / vf9
+                    var GetRaptureMacroModule = Marshal.GetDelegateForFunctionPointer<GetModuleDelegate>(*(vtbl + 12)); // Client__UI__UIModule_GetRaptureMacroModule / vf12
+
+                    raptureShellModule = GetRaptureShellModule(uiModule);
+                    raptureMacroModule = GetRaptureMacroModule(uiModule);
+
+                    ExecuteMacroHook.Enable();
+                }
+                catch { PluginLog.Error("Failed loading ExecuteMacro"); }
+            }
+            catch { PluginLog.Error("Failed loading ExecuteCommand"); }
         }
 
         public static void ExecuteMacroDetour(IntPtr raptureShellModule, IntPtr macro)
