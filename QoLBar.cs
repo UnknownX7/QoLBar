@@ -321,9 +321,7 @@ namespace QoLBar
 
             ui.Dispose();
 
-            Game.ExecuteMacroHook.Dispose();
-            Game.NumCopiedMacroLines = 15;
-            Game.NumExecutedMacroLines = 15;
+            Game.Dispose();
 
             CleanTextures(true);
         }

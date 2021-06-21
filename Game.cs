@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -240,5 +240,12 @@ namespace QoLBar
         }
 
         public static unsafe bool IsWeaponDrawn(PlayerCharacter player) => (*(byte*)(player.Address + 0x19A0) & 0b100) > 0;
+
+        public static void Dispose()
+        {
+            ExecuteMacroHook?.Dispose();
+            NumCopiedMacroLines = 15;
+            NumExecutedMacroLines = 15;
+        }
     }
 }
