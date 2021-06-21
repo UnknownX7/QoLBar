@@ -288,7 +288,7 @@ namespace QoLBar
                                 break;
                             case DisplayCondition.ConditionType.Misc:
                                 {
-                                    var opts = new string[]
+                                    var opts = new[]
                                     {
                                         "Logged in",
                                         "Character ID",
@@ -297,10 +297,12 @@ namespace QoLBar
                                         "Weapon Drawn",
                                         "Eorzea Timespan",
                                         "Local Timespan",
-                                        "Current HUD Layout"
+                                        "Current HUD Layout",
+                                        "UI Exists",
+                                        "UI Visible"
                                     };
 
-                                    if (cond.Condition == 5 || cond.Condition == 6)
+                                    if (cond.Condition >= 5 && cond.Condition <= 9 && cond.Condition != 7)
                                         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X / 2);
                                     if (ImGui.BeginCombo("##Misc", (0 <= cond.Condition && cond.Condition < opts.Length) ? opts[cond.Condition] : string.Empty))
                                     {
@@ -332,6 +334,12 @@ namespace QoLBar
                                         AddMiscConditionSelectable(7, Game.CurrentHUDLayout);
                                         ImGuiEx.SetItemTooltip("Selecting this will assign the current HUD layout preset to this condition.");
 
+                                        AddMiscConditionSelectable(8, cond.Arg is string ? cond.Arg : string.Empty);
+                                        ImGuiEx.SetItemTooltip("Advanced condition.");
+
+                                        AddMiscConditionSelectable(9, cond.Arg is string ? cond.Arg : string.Empty);
+                                        ImGuiEx.SetItemTooltip("Advanced condition.");
+
                                         ImGui.EndCombo();
                                     }
 
@@ -342,45 +350,59 @@ namespace QoLBar
                                             break;
                                         case 5:
                                         case 6:
-                                        {
-                                            ImGui.SameLine();
-                                            string timespan = cond.Arg is string ? cond.Arg : string.Empty;
-                                            var reg = Regex.Match(timespan, ConditionCache.TimespanRegex);
-                                            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
-                                            if (ImGui.InputText("##Timespan", ref timespan, 16))
                                             {
-                                                cond.Arg = timespan;
-                                                config.Save();
-                                            }
-                                            if (!reg.Success)
-                                                ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), 0x200000FF, 5f);
-
-                                            if (ImGui.IsItemHovered())
-                                            {
-                                                var regexInfo = "Failed regex!";
-                                                if (reg.Success)
+                                                ImGui.SameLine();
+                                                string timespan = cond.Arg is string ? cond.Arg : string.Empty;
+                                                var reg = Regex.Match(timespan, ConditionCache.TimespanRegex);
+                                                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+                                                if (ImGui.InputText("##Timespan", ref timespan, 16))
                                                 {
-                                                    var min = ConditionCache.ParseTime(reg.Groups[1].Value);
-                                                    var max = ConditionCache.ParseTime(reg.Groups[2].Value);
-                                                    var use1 = min.Item1 >= 0 && max.Item1 >= 0;
-                                                    var use2 = min.Item2 >= 0 && max.Item2 >= 0;
-                                                    var use3 = min.Item3 >= 0 && max.Item3 >= 0;
-                                                    var use4 = min.Item4 >= 0 && max.Item4 >= 0;
-                                                    var minStr = $"{(use1 ? min.Item1.ToString() : "X")}{(use2 ? min.Item2.ToString() : "X")}:{(use3 ? min.Item3.ToString() : "X")}{(use4 ? min.Item4.ToString() : "X")}";
-                                                    var maxStr = $"{(use1 ? max.Item1.ToString() : "X")}{(use2 ? max.Item2.ToString() : "X")}:{(use3 ? max.Item3.ToString() : "X")}{(use4 ? max.Item4.ToString() : "X")}";
-                                                    regexInfo = $"Minimum: {minStr}\nMaximum: {maxStr} {(minStr == maxStr ? "\nWarning: this will always be true!" : string.Empty)}";
+                                                    cond.Arg = timespan;
+                                                    config.Save();
                                                 }
+                                                if (!reg.Success)
+                                                    ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), 0x200000FF, 5f);
 
-                                                ImGui.SetTooltip("Timespan should be formatted as \"XX:XX-XX:XX\" (24h) and may contain \"X\" wildcards.\n" +
-                                                    "I.e \"XX:30-XX:10\" will return true for times such as 01:30, 13:54, and 21:09.\n" +
-                                                    "The minimum time is inclusive, but the maximum is not.\n\n" +
-                                                    regexInfo);
+                                                if (ImGui.IsItemHovered())
+                                                {
+                                                    var regexInfo = "Failed regex!";
+                                                    if (reg.Success)
+                                                    {
+                                                        var min = ConditionCache.ParseTime(reg.Groups[1].Value);
+                                                        var max = ConditionCache.ParseTime(reg.Groups[2].Value);
+                                                        var use1 = min.Item1 >= 0 && max.Item1 >= 0;
+                                                        var use2 = min.Item2 >= 0 && max.Item2 >= 0;
+                                                        var use3 = min.Item3 >= 0 && max.Item3 >= 0;
+                                                        var use4 = min.Item4 >= 0 && max.Item4 >= 0;
+                                                        var minStr = $"{(use1 ? min.Item1.ToString() : "X")}{(use2 ? min.Item2.ToString() : "X")}:{(use3 ? min.Item3.ToString() : "X")}{(use4 ? min.Item4.ToString() : "X")}";
+                                                        var maxStr = $"{(use1 ? max.Item1.ToString() : "X")}{(use2 ? max.Item2.ToString() : "X")}:{(use3 ? max.Item3.ToString() : "X")}{(use4 ? max.Item4.ToString() : "X")}";
+                                                        regexInfo = $"Minimum: {minStr}\nMaximum: {maxStr} {(minStr == maxStr ? "\nWarning: this will always be true!" : string.Empty)}";
+                                                    }
+
+                                                    ImGui.SetTooltip("Timespan should be formatted as \"XX:XX-XX:XX\" (24h) and may contain \"X\" wildcards.\n" +
+                                                        "I.e \"XX:30-XX:10\" will return true for times such as 01:30, 13:54, and 21:09.\n" +
+                                                        "The minimum time is inclusive, but the maximum is not.\n\n" +
+                                                        regexInfo);
+                                                }
                                             }
-
                                             break;
-                                        }
                                         case 7:
                                             ImGuiEx.SetItemTooltip($"Layout: {cond.Arg + 1}");
+                                            break;
+                                        case 8:
+                                        case 9:
+                                            {
+                                                ImGui.SameLine();
+                                                string addon = cond.Arg is string ? cond.Arg : string.Empty;
+                                                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+                                                if (ImGui.InputText("##UIName", ref addon, 32))
+                                                {
+                                                    cond.Arg = addon;
+                                                    config.Save();
+                                                }
+
+                                                ImGuiEx.SetItemTooltip("See \"/xldata ai\" to find the names of various windows.");
+                                            }
                                             break;
                                     }
                                 }
@@ -582,14 +604,16 @@ namespace QoLBar
                     b = cond switch
                     {
                         0 => pluginInterface.ClientState.Condition.Any(),
-                        1 => !(arg is string) && (ulong)arg == pluginInterface.ClientState.LocalContentId,
+                        1 => arg is ulong id && id == pluginInterface.ClientState.LocalContentId,
                         2 => pluginInterface.ClientState.Targets.CurrentTarget != null,
                         3 => pluginInterface.ClientState.Targets.FocusTarget != null,
                         4 => (player != null) && Game.IsWeaponDrawn(player),
-                        5 => arg is string && CheckEorzeaTimeCondition(arg),
-                        6 => arg is string && CheckLocalTimeCondition(arg),
-                        7 => !(arg is string) && (byte)arg == Game.CurrentHUDLayout,
-                        _ => false,
+                        5 => arg is string range && CheckEorzeaTimeCondition(range),
+                        6 => arg is string range && CheckLocalTimeCondition(range),
+                        7 => arg is byte layout && layout == Game.CurrentHUDLayout,
+                        8 => arg is string addon && QoLBar.Interface.Framework.Gui.GetUiObjectByName(addon, 1) != IntPtr.Zero,
+                        9 => arg is string addon && QoLBar.Interface.Framework.Gui.GetAddonByName(addon, 1) is { Visible: true },
+                        _ => false
                     };
                     break;
                 case DisplayCondition.ConditionType.Zone:
