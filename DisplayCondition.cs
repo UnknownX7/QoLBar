@@ -296,7 +296,8 @@ namespace QoLBar
                                         "Have Focus Target",
                                         "Weapon Drawn",
                                         "Eorzea Timespan",
-                                        "Local Timespan"
+                                        "Local Timespan",
+                                        "Current HUD Layout"
                                     };
 
                                     if (cond.Condition == 5 || cond.Condition == 6)
@@ -328,45 +329,59 @@ namespace QoLBar
 
                                         AddMiscConditionSelectable(6, cond.Arg is string ? cond.Arg : string.Empty);
 
+                                        AddMiscConditionSelectable(7, Game.CurrentHUDLayout);
+                                        ImGuiEx.SetItemTooltip("Selecting this will assign the current HUD layout preset to this condition.");
+
                                         ImGui.EndCombo();
                                     }
-                                    if (cond.Condition == 1)
-                                        ImGuiEx.SetItemTooltip($"ID: {cond.Arg}");
-                                    if (cond.Condition == 5 || cond.Condition == 6)
-                                    {
-                                        ImGui.SameLine();
-                                        string timespan = cond.Arg is string ? cond.Arg : string.Empty;
-                                        var reg = Regex.Match(timespan, ConditionCache.TimespanRegex);
-                                        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
-                                        if (ImGui.InputText("##Timespan", ref timespan, 16))
-                                        {
-                                            cond.Arg = timespan;
-                                            config.Save();
-                                        }
-                                        if (!reg.Success)
-                                            ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), 0x200000FF, 5f);
 
-                                        if (ImGui.IsItemHovered())
+                                    switch (cond.Condition)
+                                    {
+                                        case 1:
+                                            ImGuiEx.SetItemTooltip($"ID: {cond.Arg}");
+                                            break;
+                                        case 5:
+                                        case 6:
                                         {
-                                            var regexInfo = "Failed regex!";
-                                            if (reg.Success)
+                                            ImGui.SameLine();
+                                            string timespan = cond.Arg is string ? cond.Arg : string.Empty;
+                                            var reg = Regex.Match(timespan, ConditionCache.TimespanRegex);
+                                            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+                                            if (ImGui.InputText("##Timespan", ref timespan, 16))
                                             {
-                                                var min = ConditionCache.ParseTime(reg.Groups[1].Value);
-                                                var max = ConditionCache.ParseTime(reg.Groups[2].Value);
-                                                var use1 = min.Item1 >= 0 && max.Item1 >= 0;
-                                                var use2 = min.Item2 >= 0 && max.Item2 >= 0;
-                                                var use3 = min.Item3 >= 0 && max.Item3 >= 0;
-                                                var use4 = min.Item4 >= 0 && max.Item4 >= 0;
-                                                var minStr = $"{(use1 ? min.Item1.ToString() : "X")}{(use2 ? min.Item2.ToString() : "X")}:{(use3 ? min.Item3.ToString() : "X")}{(use4 ? min.Item4.ToString() : "X")}";
-                                                var maxStr = $"{(use1 ? max.Item1.ToString() : "X")}{(use2 ? max.Item2.ToString() : "X")}:{(use3 ? max.Item3.ToString() : "X")}{(use4 ? max.Item4.ToString() : "X")}";
-                                                regexInfo = $"Minimum: {minStr}\nMaximum: {maxStr} {(minStr == maxStr ? "\nWarning: this will always be true!" : string.Empty)}";
+                                                cond.Arg = timespan;
+                                                config.Save();
+                                            }
+                                            if (!reg.Success)
+                                                ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), 0x200000FF, 5f);
+
+                                            if (ImGui.IsItemHovered())
+                                            {
+                                                var regexInfo = "Failed regex!";
+                                                if (reg.Success)
+                                                {
+                                                    var min = ConditionCache.ParseTime(reg.Groups[1].Value);
+                                                    var max = ConditionCache.ParseTime(reg.Groups[2].Value);
+                                                    var use1 = min.Item1 >= 0 && max.Item1 >= 0;
+                                                    var use2 = min.Item2 >= 0 && max.Item2 >= 0;
+                                                    var use3 = min.Item3 >= 0 && max.Item3 >= 0;
+                                                    var use4 = min.Item4 >= 0 && max.Item4 >= 0;
+                                                    var minStr = $"{(use1 ? min.Item1.ToString() : "X")}{(use2 ? min.Item2.ToString() : "X")}:{(use3 ? min.Item3.ToString() : "X")}{(use4 ? min.Item4.ToString() : "X")}";
+                                                    var maxStr = $"{(use1 ? max.Item1.ToString() : "X")}{(use2 ? max.Item2.ToString() : "X")}:{(use3 ? max.Item3.ToString() : "X")}{(use4 ? max.Item4.ToString() : "X")}";
+                                                    regexInfo = $"Minimum: {minStr}\nMaximum: {maxStr} {(minStr == maxStr ? "\nWarning: this will always be true!" : string.Empty)}";
+                                                }
+
+                                                ImGui.SetTooltip("Timespan should be formatted as \"XX:XX-XX:XX\" (24h) and may contain \"X\" wildcards.\n" +
+                                                    "I.e \"XX:30-XX:10\" will return true for times such as 01:30, 13:54, and 21:09.\n" +
+                                                    "The minimum time is inclusive, but the maximum is not.\n\n" +
+                                                    regexInfo);
                                             }
 
-                                            ImGui.SetTooltip("Timespan should be formatted as \"XX:XX-XX:XX\" (24h) and may contain \"X\" wildcards.\n" +
-                                                "I.e \"XX:30-XX:10\" will return true for times such as 01:30, 13:54, and 21:09.\n" +
-                                                "The minimum time is inclusive, but the maximum is not.\n\n" +
-                                                regexInfo);
+                                            break;
                                         }
+                                        case 7:
+                                            ImGuiEx.SetItemTooltip($"Layout: {cond.Arg + 1}");
+                                            break;
                                     }
                                 }
                                 break;
@@ -550,41 +565,40 @@ namespace QoLBar
 
             if (_conditionCache.TryGetValue((type, cond, arg), out bool b)) // ReSharper / Rider hates this being a var for some reason
                 return b;
-            else
-            {
-                var player = pluginInterface.ClientState.LocalPlayer;
-                switch (type)
-                {
-                    case DisplayCondition.ConditionType.ConditionFlag:
-                        b = pluginInterface.ClientState.Condition[(ConditionFlag)cond];
-                        break;
-                    case DisplayCondition.ConditionType.Job:
-                        b = (player != null) && (player.ClassJob.Id == cond);
-                        break;
-                    case DisplayCondition.ConditionType.Role:
-                        b = (player != null) && pluginInterface.Data.IsDataReady && (((cond < 30) ? player.ClassJob.GameData.Role : player.ClassJob.GameData.ClassJobCategory.Row) == cond);
-                        break;
-                    case DisplayCondition.ConditionType.Misc:
-                        b = cond switch
-                        {
-                            0 => pluginInterface.ClientState.Condition.Any(),
-                            1 => !(arg is string) && (ulong)arg == pluginInterface.ClientState.LocalContentId,
-                            2 => pluginInterface.ClientState.Targets.CurrentTarget != null,
-                            3 => pluginInterface.ClientState.Targets.FocusTarget != null,
-                            4 => (player != null) && Game.IsWeaponDrawn(player),
-                            5 => arg is string && CheckEorzeaTimeCondition(arg),
-                            6 => arg is string && CheckLocalTimeCondition(arg),
-                            _ => false,
-                        };
-                        break;
-                    case DisplayCondition.ConditionType.Zone:
-                        b = pluginInterface.ClientState.TerritoryType == cond;
-                        break;
-                }
 
-                _conditionCache[(type, cond, arg)] = b;
-                return b;
+            var player = pluginInterface.ClientState.LocalPlayer;
+            switch (type)
+            {
+                case DisplayCondition.ConditionType.ConditionFlag:
+                    b = pluginInterface.ClientState.Condition[(ConditionFlag)cond];
+                    break;
+                case DisplayCondition.ConditionType.Job:
+                    b = (player != null) && (player.ClassJob.Id == cond);
+                    break;
+                case DisplayCondition.ConditionType.Role:
+                    b = (player != null) && pluginInterface.Data.IsDataReady && (((cond < 30) ? player.ClassJob.GameData.Role : player.ClassJob.GameData.ClassJobCategory.Row) == cond);
+                    break;
+                case DisplayCondition.ConditionType.Misc:
+                    b = cond switch
+                    {
+                        0 => pluginInterface.ClientState.Condition.Any(),
+                        1 => !(arg is string) && (ulong)arg == pluginInterface.ClientState.LocalContentId,
+                        2 => pluginInterface.ClientState.Targets.CurrentTarget != null,
+                        3 => pluginInterface.ClientState.Targets.FocusTarget != null,
+                        4 => (player != null) && Game.IsWeaponDrawn(player),
+                        5 => arg is string && CheckEorzeaTimeCondition(arg),
+                        6 => arg is string && CheckLocalTimeCondition(arg),
+                        7 => !(arg is string) && (byte)arg == Game.CurrentHUDLayout,
+                        _ => false,
+                    };
+                    break;
+                case DisplayCondition.ConditionType.Zone:
+                    b = pluginInterface.ClientState.TerritoryType == cond;
+                    break;
             }
+
+            _conditionCache[(type, cond, arg)] = b;
+            return b;
         }
 
         public static (double, double, double, double) ParseTime(string str) => str.Length switch {
