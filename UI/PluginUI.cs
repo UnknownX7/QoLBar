@@ -424,26 +424,26 @@ namespace QoLBar
 
             ImGui.TextUnformatted("UI Module");
             ImGui.NextColumn();
-            ImGui.TextUnformatted($"{Game.uiModule.ToString("X")}");
+            ImGuiEx.TextCopyable($"{Game.uiModule.ToString("X")}");
             ImGui.NextColumn();
             ImGui.NextColumn();
 
             ImGui.TextUnformatted("Rapture Shell Module");
             ImGui.NextColumn();
-            ImGui.TextUnformatted($"{Game.raptureShellModule.ToString("X")}");
+            ImGuiEx.TextCopyable($"{Game.raptureShellModule.ToString("X")}");
             ImGui.NextColumn();
             ImGui.NextColumn();
 
             ImGui.TextUnformatted("Rapture Macro Module");
             ImGui.NextColumn();
-            ImGui.TextUnformatted($"{Game.raptureMacroModule.ToString("X")}");
+            ImGuiEx.TextCopyable($"{Game.raptureMacroModule.ToString("X")}");
             ImGui.NextColumn();
             ImGui.TextUnformatted($"{Game.IsMacroRunning}");
             ImGui.NextColumn();
 
             ImGui.TextUnformatted("Game Text Input Active");
             ImGui.NextColumn();
-            ImGui.TextUnformatted($"{Game.textActiveBoolPtr.ToString("X")}");
+            ImGuiEx.TextCopyable($"{Game.textActiveBoolPtr.ToString("X")}");
             ImGui.NextColumn();
             ImGui.TextUnformatted($"{Game.IsGameTextInputActive}");
 

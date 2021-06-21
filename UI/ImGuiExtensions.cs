@@ -137,6 +137,16 @@ namespace QoLBar
         // ?????????
         public static void PushClipRectFullScreen() => ImGui.GetWindowDrawList().PushClipRectFullScreen();
 
+        public static void TextCopyable(string text)
+        {
+            ImGui.TextUnformatted(text);
+
+            if (!ImGui.IsItemHovered()) return;
+            ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
+            if (ImGui.IsItemClicked())
+                ImGui.SetClipboardText(text);
+        }
+
         public static Vector2 RotateVector(Vector2 v, float a)
         {
             var aCos = (float)Math.Cos(a);
