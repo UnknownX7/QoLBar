@@ -428,6 +428,12 @@ namespace QoLBar
             ImGui.NextColumn();
             ImGui.NextColumn();
 
+            ImGui.TextUnformatted("Agent Module");
+            ImGui.NextColumn();
+            ImGuiEx.TextCopyable($"{Game.agentModule.ToString("X")}");
+            ImGui.NextColumn();
+            ImGui.NextColumn();
+
             ImGui.TextUnformatted("Rapture Shell Module");
             ImGui.NextColumn();
             ImGuiEx.TextCopyable($"{Game.raptureShellModule.ToString("X")}");
@@ -439,6 +445,13 @@ namespace QoLBar
             ImGuiEx.TextCopyable($"{Game.raptureMacroModule.ToString("X")}");
             ImGui.NextColumn();
             ImGui.TextUnformatted($"{Game.IsMacroRunning}");
+            ImGui.NextColumn();
+
+            ImGui.TextUnformatted("Addon Config (HUD Layout #)");
+            ImGui.NextColumn();
+            ImGuiEx.TextCopyable($"{Game.addonConfig.ToString("X")}");
+            ImGui.NextColumn();
+            ImGui.TextUnformatted($"{Game.CurrentHUDLayout}");
             ImGui.NextColumn();
 
             ImGui.TextUnformatted("Game Text Input Active");

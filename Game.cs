@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -42,6 +42,11 @@ namespace QoLBar
         public static unsafe bool IsGameTextInputActive => textActiveBoolPtr != IntPtr.Zero && *(bool*)textActiveBoolPtr;
         public static unsafe bool IsMacroRunning => *(int*)(raptureShellModule + 0x2C0) >= 0;
 
+        public static IntPtr agentModule = IntPtr.Zero;
+
+        public static IntPtr addonConfig = IntPtr.Zero;
+        public static unsafe byte CurrentHUDLayout => *(byte*)(*(IntPtr*)(addonConfig + 0x50) + 0x59E8);
+
         // Command Execution
         public delegate void ProcessChatBoxDelegate(IntPtr uiModule, IntPtr message, IntPtr unused, byte a4);
         public delegate IntPtr GetModuleDelegate(IntPtr basePtr);
@@ -78,13 +83,25 @@ namespace QoLBar
 
         public static unsafe void Initialize()
         {
+            uiModule = QoLBar.Interface.Framework.Gui.GetUIModule();
+
+            var vtbl = (IntPtr*)(*(IntPtr*)uiModule);
+            var GetRaptureShellModule = Marshal.GetDelegateForFunctionPointer<GetModuleDelegate>(*(vtbl + 9)); // Client__UI__UIModule_GetRaptureShellModule / vf9
+            var GetRaptureMacroModule = Marshal.GetDelegateForFunctionPointer<GetModuleDelegate>(*(vtbl + 12)); // Client__UI__UIModule_GetRaptureMacroModule / vf12
+            var GetAddonConfig = Marshal.GetDelegateForFunctionPointer<GetModuleDelegate>(*(vtbl + 19)); // Client__UI__UIModule_GetRaptureMacroModule / vf19
+            var GetAgentModule = Marshal.GetDelegateForFunctionPointer<GetModuleDelegate>(*(vtbl + 34)); // Client__UI__UIModule_GetAgentModule / vf34
+
+            raptureShellModule = GetRaptureShellModule(uiModule);
+            raptureMacroModule = GetRaptureMacroModule(uiModule);
+            addonConfig = GetAddonConfig(uiModule);
+            agentModule = GetAgentModule(uiModule);
+
             try { textActiveBoolPtr = *(IntPtr*)(QoLBar.Interface.Framework.Gui.GetBaseUIObject() + 0x28) + 0x188E; }
             catch { PluginLog.Error("Failed loading textActiveBoolPtr"); }
 
             try
             {
                 ProcessChatBox = Marshal.GetDelegateForFunctionPointer<ProcessChatBoxDelegate>(QoLBar.Interface.TargetModuleScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9"));
-                uiModule = QoLBar.Interface.Framework.Gui.GetUIModule();
 
                 try
                 {
@@ -93,19 +110,30 @@ namespace QoLBar
                     numCopiedMacroLinesPtr = QoLBar.Interface.TargetModuleScanner.ScanText("49 8D 5E 70 BF ?? 00 00 00") + 0x5;
                     numExecutedMacroLinesPtr = QoLBar.Interface.TargetModuleScanner.ScanText("41 83 F8 ?? 0F 8D ?? ?? ?? ?? 49 6B C8 68") + 0x3;
 
-                    var vtbl = (IntPtr*)(*(IntPtr*)uiModule);
-                    var GetRaptureShellModule = Marshal.GetDelegateForFunctionPointer<GetModuleDelegate>(*(vtbl + 9)); // Client__UI__UIModule_GetRaptureShellModule / vf9
-                    var GetRaptureMacroModule = Marshal.GetDelegateForFunctionPointer<GetModuleDelegate>(*(vtbl + 12)); // Client__UI__UIModule_GetRaptureMacroModule / vf12
-
-                    raptureShellModule = GetRaptureShellModule(uiModule);
-                    raptureMacroModule = GetRaptureMacroModule(uiModule);
-
                     ExecuteMacroHook.Enable();
                 }
                 catch { PluginLog.Error("Failed loading ExecuteMacro"); }
             }
             catch { PluginLog.Error("Failed loading ExecuteCommand"); }
         }
+
+        public static unsafe IntPtr GetAgentByInternalID(int id) => *(IntPtr*)(agentModule + 0x20 + id * 0x8); // Client::UI::Agent::AgentModule_GetAgentByInternalID, not going to try and sig a function this small
+
+        public static void DEBUG_FindAgent(long agent)
+        {
+            var found = false;
+            for (int i = 0; i < 800; i++) // Dunno how many there are
+            {
+                if (GetAgentByInternalID(i).ToInt64() != agent) continue;
+                QoLBar.PrintEcho(i.ToString());
+                found = true;
+                break;
+            }
+
+            if (!found)
+                QoLBar.PrintEcho($"Failed to find agent {agent:X}");
+        }
+
 
         public static void ExecuteMacroDetour(IntPtr raptureShellModule, IntPtr macro)
         {
