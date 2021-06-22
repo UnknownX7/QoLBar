@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Reflection;
 using System.Dynamic;
+using System.Linq;
 using System.Linq.Expressions;
 using ImGuiNET;
 using Dalamud.Plugin;
@@ -71,6 +72,8 @@ namespace QoLBar
 
             Game.Initialize();
 
+            ReflectDalamud();
+
             _pluginReady = true;
         }
 
@@ -137,6 +140,24 @@ namespace QoLBar
             else
                 PrintError("Usage: /qolvisible [on|off|toggle] <bar>");
         }
+
+        public static List<(IDalamudPlugin Plugin, PluginDefinition Definition, DalamudPluginInterface PluginInterface, bool IsRaw)> pluginsList;
+        private static void ReflectDalamud()
+        {
+            var dalamud = (Dalamud.Dalamud)Interface.GetType()
+                .GetField("dalamud", BindingFlags.Instance | BindingFlags.NonPublic)
+                ?.GetValue(Interface);
+
+            var pluginManager = dalamud?.GetType()
+                .GetProperty("PluginManager", BindingFlags.Instance | BindingFlags.NonPublic)
+                ?.GetValue(dalamud);
+
+            pluginsList = (List<(IDalamudPlugin Plugin, PluginDefinition Definition, DalamudPluginInterface PluginInterface, bool IsRaw)>)pluginManager?.GetType()
+                .GetProperty("Plugins", BindingFlags.Instance | BindingFlags.Public)
+                ?.GetValue(pluginManager);
+        }
+
+        public static bool HasPlugin(string name) => pluginsList != null && pluginsList.Any(x => x.Definition.InternalName == name);
 
         public static bool IsLoggedIn() => ConditionCache.GetCondition(DisplayCondition.ConditionType.Misc, 0);
 

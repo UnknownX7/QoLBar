@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using ImGuiNET;
 using Dalamud.Game.ClientState;
+using Dalamud.Interface;
 
 namespace QoLBar
 {
@@ -299,10 +300,11 @@ namespace QoLBar
                                         "Local Timespan",
                                         "Current HUD Layout",
                                         "UI Exists",
-                                        "UI Visible"
+                                        "UI Visible",
+                                        "Plugin Enabled"
                                     };
 
-                                    if (cond.Condition >= 5 && cond.Condition <= 9 && cond.Condition != 7)
+                                    if (cond.Condition >= 5 && cond.Condition <= 10 && cond.Condition != 7)
                                         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X / 2);
                                     if (ImGui.BeginCombo("##Misc", (0 <= cond.Condition && cond.Condition < opts.Length) ? opts[cond.Condition] : string.Empty))
                                     {
@@ -339,6 +341,8 @@ namespace QoLBar
 
                                         AddMiscConditionSelectable(9, cond.Arg is string ? cond.Arg : string.Empty);
                                         ImGuiEx.SetItemTooltip("Advanced condition.");
+
+                                        AddMiscConditionSelectable(10, cond.Arg is string ? cond.Arg : string.Empty);
 
                                         ImGui.EndCombo();
                                     }
@@ -402,6 +406,37 @@ namespace QoLBar
                                                 }
 
                                                 ImGuiEx.SetItemTooltip("See \"/xldata ai\" to find the names of various windows.");
+                                            }
+                                            break;
+                                        case 10:
+                                            {
+                                                ImGui.SameLine();
+                                                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+                                                if (ImGui.BeginCombo("##PluginsList", cond.Arg is string ? cond.Arg : string.Empty))
+                                                {
+                                                    if (QoLBar.pluginsList != null)
+                                                    {
+                                                        for (int ind = 0; ind < QoLBar.pluginsList.Count; ind++)
+                                                        {
+                                                            var (_, definition, _, _) = QoLBar.pluginsList[ind];
+                                                            var name = definition.InternalName;
+                                                            if (ImGui.Selectable($"{name}##{ind}", cond.Arg == name))
+                                                            {
+                                                                cond.Arg = name;
+                                                                config.Save();
+                                                            }
+                                                        }
+                                                    }
+
+                                                    ImGui.EndCombo();
+                                                }
+
+                                                if (cond.Arg is "QoLBar")
+                                                {
+                                                    ImGui.PushFont(UiBuilder.IconFont);
+                                                    ImGuiEx.SetItemTooltip(FontAwesomeIcon.Poo.ToIconString());
+                                                    ImGui.PopFont();
+                                                }
                                             }
                                             break;
                                     }
@@ -606,6 +641,7 @@ namespace QoLBar
                     7 => arg is byte layout && layout == Game.CurrentHUDLayout,
                     8 => arg is string addon && QoLBar.Interface.Framework.Gui.GetUiObjectByName(addon, 1) != IntPtr.Zero,
                     9 => arg is string addon && QoLBar.Interface.Framework.Gui.GetAddonByName(addon, 1) is {Visible: true},
+                    10 => arg is string plugin && QoLBar.HasPlugin(plugin),
                     _ => false
                 },
                 DisplayCondition.ConditionType.Zone => pluginInterface.ClientState.TerritoryType == cond,
