@@ -16,8 +16,8 @@ namespace QoLBar
 
         private static bool commandReady = true;
         private static bool macroMode = false;
-        private static readonly Queue<string> commandQueue = new Queue<string>();
-        private static readonly Queue<string> macroQueue = new Queue<string>();
+        private static readonly Queue<string> commandQueue = new();
+        private static readonly Queue<string> macroQueue = new();
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)] private static extern IntPtr GetForegroundWindow();
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)] private static extern int GetWindowThreadProcessId(IntPtr handle, out int processId);
@@ -38,6 +38,8 @@ namespace QoLBar
 
         public static unsafe DateTimeOffset EorzeaTime => DateTimeOffset.FromUnixTimeSeconds(*(long*)(QoLBar.Interface.Framework.Address.BaseAddress + 0x1608));
 
+        public static Wrappers.UIModule uiModule;
+
         public static IntPtr textActiveBoolPtr = IntPtr.Zero;
         public static unsafe bool IsGameTextInputActive => textActiveBoolPtr != IntPtr.Zero && *(bool*)textActiveBoolPtr;
         public static unsafe bool IsMacroRunning => *(int*)(raptureShellModule + 0x2C0) >= 0;
@@ -49,9 +51,7 @@ namespace QoLBar
 
         // Command Execution
         public delegate void ProcessChatBoxDelegate(IntPtr uiModule, IntPtr message, IntPtr unused, byte a4);
-        public delegate IntPtr GetModuleDelegate(IntPtr basePtr);
         public static ProcessChatBoxDelegate ProcessChatBox;
-        public static IntPtr uiModule = IntPtr.Zero;
 
         // Macro Execution
         public delegate void ExecuteMacroDelegate(IntPtr raptureShellModule, IntPtr macro);
@@ -83,18 +83,12 @@ namespace QoLBar
 
         public static unsafe void Initialize()
         {
-            uiModule = QoLBar.Interface.Framework.Gui.GetUIModule();
+            uiModule = new Wrappers.UIModule(QoLBar.Interface.Framework.Gui.GetUIModule());
 
-            var vtbl = (IntPtr*)(*(IntPtr*)uiModule);
-            var GetRaptureShellModule = Marshal.GetDelegateForFunctionPointer<GetModuleDelegate>(*(vtbl + 9)); // Client__UI__UIModule_GetRaptureShellModule / vf9
-            var GetRaptureMacroModule = Marshal.GetDelegateForFunctionPointer<GetModuleDelegate>(*(vtbl + 12)); // Client__UI__UIModule_GetRaptureMacroModule / vf12
-            var GetAddonConfig = Marshal.GetDelegateForFunctionPointer<GetModuleDelegate>(*(vtbl + 19)); // Client__UI__UIModule_GetRaptureMacroModule / vf19
-            var GetAgentModule = Marshal.GetDelegateForFunctionPointer<GetModuleDelegate>(*(vtbl + 34)); // Client__UI__UIModule_GetAgentModule / vf34
-
-            raptureShellModule = GetRaptureShellModule(uiModule);
-            raptureMacroModule = GetRaptureMacroModule(uiModule);
-            addonConfig = GetAddonConfig(uiModule);
-            agentModule = GetAgentModule(uiModule);
+            raptureShellModule = uiModule.GetRaptureShellModule();
+            raptureMacroModule = uiModule.GetRaptureMacroModule();
+            addonConfig = uiModule.GetAddonConfig();
+            agentModule = uiModule.GetAgentModule();
 
             try { textActiveBoolPtr = *(IntPtr*)(QoLBar.Interface.Framework.Gui.GetBaseUIObject() + 0x28) + 0x188E; }
             catch { PluginLog.Error("Failed loading textActiveBoolPtr"); }
@@ -102,19 +96,19 @@ namespace QoLBar
             try
             {
                 ProcessChatBox = Marshal.GetDelegateForFunctionPointer<ProcessChatBoxDelegate>(QoLBar.Interface.TargetModuleScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9"));
-
-                try
-                {
-                    ExecuteMacroHook = new Hook<ExecuteMacroDelegate>(QoLBar.Interface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28"), new ExecuteMacroDelegate(ExecuteMacroDetour));
-
-                    numCopiedMacroLinesPtr = QoLBar.Interface.TargetModuleScanner.ScanText("49 8D 5E 70 BF ?? 00 00 00") + 0x5;
-                    numExecutedMacroLinesPtr = QoLBar.Interface.TargetModuleScanner.ScanText("41 83 F8 ?? 0F 8D ?? ?? ?? ?? 49 6B C8 68") + 0x3;
-
-                    ExecuteMacroHook.Enable();
-                }
-                catch { PluginLog.Error("Failed loading ExecuteMacro"); }
             }
             catch { PluginLog.Error("Failed loading ExecuteCommand"); }
+
+            try
+            {
+                ExecuteMacroHook = new Hook<ExecuteMacroDelegate>(QoLBar.Interface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28"), new ExecuteMacroDelegate(ExecuteMacroDetour));
+
+                numCopiedMacroLinesPtr = QoLBar.Interface.TargetModuleScanner.ScanText("49 8D 5E 70 BF ?? 00 00 00") + 0x5;
+                numExecutedMacroLinesPtr = QoLBar.Interface.TargetModuleScanner.ScanText("41 83 F8 ?? 0F 8D ?? ?? ?? ?? 49 6B C8 68") + 0x3;
+
+                ExecuteMacroHook.Enable();
+            }
+            catch { PluginLog.Error("Failed loading ExecuteMacro"); }
         }
 
         public static unsafe IntPtr GetAgentByInternalID(int id) => *(IntPtr*)(agentModule + 0x20 + id * 0x8); // Client::UI::Agent::AgentModule_GetAgentByInternalID, not going to try and sig a function this small
@@ -237,7 +231,7 @@ namespace QoLBar
                 using var str = new UTF8String(stringPtr, command);
                 Marshal.StructureToPtr(str, stringPtr, false);
 
-                ProcessChatBox(uiModule, stringPtr, IntPtr.Zero, 0);
+                ProcessChatBox(uiModule.Address, stringPtr, IntPtr.Zero, 0);
             }
             catch { QoLBar.PrintError("Failed injecting command"); }
 
