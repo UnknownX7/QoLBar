@@ -155,6 +155,8 @@ namespace QoLBar
             }
             //else if (sh.ColorAnimation == 0)
             //    sh.ColorBg = sh.GetDefaultValue(x => x.ColorBg);
+
+            sh._i = sh.GetDefaultValue(x => x._i);
         }
 
         public static T CopyObject<T>(T o)

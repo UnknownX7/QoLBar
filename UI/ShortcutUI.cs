@@ -26,13 +26,12 @@ namespace QoLBar
 
         public readonly BarUI parentBar;
         public readonly ShortcutUI parent;
-        public readonly List<ShortcutUI> children = new List<ShortcutUI>();
+        public readonly List<ShortcutUI> children = new();
 
         private bool IsConfigPopupOpen() => QoLBar.Plugin.ui.IsConfigPopupOpen();
         private void SetConfigPopupOpen() => QoLBar.Plugin.ui.SetConfigPopupOpen();
 
-        public int _i = 0;
-        public ShortcutUI DisplayedUI => (Config.Type == ShortcutType.Category && Config.Mode != ShortcutMode.Default && children.Count > 0) ? children[Math.Min(_i, children.Count - 1)] : this;
+        public ShortcutUI DisplayedUI => (Config.Type == ShortcutType.Category && Config.Mode != ShortcutMode.Default && children.Count > 0) ? children[Math.Min(Config._i, children.Count - 1)] : this;
 
         public bool _activated = false;
 
@@ -55,17 +54,10 @@ namespace QoLBar
 
         public void Initialize()
         {
-            if (Config.Mode == ShortcutMode.Random)
-            {
-                var count = Math.Max(1, (Config.Type == ShortcutType.Category) ? Config.SubList.Count : Config.Command.Split('\n').Length);
-                _i = DateTime.Now.Millisecond % count;
-            }
+            if (Config.SubList == null) return;
 
-            if (Config.SubList != null)
-            {
-                for (int i = 0; i < Config.SubList.Count; i++)
-                    children.Add(new ShortcutUI(this));
-            }
+            for (int i = 0; i < Config.SubList.Count; i++)
+                children.Add(new ShortcutUI(this));
         }
 
         public void SetupHotkeys()
@@ -100,6 +92,8 @@ namespace QoLBar
             else
                 _animTime = 0;
 
+            var _i = Config._i;
+
             var command = Config.Command;
             switch (Config.Type)
             {
@@ -110,14 +104,16 @@ namespace QoLBar
                             {
                                 var lines = command.Split('\n');
                                 command = lines[Math.Min(_i, lines.Length - 1)];
-                                _i = (_i + 1) % lines.Length;
+                                Config._i = (_i + 1) % lines.Length;
+                                QoLBar.Config.Save();
                                 break;
                             }
                         case ShortcutMode.Random:
                             {
                                 var lines = command.Split('\n');
                                 command = lines[Math.Min(_i, lines.Length - 1)];
-                                _i = (int)(QoLBar.GetFrameCount() % lines.Length); // With this game's FPS drops? Completely random.
+                                Config._i = (int)(QoLBar.GetFrameCount() % lines.Length); // With this game's FPS drops? Completely random.
+                                QoLBar.Config.Save();
                                 break;
                             }
                     }
@@ -129,12 +125,14 @@ namespace QoLBar
                         case ShortcutMode.Incremental:
                             if (0 <= _i && _i < children.Count)
                                 children[_i].OnClick(v, true, wasHovered, outsideDraw);
-                            _i = (_i + 1) % Math.Max(1, children.Count);
+                            Config._i = (_i + 1) % Math.Max(1, children.Count);
+                            QoLBar.Config.Save();
                             break;
                         case ShortcutMode.Random:
                             if (0 <= _i && _i < children.Count)
                                 children[_i].OnClick(v, true, wasHovered, outsideDraw);
-                            _i = (int)(QoLBar.GetFrameCount() % Math.Max(1, children.Count));
+                            Config._i = (int)(QoLBar.GetFrameCount() % Math.Max(1, children.Count));
+                            QoLBar.Config.Save();
                             break;
                         default:
                             if (!wasHovered)

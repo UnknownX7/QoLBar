@@ -188,20 +188,21 @@ namespace QoLBar
             if (_m != (int)sh.Config.Mode)
             {
                 sh.Config.Mode = (ShortcutMode)_m;
-                QoLBar.Config.Save();
 
                 if (sh.Config.Mode == ShortcutMode.Random)
                 {
                     var c = Math.Max(1, (sh.Config.Type == ShortcutType.Category) ? sh.children.Count : sh.Config.Command.Split('\n').Length);
-                    sh._i = (int)(QoLBar.GetFrameCount() % c);
+                    sh.Config._i = (int)(QoLBar.GetFrameCount() % c);
                 }
                 else
-                    sh._i = 0;
+                    sh.Config._i = 0;
+
+                QoLBar.Config.Save();
 
                 return true;
             }
-            else
-                return false;
+
+            return false;
         }
 
         public static bool EditShortcutColor(ShortcutUI sh)
