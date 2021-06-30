@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 using Dalamud;
 using Dalamud.Game.ClientState.Actors.Types;
@@ -16,8 +17,10 @@ namespace QoLBar
 
         private static bool commandReady = true;
         private static bool macroMode = false;
+        private static float chatQueueTimer = 0;
         private static readonly Queue<string> commandQueue = new();
         private static readonly Queue<string> macroQueue = new();
+        private static readonly Queue<string> chatQueue = new();
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)] private static extern IntPtr GetForegroundWindow();
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)] private static extern int GetWindowThreadProcessId(IntPtr handle, out int processId);
@@ -52,6 +55,9 @@ namespace QoLBar
         // Command Execution
         public delegate void ProcessChatBoxDelegate(IntPtr uiModule, IntPtr message, IntPtr unused, byte a4);
         public static ProcessChatBoxDelegate ProcessChatBox;
+
+        public delegate int GetCommandHandlerDelegate(IntPtr raptureShellModule, IntPtr message, IntPtr unused);
+        public static GetCommandHandlerDelegate GetCommandHandler;
 
         // Macro Execution
         public delegate void ExecuteMacroDelegate(IntPtr raptureShellModule, IntPtr macro);
@@ -95,20 +101,26 @@ namespace QoLBar
 
             try
             {
-                ProcessChatBox = Marshal.GetDelegateForFunctionPointer<ProcessChatBoxDelegate>(QoLBar.Interface.TargetModuleScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9"));
+                GetCommandHandler = Marshal.GetDelegateForFunctionPointer<GetCommandHandlerDelegate>(QoLBar.Interface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? 83 F8 FE 74 1E"));
+
+                try
+                {
+                    ProcessChatBox = Marshal.GetDelegateForFunctionPointer<ProcessChatBoxDelegate>(QoLBar.Interface.TargetModuleScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9"));
+                }
+                catch { PluginLog.Error("Failed loading ExecuteCommand"); }
+
+                try
+                {
+                    ExecuteMacroHook = new Hook<ExecuteMacroDelegate>(QoLBar.Interface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28"), new ExecuteMacroDelegate(ExecuteMacroDetour));
+
+                    numCopiedMacroLinesPtr = QoLBar.Interface.TargetModuleScanner.ScanText("49 8D 5E 70 BF ?? 00 00 00") + 0x5;
+                    numExecutedMacroLinesPtr = QoLBar.Interface.TargetModuleScanner.ScanText("41 83 F8 ?? 0F 8D ?? ?? ?? ?? 49 6B C8 68") + 0x3;
+
+                    ExecuteMacroHook.Enable();
+                }
+                catch { PluginLog.Error("Failed loading ExecuteMacro"); }
             }
-            catch { PluginLog.Error("Failed loading ExecuteCommand"); }
-
-            try
-            {
-                ExecuteMacroHook = new Hook<ExecuteMacroDelegate>(QoLBar.Interface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28"), new ExecuteMacroDelegate(ExecuteMacroDetour));
-
-                numCopiedMacroLinesPtr = QoLBar.Interface.TargetModuleScanner.ScanText("49 8D 5E 70 BF ?? 00 00 00") + 0x5;
-                numExecutedMacroLinesPtr = QoLBar.Interface.TargetModuleScanner.ScanText("41 83 F8 ?? 0F 8D ?? ?? ?? ?? 49 6B C8 68") + 0x3;
-
-                ExecuteMacroHook.Enable();
-            }
-            catch { PluginLog.Error("Failed loading ExecuteMacro"); }
+            catch { PluginLog.Error("Failed loading plugin"); }
         }
 
         public static unsafe IntPtr GetAgentByInternalID(int id) => *(IntPtr*)(agentModule + 0x20 + id * 0x8); // Client::UI::Agent::AgentModule_GetAgentByInternalID, not going to try and sig a function this small
@@ -138,6 +150,9 @@ namespace QoLBar
 
         public static void ReadyCommand()
         {
+            if (chatQueueTimer > 0 && (chatQueueTimer -= ImGuiNET.ImGui.GetIO().DeltaTime) <= 0 && chatQueue.Count > 0)
+                ExecuteCommand(chatQueue.Dequeue(), true);
+
             commandReady = true;
             RunCommandQueue();
 
@@ -157,7 +172,6 @@ namespace QoLBar
                 if (!string.IsNullOrEmpty(c))
                     commandQueue.Enqueue(c.Substring(0, Math.Min(c.Length, maxCommandLength)));
             }
-            RunCommandQueue(); // Attempt to run immediately
         }
 
         private static void RunCommandQueue()
@@ -177,7 +191,7 @@ namespace QoLBar
                             {
                                 if (int.TryParse(command.Substring(1), out var macro))
                                 {
-                                    if (0 <= macro && macro < 200)
+                                    if (macro is <= 0 and < 200)
                                         ExecuteMacroHook.Original(raptureShellModule, raptureMacroModule + 0x58 + (Macro.size * macro));
                                     else
                                         QoLBar.PrintError("Invalid macro. Usage: \"//m0\" for individual macro #0, \"//m100\" for shared macro #0, valid up to 199.");
@@ -216,12 +230,12 @@ namespace QoLBar
                             QoLBar.PrintError("Failed to add command to macro, capacity reached. Please close off the macro with another \"//m\" if you didn't intend to do this.");
                     }
                     else
-                        ExecuteCommand(command);
+                        ExecuteCommand(command, IsChatSendCommand(command));
                 }
             }
         }
 
-        public static void ExecuteCommand(string command)
+        public static void ExecuteCommand(string command, bool chat = false)
         {
             var stringPtr = IntPtr.Zero;
 
@@ -231,11 +245,46 @@ namespace QoLBar
                 using var str = new UTF8String(stringPtr, command);
                 Marshal.StructureToPtr(str, stringPtr, false);
 
-                ProcessChatBox(uiModule.Address, stringPtr, IntPtr.Zero, 0);
+                if (!chat || chatQueueTimer <= 0)
+                {
+                    if (chat)
+                        chatQueueTimer = 1f / 6f;
+
+                    ProcessChatBox(uiModule.Address, stringPtr, IntPtr.Zero, 0);
+                }
+                else
+                    chatQueue.Enqueue(command);
             }
             catch { QoLBar.PrintError("Failed injecting command"); }
 
             Marshal.FreeHGlobal(stringPtr);
+        }
+
+        public static bool IsChatSendCommand(string command)
+        {
+            var split = command.IndexOf(' ');
+            if (split < 1) return split == 0 || !command.StartsWith("/");
+
+            var handler = 0;
+            var stringPtr = IntPtr.Zero;
+
+            try
+            {
+                stringPtr = Marshal.AllocHGlobal(UTF8String.size);
+                using var str = new UTF8String(stringPtr, command.Substring(0, split));
+                Marshal.StructureToPtr(str, stringPtr, false);
+                handler = GetCommandHandler(raptureShellModule, stringPtr, IntPtr.Zero);
+            }
+            catch { }
+
+            Marshal.FreeHGlobal(stringPtr);
+
+            // TODO probably swap to using the TextCommand.csv and checking 2nd to last column since it appears to be flags of some sort (all of the chat senders including echo are 1021, say is 1023)
+            return handler switch
+            {
+                8 or (>= 13 and <= 20) or (>= 91 and <= 119 and not 116) => true,
+                _ => false,
+            };
         }
 
         private static void CreateAndExecuteMacro()
@@ -244,12 +293,19 @@ namespace QoLBar
 
             try
             {
+                var count = (byte)Math.Max(Macro.numLines, macroQueue.Count);
+                if (count > Macro.numLines && macroQueue.Any(IsChatSendCommand))
+                {
+                    QoLBar.PrintError("Macros using more than 15 lines do not support chat message commands!");
+                    throw new InvalidOperationException();
+                }
+
                 macroPtr = Marshal.AllocHGlobal(ExtendedMacro.size);
                 using var macro = new ExtendedMacro(macroPtr, string.Empty, macroQueue.ToArray());
                 Marshal.StructureToPtr(macro, macroPtr, false);
 
-                NumCopiedMacroLines = ExtendedMacro.numLines;
-                NumExecutedMacroLines = ExtendedMacro.numLines;
+                NumCopiedMacroLines = count;
+                NumExecutedMacroLines = count;
 
                 ExecuteMacroHook.Original(raptureShellModule, macroPtr);
 
