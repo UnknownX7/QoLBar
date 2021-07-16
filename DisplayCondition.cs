@@ -414,12 +414,11 @@ namespace QoLBar
                                                 ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
                                                 if (ImGui.BeginCombo("##PluginsList", cond.Arg is string ? cond.Arg : string.Empty))
                                                 {
-                                                    if (QoLBar.pluginsList != null)
+                                                    if (QoLBar.pluginInternalNameList != null)
                                                     {
-                                                        for (int ind = 0; ind < QoLBar.pluginsList.Count; ind++)
+                                                        for (int ind = 0; ind < QoLBar.pluginInternalNameList.Count; ind++)
                                                         {
-                                                            var (_, definition, _, _) = QoLBar.pluginsList[ind];
-                                                            var name = definition.InternalName;
+                                                            var name = QoLBar.pluginInternalNameList[ind];
                                                             if (ImGui.Selectable($"{name}##{ind}", cond.Arg == name))
                                                             {
                                                                 cond.Arg = name;

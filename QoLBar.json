@@ -6,6 +6,6 @@
   "AssemblyVersion": "",
   "RepoUrl": "https://github.com/UnknownX7/QoLBar",
   "ApplicableVersion": "any",
-  "DalamudApiLevel": 3,
+  "DalamudApiLevel": 4,
   "LoadPriority": 0
 }

@@ -141,23 +141,34 @@ namespace QoLBar
                 PrintError("Usage: /qolvisible [on|off|toggle] <bar>");
         }
 
-        public static List<(IDalamudPlugin Plugin, PluginDefinition Definition, DalamudPluginInterface PluginInterface, bool IsRaw)> pluginsList;
+        public static List<string> pluginInternalNameList;
+
         private static void ReflectDalamud()
         {
-            var dalamud = (Dalamud.Dalamud)Interface.GetType()
+            var dalamud = Interface.GetType()  // Dalamud
                 .GetField("dalamud", BindingFlags.Instance | BindingFlags.NonPublic)
                 ?.GetValue(Interface);
 
-            var pluginManager = dalamud?.GetType()
-                .GetProperty("PluginManager", BindingFlags.Instance | BindingFlags.NonPublic)
+            var pluginManager = dalamud?.GetType()  // PluginManager
+                .GetProperty("PluginManager", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                 ?.GetValue(dalamud);
 
-            pluginsList = (List<(IDalamudPlugin Plugin, PluginDefinition Definition, DalamudPluginInterface PluginInterface, bool IsRaw)>)pluginManager?.GetType()
-                .GetProperty("Plugins", BindingFlags.Instance | BindingFlags.Public)
+            var pluginsList = (IEnumerable<object>)pluginManager?.GetType()  // ImmutableList<LocalPlugin>
+                .GetProperty("InstalledPlugins", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
                 ?.GetValue(pluginManager);
+
+            pluginInternalNameList = pluginsList
+                .Select(o => o?.GetType()  // List<LocalPluginManifest>
+                    .GetProperty("Manifest", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                    ?.GetValue(o))
+                .Select(o => o?.GetType()
+                    .GetProperty("InternalName", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
+                    ?.GetValue(o))
+                .Cast<string>()
+                .ToList();
         }
 
-        public static bool HasPlugin(string name) => pluginsList != null && pluginsList.Any(x => x.Definition.InternalName == name);
+        public static bool HasPlugin(string name) => pluginInternalNameList != null && pluginInternalNameList.Any(x => x == name);
 
         public static bool IsLoggedIn() => ConditionCache.GetCondition(DisplayCondition.ConditionType.Misc, 0);
 
