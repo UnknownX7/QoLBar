@@ -260,8 +260,8 @@ namespace QoLBar
         {
             void AddTexSheet(int id, string path, bool noHR = false)
             {
-                lr.AddTex(id, path + ".tex");
-                hr.AddTex(id, path + (!noHR ? "_hr1.tex" : ".tex"));
+                lr.AddTex(id, path + ".tex", true);
+                hr.AddTex(id, path + (!noHR ? "_hr1.tex" : ".tex", true));
             }
 
             AddTexSheet(FrameIconID, "ui/uld/icona_frame"); // GetSafeIconID(0)
