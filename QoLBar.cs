@@ -13,7 +13,7 @@ using Dalamud.Plugin;
 
 // I'm too lazy to make a file just for this
 [assembly: AssemblyTitle("QoLBar")]
-[assembly: AssemblyVersion("2.1.3.0")]
+[assembly: AssemblyVersion("2.1.3.1")]
 
 // Disclaimer: I have no idea what I'm doing.
 namespace QoLBar
@@ -31,10 +31,10 @@ namespace QoLBar
         private bool PluginReady => _pluginReady;
 
         public static TextureDictionary TextureDictionary => Config.UseHRIcons ? textureDictionaryHR : textureDictionaryLR;
-        public static readonly TextureDictionary textureDictionaryLR = new TextureDictionary(false, false);
-        public static readonly TextureDictionary textureDictionaryHR = new TextureDictionary(true, false);
-        public static readonly TextureDictionary textureDictionaryGSLR = new TextureDictionary(false, true);
-        public static readonly TextureDictionary textureDictionaryGSHR = new TextureDictionary(true, true);
+        public static readonly TextureDictionary textureDictionaryLR = new(false, false);
+        public static readonly TextureDictionary textureDictionaryHR = new(true, false);
+        public static readonly TextureDictionary textureDictionaryGSLR = new(false, true);
+        public static readonly TextureDictionary textureDictionaryGSHR = new(true, true);
 
         public void Initialize(DalamudPluginInterface pInterface)
         {
@@ -42,7 +42,7 @@ namespace QoLBar
 
             Interface = pInterface;
 
-            Config = (Configuration)Interface.GetPluginConfig() ?? new Configuration();
+            Config = (Configuration)Interface.GetPluginConfig() ?? new();
             Config.Initialize();
             Config.TryBackup(); // Backup on version change
 
@@ -54,7 +54,7 @@ namespace QoLBar
 
             CheckHideOptOuts();
 
-            commandManager = new PluginCommandManager();
+            commandManager = new();
 
             ReadyPlugin();
             SetupIPC();

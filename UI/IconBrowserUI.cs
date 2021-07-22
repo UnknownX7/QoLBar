@@ -273,50 +273,6 @@ namespace QoLBar
                 }
             }
 
-            /*//PluginLog.Error($"{ImGui.GetScrollY()} / {ImGui.GetScrollMaxY()}");
-            var itemSize = _iconSize + ImGui.GetStyle().ItemSpacing.X / 2;
-            var scrollRow = (int)(ImGui.GetScrollY() / itemSize);
-            var lastRow = (cache.Count - 1) / _columns;
-            var rows = (int)(ImGui.GetWindowHeight() / itemSize) + 2;
-            var displayStart = scrollRow * _columns;
-            var displayEnd = Math.Min((scrollRow + rows) * _columns - 1, cache.Count - 1);
-            //PluginLog.Error($"{scrollRow} {rows} {displayStart} {displayEnd}");
-
-            var iconSize = new Vector2(_iconSize);
-            for (int i = 0; i < scrollRow; i++)
-                ImGui.Dummy(iconSize);
-
-            for (int i = displayStart; i <= displayEnd; i++)
-            {
-                var icon = cache[i];
-                ShortcutUI.DrawIcon(icon, iconSize, 1.0f, Vector2.Zero, 0, 0xFFFFFFFF, -1, "n");
-                if (ImGui.IsItemClicked())
-                {
-                    doPasteIcon = true;
-                    pasteIcon = icon;
-                    ImGui.SetClipboardText($"::{icon}");
-                }
-
-                if (ImGui.IsItemHovered())
-                {
-                    var tex = QoLBar.TextureDictionary[icon];
-                    if (!ImGui.IsMouseDown(ImGuiMouseButton.Right))
-                        ImGui.SetTooltip($"{icon}");
-                    else if (tex != null && tex.ImGuiHandle != IntPtr.Zero)
-                    {
-                        ImGui.BeginTooltip();
-                        ImGui.Image(tex.ImGuiHandle, new Vector2(700 * ImGuiHelpers.GlobalScale));
-                        ImGui.EndTooltip();
-                    }
-                }
-                if (_i % _columns != _columns - 1)
-                    ImGui.SameLine();
-                _i++;
-            }
-
-            for (int i = scrollRow + rows; i < lastRow; i++)
-                ImGui.Dummy(iconSize);*/
-
             ImGui.EndChild();
         }
 
