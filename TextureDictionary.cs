@@ -260,8 +260,10 @@ namespace QoLBar
         {
             void AddTexSheet(int id, string path, bool noHR = false)
             {
-                lr.AddTex(id, path + ".tex", true);
-                hr.AddTex(id, path + (!noHR ? "_hr1.tex" : ".tex", true));
+                if (!lr.textureOverrides.ContainsKey(id))
+                    lr.AddTex(id, path + ".tex");
+                if (!hr.textureOverrides.ContainsKey(id))
+                    hr.AddTex(id, path + (!noHR ? "_hr1.tex" : ".tex"));
             }
 
             AddTexSheet(FrameIconID, "ui/uld/icona_frame"); // GetSafeIconID(0)
