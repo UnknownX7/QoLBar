@@ -262,6 +262,7 @@ namespace QoLBar
         {
             var halfWidth = ImGui.GetWindowWidth() / 2;
             var thirdWidth = ImGui.GetWindowWidth() / 3;
+            var quarterWidth = ImGui.GetWindowWidth() / 4;
             if (ImGui.Checkbox("Export on Delete", ref QoLBar.Config.ExportOnDelete))
                 QoLBar.Config.Save();
             ImGui.SameLine(halfWidth);
@@ -285,7 +286,7 @@ namespace QoLBar
                 QoLBar.Config.Save();
             ImGuiEx.SetItemTooltip("Disables the 100ms delay between checking conditions, increasing CPU load.");
             ImGui.SameLine(halfWidth);
-            ImGui.SetNextItemWidth(ImGui.GetWindowWidth() / 4);
+            ImGui.SetNextItemWidth(quarterWidth);
             if (ImGui.InputInt("Backup Timer", ref QoLBar.Config.BackupTimer))
                 QoLBar.Config.Save();
             ImGuiEx.SetItemTooltip("Number of minutes since the last save to perform a backup. Set to 0 to disable.");
@@ -293,6 +294,21 @@ namespace QoLBar
             ImGui.Spacing();
             ImGui.Spacing();
             ImGui.TextUnformatted("Pie Settings");
+            ImGui.SetNextItemWidth(quarterWidth);
+            if (ImGui.DragInt("Opacity", ref QoLBar.Config.PieOpacity, 0.2f, 0, 255))
+                QoLBar.Config.Save();
+            ImGui.SameLine(halfWidth);
+            if (ImGui.Checkbox("Alternate Angle", ref QoLBar.Config.PieAlternateAngle))
+                QoLBar.Config.Save();
+            /*ImGui.SetNextItemWidth(quarterWidth);
+            var offset = (float)(QoLBar.Config.PieAngleOffset / Math.PI * 180);
+            if (ImGui.DragFloat("Pie Angle Offset", ref offset, 0.1f, -10, 370, "%.1f"))
+            {
+                offset = (offset % 360 + 360) % 360;
+                QoLBar.Config.PieAngleOffset = (float)(offset / 180f * Math.PI);
+                QoLBar.Config.Save();
+            }*/
+
             if (ImGui.Checkbox("Appear in Center", ref QoLBar.Config.PiesAlwaysCenter))
             {
                 if (!QoLBar.Config.PiesAlwaysCenter)

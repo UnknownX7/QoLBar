@@ -46,8 +46,11 @@ namespace QoLBar
 
                         if (!bar.Config.NoBackground)
                         {
-                            ImGui.PushStyleColor(ImGuiCol.Button, 0x70000000);
-                            ImGui.PushStyleColor(ImGuiCol.ButtonHovered, 0xC0404040);
+                            var opacity = (uint)Math.Min(Math.Max(QoLBar.Config.PieOpacity, 0), 255);
+                            var buttonCol = opacity << 24;
+                            var buttonHoverCol = (Math.Min((uint)(opacity * 1.7f), 255) << 24) + 0x404040;
+                            ImGui.PushStyleColor(ImGuiCol.Button, buttonCol);
+                            ImGui.PushStyleColor(ImGuiCol.ButtonHovered, buttonHoverCol);
                         }
                         else
                         {
@@ -57,6 +60,8 @@ namespace QoLBar
 
                         ImGuiPie.SetPieRadius(50);
                         ImGuiPie.SetPieScale(ImGuiHelpers.GlobalScale * bar.Config.Scale);
+                        if (!QoLBar.Config.PieAlternateAngle)
+                            ImGuiPie.SetPieRotationOffset((float)(Math.PI - Math.PI / bar.children.Count));
                         ImGuiPie.DisableRepositioning();
 
                         DrawChildren(bar.children);

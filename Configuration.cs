@@ -36,7 +36,7 @@ namespace QoLBar
 
         [JsonProperty("n")]  [DefaultValue("")]                   public string Name = string.Empty;
         [JsonProperty("k")]  [DefaultValue(0)]                    public int Hotkey = 0;
-        [JsonProperty("sL")] [DefaultValue(null)]                 public List<ShCfg> ShortcutList = new List<ShCfg>();
+        [JsonProperty("sL")] [DefaultValue(null)]                 public List<ShCfg> ShortcutList = new();
         [JsonProperty("h")]  [DefaultValue(false)]                public bool Hidden = false;
         [JsonProperty("d")]  [DefaultValue(BarDock.Bottom)]       public BarDock DockSide = BarDock.Bottom;
         [JsonProperty("a")]  [DefaultValue(BarAlign.Center)]      public BarAlign Alignment = BarAlign.Center;
@@ -50,7 +50,7 @@ namespace QoLBar
         [JsonProperty("s")]  [DefaultValue(1.0f)]                 public float Scale = 1.0f;
         [JsonProperty("rA")] [DefaultValue(1.0f)]                 public float RevealAreaScale = 1.0f;
         [JsonProperty("fS")] [DefaultValue(1.0f)]                 public float FontScale = 1.0f;
-        [JsonProperty("sp")] [DefaultValue(new[] { 8, 4 })]       public int[] Spacing = new[] { 8, 4 };
+        [JsonProperty("sp")] [DefaultValue(new[] { 8, 4 })]       public int[] Spacing = { 8, 4 };
         [JsonProperty("nB")] [DefaultValue(false)]                public bool NoBackground = false;
         [JsonProperty("c")]  [DefaultValue(-1)]                   public int ConditionSet = -1;
     }
@@ -86,7 +86,7 @@ namespace QoLBar
         [JsonProperty("cW")]  [DefaultValue(140)]                  public int CategoryWidth = 140;
         [JsonProperty("cSO")] [DefaultValue(false)]                public bool CategoryStaysOpen = false;
         [JsonProperty("cC")]  [DefaultValue(1)]                    public int CategoryColumns = 1;
-        [JsonProperty("cSp")] [DefaultValue(new[] { 8, 4 })]       public int[] CategorySpacing = new[] { 8, 4 };
+        [JsonProperty("cSp")] [DefaultValue(new[] { 8, 4 })]       public int[] CategorySpacing = { 8, 4 };
         [JsonProperty("cS")]  [DefaultValue(1.0f)]                 public float CategoryScale = 1.0f;
         [JsonProperty("cF")]  [DefaultValue(1.0f)]                 public float CategoryFontScale = 1.0f;
         [JsonProperty("cNB")] [DefaultValue(false)]                public bool CategoryNoBackground = false;
@@ -100,8 +100,8 @@ namespace QoLBar
         public int Version { get; set; } = 1;
 
         [Obsolete] public List<BarConfig> BarConfigs { internal get; set; }
-        public List<BarCfg> BarCfgs = new List<BarCfg>();
-        public List<DisplayConditionSet> ConditionSets = new List<DisplayConditionSet>();
+        public List<BarCfg> BarCfgs = new();
+        public List<DisplayConditionSet> ConditionSets = new();
         public bool ExportOnDelete = true;
         public bool UseIconFrame = false;
         public bool AlwaysDisplayBars = false;
@@ -111,6 +111,9 @@ namespace QoLBar
         public bool NoConditionCache = false;
         public bool UseHRIcons = false;
         public int BackupTimer = 30;
+        public int PieOpacity = 112;
+        //public float PieAngleOffset = 0;
+        public bool PieAlternateAngle = false;
         public bool PiesAlwaysCenter = false;
         public bool PiesMoveMouse = false;
         public bool PiesReturnMouse = false;

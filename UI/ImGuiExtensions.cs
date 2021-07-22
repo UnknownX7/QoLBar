@@ -187,14 +187,14 @@ namespace QoLBar
             }
         }
 
-        public static Vector2 iconFrameUV0 = new Vector2(1f / 426f, 141f / 426f);
-        public static Vector2 iconFrameUV1 = new Vector2(47f / 426f, 187f / 426f);
-        public static Vector2 iconHoverUV0 = new Vector2(49f / 426f, 238f / 426f);
-        public static Vector2 iconHoverUV1 = new Vector2(95f / 426f, 284f / 426f);
-        public static Vector2 iconHoverFrameUV0 = new Vector2(242f / 426f, 143f / 426f);
-        public static Vector2 iconHoverFrameUV1 = new Vector2(310f / 426f, 211f / 426f);
-        public static Vector2 iconClickUV0 = new Vector2(241f / 426f, 214f / 426f);
-        public static Vector2 iconClickUV1 = new Vector2(303f / 426f, 276f / 426f);
+        public static Vector2 iconFrameUV0 = new(1f / 426f, 141f / 426f);
+        public static Vector2 iconFrameUV1 = new(47f / 426f, 187f / 426f);
+        public static Vector2 iconHoverUV0 = new(49f / 426f, 238f / 426f);
+        public static Vector2 iconHoverUV1 = new(95f / 426f, 284f / 426f);
+        public static Vector2 iconHoverFrameUV0 = new(242f / 426f, 143f / 426f);
+        public static Vector2 iconHoverFrameUV1 = new(310f / 426f, 211f / 426f);
+        public static Vector2 iconClickUV0 = new(241f / 426f, 214f / 426f);
+        public static Vector2 iconClickUV1 = new(303f / 426f, 276f / 426f);
 
         public static void AddIconFrame(this ImDrawListPtr drawList, Vector2 pos, Vector2 size, bool hovered, float activeTime)
         {
@@ -306,6 +306,7 @@ namespace QoLBar
             public bool m_bAdjustPosition;
             public float m_fRadiusOverride;
             public float m_fScale;
+            public float m_fRotationOffset;
             public bool m_bMaintainDraw;
             public bool m_bClose;
         };
@@ -368,6 +369,7 @@ namespace QoLBar
                     s_oPieMenuContext.m_iMaxIndex = -1;
                     s_oPieMenuContext.m_fRadiusOverride = 0.0f;
                     s_oPieMenuContext.m_fScale = 1.0f;
+                    s_oPieMenuContext.m_fRotationOffset = 0;
                     BeginPieMenuEx();
 
                     return true;
@@ -401,7 +403,7 @@ namespace QoLBar
 
             bool bItemHovered = false;
 
-            float c_fDefaultRotate = (float)(-Math.PI / 2.0f);
+            float c_fDefaultRotate = (float)(-Math.PI / 2.0f) + s_oPieMenuContext.m_fRotationOffset;
             float fLastRotate = c_fDefaultRotate;
             for (int iIndex = 0; iIndex <= s_oPieMenuContext.m_iMaxIndex; ++iIndex)
             {
@@ -696,6 +698,8 @@ namespace QoLBar
         public static void SetPieRadius(float size) => s_oPieMenuContext.m_fRadiusOverride = size;
 
         public static void SetPieScale(float scale) => s_oPieMenuContext.m_fScale = scale;
+
+        public static void SetPieRotationOffset(float rotation) => s_oPieMenuContext.m_fRotationOffset = rotation;
 
         public static void DisableRepositioning() => s_oPieMenuContext.m_bAdjustPosition = false;
 
