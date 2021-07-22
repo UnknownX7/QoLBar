@@ -69,6 +69,7 @@ namespace QoLBar
             textureDictionaryLR.LoadTexture(46); // Magnifying glass / Search
             TextureDictionary.AddExtraTextures(textureDictionaryLR, textureDictionaryHR);
             TextureDictionary.AddExtraTextures(textureDictionaryGSLR, textureDictionaryGSHR);
+            IconBrowserUI.BuildCache();
 
             Game.Initialize();
 

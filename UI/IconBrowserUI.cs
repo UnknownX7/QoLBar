@@ -1,8 +1,11 @@
+using System;
 using System.Numerics;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using ImGuiNET;
 using Dalamud.Interface;
+using Dalamud.Plugin;
 
 namespace QoLBar
 {
@@ -20,6 +23,10 @@ namespace QoLBar
         private static string _tooltip;
         private static List<(int, int)> _iconList;
         private static bool _displayOutsideMain = true;
+
+        private const int iconMax = 200_000;
+        private static readonly Dictionary<int, bool> _iconExistsCache = new();
+        private static readonly Dictionary<string, List<int>> _iconCache = new();
 
         public static void ToggleIconBrowser() => iconBrowserOpen = !iconBrowserOpen;
 
@@ -157,7 +164,7 @@ namespace QoLBar
                 AddIcons(142_000, 150_000, "Japanese Popup Texts");
                 AddIcons(180_060, 180_100, "Trusts Names");
                 AddIcons(181_000, 181_500, "Boss Titles");
-                AddIcons(181_500, 200_000, "Placeholder");
+                AddIcons(181_500, iconMax, "Placeholder");
                 EndIconList();
 
                 BeginIconList("Spoilers 2", iconSize, true);
@@ -204,6 +211,7 @@ namespace QoLBar
             {
                 if (!string.IsNullOrEmpty(_tooltip))
                     ImGuiEx.SetItemTooltip(_tooltip);
+                BuildTabCache();
                 DrawIconList();
                 ImGui.EndTabItem();
             }
@@ -221,26 +229,40 @@ namespace QoLBar
         private static void DrawIconList()
         {
             ImGui.BeginChild($"{_name}##IconList");
-            foreach ((int start, int end) in _iconList)
+
+            var cache = _iconCache[_name];
+
+            ImGuiListClipperPtr clipper;
+            unsafe { clipper = new(ImGuiNative.ImGuiListClipper_ImGuiListClipper()); }
+            clipper.Begin(cache.Count / _columns + 1, _iconSize);
+
+            var iconSize = new Vector2(_iconSize);
+            while (clipper.Step())
             {
-                for (int icon = start; icon < end; icon++)
+                for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
                 {
-                    if (ShortcutUI.DrawIcon(icon, new Vector2(_iconSize), 1.0f, Vector2.Zero, 0, 0xFFFFFFFF, -1, "n", true))
+                    var start = row * _columns;
+                    var end = Math.Min(start + _columns, cache.Count);
+                    for (int i = start; i < end; i++)
                     {
+                        var icon = cache[i];
+                        ShortcutUI.DrawIcon(icon, iconSize, 1.0f, Vector2.Zero, 0, 0xFFFFFFFF, -1, "n");
                         if (ImGui.IsItemClicked())
                         {
                             doPasteIcon = true;
                             pasteIcon = icon;
                             ImGui.SetClipboardText($"::{icon}");
                         }
+
                         if (ImGui.IsItemHovered())
                         {
+                            var tex = QoLBar.TextureDictionary[icon];
                             if (!ImGui.IsMouseDown(ImGuiMouseButton.Right))
                                 ImGui.SetTooltip($"{icon}");
-                            else
+                            else if (tex != null && tex.ImGuiHandle != IntPtr.Zero)
                             {
                                 ImGui.BeginTooltip();
-                                ImGui.Image(QoLBar.TextureDictionary[icon].ImGuiHandle, new Vector2(700 * ImGuiHelpers.GlobalScale));
+                                ImGui.Image(tex.ImGuiHandle, new Vector2(700 * ImGuiHelpers.GlobalScale));
                                 ImGui.EndTooltip();
                             }
                         }
@@ -250,8 +272,87 @@ namespace QoLBar
                     }
                 }
             }
+
+            /*//PluginLog.Error($"{ImGui.GetScrollY()} / {ImGui.GetScrollMaxY()}");
+            var itemSize = _iconSize + ImGui.GetStyle().ItemSpacing.X / 2;
+            var scrollRow = (int)(ImGui.GetScrollY() / itemSize);
+            var lastRow = (cache.Count - 1) / _columns;
+            var rows = (int)(ImGui.GetWindowHeight() / itemSize) + 2;
+            var displayStart = scrollRow * _columns;
+            var displayEnd = Math.Min((scrollRow + rows) * _columns - 1, cache.Count - 1);
+            //PluginLog.Error($"{scrollRow} {rows} {displayStart} {displayEnd}");
+
+            var iconSize = new Vector2(_iconSize);
+            for (int i = 0; i < scrollRow; i++)
+                ImGui.Dummy(iconSize);
+
+            for (int i = displayStart; i <= displayEnd; i++)
+            {
+                var icon = cache[i];
+                ShortcutUI.DrawIcon(icon, iconSize, 1.0f, Vector2.Zero, 0, 0xFFFFFFFF, -1, "n");
+                if (ImGui.IsItemClicked())
+                {
+                    doPasteIcon = true;
+                    pasteIcon = icon;
+                    ImGui.SetClipboardText($"::{icon}");
+                }
+
+                if (ImGui.IsItemHovered())
+                {
+                    var tex = QoLBar.TextureDictionary[icon];
+                    if (!ImGui.IsMouseDown(ImGuiMouseButton.Right))
+                        ImGui.SetTooltip($"{icon}");
+                    else if (tex != null && tex.ImGuiHandle != IntPtr.Zero)
+                    {
+                        ImGui.BeginTooltip();
+                        ImGui.Image(tex.ImGuiHandle, new Vector2(700 * ImGuiHelpers.GlobalScale));
+                        ImGui.EndTooltip();
+                    }
+                }
+                if (_i % _columns != _columns - 1)
+                    ImGui.SameLine();
+                _i++;
+            }
+
+            for (int i = scrollRow + rows; i < lastRow; i++)
+                ImGui.Dummy(iconSize);*/
+
             ImGui.EndChild();
         }
 
+        private static void BuildTabCache()
+        {
+            if (_iconCache.ContainsKey(_name)) return;
+            PluginLog.Information($"Building Icon Browser cache for tab \"{_name}\"");
+
+            var cache = _iconCache[_name] = new();
+            foreach (var (start, end) in _iconList)
+            {
+                for (int icon = start; icon < end; icon++)
+                {
+                    if (_iconExistsCache[icon])
+                        cache.Add(icon);
+                }
+            }
+
+            PluginLog.Information($"Done building tab cache! {cache.Count} icons found.");
+        }
+
+        public static void BuildCache()
+        {
+            PluginLog.Information("Building Icon Browser cache");
+
+            for (int i = 0; i < iconMax; i++)
+                _iconExistsCache.Add(i, QoLBar.Interface.Data.FileExists($"ui/icon/{i / 1000 * 1000:000000}/{i:000000}.tex"));
+
+            foreach (var kv in QoLBar.textureDictionaryLR.GetUserIcons())
+                _iconExistsCache.Add(kv.Key, true);
+
+            var overrides = QoLBar.textureDictionaryLR.GetTextureOverrides();
+            for (int i = TextureDictionary.FrameIconID; i < TextureDictionary.FrameIconID + 3000; i++)
+                _iconExistsCache.Add(i, overrides.ContainsKey(i));
+
+            PluginLog.Information($"Done building cache! {_iconExistsCache.Count(i => i.Value)} icons found.");
+        }
     }
 }

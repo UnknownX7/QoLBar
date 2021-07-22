@@ -15,11 +15,11 @@ namespace QoLBar
         public const int FrameIconID = 10_000_000;
         public static int GetSafeIconID(ushort i) => FrameIconID + i;
 
-        private readonly Dictionary<int, string> userIcons = new Dictionary<int, string>();
-        private readonly Dictionary<int, string> textureOverrides = new Dictionary<int, string>();
+        private readonly Dictionary<int, string> userIcons = new();
+        private readonly Dictionary<int, string> textureOverrides = new();
         private int loadingTasks = 0;
         private static readonly TextureWrap disposedTexture = new GLTextureWrap(0, 0, 0);
-        private readonly ConcurrentQueue<(bool, Task)> loadQueue = new ConcurrentQueue<(bool, Task)>();
+        private readonly ConcurrentQueue<(bool, Task)> loadQueue = new();
         private Task loadTask;
         private readonly bool useHR = false;
         private readonly bool useGrayscale = false;
@@ -35,17 +35,9 @@ namespace QoLBar
         {
             get
             {
-                if (IsEmptying)
-                    return null;
-                else if (TryGetValue(k, out var tex) && tex?.ImGuiHandle != IntPtr.Zero)
-                    return tex;
-                else
-                {
-                    if (LoadTexture(k))
-                        return ((ConcurrentDictionary<int, TextureWrap>)this)[k];
-                    else
-                        return null;
-                }
+                if (IsEmptying) return null;
+                if (TryGetValue(k, out var tex) && tex?.ImGuiHandle != IntPtr.Zero) return tex;
+                return LoadTexture(k) ? ((ConcurrentDictionary<int, TextureWrap>)this)[k] : null;
             }
 
             set => ((ConcurrentDictionary<int, TextureWrap>)this)[k] = value;
@@ -209,6 +201,8 @@ namespace QoLBar
         }
 
         public Dictionary<int, string> GetUserIcons() => userIcons;
+
+        public Dictionary<int, string> GetTextureOverrides() => textureOverrides;
 
         public bool AddUserIcons(string path)
         {
