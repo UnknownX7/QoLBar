@@ -632,13 +632,13 @@ namespace QoLBar
                 DisplayCondition.ConditionType.Misc => cond switch
                 {
                     0 => pluginInterface.ClientState.Condition.Any(),
-                    1 => arg is ulong id && id == pluginInterface.ClientState.LocalContentId,
+                    1 => arg is not string && (ulong)arg == pluginInterface.ClientState.LocalContentId,
                     2 => pluginInterface.ClientState.Targets.CurrentTarget != null,
                     3 => pluginInterface.ClientState.Targets.FocusTarget != null,
                     4 => pluginInterface.ClientState.LocalPlayer is {} player && Game.IsWeaponDrawn(player),
                     5 => arg is string range && CheckEorzeaTimeCondition(range),
                     6 => arg is string range && CheckLocalTimeCondition(range),
-                    7 => arg is byte layout && layout == Game.CurrentHUDLayout,
+                    7 => arg is not string && (byte)arg == Game.CurrentHUDLayout,
                     8 => arg is string addon && QoLBar.Interface.Framework.Gui.GetUiObjectByName(addon, 1) != IntPtr.Zero,
                     9 => arg is string addon && QoLBar.Interface.Framework.Gui.GetAddonByName(addon, 1) is {Visible: true},
                     10 => arg is string plugin && QoLBar.HasPlugin(plugin),
