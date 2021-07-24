@@ -191,7 +191,7 @@ namespace QoLBar
                             {
                                 if (int.TryParse(command.Substring(1), out var macro))
                                 {
-                                    if (macro is <= 0 and < 200)
+                                    if (macro is >= 0 and < 200)
                                         ExecuteMacroHook.Original(raptureShellModule, raptureMacroModule + 0x58 + (Macro.size * macro));
                                     else
                                         QoLBar.PrintError("Invalid macro. Usage: \"//m0\" for individual macro #0, \"//m100\" for shared macro #0, valid up to 199.");
