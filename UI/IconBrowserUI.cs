@@ -2,7 +2,6 @@ using System;
 using System.Numerics;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using ImGuiNET;
 using Dalamud.Interface;
 using Dalamud.Plugin;
@@ -25,7 +24,7 @@ namespace QoLBar
         private static bool _displayOutsideMain = true;
 
         private const int iconMax = 200_000;
-        private static readonly Dictionary<int, bool> _iconExistsCache = new();
+        private static HashSet<int> _iconExistsCache;
         private static readonly Dictionary<string, List<int>> _iconCache = new();
 
         public static void ToggleIconBrowser() => iconBrowserOpen = !iconBrowserOpen;
@@ -41,6 +40,9 @@ namespace QoLBar
             ImGui.Begin("Icon Browser", ref iconBrowserOpen);
 
             ImGuiEx.ShouldDrawInViewport(out _displayOutsideMain);
+
+            if (ImGuiEx.AddHeaderIconButton("RebuildIconCache", TextureDictionary.FrameIconID + 105, 1.0f, Vector2.Zero, 0, 0xFFFFFFFF, "nhg"))
+                BuildCache(true);
 
             if (ImGui.BeginTabBar("Icon Tabs", ImGuiTabBarFlags.NoTooltip))
             {
@@ -61,7 +63,10 @@ namespace QoLBar
                 if (_tabExists)
                 {
                     if (ImGui.Button("Refresh Custom Icons"))
+                    {
                         QoLBar.Plugin.AddUserIcons();
+                        BuildCache(false);
+                    }
                     ImGui.SameLine();
                     if (ImGui.Button("Open Icon Folder"))
                         Process.Start(QoLBar.Config.GetPluginIconPath());
@@ -286,7 +291,7 @@ namespace QoLBar
             {
                 for (int icon = start; icon < end; icon++)
                 {
-                    if (_iconExistsCache[icon])
+                    if (_iconExistsCache.Contains(icon))
                         cache.Add(icon);
                 }
             }
@@ -294,21 +299,32 @@ namespace QoLBar
             PluginLog.Information($"Done building tab cache! {cache.Count} icons found.");
         }
 
-        public static void BuildCache()
+        public static void BuildCache(bool rebuild)
         {
             PluginLog.Information("Building Icon Browser cache");
 
-            for (int i = 0; i < iconMax; i++)
-                _iconExistsCache.Add(i, QoLBar.Interface.Data.FileExists($"ui/icon/{i / 1000 * 1000:000000}/{i:000000}.tex"));
+            _iconCache.Clear();
+            _iconExistsCache = !rebuild ? QoLBar.Config.LoadIconCache() ?? new() : new();
+
+            if (_iconExistsCache.Count == 0)
+            {
+                for (int i = 0; i < iconMax; i++)
+                {
+                    if (QoLBar.Interface.Data.FileExists($"ui/icon/{i / 1000 * 1000:000000}/{i:000000}.tex")
+                        || QoLBar.Interface.Data.FileExists($"ui/icon/{i / 1000 * 1000:000000}/en/{i:000000}.tex"))
+                        _iconExistsCache.Add(i);
+                }
+
+                QoLBar.Config.SaveIconCache(_iconExistsCache);
+            }
 
             foreach (var kv in QoLBar.textureDictionaryLR.GetUserIcons())
-                _iconExistsCache.Add(kv.Key, true);
+                _iconExistsCache.Add(kv.Key);
 
-            var overrides = QoLBar.textureDictionaryLR.GetTextureOverrides();
-            for (int i = TextureDictionary.FrameIconID; i < TextureDictionary.FrameIconID + 3000; i++)
-                _iconExistsCache.Add(i, overrides.ContainsKey(i));
+            foreach (var kv in QoLBar.textureDictionaryLR.GetTextureOverrides())
+                _iconExistsCache.Add(kv.Key);
 
-            PluginLog.Information($"Done building cache! {_iconExistsCache.Count(i => i.Value)} icons found.");
+            PluginLog.Information($"Done building cache! {_iconExistsCache.Count} icons found.");
         }
     }
 }

@@ -27,8 +27,7 @@ namespace QoLBar
         public static Configuration Config { get; private set; }
         public static QoLBar Plugin { get; private set; }
         public PluginUI ui;
-        private bool _pluginReady = false;
-        private bool PluginReady => _pluginReady;
+        private bool pluginReady = false;
 
         public static TextureDictionary TextureDictionary => Config.UseHRIcons ? textureDictionaryHR : textureDictionaryLR;
         public static readonly TextureDictionary textureDictionaryLR = new(false, false);
@@ -69,13 +68,13 @@ namespace QoLBar
             textureDictionaryLR.LoadTexture(46); // Magnifying glass / Search
             TextureDictionary.AddExtraTextures(textureDictionaryLR, textureDictionaryHR);
             TextureDictionary.AddExtraTextures(textureDictionaryGSLR, textureDictionaryGSHR);
-            IconBrowserUI.BuildCache();
+            IconBrowserUI.BuildCache(false);
 
             Game.Initialize();
 
             ReflectDalamud();
 
-            _pluginReady = true;
+            pluginReady = true;
         }
 
         public void Reload()
@@ -171,7 +170,7 @@ namespace QoLBar
             _frameCount++;
             _runTime += ImGui.GetIO().DeltaTime;
 
-            if (!PluginReady) return;
+            if (!pluginReady) return;
 
             Config.DoTimedBackup();
             Game.ReadyCommand();
@@ -188,7 +187,7 @@ namespace QoLBar
 
             _drawTime += ImGui.GetIO().DeltaTime;
 
-            if (!PluginReady) return;
+            if (!pluginReady) return;
 
             Config.DrawUpdateWindow();
             ui.Draw();

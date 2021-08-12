@@ -126,6 +126,7 @@ namespace QoLBar
         [JsonIgnore] public static DirectoryInfo ConfigFolder => QoLBar.Interface.ConfigDirectory;
         [JsonIgnore] private static DirectoryInfo iconFolder;
         [JsonIgnore] private static DirectoryInfo backupFolder;
+        [JsonIgnore] private static FileInfo iconCache;
         [JsonIgnore] private static FileInfo tempConfig;
         [JsonIgnore] private static FileInfo timedConfig;
         [JsonIgnore] public static FileInfo ConfigFile => QoLBar.Interface.ConfigFile;
@@ -133,7 +134,7 @@ namespace QoLBar
         [JsonIgnore] private static bool displayUpdateWindow = false;
         [JsonIgnore] private static bool updateWindowAgree = false;
 
-        [JsonIgnore] private static float lastSave = float.MaxValue;
+        [JsonIgnore] private static float lastSave = -1;
 
         public string GetVersion() => PluginVersion;
         public void UpdateVersion()
@@ -161,6 +162,7 @@ namespace QoLBar
             {
                 iconFolder = new DirectoryInfo(Path.Combine(ConfigFolder.FullName, "icons"));
                 backupFolder = new DirectoryInfo(Path.Combine(ConfigFolder.FullName, "backups"));
+                iconCache = new FileInfo(ConfigFolder.FullName + "\\iconCache.json");
                 tempConfig = new FileInfo(backupFolder.FullName + "\\temp.json");
                 timedConfig = new FileInfo(backupFolder.FullName + "\\timedBackup.json");
             }
@@ -215,7 +217,7 @@ namespace QoLBar
             catch (Exception e)
             {
                 PluginLog.LogError(e, "Failed to create icon folder");
-                return "";
+                return string.Empty;
             }
         }
 
@@ -230,7 +232,7 @@ namespace QoLBar
             catch (Exception e)
             {
                 PluginLog.LogError(e, "Failed to create backup folder");
-                return "";
+                return string.Empty;
             }
         }
 
@@ -241,19 +243,14 @@ namespace QoLBar
                 if (!tempConfig.Exists)
                     SaveTempConfig();
 
-                try
-                {
-                    tempConfig.CopyTo(backupFolder.FullName + $"\\v{PluginVersion} {DateTime.Now:yyyy-MM-dd HH.mm.ss}.json");
-                }
-                catch (Exception e)
-                {
-                    PluginLog.LogError(e, "Failed to back up config!");
-                }
+                try { tempConfig.CopyTo(backupFolder.FullName + $"\\v{PluginVersion} {DateTime.Now:yyyy-MM-dd HH.mm.ss}.json"); }
+                catch (Exception e) { PluginLog.LogError(e, "Failed to back up config!"); }
 
                 UpdateVersion();
                 Save();
                 CheckDisplayUpdateWindow();
-                lastSave = float.MaxValue;
+                DeleteIconCache();
+                lastSave = -1;
             }
 
             SaveTempConfig();
@@ -267,20 +264,16 @@ namespace QoLBar
                     backupFolder.Create();
                 ConfigFile.CopyTo(tempConfig.FullName, true);
             }
-            catch (Exception e)
-            {
-                PluginLog.LogError(e, "Failed to save temp config!");
-            }
+            catch (Exception e) { PluginLog.LogError(e, "Failed to save temp config!"); }
         }
 
         public void DoTimedBackup()
         {
-            if ((BackupTimer > 0) && (QoLBar.GetRunTime() - (BackupTimer * 60)) > lastSave)
-            {
-                SaveTimedConfig();
-                lastSave = float.MaxValue; // Prevent from pointlessly saving if the config is never changed
-                PluginLog.LogInformation("Performed timed backup!");
-            }
+            if (BackupTimer <= 0 || lastSave < 0 || QoLBar.GetRunTime() < lastSave + BackupTimer * 60) return;
+
+            SaveTimedConfig();
+            lastSave = -1; // Prevent from pointlessly saving if the config is never changed
+            PluginLog.LogInformation("Performed timed backup!");
         }
 
         private void SaveTimedConfig()
@@ -291,81 +284,89 @@ namespace QoLBar
                     backupFolder.Create();
                 ConfigFile.CopyTo(timedConfig.FullName, true);
             }
-            catch (Exception e)
-            {
-                PluginLog.LogError(e, "Failed to save timed backup!");
-            }
+            catch (Exception e) { PluginLog.LogError(e, "Failed to save timed backup!"); }
         }
 
         public void LoadConfig(FileInfo file)
         {
-            if (file.Exists)
+            if (!file.Exists) return;
+
+            try
             {
-                try
-                {
-                    file.CopyTo(ConfigFile.FullName, true);
-                    QoLBar.Plugin.Reload();
-                }
-                catch (Exception e)
-                {
-                    PluginLog.LogError(e, "Failed to load config!");
-                }
+                file.CopyTo(ConfigFile.FullName, true);
+                QoLBar.Plugin.Reload();
             }
+            catch (Exception e) { PluginLog.LogError(e, "Failed to load config!"); }
         }
+
+        public void SaveIconCache(HashSet<int> cache)
+        {
+            if (!iconFolder.Exists)
+                iconFolder.Create();
+            try { File.WriteAllText(iconCache.FullName, JsonConvert.SerializeObject(cache, new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Objects })); } catch { }
+        }
+
+        public HashSet<int> LoadIconCache()
+        {
+            if (!iconFolder.Exists)
+                iconFolder.Create();
+            try { return JsonConvert.DeserializeObject<HashSet<int>>(File.ReadAllText(iconCache.FullName)); }
+            catch { return null; }
+        }
+
+        public void DeleteIconCache() { try { iconCache.Delete(); } catch { } }
 
         public void DrawUpdateWindow()
         {
-            if (displayUpdateWindow)
+            if (!displayUpdateWindow) return;
+            var window = ImGuiHelpers.MainViewport.Size;
+            ImGui.SetNextWindowPos(new System.Numerics.Vector2(window.X / 2, window.Y / 2), ImGuiCond.Appearing, new System.Numerics.Vector2(0.5f));
+            ImGui.SetNextWindowSize(new System.Numerics.Vector2(550, 280) * ImGuiHelpers.GlobalScale);
+            ImGui.Begin("QoL Bar Updated!", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoSavedSettings);
+            ImGui.TextWrapped("QoL Bar has a new feature where categories may now run commands like a normal shortcut, " +
+                "this may cause problems for people who were using the plugin BEFORE JANUARY 4TH, due to " +
+                "the command setting being used for tooltips. Please verify that you understand the risks " +
+                "and that YOU MAY ACCIDENTALLY SEND CHAT MESSAGES WHEN CLICKING CATEGORIES. Additionally, " +
+                "YOU MAY DELETE ALL COMMANDS FROM ALL CATEGORIES AFTERWARDS if you are worried. Selecting " +
+                "YES will remove EVERY command from EVERY category in your config, note that this has no " +
+                "real downside if you have not started to utilize this feature. Selecting NO will close this " +
+                "popup permanently, you may also change your mind after selecting YES if you restore the " +
+                "version backup from the config, please be aware that old configs will possibly contain " +
+                "commands again if you do reload one of them.");
+            ImGui.Spacing();
+            ImGui.Spacing();
+            ImGui.Checkbox("I UNDERSTAND", ref updateWindowAgree);
+            if (updateWindowAgree)
             {
-                var window = ImGuiHelpers.MainViewport.Size;
-                ImGui.SetNextWindowPos(new System.Numerics.Vector2(window.X / 2, window.Y / 2), ImGuiCond.Appearing, new System.Numerics.Vector2(0.5f));
-                ImGui.SetNextWindowSize(new System.Numerics.Vector2(550, 280) * ImGuiHelpers.GlobalScale);
-                ImGui.Begin("QoL Bar Updated!", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoSavedSettings);
-                ImGui.TextWrapped("QoL Bar has a new feature where categories may now run commands like a normal shortcut, " +
-                    "this may cause problems for people who were using the plugin BEFORE JANUARY 4TH, due to " +
-                    "the command setting being used for tooltips. Please verify that you understand the risks " +
-                    "and that YOU MAY ACCIDENTALLY SEND CHAT MESSAGES WHEN CLICKING CATEGORIES. Additionally, " +
-                    "YOU MAY DELETE ALL COMMANDS FROM ALL CATEGORIES AFTERWARDS if you are worried. Selecting " +
-                    "YES will remove EVERY command from EVERY category in your config, note that this has no " +
-                    "real downside if you have not started to utilize this feature. Selecting NO will close this " +
-                    "popup permanently, you may also change your mind after selecting YES if you restore the " +
-                    "version backup from the config, please be aware that old configs will possibly contain " +
-                    "commands again if you do reload one of them.");
                 ImGui.Spacing();
                 ImGui.Spacing();
-                ImGui.Checkbox("I UNDERSTAND", ref updateWindowAgree);
-                if (updateWindowAgree)
+                if (ImGui.Button("YES, DELETE THEM"))
                 {
-                    ImGui.Spacing();
-                    ImGui.Spacing();
-                    if (ImGui.Button("YES, DELETE THEM"))
+                    static void DeleteRecursive(ShCfg sh)
                     {
-                        static void DeleteRecursive(ShCfg sh)
+                        if (sh.Type == ShCfg.ShortcutType.Category)
                         {
-                            if (sh.Type == ShCfg.ShortcutType.Category)
+                            sh.Command = string.Empty;
+                            if (sh.SubList != null)
                             {
-                                sh.Command = string.Empty;
-                                if (sh.SubList != null)
-                                {
-                                    foreach (var sh2 in sh.SubList)
-                                        DeleteRecursive(sh2);
-                                }
+                                foreach (var sh2 in sh.SubList)
+                                    DeleteRecursive(sh2);
                             }
                         }
-                        foreach (var bar in BarCfgs)
-                        {
-                            foreach (var sh in bar.ShortcutList)
-                                DeleteRecursive(sh);
-                        }
-                        Save();
-                        displayUpdateWindow = false;
                     }
-                    ImGui.SameLine();
-                    if (ImGui.Button("NO, I AM FINE"))
-                        displayUpdateWindow = false;
+                    foreach (var bar in BarCfgs)
+                    {
+                        foreach (var sh in bar.ShortcutList)
+                            DeleteRecursive(sh);
+                    }
+                    Save();
+                    displayUpdateWindow = false;
                 }
-                ImGui.End();
+                ImGui.SameLine();
+                if (ImGui.Button("NO, I AM FINE"))
+                    displayUpdateWindow = false;
             }
+            ImGui.End();
         }
     }
 }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Numerics;
 using System.Collections.Generic;
 using ImGuiNET;
@@ -245,6 +245,40 @@ namespace QoLBar
             var ret = ImGui.InvisibleButton(id, size);
             DrawIcon(icon, size, zoom, offset, rotation, flipped, color, activeTime > 0 || ImGui.IsItemHovered(ImGuiHoveredFlags.RectOnly), (activeTime >= 0) ? activeTime : (ImGui.IsItemActive() ? -1 : 0), frame);
             return ret;
+        }
+
+        // 😔
+        public static bool AddHeaderIconButton(string id, int icon, float zoom, Vector2 offset, float rotation, uint color, string args)
+        {
+            if (ImGui.IsWindowCollapsed()) return false;
+
+            var scale = ImGuiHelpers.GlobalScale;
+            var prevCursorPos = ImGui.GetCursorPos();
+            var buttonSize = new Vector2(20 * scale);
+            var buttonPos = new Vector2(ImGui.GetWindowWidth() - buttonSize.X - 34 * scale - ImGui.GetStyle().FramePadding.X * 2, 2);
+            ImGui.SetCursorPos(buttonPos);
+            PushClipRectFullScreen();
+
+            var pressed = false;
+            ImGui.InvisibleButton(id, buttonSize);
+            var itemMin = ImGui.GetItemRectMin();
+            var itemMax = ImGui.GetItemRectMax();
+            if (ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(itemMin, itemMax, false))
+            {
+                var halfSize = ImGui.GetItemRectSize() / 2;
+                var center = itemMin + halfSize;
+                ImGui.GetWindowDrawList().AddCircleFilled(center, halfSize.X, ImGui.GetColorU32(ImGui.IsMouseDown(ImGuiMouseButton.Left) ? ImGuiCol.ButtonActive : ImGuiCol.ButtonHovered));
+                if (ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+                    pressed = true;
+            }
+
+            ImGui.SetCursorPos(buttonPos);
+            ShortcutUI.DrawIcon(icon, buttonSize, zoom, offset, rotation, color, -1, args, false, true);
+
+            ImGui.PopClipRect();
+            ImGui.SetCursorPos(prevCursorPos);
+
+            return pressed;
         }
     }
 
