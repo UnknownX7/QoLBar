@@ -63,10 +63,7 @@ namespace QoLBar
                 if (_tabExists)
                 {
                     if (ImGui.Button("Refresh Custom Icons"))
-                    {
                         QoLBar.Plugin.AddUserIcons();
-                        BuildCache(false);
-                    }
                     ImGui.SameLine();
                     if (ImGui.Button("Open Icon Folder"))
                         Process.Start(QoLBar.Config.GetPluginIconPath());

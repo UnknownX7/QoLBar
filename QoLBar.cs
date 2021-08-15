@@ -203,8 +203,13 @@ namespace QoLBar
 
         public static Dictionary<int, string> GetUserIcons() => TextureDictionary.GetUserIcons();
 
-        bool _addUserIcons = false;
-        private bool AddUserIcons(ref bool b) => b = !TextureDictionary.AddUserIcons(Config.GetPluginIconPath());
+        private bool _addUserIcons = false;
+        private void AddUserIcons(ref bool b)
+        {
+            b = !TextureDictionary.AddUserIcons(Config.GetPluginIconPath());
+            IconBrowserUI.BuildCache(false);
+        }
+
         public void AddUserIcons() => _addUserIcons = true;
 
         public static void CleanTextures(bool disposing)
