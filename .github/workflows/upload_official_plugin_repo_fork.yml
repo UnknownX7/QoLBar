@@ -1,0 +1,65 @@
+name: Upload to Official Plugin Repository Fork
+
+on:
+  push:
+    tags:
+      - '*'
+
+env:
+  SOLUTION_NAME: QoLBar
+  INTERNAL_NAME: QoLBar
+  EXTERNAL_NAME: QoL Bar
+  RELEASE_DIR: ./Publish
+  PLUGIN_REPO_FORK: UnknownX7/DalamudPlugins
+
+jobs:
+  build:
+    runs-on: [windows-latest]
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1.0.2
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v1.0.5
+
+      - name: Restore NuGet Packages
+        run: nuget restore ${{ env.SOLUTION_NAME }}.sln
+
+      - name: Download Dalamud
+        run: |
+          Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/latest.zip -OutFile latest.zip
+          Expand-Archive -Force latest.zip "$env:AppData\XIVLauncher\addon\Hooks\dev\"
+
+      - name: Build
+        run: msbuild ${{ env.SOLUTION_NAME }}.sln /p:Configuration=Release
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v2.2.1
+        with:
+          path: ${{ env.RELEASE_DIR }}/*
+
+  deploy:
+    needs: build
+    runs-on: [ubuntu-latest]
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        repository: ${{ env.PLUGIN_REPO_FORK }}
+        token: ${{ secrets.PAT }}
+
+    - uses: actions/download-artifact@v2
+      with:
+        name: artifact
+        path: plugins/${{ env.INTERNAL_NAME }}
+
+    - uses: EndBug/add-and-commit@v7
+      with:
+        add: --all
+        author_name: GitHub Action
+        author_email: github-actions[bot]@users.noreply.github.com
+        branch: master
+        message: ${{ env.EXTERNAL_NAME }} ${GITHUB_REF##*/}
