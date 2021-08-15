@@ -62,4 +62,4 @@ jobs:
         author_name: GitHub Action
         author_email: github-actions[bot]@users.noreply.github.com
         branch: master
-        message: ${{ env.EXTERNAL_NAME }} ${GITHUB_REF##*/}
+        message: ${{ env.EXTERNAL_NAME }} ${GITHUB_REF#refs/tags/}
