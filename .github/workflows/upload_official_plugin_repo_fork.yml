@@ -46,6 +46,10 @@ jobs:
     runs-on: [ubuntu-latest]
 
     steps:
+    - name: Get the version
+      id: get_version
+      run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+
     - uses: actions/checkout@v2
       with:
         repository: ${{ env.PLUGIN_REPO_FORK }}
@@ -59,7 +63,5 @@ jobs:
     - uses: EndBug/add-and-commit@v7
       with:
         add: --all
-        author_name: GitHub Action
-        author_email: github-actions[bot]@users.noreply.github.com
         branch: master
-        message: ${{ env.EXTERNAL_NAME }} ${GITHUB_REF#refs/tags/}
+        message: ${{ env.EXTERNAL_NAME }} ${{ steps.get_version.outputs.VERSION }}
