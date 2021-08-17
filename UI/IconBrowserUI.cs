@@ -236,7 +236,7 @@ namespace QoLBar
 
             ImGuiListClipperPtr clipper;
             unsafe { clipper = new(ImGuiNative.ImGuiListClipper_ImGuiListClipper()); }
-            clipper.Begin(cache.Count / _columns + 1, _iconSize);
+            clipper.Begin(cache.Count / _columns + 1, _iconSize + ImGui.GetStyle().ItemSpacing.Y);
 
             var iconSize = new Vector2(_iconSize);
             while (clipper.Step())
@@ -275,13 +275,15 @@ namespace QoLBar
                 }
             }
 
+            clipper.Destroy();
+
             ImGui.EndChild();
         }
 
         private static void BuildTabCache()
         {
             if (_iconCache.ContainsKey(_name)) return;
-            PluginLog.Information($"Building Icon Browser cache for tab \"{_name}\"");
+            PluginLog.LogInformation($"Building Icon Browser cache for tab \"{_name}\"");
 
             var cache = _iconCache[_name] = new();
             foreach (var (start, end) in _iconList)
@@ -293,12 +295,12 @@ namespace QoLBar
                 }
             }
 
-            PluginLog.Information($"Done building tab cache! {cache.Count} icons found.");
+            PluginLog.LogInformation($"Done building tab cache! {cache.Count} icons found.");
         }
 
         public static void BuildCache(bool rebuild)
         {
-            PluginLog.Information("Building Icon Browser cache");
+            PluginLog.LogInformation("Building Icon Browser cache");
 
             _iconCache.Clear();
             _iconExistsCache = !rebuild ? QoLBar.Config.LoadIconCache() ?? new() : new();
@@ -321,7 +323,7 @@ namespace QoLBar
             foreach (var kv in QoLBar.textureDictionaryLR.GetTextureOverrides())
                 _iconExistsCache.Add(kv.Key);
 
-            PluginLog.Information($"Done building cache! {_iconExistsCache.Count} icons found.");
+            PluginLog.LogInformation($"Done building cache! {_iconExistsCache.Count} icons found.");
         }
     }
 }
