@@ -517,7 +517,7 @@ namespace QoLBar
             _catpos = pos;
         }
 
-        public void SetCategoryPosition() => ImGui.SetNextWindowPos(_catpos, ImGuiCond.Appearing, _catpiv);
+        public void SetCategoryPosition(ImGuiCond cond) => ImGui.SetNextWindowPos(_catpos, cond, _catpiv);
 
         public void DrawConfig()
         {

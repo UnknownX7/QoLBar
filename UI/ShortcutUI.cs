@@ -33,7 +33,7 @@ namespace QoLBar
 
         public ShortcutUI DisplayedUI => (Config.Type == ShortcutType.Category && Config.Mode != ShortcutMode.Default && children.Count > 0) ? children[Math.Min(Config._i, children.Count - 1)] : this;
 
-        public bool _activated = false;
+        public bool _activated = false; // TODO :)
 
         private float _animTime = -1;
 
@@ -283,11 +283,23 @@ namespace QoLBar
             PluginUI.DrawExternalWindow(() => DrawConfig(useIcon), parentBar.IsDocked);
         }
 
+        // Bandaid until ImGui fucks off
+        private bool _fuckImGui = false;
         private void DrawCategory()
         {
-            parentBar.SetCategoryPosition();
+            //parentBar.SetCategoryPosition(ImGuiCond.Appearing);
+
+            if (_fuckImGui)
+            {
+                parentBar.SetCategoryPosition(ImGuiCond.Always);
+                _fuckImGui = false;
+            }
+
             if (ImGui.BeginPopup("ShortcutCategory", (Config.CategoryNoBackground ? ImGuiWindowFlags.NoBackground : ImGuiWindowFlags.None) | ImGuiWindowFlags.NoMove))
             {
+                if (ImGui.IsWindowAppearing())
+                    _fuckImGui = true;
+
                 parentBar.Reveal();
 
                 if (ImGui.IsWindowHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right) && !ImGui.IsAnyItemHovered()) // Why are the ImGui hover flags just not working ???
