@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using ImGuiNET;
 using Dalamud.Interface;
-using Dalamud.Plugin;
+using Dalamud.Logging;
 
 namespace QoLBar
 {
@@ -309,8 +309,8 @@ namespace QoLBar
             {
                 for (int i = 0; i < iconMax; i++)
                 {
-                    if (QoLBar.Interface.Data.FileExists($"ui/icon/{i / 1000 * 1000:000000}/{i:000000}.tex")
-                        || QoLBar.Interface.Data.FileExists($"ui/icon/{i / 1000 * 1000:000000}/en/{i:000000}.tex"))
+                    if (QoLBar.DataManager.FileExists($"ui/icon/{i / 1000 * 1000:000000}/{i:000000}.tex")
+                        || QoLBar.DataManager.FileExists($"ui/icon/{i / 1000 * 1000:000000}/en/{i:000000}.tex"))
                         _iconExistsCache.Add(i);
                 }
 

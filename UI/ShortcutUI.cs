@@ -554,7 +554,7 @@ namespace QoLBar
                         done = true;
                 }
 
-                int.TryParse(name.Substring(substart), out icon);
+                _ = int.TryParse(name[substart..], out icon);
                 return true;
             }
             else

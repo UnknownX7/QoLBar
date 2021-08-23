@@ -7,8 +7,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using ImGuiNET;
-using Dalamud.Plugin;
 using Dalamud.Interface;
+using Dalamud.Logging;
 
 namespace QoLBar
 {
@@ -30,7 +30,7 @@ namespace QoLBar
         public bool IsConfigPopupOpen() => configPopupOpen || lastConfigPopupOpen;
         public void SetConfigPopupOpen() => configPopupOpen = true;
 
-        public static readonly Vector2 defaultSpacing = new Vector2(8, 4);
+        public static readonly Vector2 defaultSpacing = new(8, 4);
 
         private bool _displayOutsideMain = true;
 
@@ -44,17 +44,16 @@ namespace QoLBar
 
             Task.Run(async () =>
             {
-                while (!QoLBar.Interface.Data.IsDataReady)
+                while (!QoLBar.DataManager.IsDataReady)
                     await Task.Delay(1000);
-                DisplayConditionSet.classDictionary = QoLBar.Interface.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.ClassJob>(QoLBar.Interface.ClientState.ClientLanguage).ToDictionary(i => i.RowId);
-                DisplayConditionSet.territoryDictionary = QoLBar.Interface.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.TerritoryType>(QoLBar.Interface.ClientState.ClientLanguage).ToDictionary(i => i.RowId);
+                DisplayConditionSet.classDictionary = QoLBar.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.ClassJob>().ToDictionary(i => i.RowId);
+                DisplayConditionSet.territoryDictionary = QoLBar.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.TerritoryType>().ToDictionary(i => i.RowId);
             });
 
-            if (QoLBar.Config.FirstStart)
-            {
-                AddBar(new BarCfg { Editing = true });
-                AddDemoBar();
-            }
+            if (!QoLBar.Config.FirstStart) return;
+
+            AddBar(new BarCfg { Editing = true });
+            AddDemoBar();
         }
 
         public void Reload()
@@ -76,7 +75,7 @@ namespace QoLBar
 
             if (QoLBar.Config.AlwaysDisplayBars || QoLBar.IsLoggedIn())
             {
-                foreach (BarUI bar in bars)
+                foreach (var bar in bars)
                     bar.Draw();
             }
             lastConfigPopupOpen = configPopupOpen;
@@ -138,7 +137,7 @@ namespace QoLBar
 
         private void DrawBarManager()
         {
-            Vector2 textsize = new Vector2(-1, 0);
+            Vector2 textsize = new(-1, 0);
             float textx = 0.0f;
 
             var letterButtonSize = new Vector2(ImGui.CalcTextSize("O").X + ImGui.GetStyle().FramePadding.X * 2, 0);
@@ -440,39 +439,39 @@ namespace QoLBar
 
             ImGui.TextUnformatted("UI Module");
             ImGui.NextColumn();
-            ImGuiEx.TextCopyable($"{Game.uiModule.ToString("X")}");
+            ImGuiEx.TextCopyable($"{Game.uiModule.Address:X}");
             ImGui.NextColumn();
             ImGui.NextColumn();
 
             ImGui.TextUnformatted("Agent Module");
             ImGui.NextColumn();
-            ImGuiEx.TextCopyable($"{Game.agentModule.ToString("X")}");
+            ImGuiEx.TextCopyable($"{Game.agentModule:X}");
             ImGui.NextColumn();
             ImGui.NextColumn();
 
             ImGui.TextUnformatted("Rapture Shell Module");
             ImGui.NextColumn();
-            ImGuiEx.TextCopyable($"{Game.raptureShellModule.ToString("X")}");
+            ImGuiEx.TextCopyable($"{Game.raptureShellModule:X}");
             ImGui.NextColumn();
             ImGui.NextColumn();
 
             ImGui.TextUnformatted("Rapture Macro Module");
             ImGui.NextColumn();
-            ImGuiEx.TextCopyable($"{Game.raptureMacroModule.ToString("X")}");
+            ImGuiEx.TextCopyable($"{Game.raptureMacroModule:X}");
             ImGui.NextColumn();
             ImGui.TextUnformatted($"{Game.IsMacroRunning}");
             ImGui.NextColumn();
 
             ImGui.TextUnformatted("Addon Config (HUD Layout #)");
             ImGui.NextColumn();
-            ImGuiEx.TextCopyable($"{Game.addonConfig.ToString("X")}");
+            ImGuiEx.TextCopyable($"{Game.addonConfig:X}");
             ImGui.NextColumn();
             ImGui.TextUnformatted($"{Game.CurrentHUDLayout}");
             ImGui.NextColumn();
 
             ImGui.TextUnformatted("Game Text Input Active");
             ImGui.NextColumn();
-            ImGuiEx.TextCopyable($"{Game.textActiveBoolPtr.ToString("X")}");
+            ImGuiEx.TextCopyable($"{Game.textActiveBoolPtr:X}");
             ImGui.NextColumn();
             ImGui.TextUnformatted($"{Game.IsGameTextInputActive}");
 

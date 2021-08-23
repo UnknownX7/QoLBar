@@ -1,12 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Dalamud;
-using Dalamud.Game.ClientState.Actors.Types;
+using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Hooking;
-using Dalamud.Plugin;
+using Dalamud.Logging;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 using QoLBar.Structures;
 
 namespace QoLBar
@@ -32,14 +32,14 @@ namespace QoLBar
                 if (activatedHandle == IntPtr.Zero)
                     return false;
 
-                var procId = Process.GetCurrentProcess().Id;
-                GetWindowThreadProcessId(activatedHandle, out var activeProcId);
+                var procId = Environment.ProcessId;
+                _ = GetWindowThreadProcessId(activatedHandle, out var activeProcId);
 
                 return activeProcId == procId;
             }
         }
 
-        public static unsafe DateTimeOffset EorzeaTime => DateTimeOffset.FromUnixTimeSeconds(*(long*)(QoLBar.Interface.Framework.Address.BaseAddress + 0x1608));
+        public static unsafe DateTimeOffset EorzeaTime => DateTimeOffset.FromUnixTimeSeconds(*(long*)(QoLBar.Framework.Address.BaseAddress + 0x1608));
 
         public static Wrappers.UIModule uiModule;
 
@@ -89,32 +89,32 @@ namespace QoLBar
 
         public static unsafe void Initialize()
         {
-            uiModule = new Wrappers.UIModule(QoLBar.Interface.Framework.Gui.GetUIModule());
+            uiModule = new Wrappers.UIModule(QoLBar.GameGui.GetUIModule());
 
             raptureShellModule = uiModule.GetRaptureShellModule();
             raptureMacroModule = uiModule.GetRaptureMacroModule();
             addonConfig = uiModule.GetAddonConfig();
             agentModule = uiModule.GetAgentModule();
 
-            try { textActiveBoolPtr = *(IntPtr*)(QoLBar.Interface.Framework.Gui.GetBaseUIObject() + 0x28) + 0x188E; }
+            try { textActiveBoolPtr = *(IntPtr*)((IntPtr)AtkStage.GetSingleton() + 0x28) + 0x188E; }
             catch { PluginLog.Error("Failed loading textActiveBoolPtr"); }
 
             try
             {
-                GetCommandHandler = Marshal.GetDelegateForFunctionPointer<GetCommandHandlerDelegate>(QoLBar.Interface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? 83 F8 FE 74 1E"));
+                GetCommandHandler = Marshal.GetDelegateForFunctionPointer<GetCommandHandlerDelegate>(QoLBar.SigScanner.ScanText("E8 ?? ?? ?? ?? 83 F8 FE 74 1E"));
 
                 try
                 {
-                    ProcessChatBox = Marshal.GetDelegateForFunctionPointer<ProcessChatBoxDelegate>(QoLBar.Interface.TargetModuleScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9"));
+                    ProcessChatBox = Marshal.GetDelegateForFunctionPointer<ProcessChatBoxDelegate>(QoLBar.SigScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9"));
                 }
                 catch { PluginLog.Error("Failed loading ExecuteCommand"); }
 
                 try
                 {
-                    ExecuteMacroHook = new Hook<ExecuteMacroDelegate>(QoLBar.Interface.TargetModuleScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28"), new ExecuteMacroDelegate(ExecuteMacroDetour));
+                    ExecuteMacroHook = new Hook<ExecuteMacroDelegate>(QoLBar.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28"), new ExecuteMacroDelegate(ExecuteMacroDetour));
 
-                    numCopiedMacroLinesPtr = QoLBar.Interface.TargetModuleScanner.ScanText("49 8D 5E 70 BF ?? 00 00 00") + 0x5;
-                    numExecutedMacroLinesPtr = QoLBar.Interface.TargetModuleScanner.ScanText("41 83 F8 ?? 0F 8D ?? ?? ?? ?? 49 6B C8 68") + 0x3;
+                    numCopiedMacroLinesPtr = QoLBar.SigScanner.ScanText("49 8D 5E 70 BF ?? 00 00 00") + 0x5;
+                    numExecutedMacroLinesPtr = QoLBar.SigScanner.ScanText("41 83 F8 ?? 0F 8D ?? ?? ?? ?? 49 6B C8 68") + 0x3;
 
                     ExecuteMacroHook.Enable();
                 }
@@ -183,13 +183,13 @@ namespace QoLBar
 
                 if (command.StartsWith("//"))
                 {
-                    command = command.Substring(2).ToLower();
+                    command = command[2..].ToLower();
                     switch (command[0])
                     {
                         case 'm': // Execute Macro
                             try
                             {
-                                if (int.TryParse(command.Substring(1), out var macro))
+                                if (int.TryParse(command[1..], out var macro))
                                 {
                                     if (macro is >= 0 and < 200)
                                         ExecuteMacroHook.Original(raptureShellModule, raptureMacroModule + 0x58 + (Macro.size * macro));
@@ -318,6 +318,20 @@ namespace QoLBar
         }
 
         public static unsafe bool IsWeaponDrawn(PlayerCharacter player) => (*(byte*)(player.Address + 0x19A0) & 0b100) > 0;
+
+        public static unsafe AtkUnitBase* GetAddonStructByName(string name, int index)
+        {
+            var atkStage = AtkStage.GetSingleton();
+            if (atkStage == null)
+                return null;
+
+            var unitMgr = atkStage->RaptureAtkUnitManager;
+            if (unitMgr == null)
+                return null;
+
+            var addon = unitMgr->GetAddonByName(name, index);
+            return addon;
+        }
 
         public static void Dispose()
         {

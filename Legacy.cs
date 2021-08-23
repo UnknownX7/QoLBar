@@ -3,8 +3,8 @@ using System.Numerics;
 using System.Collections.Generic;
 using System.ComponentModel;
 using Newtonsoft.Json;
-using ImGuiNET;
 using Dalamud.Interface;
+using ImGuiNET;
 
 #pragma warning disable CS0612 // Type or member is obsolete
 
@@ -13,7 +13,7 @@ namespace QoLBar
     public class BarConfig
     {
         [DefaultValue("")] public string Title = string.Empty;
-        [DefaultValue(null)] public List<Shortcut> ShortcutList = new List<Shortcut>();
+        [DefaultValue(null)] public List<Shortcut> ShortcutList = new();
         [DefaultValue(false)] public bool Hidden = false;
         public enum VisibilityMode
         {
@@ -51,7 +51,7 @@ namespace QoLBar
         [DefaultValue(1.0f)] public float FontScale = 1.0f;
         [DefaultValue(1.0f)] public float CategoryFontScale = 1.0f;
         [DefaultValue(8)] public int Spacing = 8;
-        public Vector2 CategorySpacing = new Vector2(8, 4);
+        public Vector2 CategorySpacing = new(8, 4);
         [DefaultValue(false)] public bool NoBackground = false;
         [DefaultValue(false)] public bool NoCategoryBackgrounds = false;
         [DefaultValue(false)] public bool OpenCategoriesOnHover = false;
@@ -225,7 +225,7 @@ namespace QoLBar
 
     public static class Legacy
     {
-        private static readonly Dictionary<string, Action<Configuration>> upgradeActions = new Dictionary<string, Action<Configuration>>
+        private static readonly Dictionary<string, Action<Configuration>> upgradeActions = new()
         {
             ["1.3.2.0"] = (config) =>
             {

@@ -6,8 +6,8 @@ using System.ComponentModel;
 using Newtonsoft.Json;
 using ImGuiNET;
 using Dalamud.Configuration;
-using Dalamud.Plugin;
 using Dalamud.Interface;
+using Dalamud.Logging;
 
 namespace QoLBar
 {
@@ -141,10 +141,10 @@ namespace QoLBar
         {
             if (PluginVersion != ".INITIAL")
                 PrevPluginVersion = PluginVersion;
-            PluginVersion = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            PluginVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString();
         }
 
-        public bool CheckVersion() => PluginVersion == Assembly.GetExecutingAssembly().GetName().Version.ToString();
+        public bool CheckVersion() => PluginVersion == Assembly.GetExecutingAssembly().GetName().Version?.ToString();
 
         public void CheckDisplayUpdateWindow()
         {

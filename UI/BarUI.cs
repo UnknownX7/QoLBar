@@ -51,14 +51,14 @@ namespace QoLBar
         public bool IsDocked { get; private set; } = true;
         public bool IsDragging { get; private set; } = false;
 
-        public List<ShortcutUI> children = new List<ShortcutUI>();
+        public List<ShortcutUI> children = new();
         public static ShCfg tempSh;
 
         private Vector2 window = ImGuiHelpers.MainViewport.Size;
         private Vector2 monitor = ImGui.GetPlatformIO().Monitors[0].MainSize;
         public Vector2 UsableArea => IsDocked ? window : monitor;
 
-        private Vector2 barSize = new Vector2(200, 38);
+        private Vector2 barSize = new(200, 38);
         private Vector2 barPos;
         private Vector2 piv = Vector2.Zero;
         private Vector2 hidePos = Vector2.Zero;

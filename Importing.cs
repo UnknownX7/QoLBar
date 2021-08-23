@@ -4,9 +4,9 @@ using System.IO;
 using System.IO.Compression;
 using System.Numerics;
 using System.Text;
+using Dalamud.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using Dalamud.Plugin;
 
 namespace QoLBar
 {
@@ -26,7 +26,7 @@ namespace QoLBar
         private static readonly string shortcutShortName2 = "s2";
         private static readonly string vector2ShortName = "2";
         private static readonly string vector4ShortName = "4";
-        private static readonly Dictionary<string, Type> types = new Dictionary<string, Type>
+        private static readonly Dictionary<string, Type> types = new()
         {
             [exportType.FullName] = exportType,
             [exportShortName] = exportType,
@@ -43,7 +43,7 @@ namespace QoLBar
             [vector4Type.FullName] = vector4Type,
             [vector4ShortName] = vector4Type
         };
-        private static readonly Dictionary<Type, string> typeNames = new Dictionary<Type, string>
+        private static readonly Dictionary<Type, string> typeNames = new()
         {
             [exportType] = exportShortName,
             [barType] = barShortName,
@@ -91,7 +91,7 @@ namespace QoLBar
             public string v = QoLBar.Config.PluginVersion;
         }
 
-        private static readonly QoLSerializer qolSerializer = new QoLSerializer();
+        private static readonly QoLSerializer qolSerializer = new();
 
         private static void CleanBarConfig(BarCfg bar)
         {

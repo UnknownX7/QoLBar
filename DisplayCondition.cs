@@ -2,9 +2,10 @@ using System;
 using System.Numerics;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
-using ImGuiNET;
-using Dalamud.Game.ClientState;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Interface;
+using FFXIVClientStructs.FFXIV.Component.GUI;
+using ImGuiNET;
 
 namespace QoLBar
 {
@@ -27,12 +28,12 @@ namespace QoLBar
 
         public bool CheckCondition()
         {
-            if (Type == ConditionType.Logic)
-                return false;
-            else if (Type == ConditionType.ConditionSet)
-                return Condition >= 0 && Condition < QoLBar.Config.ConditionSets.Count && QoLBar.Config.ConditionSets[Condition].CheckConditions();
-            else
-                return ConditionCache.GetCondition(Type, Condition, (Type == ConditionType.Misc) ? Arg : null);
+            return Type switch
+            {
+                ConditionType.Logic => false,
+                ConditionType.ConditionSet => Condition >= 0 && Condition < QoLBar.Config.ConditionSets.Count && QoLBar.Config.ConditionSets[Condition].CheckConditions(),
+                _ => ConditionCache.GetCondition(Type, Condition, (Type == ConditionType.Misc) ? Arg : null)
+            };
         }
 
         public bool IsLogic() => Type == ConditionType.Logic;
@@ -45,7 +46,7 @@ namespace QoLBar
     public class DisplayConditionSet
     {
         public string Name = string.Empty;
-        public readonly List<DisplayCondition> Conditions = new List<DisplayCondition>();
+        public readonly List<DisplayCondition> Conditions = new();
 
         private bool _locked = false;
         private bool _cached = false;
@@ -55,7 +56,7 @@ namespace QoLBar
 
         private static readonly Array conditionFlags = Enum.GetValues(typeof(ConditionFlag));
         public static Dictionary<uint, Lumina.Excel.GeneratedSheets.ClassJob> classDictionary;
-        private static readonly Dictionary<int, string> roleDictionary = new Dictionary<int, string>
+        private static readonly Dictionary<int, string> roleDictionary = new()
         {
             [0] = "No Role",
             [1] = "Tank",
@@ -211,7 +212,7 @@ namespace QoLBar
                                     cond.Type = (DisplayCondition.ConditionType)n;
                                     // This list is completely and utterly awful so help people out a little bit
                                     if (cond.Type == DisplayCondition.ConditionType.Zone)
-                                        cond.Condition = QoLBar.Interface.ClientState.TerritoryType;
+                                        cond.Condition = QoLBar.ClientState.TerritoryType;
                                     config.Save();
                                 }
                             }
@@ -320,7 +321,7 @@ namespace QoLBar
 
                                         AddMiscConditionSelectable(0, 0);
 
-                                        AddMiscConditionSelectable(1, QoLBar.Interface.ClientState.LocalContentId);
+                                        AddMiscConditionSelectable(1, QoLBar.ClientState.LocalContentId);
                                         ImGuiEx.SetItemTooltip("Selecting this will assign the current character's ID to this condition.");
 
                                         AddMiscConditionSelectable(2, 0);
@@ -414,16 +415,13 @@ namespace QoLBar
                                                 ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
                                                 if (ImGui.BeginCombo("##PluginsList", cond.Arg is string ? cond.Arg : string.Empty))
                                                 {
-                                                    if (QoLBar.pluginInternalNameList != null)
+                                                    for (int ind = 0; ind < QoLBar.Interface.PluginInternalNames.Count; ind++)
                                                     {
-                                                        for (int ind = 0; ind < QoLBar.pluginInternalNameList.Count; ind++)
+                                                        var name = QoLBar.Interface.PluginInternalNames[ind];
+                                                        if (ImGui.Selectable($"{name}##{ind}", cond.Arg == name))
                                                         {
-                                                            var name = QoLBar.pluginInternalNameList[ind];
-                                                            if (ImGui.Selectable($"{name}##{ind}", cond.Arg == name))
-                                                            {
-                                                                cond.Arg = name;
-                                                                config.Save();
-                                                            }
+                                                            cond.Arg = name;
+                                                            config.Save();
                                                         }
                                                     }
 
@@ -569,7 +567,7 @@ namespace QoLBar
             config.ConditionSets.Insert(to, set);
             config.Save();
 
-            QoLBar.SendIPCMovedCondition(from, to);
+            //QoLBar.SendIPCMovedCondition(from, to);
         }
 
         private static void RemoveConditionSet(int i)
@@ -602,21 +600,20 @@ namespace QoLBar
             config.ConditionSets.RemoveAt(i);
             config.Save();
 
-            QoLBar.SendIPCDeletedCondition(i);
+            //QoLBar.SendIPCDeletedCondition(i);
         }
     }
 
     public static class ConditionCache
     {
-        private static readonly Dictionary<(DisplayCondition.ConditionType, int, dynamic), bool> _conditionCache = new Dictionary<(DisplayCondition.ConditionType, int, dynamic), bool>();
+        private static readonly Dictionary<(DisplayCondition.ConditionType, int, dynamic), bool> _conditionCache = new();
         private static float _lastCache = 0;
         public static float GetLastCache() => _lastCache;
 
         public const string TimespanRegex = @"^([0-9Xx]{1,2}:[0-9Xx]{2})\s*-\s*([0-9Xx]{1,2}:[0-9Xx]{2})$";
 
-        public static bool GetCondition(DisplayCondition.ConditionType type, int cond, dynamic arg = null)
+        public static unsafe bool GetCondition(DisplayCondition.ConditionType type, int cond, dynamic arg = null)
         {
-            var pluginInterface = QoLBar.Interface;
             CheckCache();
 
             if (_conditionCache.TryGetValue((type, cond, arg), out bool b)) // ReSharper / Rider hates this being a var for some reason
@@ -624,26 +621,26 @@ namespace QoLBar
 
             b = type switch
             {
-                DisplayCondition.ConditionType.ConditionFlag => pluginInterface.ClientState.Condition[(ConditionFlag)cond],
-                DisplayCondition.ConditionType.Job => pluginInterface.ClientState.LocalPlayer is {} player && (player.ClassJob.Id == cond),
-                DisplayCondition.ConditionType.Role => pluginInterface.ClientState.LocalPlayer is {} player
-                    && pluginInterface.Data.IsDataReady && (((cond < 30) ? player.ClassJob.GameData.Role : player.ClassJob.GameData.ClassJobCategory.Row) == cond),
+                DisplayCondition.ConditionType.ConditionFlag => QoLBar.Condition[(ConditionFlag)cond],
+                DisplayCondition.ConditionType.Job => QoLBar.ClientState.LocalPlayer is {} player && (player.ClassJob.Id == cond),
+                DisplayCondition.ConditionType.Role => QoLBar.ClientState.LocalPlayer is {} player
+                    && QoLBar.DataManager.IsDataReady && (((cond < 30) ? player.ClassJob.GameData.Role : player.ClassJob.GameData.ClassJobCategory.Row) == cond),
                 DisplayCondition.ConditionType.Misc => cond switch
                 {
-                    0 => pluginInterface.ClientState.Condition.Any(),
-                    1 => arg is not string && (ulong)arg == pluginInterface.ClientState.LocalContentId,
-                    2 => pluginInterface.ClientState.Targets.CurrentTarget != null,
-                    3 => pluginInterface.ClientState.Targets.FocusTarget != null,
-                    4 => pluginInterface.ClientState.LocalPlayer is {} player && Game.IsWeaponDrawn(player),
+                    0 => QoLBar.Condition.Any(),
+                    1 => arg is not string && (ulong)arg == QoLBar.ClientState.LocalContentId,
+                    2 => QoLBar.TargetManager.Target != null,
+                    3 => QoLBar.TargetManager.FocusTarget != null,
+                    4 => QoLBar.ClientState.LocalPlayer is {} player && Game.IsWeaponDrawn(player),
                     5 => arg is string range && CheckEorzeaTimeCondition(range),
                     6 => arg is string range && CheckLocalTimeCondition(range),
                     7 => arg is not string && (byte)arg == Game.CurrentHUDLayout,
-                    8 => arg is string addon && QoLBar.Interface.Framework.Gui.GetUiObjectByName(addon, 1) != IntPtr.Zero,
-                    9 => arg is string addon && QoLBar.Interface.Framework.Gui.GetAddonByName(addon, 1) is {Visible: true},
+                    8 => arg is string addon && Game.GetAddonStructByName(addon, 1) != null,
+                    9 => arg is string addon && Game.GetAddonStructByName(addon, 1) is var atkBase && atkBase != null && atkBase->IsVisible,
                     10 => arg is string plugin && QoLBar.HasPlugin(plugin),
                     _ => false
                 },
-                DisplayCondition.ConditionType.Zone => pluginInterface.ClientState.TerritoryType == cond,
+                DisplayCondition.ConditionType.Zone => QoLBar.ClientState.TerritoryType == cond,
                 _ => false
             };
 

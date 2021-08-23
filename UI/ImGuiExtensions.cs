@@ -16,7 +16,7 @@ namespace QoLBar
         }
 
         // Why is this not a basic feature of ImGui...
-        private static readonly Stack<float> _fontScaleStack = new Stack<float>();
+        private static readonly Stack<float> _fontScaleStack = new();
         private static float _curScale = 1;
         public static void PushFontScale(float scale)
         {
@@ -36,11 +36,10 @@ namespace QoLBar
         public static void ClampWindowPosToViewport()
         {
             var viewport = ImGui.GetWindowViewport();
-            if (viewport.ID == ImGuiHelpers.MainViewport.ID)
-            {
-                var pos = viewport.Pos;
-                ClampWindowPos(pos, pos + viewport.Size);
-            }
+            if (viewport.ID != ImGuiHelpers.MainViewport.ID) return;
+
+            var pos = viewport.Pos;
+            ClampWindowPos(pos, pos + viewport.Size);
         }
 
         public static void ClampWindowPos(Vector2 max) => ClampWindowPos(Vector2.Zero, max);
@@ -154,7 +153,7 @@ namespace QoLBar
             return RotateVector(v, aCos, aSin);
         }
 
-        public static Vector2 RotateVector(Vector2 v, float aCos, float aSin) => new Vector2(v.X * aCos - v.Y * aSin, v.X * aSin + v.Y * aCos);
+        public static Vector2 RotateVector(Vector2 v, float aCos, float aSin) => new(v.X * aCos - v.Y * aSin, v.X * aSin + v.Y * aCos);
 
         public static void AddIcon(this ImDrawListPtr drawList, ImGuiScene.TextureWrap tex, Vector2 pos, Vector2 size, Vector2 uv1, Vector2 uv3, double rotation, bool flipped, uint color, bool hovered, float activeTime, bool frame)
         {

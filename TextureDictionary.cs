@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Dalamud.Data.LuminaExtensions;
-using Dalamud.Plugin;
+using Dalamud.Logging;
+using Dalamud.Utility;
 using ImGuiScene;
 
 namespace QoLBar
@@ -121,16 +121,16 @@ namespace QoLBar
             }
             else if (k >= 0)
             {
-                LoadIcon(k, overwrite);
+                LoadIcon((uint)k, overwrite);
                 return false;
             }
             else
                 return false;
         }
 
-        private void LoadIcon(int icon, bool overwrite) => LoadTextureWrap(icon, overwrite, false, () =>
+        private void LoadIcon(uint icon, bool overwrite) => LoadTextureWrap((int)icon, overwrite, false, () =>
         {
-            var iconTex = useHR ? GetHRIcon(icon) : QoLBar.Interface.Data.GetIcon(icon);
+            var iconTex = useHR ? GetHRIcon(icon) : QoLBar.DataManager.GetIcon(icon);
             return (iconTex == null) ? null : LoadTextureWrapSquare(iconTex);
         });
 
@@ -145,7 +145,7 @@ namespace QoLBar
 
         private void LoadTex(int iconSlot, string path, bool overwrite) => LoadTextureWrap(iconSlot, overwrite, false, () =>
         {
-            var iconTex = QoLBar.Interface.Data.GetFile<Lumina.Data.Files.TexFile>(path);
+            var iconTex = QoLBar.DataManager.GetFile<Lumina.Data.Files.TexFile>(path);
             return (iconTex == null) ? null : LoadTextureWrapSquare(iconTex);
         });
 
@@ -158,10 +158,10 @@ namespace QoLBar
         // Seems to cause a nvwgf2umx.dll crash (System Access Violation Exception) if used async
         private void LoadImage(int iconSlot, string path, bool overwrite) => LoadTextureWrap(iconSlot, overwrite, true, () => QoLBar.Interface.UiBuilder.LoadImage(path));
 
-        private Lumina.Data.Files.TexFile GetHRIcon(int icon)
+        private static Lumina.Data.Files.TexFile GetHRIcon(uint icon)
         {
             var path = $"ui/icon/{icon / 1000 * 1000:000000}/{icon:000000}_hr1.tex";
-            return QoLBar.Interface.Data.GetFile<Lumina.Data.Files.TexFile>(path) ?? QoLBar.Interface.Data.GetIcon(icon);
+            return QoLBar.DataManager.GetFile<Lumina.Data.Files.TexFile>(path) ?? QoLBar.DataManager.GetIcon(icon);
         }
 
         private TextureWrap LoadTextureWrapSquare(Lumina.Data.Files.TexFile tex)
@@ -212,20 +212,16 @@ namespace QoLBar
                 TryDispose(kv.Key);
 
             userIcons.Clear();
-            if (!string.IsNullOrEmpty(path))
+            if (string.IsNullOrEmpty(path)) return true;
+
+            var directory = new DirectoryInfo(path);
+            foreach (var file in directory.GetFiles())
             {
-                var directory = new DirectoryInfo(path);
-                foreach (var file in directory.GetFiles())
-                {
-                    int.TryParse(Path.GetFileNameWithoutExtension(file.Name), out int i);
-                    if (i > 0)
-                    {
-                        if (userIcons.ContainsKey(-i))
-                            PluginLog.LogError($"Attempted to load {file.Name} into index {-i} but it already exists!");
-                        else
-                            AddImage(-i, directory.FullName + "\\" + file.Name);
-                    }
-                }
+                if (!int.TryParse(Path.GetFileNameWithoutExtension(file.Name), out var i) || i <= 0) continue;
+                if (userIcons.ContainsKey(-i))
+                    PluginLog.LogError($"Attempted to load {file.Name} into index {-i} but it already exists!");
+                else
+                    AddImage(-i, directory.FullName + "\\" + file.Name);
             }
 
             return true;

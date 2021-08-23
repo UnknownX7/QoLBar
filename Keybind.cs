@@ -8,7 +8,7 @@ namespace QoLBar
 {
     public static class Keybind
     {
-        public static readonly List<(BarUI, ShortcutUI)> hotkeys = new List<(BarUI, ShortcutUI)>();
+        public static readonly List<(BarUI, ShortcutUI)> hotkeys = new();
         private static readonly byte[] keyState = new byte[256];
         private static readonly bool[] prevKeyState = new bool[keyState.Length];
         private static readonly bool[] keyPressed = new bool[keyState.Length];
@@ -72,7 +72,7 @@ namespace QoLBar
         public static void BlockGameKey(int key)
         {
             if (key <= 160)
-                QoLBar.Interface.ClientState.KeyState[key] = false;
+                QoLBar.KeyState[key] = false;
         }
 
         private static void DoPieHotkeys()
@@ -135,7 +135,7 @@ namespace QoLBar
                                     sh.OnClick(false, false, false, true);
 
                                 if (!cfg.KeyPassthrough && k <= 160)
-                                    QoLBar.Interface.ClientState.KeyState[k] = false;
+                                    QoLBar.KeyState[k] = false;
                             }
                         }
                     }
@@ -268,7 +268,7 @@ namespace QoLBar
             }
         }
 
-        private static readonly Dictionary<Keys, string> _keynames = new Dictionary<Keys, string>
+        private static readonly Dictionary<Keys, string> _keynames = new()
         {
             [Keys.ShiftKey] = "Shift",
             [Keys.ControlKey] = "Ctrl",

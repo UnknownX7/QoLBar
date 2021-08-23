@@ -3,17 +3,19 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Reflection;
-using System.Dynamic;
 using System.Linq;
 using System.Linq.Expressions;
-using ImGuiNET;
+using Dalamud.Data;
+using Dalamud.Game;
+using Dalamud.Game.ClientState;
+using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState.Keys;
+using Dalamud.Game.ClientState.Objects;
+using Dalamud.Game.Command;
+using Dalamud.Game.Gui;
 using Dalamud.Plugin;
-
-#pragma warning disable IDE0060 // Remove unused parameter
-
-// I'm too lazy to make a file just for this
-[assembly: AssemblyTitle("QoLBar")]
-[assembly: AssemblyVersion("2.1.3.4")]
+using Dalamud.Utility;
+using ImGuiNET;
 
 // Disclaimer: I have no idea what I'm doing.
 namespace QoLBar
@@ -23,7 +25,18 @@ namespace QoLBar
         public string Name => "QoL Bar";
 
         public static DalamudPluginInterface Interface { get; private set; }
-        private PluginCommandManager commandManager;
+        public static ChatGui ChatGui { get; private set; }
+        public static ClientState ClientState { get; private set; }
+        public static CommandManager CommandManager { get; private set; }
+        public static Condition Condition { get; private set; }
+        public static DataManager DataManager { get; private set; }
+        public static Framework Framework { get; private set; }
+        public static GameGui GameGui { get; private set; }
+        public static KeyState KeyState { get; private set; }
+        public static SigScanner SigScanner { get; private set; }
+        public static TargetManager TargetManager { get; private set; }
+
+        private readonly PluginCommandManager pluginCommandManager;
         public static Configuration Config { get; private set; }
         public static QoLBar Plugin { get; private set; }
         public PluginUI ui;
@@ -35,28 +48,48 @@ namespace QoLBar
         public static readonly TextureDictionary textureDictionaryGSLR = new(false, true);
         public static readonly TextureDictionary textureDictionaryGSHR = new(true, true);
 
-        public void Initialize(DalamudPluginInterface pInterface)
+        public QoLBar(
+            DalamudPluginInterface pluginInterface,
+            ChatGui chatGui,
+            ClientState clientState,
+            CommandManager commandManager,
+            Condition condition,
+            DataManager dataManager,
+            Framework framework,
+            GameGui gameGui,
+            KeyState keyState,
+            SigScanner sigScanner,
+            TargetManager targetManager)
         {
             Plugin = this;
 
-            Interface = pInterface;
+            Interface = pluginInterface;
+            ChatGui = chatGui;
+            ClientState = clientState;
+            CommandManager = commandManager;
+            Condition = condition;
+            DataManager = dataManager;
+            Framework = framework;
+            GameGui = gameGui;
+            KeyState = keyState;
+            SigScanner = sigScanner;
+            TargetManager = targetManager;
 
             Config = (Configuration)Interface.GetPluginConfig() ?? new();
             Config.Initialize();
             Config.TryBackup(); // Backup on version change
 
-            Interface.Framework.OnUpdateEvent += Update;
+            Framework.OnUpdateEvent += Update;
 
             ui = new PluginUI();
-            Interface.UiBuilder.OnOpenConfigUi += ToggleConfig;
-            Interface.UiBuilder.OnBuildUi += Draw;
+            Interface.UiBuilder.OpenConfigUi += ToggleConfig;
+            Interface.UiBuilder.Draw += Draw;
 
             CheckHideOptOuts();
 
-            commandManager = new();
-
+            pluginCommandManager = new();
             ReadyPlugin();
-            SetupIPC();
+            //SetupIPC();
         }
 
         public void ReadyPlugin()
@@ -72,14 +105,12 @@ namespace QoLBar
 
             Game.Initialize();
 
-            ReflectDalamud();
-
             pluginReady = true;
         }
 
         public void Reload()
         {
-            Config = (Configuration)Interface.GetPluginConfig() ?? new Configuration();
+            Config = (Configuration)Interface.GetPluginConfig() ?? new();
             Config.Initialize();
             Config.UpdateVersion();
             Config.Save();
@@ -141,34 +172,7 @@ namespace QoLBar
                 PrintError("Usage: /qolvisible [on|off|toggle] <bar>");
         }
 
-        public static List<string> pluginInternalNameList;
-
-        private static void ReflectDalamud()
-        {
-            var dalamud = Interface.GetType()  // Dalamud
-                .GetField("dalamud", BindingFlags.Instance | BindingFlags.NonPublic)
-                ?.GetValue(Interface);
-
-            var pluginManager = dalamud?.GetType()  // PluginManager
-                .GetProperty("PluginManager", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                ?.GetValue(dalamud);
-
-            var pluginsList = (IEnumerable<object>)pluginManager?.GetType()  // ImmutableList<LocalPlugin>
-                .GetProperty("InstalledPlugins", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                ?.GetValue(pluginManager);
-
-            pluginInternalNameList = pluginsList
-                .Select(o => o?.GetType()  // List<LocalPluginManifest>
-                    .GetProperty("Manifest", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                    ?.GetValue(o))
-                .Select(o => o?.GetType()
-                    .GetProperty("InternalName", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)
-                    ?.GetValue(o))
-                .Cast<string>()
-                .ToList();
-        }
-
-        public static bool HasPlugin(string name) => pluginInternalNameList != null && pluginInternalNameList.Any(x => x == name);
+        public static bool HasPlugin(string name) => Interface.PluginInternalNames.Any(x => x == name);
 
         public static bool IsLoggedIn() => ConditionCache.GetCondition(DisplayCondition.ConditionType.Misc, 0);
 
@@ -176,7 +180,7 @@ namespace QoLBar
         public static float GetRunTime() => _runTime;
         private static long _frameCount = 0;
         public static long GetFrameCount() => _frameCount;
-        private void Update(Dalamud.Game.Internal.Framework framework)
+        private void Update(Framework framework)
         {
             _frameCount++;
             _runTime += ImGui.GetIO().DeltaTime;
@@ -241,11 +245,10 @@ namespace QoLBar
             }
         }
 
-        public static void PrintEcho(string message) => Interface.Framework.Gui.Chat.Print($"[QoLBar] {message}");
-        public static void PrintError(string message) => Interface.Framework.Gui.Chat.PrintError($"[QoLBar] {message}");
+        public static void PrintEcho(string message) => ChatGui.Print($"[QoLBar] {message}");
+        public static void PrintError(string message) => ChatGui.PrintError($"[QoLBar] {message}");
 
-#pragma warning disable CS0618 // Type or member is obsolete
-        private void SetupIPC()
+        /*private void SetupIPC()
         {
             Interface.SubscribeAny(OnReceiveMessage);
             dynamic msg = new ExpandoObject();
@@ -335,24 +338,23 @@ namespace QoLBar
             msg.Action = "Unloaded";
             Interface.SendMessage(msg);
             Interface.UnsubscribeAny();
-        }
-#pragma warning restore CS0618 // Type or member is obsolete
+        }*/
 
         #region IDisposable Support
         protected virtual void Dispose(bool disposing)
         {
             if (!disposing) return;
 
-            DisposeIPC();
+            //DisposeIPC();
 
-            commandManager.Dispose();
+            pluginCommandManager.Dispose();
             Config.Save();
             Config.SaveTempConfig();
 
-            Interface.Framework.OnUpdateEvent -= Update;
+            Framework.OnUpdateEvent -= Update;
 
-            Interface.UiBuilder.OnOpenConfigUi -= ToggleConfig;
-            Interface.UiBuilder.OnBuildUi -= Draw;
+            Interface.UiBuilder.OpenConfigUi -= ToggleConfig;
+            Interface.UiBuilder.Draw -= Draw;
 
             Interface.Dispose();
 
@@ -383,7 +385,7 @@ namespace QoLBar
 
         public static byte[] GetGrayscaleImageData(this Lumina.Data.Files.TexFile tex)
         {
-            var rgba = Dalamud.Data.LuminaExtensions.TexFileExtensions.GetRgbaImageData(tex);
+            var rgba = tex.GetRgbaImageData();
             var pixels = rgba.Length / 4;
             var newData = new byte[rgba.Length];
             for (int i = 0; i < pixels; i++)
