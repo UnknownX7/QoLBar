@@ -36,7 +36,7 @@ namespace QoLBar
         public static void ClampWindowPosToViewport()
         {
             var viewport = ImGui.GetWindowViewport();
-            if (viewport.ID != ImGuiHelpers.MainViewport.ID) return;
+            if (ImGui.IsWindowAppearing() || viewport.ID != ImGuiHelpers.MainViewport.ID) return;
 
             var pos = viewport.Pos;
             ClampWindowPos(pos, pos + viewport.Size);
