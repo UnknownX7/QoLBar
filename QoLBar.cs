@@ -79,7 +79,7 @@ namespace QoLBar
             Config.Initialize();
             Config.TryBackup(); // Backup on version change
 
-            Framework.OnUpdateEvent += Update;
+            Framework.Update += Update;
 
             ui = new PluginUI();
             Interface.UiBuilder.OpenConfigUi += ToggleConfig;
@@ -351,7 +351,7 @@ namespace QoLBar
             Config.Save();
             Config.SaveTempConfig();
 
-            Framework.OnUpdateEvent -= Update;
+            Framework.Update -= Update;
 
             Interface.UiBuilder.OpenConfigUi -= ToggleConfig;
             Interface.UiBuilder.Draw -= Draw;
