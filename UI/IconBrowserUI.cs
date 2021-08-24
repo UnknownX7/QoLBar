@@ -309,8 +309,8 @@ namespace QoLBar
             {
                 for (int i = 0; i < iconMax; i++)
                 {
-                    if (QoLBar.DataManager.FileExists($"ui/icon/{i / 1000 * 1000:000000}/{i:000000}.tex")
-                        || QoLBar.DataManager.FileExists($"ui/icon/{i / 1000 * 1000:000000}/en/{i:000000}.tex"))
+                    if (DalamudApi.DataManager.FileExists($"ui/icon/{i / 1000 * 1000:000000}/{i:000000}.tex")
+                        || DalamudApi.DataManager.FileExists($"ui/icon/{i / 1000 * 1000:000000}/en/{i:000000}.tex"))
                         _iconExistsCache.Add(i);
                 }
 

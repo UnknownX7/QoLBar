@@ -5,14 +5,7 @@ using System.ComponentModel;
 using System.Reflection;
 using System.Linq;
 using System.Linq.Expressions;
-using Dalamud.Data;
 using Dalamud.Game;
-using Dalamud.Game.ClientState;
-using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Game.ClientState.Keys;
-using Dalamud.Game.ClientState.Objects;
-using Dalamud.Game.Command;
-using Dalamud.Game.Gui;
 using Dalamud.Plugin;
 using Dalamud.Utility;
 using ImGuiNET;
@@ -24,19 +17,6 @@ namespace QoLBar
     {
         public string Name => "QoL Bar";
 
-        public static DalamudPluginInterface Interface { get; private set; }
-        public static ChatGui ChatGui { get; private set; }
-        public static ClientState ClientState { get; private set; }
-        public static CommandManager CommandManager { get; private set; }
-        public static Condition Condition { get; private set; }
-        public static DataManager DataManager { get; private set; }
-        public static Framework Framework { get; private set; }
-        public static GameGui GameGui { get; private set; }
-        public static KeyState KeyState { get; private set; }
-        public static SigScanner SigScanner { get; private set; }
-        public static TargetManager TargetManager { get; private set; }
-
-        private readonly PluginCommandManager pluginCommandManager;
         public static Configuration Config { get; private set; }
         public static QoLBar Plugin { get; private set; }
         public PluginUI ui;
@@ -48,46 +28,23 @@ namespace QoLBar
         public static readonly TextureDictionary textureDictionaryGSLR = new(false, true);
         public static readonly TextureDictionary textureDictionaryGSHR = new(true, true);
 
-        public QoLBar(
-            DalamudPluginInterface pluginInterface,
-            ChatGui chatGui,
-            ClientState clientState,
-            CommandManager commandManager,
-            Condition condition,
-            DataManager dataManager,
-            Framework framework,
-            GameGui gameGui,
-            KeyState keyState,
-            SigScanner sigScanner,
-            TargetManager targetManager)
+        public QoLBar(DalamudPluginInterface pluginInterface)
         {
             Plugin = this;
+            DalamudApi.Initialize(this, pluginInterface);
 
-            Interface = pluginInterface;
-            ChatGui = chatGui;
-            ClientState = clientState;
-            CommandManager = commandManager;
-            Condition = condition;
-            DataManager = dataManager;
-            Framework = framework;
-            GameGui = gameGui;
-            KeyState = keyState;
-            SigScanner = sigScanner;
-            TargetManager = targetManager;
-
-            Config = (Configuration)Interface.GetPluginConfig() ?? new();
+            Config = (Configuration)DalamudApi.PluginInterface.GetPluginConfig() ?? new();
             Config.Initialize();
             Config.TryBackup(); // Backup on version change
 
-            Framework.Update += Update;
+            DalamudApi.Framework.Update += Update;
 
             ui = new PluginUI();
-            Interface.UiBuilder.OpenConfigUi += ToggleConfig;
-            Interface.UiBuilder.Draw += Draw;
+            DalamudApi.PluginInterface.UiBuilder.OpenConfigUi += ToggleConfig;
+            DalamudApi.PluginInterface.UiBuilder.Draw += Draw;
 
             CheckHideOptOuts();
 
-            pluginCommandManager = new();
             ReadyPlugin();
             //SetupIPC();
         }
@@ -110,7 +67,7 @@ namespace QoLBar
 
         public void Reload()
         {
-            Config = (Configuration)Interface.GetPluginConfig() ?? new();
+            Config = (Configuration)DalamudApi.PluginInterface.GetPluginConfig() ?? new();
             Config.Initialize();
             Config.UpdateVersion();
             Config.Save();
@@ -172,7 +129,7 @@ namespace QoLBar
                 PrintError("Usage: /qolvisible [on|off|toggle] <bar>");
         }
 
-        public static bool HasPlugin(string name) => Interface.PluginInternalNames.Any(x => x == name);
+        public static bool HasPlugin(string name) => DalamudApi.PluginInterface.PluginInternalNames.Any(x => x == name);
 
         public static bool IsLoggedIn() => ConditionCache.GetCondition(DisplayCondition.ConditionType.Misc, 0);
 
@@ -211,9 +168,9 @@ namespace QoLBar
         public void CheckHideOptOuts()
         {
             //pluginInterface.UiBuilder.DisableAutomaticUiHide = false;
-            Interface.UiBuilder.DisableUserUiHide = Config.OptOutGameUIOffHide;
-            Interface.UiBuilder.DisableCutsceneUiHide = Config.OptOutCutsceneHide;
-            Interface.UiBuilder.DisableGposeUiHide = Config.OptOutGPoseHide;
+            DalamudApi.PluginInterface.UiBuilder.DisableUserUiHide = Config.OptOutGameUIOffHide;
+            DalamudApi.PluginInterface.UiBuilder.DisableCutsceneUiHide = Config.OptOutCutsceneHide;
+            DalamudApi.PluginInterface.UiBuilder.DisableGposeUiHide = Config.OptOutGPoseHide;
         }
 
         public static Dictionary<int, string> GetUserIcons() => TextureDictionary.GetUserIcons();
@@ -245,8 +202,8 @@ namespace QoLBar
             }
         }
 
-        public static void PrintEcho(string message) => ChatGui.Print($"[QoLBar] {message}");
-        public static void PrintError(string message) => ChatGui.PrintError($"[QoLBar] {message}");
+        public static void PrintEcho(string message) => DalamudApi.ChatGui.Print($"[QoLBar] {message}");
+        public static void PrintError(string message) => DalamudApi.ChatGui.PrintError($"[QoLBar] {message}");
 
         /*private void SetupIPC()
         {
@@ -347,16 +304,15 @@ namespace QoLBar
 
             //DisposeIPC();
 
-            pluginCommandManager.Dispose();
             Config.Save();
             Config.SaveTempConfig();
 
-            Framework.Update -= Update;
+            DalamudApi.Framework.Update -= Update;
 
-            Interface.UiBuilder.OpenConfigUi -= ToggleConfig;
-            Interface.UiBuilder.Draw -= Draw;
+            DalamudApi.PluginInterface.UiBuilder.OpenConfigUi -= ToggleConfig;
+            DalamudApi.PluginInterface.UiBuilder.Draw -= Draw;
 
-            Interface.Dispose();
+            DalamudApi.Dispose();
 
             ui.Dispose();
 

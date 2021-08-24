@@ -130,7 +130,7 @@ namespace QoLBar
 
         private void LoadIcon(uint icon, bool overwrite) => LoadTextureWrap((int)icon, overwrite, false, () =>
         {
-            var iconTex = useHR ? GetHRIcon(icon) : QoLBar.DataManager.GetIcon(icon);
+            var iconTex = useHR ? GetHRIcon(icon) : DalamudApi.DataManager.GetIcon(icon);
             return (iconTex == null) ? null : LoadTextureWrapSquare(iconTex);
         });
 
@@ -145,7 +145,7 @@ namespace QoLBar
 
         private void LoadTex(int iconSlot, string path, bool overwrite) => LoadTextureWrap(iconSlot, overwrite, false, () =>
         {
-            var iconTex = QoLBar.DataManager.GetFile<Lumina.Data.Files.TexFile>(path);
+            var iconTex = DalamudApi.DataManager.GetFile<Lumina.Data.Files.TexFile>(path);
             return (iconTex == null) ? null : LoadTextureWrapSquare(iconTex);
         });
 
@@ -156,12 +156,12 @@ namespace QoLBar
         }
 
         // Seems to cause a nvwgf2umx.dll crash (System Access Violation Exception) if used async
-        private void LoadImage(int iconSlot, string path, bool overwrite) => LoadTextureWrap(iconSlot, overwrite, true, () => QoLBar.Interface.UiBuilder.LoadImage(path));
+        private void LoadImage(int iconSlot, string path, bool overwrite) => LoadTextureWrap(iconSlot, overwrite, true, () => DalamudApi.PluginInterface.UiBuilder.LoadImage(path));
 
         private static Lumina.Data.Files.TexFile GetHRIcon(uint icon)
         {
             var path = $"ui/icon/{icon / 1000 * 1000:000000}/{icon:000000}_hr1.tex";
-            return QoLBar.DataManager.GetFile<Lumina.Data.Files.TexFile>(path) ?? QoLBar.DataManager.GetIcon(icon);
+            return DalamudApi.DataManager.GetFile<Lumina.Data.Files.TexFile>(path) ?? DalamudApi.DataManager.GetIcon(icon);
         }
 
         private TextureWrap LoadTextureWrapSquare(Lumina.Data.Files.TexFile tex)
@@ -172,7 +172,7 @@ namespace QoLBar
                 var newData = new byte[tex.Header.Width * tex.Header.Width * 4];
                 var diff = (int)Math.Floor((tex.Header.Width - tex.Header.Height) / 2f);
                 imageData.CopyTo(newData, diff * tex.Header.Width * 4);
-                return QoLBar.Interface.UiBuilder.LoadImageRaw(newData, tex.Header.Width, tex.Header.Width, 4);
+                return DalamudApi.PluginInterface.UiBuilder.LoadImageRaw(newData, tex.Header.Width, tex.Header.Width, 4);
             }
             else if (tex.Header.Width < tex.Header.Height)
             {
@@ -192,11 +192,11 @@ namespace QoLBar
                         newData[pixel + 3] = imageData[imageDataPos++];
                     }
                 }
-                return QoLBar.Interface.UiBuilder.LoadImageRaw(newData, tex.Header.Height, tex.Header.Height, 4);
+                return DalamudApi.PluginInterface.UiBuilder.LoadImageRaw(newData, tex.Header.Height, tex.Header.Height, 4);
             }
             else
             {
-                return QoLBar.Interface.UiBuilder.LoadImageRaw(imageData, tex.Header.Width, tex.Header.Height, 4);
+                return DalamudApi.PluginInterface.UiBuilder.LoadImageRaw(imageData, tex.Header.Width, tex.Header.Height, 4);
             }
         }
 

@@ -123,13 +123,13 @@ namespace QoLBar
         [JsonIgnore] public string PrevPluginVersion = string.Empty;
         [JsonIgnore] public bool FirstStart = false;
 
-        [JsonIgnore] public static DirectoryInfo ConfigFolder => QoLBar.Interface.ConfigDirectory;
+        [JsonIgnore] public static DirectoryInfo ConfigFolder => DalamudApi.PluginInterface.ConfigDirectory;
         [JsonIgnore] private static DirectoryInfo iconFolder;
         [JsonIgnore] private static DirectoryInfo backupFolder;
         [JsonIgnore] private static FileInfo iconCache;
         [JsonIgnore] private static FileInfo tempConfig;
         [JsonIgnore] private static FileInfo timedConfig;
-        [JsonIgnore] public static FileInfo ConfigFile => QoLBar.Interface.ConfigFile;
+        [JsonIgnore] public static FileInfo ConfigFile => DalamudApi.PluginInterface.ConfigFile;
 
         [JsonIgnore] private static bool displayUpdateWindow = false;
         [JsonIgnore] private static bool updateWindowAgree = false;
@@ -188,7 +188,7 @@ namespace QoLBar
         {
             try
             {
-                QoLBar.Interface.SavePluginConfig(this);
+                DalamudApi.PluginInterface.SavePluginConfig(this);
                 lastSave = QoLBar.GetRunTime();
             }
             catch

@@ -72,7 +72,7 @@ namespace QoLBar
         public static void BlockGameKey(int key)
         {
             if (key <= 160)
-                QoLBar.KeyState[key] = false;
+                DalamudApi.KeyState[key] = false;
         }
 
         private static void DoPieHotkeys()
@@ -135,7 +135,7 @@ namespace QoLBar
                                     sh.OnClick(false, false, false, true);
 
                                 if (!cfg.KeyPassthrough && k <= 160)
-                                    QoLBar.KeyState[k] = false;
+                                    DalamudApi.KeyState[k] = false;
                             }
                         }
                     }

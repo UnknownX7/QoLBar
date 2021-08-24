@@ -39,7 +39,7 @@ namespace QoLBar
             }
         }
 
-        public static unsafe DateTimeOffset EorzeaTime => DateTimeOffset.FromUnixTimeSeconds(*(long*)(QoLBar.Framework.Address.BaseAddress + 0x1608));
+        public static unsafe DateTimeOffset EorzeaTime => DateTimeOffset.FromUnixTimeSeconds(*(long*)(DalamudApi.Framework.Address.BaseAddress + 0x1608));
 
         public static Wrappers.UIModule uiModule;
 
@@ -89,7 +89,7 @@ namespace QoLBar
 
         public static unsafe void Initialize()
         {
-            uiModule = new Wrappers.UIModule(QoLBar.GameGui.GetUIModule());
+            uiModule = new Wrappers.UIModule(DalamudApi.GameGui.GetUIModule());
 
             raptureShellModule = uiModule.GetRaptureShellModule();
             raptureMacroModule = uiModule.GetRaptureMacroModule();
@@ -101,20 +101,20 @@ namespace QoLBar
 
             try
             {
-                GetCommandHandler = Marshal.GetDelegateForFunctionPointer<GetCommandHandlerDelegate>(QoLBar.SigScanner.ScanText("E8 ?? ?? ?? ?? 83 F8 FE 74 1E"));
+                GetCommandHandler = Marshal.GetDelegateForFunctionPointer<GetCommandHandlerDelegate>(DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? 83 F8 FE 74 1E"));
 
                 try
                 {
-                    ProcessChatBox = Marshal.GetDelegateForFunctionPointer<ProcessChatBoxDelegate>(QoLBar.SigScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9"));
+                    ProcessChatBox = Marshal.GetDelegateForFunctionPointer<ProcessChatBoxDelegate>(DalamudApi.SigScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9"));
                 }
                 catch { PluginLog.Error("Failed loading ExecuteCommand"); }
 
                 try
                 {
-                    ExecuteMacroHook = new Hook<ExecuteMacroDelegate>(QoLBar.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28"), new ExecuteMacroDelegate(ExecuteMacroDetour));
+                    ExecuteMacroHook = new Hook<ExecuteMacroDelegate>(DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28"), new ExecuteMacroDelegate(ExecuteMacroDetour));
 
-                    numCopiedMacroLinesPtr = QoLBar.SigScanner.ScanText("49 8D 5E 70 BF ?? 00 00 00") + 0x5;
-                    numExecutedMacroLinesPtr = QoLBar.SigScanner.ScanText("41 83 F8 ?? 0F 8D ?? ?? ?? ?? 49 6B C8 68") + 0x3;
+                    numCopiedMacroLinesPtr = DalamudApi.SigScanner.ScanText("49 8D 5E 70 BF ?? 00 00 00") + 0x5;
+                    numExecutedMacroLinesPtr = DalamudApi.SigScanner.ScanText("41 83 F8 ?? 0F 8D ?? ?? ?? ?? 49 6B C8 68") + 0x3;
 
                     ExecuteMacroHook.Enable();
                 }

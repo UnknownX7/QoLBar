@@ -4,7 +4,6 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Interface;
-using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 
 namespace QoLBar
@@ -212,7 +211,7 @@ namespace QoLBar
                                     cond.Type = (DisplayCondition.ConditionType)n;
                                     // This list is completely and utterly awful so help people out a little bit
                                     if (cond.Type == DisplayCondition.ConditionType.Zone)
-                                        cond.Condition = QoLBar.ClientState.TerritoryType;
+                                        cond.Condition = DalamudApi.ClientState.TerritoryType;
                                     config.Save();
                                 }
                             }
@@ -321,7 +320,7 @@ namespace QoLBar
 
                                         AddMiscConditionSelectable(0, 0);
 
-                                        AddMiscConditionSelectable(1, QoLBar.ClientState.LocalContentId);
+                                        AddMiscConditionSelectable(1, DalamudApi.ClientState.LocalContentId);
                                         ImGuiEx.SetItemTooltip("Selecting this will assign the current character's ID to this condition.");
 
                                         AddMiscConditionSelectable(2, 0);
@@ -415,9 +414,9 @@ namespace QoLBar
                                                 ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
                                                 if (ImGui.BeginCombo("##PluginsList", cond.Arg is string ? cond.Arg : string.Empty))
                                                 {
-                                                    for (int ind = 0; ind < QoLBar.Interface.PluginInternalNames.Count; ind++)
+                                                    for (int ind = 0; ind < DalamudApi.PluginInterface.PluginInternalNames.Count; ind++)
                                                     {
-                                                        var name = QoLBar.Interface.PluginInternalNames[ind];
+                                                        var name = DalamudApi.PluginInterface.PluginInternalNames[ind];
                                                         if (ImGui.Selectable($"{name}##{ind}", cond.Arg == name))
                                                         {
                                                             cond.Arg = name;
@@ -621,17 +620,17 @@ namespace QoLBar
 
             b = type switch
             {
-                DisplayCondition.ConditionType.ConditionFlag => QoLBar.Condition[(ConditionFlag)cond],
-                DisplayCondition.ConditionType.Job => QoLBar.ClientState.LocalPlayer is {} player && (player.ClassJob.Id == cond),
-                DisplayCondition.ConditionType.Role => QoLBar.ClientState.LocalPlayer is {} player
-                    && QoLBar.DataManager.IsDataReady && (((cond < 30) ? player.ClassJob.GameData.Role : player.ClassJob.GameData.ClassJobCategory.Row) == cond),
+                DisplayCondition.ConditionType.ConditionFlag => DalamudApi.Condition[(ConditionFlag)cond],
+                DisplayCondition.ConditionType.Job => DalamudApi.ClientState.LocalPlayer is {} player && (player.ClassJob.Id == cond),
+                DisplayCondition.ConditionType.Role => DalamudApi.ClientState.LocalPlayer is {} player
+                    && DalamudApi.DataManager.IsDataReady && (((cond < 30) ? player.ClassJob.GameData.Role : player.ClassJob.GameData.ClassJobCategory.Row) == cond),
                 DisplayCondition.ConditionType.Misc => cond switch
                 {
-                    0 => QoLBar.Condition.Any(),
-                    1 => arg is not string && (ulong)arg == QoLBar.ClientState.LocalContentId,
-                    2 => QoLBar.TargetManager.Target != null,
-                    3 => QoLBar.TargetManager.FocusTarget != null,
-                    4 => QoLBar.ClientState.LocalPlayer is {} player && Game.IsWeaponDrawn(player),
+                    0 => DalamudApi.Condition.Any(),
+                    1 => arg is not string && (ulong)arg == DalamudApi.ClientState.LocalContentId,
+                    2 => DalamudApi.TargetManager.Target != null,
+                    3 => DalamudApi.TargetManager.FocusTarget != null,
+                    4 => DalamudApi.ClientState.LocalPlayer is {} player && Game.IsWeaponDrawn(player),
                     5 => arg is string range && CheckEorzeaTimeCondition(range),
                     6 => arg is string range && CheckLocalTimeCondition(range),
                     7 => arg is not string && (byte)arg == Game.CurrentHUDLayout,
@@ -640,7 +639,7 @@ namespace QoLBar
                     10 => arg is string plugin && QoLBar.HasPlugin(plugin),
                     _ => false
                 },
-                DisplayCondition.ConditionType.Zone => QoLBar.ClientState.TerritoryType == cond,
+                DisplayCondition.ConditionType.Zone => DalamudApi.ClientState.TerritoryType == cond,
                 _ => false
             };
 

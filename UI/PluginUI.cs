@@ -44,10 +44,10 @@ namespace QoLBar
 
             Task.Run(async () =>
             {
-                while (!QoLBar.DataManager.IsDataReady)
+                while (!DalamudApi.DataManager.IsDataReady)
                     await Task.Delay(1000);
-                DisplayConditionSet.classDictionary = QoLBar.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.ClassJob>().ToDictionary(i => i.RowId);
-                DisplayConditionSet.territoryDictionary = QoLBar.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.TerritoryType>().ToDictionary(i => i.RowId);
+                DisplayConditionSet.classDictionary = DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.ClassJob>().ToDictionary(i => i.RowId);
+                DisplayConditionSet.territoryDictionary = DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.TerritoryType>().ToDictionary(i => i.RowId);
             });
 
             if (!QoLBar.Config.FirstStart) return;
@@ -668,7 +668,7 @@ namespace QoLBar
 
         public void Dispose()
         {
-            foreach (BarUI bar in bars)
+            foreach (var bar in bars)
                 bar.Dispose();
         }
 
