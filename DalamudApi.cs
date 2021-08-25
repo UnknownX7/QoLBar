@@ -124,6 +124,8 @@ namespace QoLBar
 
         private static PluginCommandManager<IDalamudPlugin> _pluginCommandManager;
 
+        public DalamudApi() { }
+
         public DalamudApi(IDalamudPlugin plugin) => _pluginCommandManager ??= new(plugin);
 
         public DalamudApi(IDalamudPlugin plugin, DalamudPluginInterface pluginInterface)

@@ -16,9 +16,9 @@ namespace QoLBar
     public class QoLBar : IDalamudPlugin
     {
         public string Name => "QoL Bar";
-
-        public static Configuration Config { get; private set; }
         public static QoLBar Plugin { get; private set; }
+        public static Configuration Config { get; private set; }
+
         public PluginUI ui;
         private bool pluginReady = false;
 
@@ -75,11 +75,11 @@ namespace QoLBar
             CheckHideOptOuts();
         }
 
-        public void ToggleConfig(object sender, EventArgs e) => ToggleConfig();
+        public void ToggleConfig() => ui.ToggleConfig();
 
         [Command("/qolbar")]
         [HelpMessage("Open the configuration menu.")]
-        public void ToggleConfig(string command = null, string argument = null) => ui.ToggleConfig();
+        public void ToggleConfig(string command, string argument) => ToggleConfig();
 
         [Command("/qolicons")]
         [HelpMessage("Open the icon browser.")]
@@ -308,16 +308,12 @@ namespace QoLBar
             Config.SaveTempConfig();
 
             DalamudApi.Framework.Update -= Update;
-
             DalamudApi.PluginInterface.UiBuilder.OpenConfigUi -= ToggleConfig;
             DalamudApi.PluginInterface.UiBuilder.Draw -= Draw;
-
             DalamudApi.Dispose();
 
             ui.Dispose();
-
             Game.Dispose();
-
             CleanTextures(true);
         }
 
