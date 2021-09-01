@@ -66,7 +66,11 @@ namespace QoLBar
                         QoLBar.Plugin.AddUserIcons();
                     ImGui.SameLine();
                     if (ImGui.Button("Open Icon Folder"))
-                        Process.Start(QoLBar.Config.GetPluginIconPath());
+                        Process.Start(new ProcessStartInfo
+                        {
+                            FileName = QoLBar.Config.GetPluginIconPath(),
+                            UseShellExecute = true
+                        });
                 }
                 foreach (var kv in QoLBar.GetUserIcons())
                     AddIcons(kv.Key, kv.Key + 1);

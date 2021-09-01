@@ -376,7 +376,11 @@ namespace QoLBar
             var configFile = Configuration.ConfigFile;
 
             if (ImGui.Button("Open Folder"))
-                Process.Start(path);
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = path,
+                    UseShellExecute = true
+                });
             ImGui.SameLine();
             if (ImGui.Button("Create Backup"))
                 BackupFile(configFile);
