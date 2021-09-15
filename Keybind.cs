@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using Dalamud.Interface;
@@ -8,10 +10,51 @@ namespace QoLBar
 {
     public static class Keybind
     {
+        private const int modifierMask = -1 << (int)Keys.ShiftKey;
+        private const int shiftModifier = 1 << (int)Keys.ShiftKey;
+        private const int controlModifier = 1 << (int)Keys.ControlKey;
+        private const int altModifier = 1 << (int)Keys.Menu;
+
         public static readonly List<(BarUI, ShortcutUI)> hotkeys = new();
-        private static readonly byte[] keyState = new byte[256];
-        private static readonly bool[] prevKeyState = new bool[keyState.Length];
-        private static readonly bool[] keyPressed = new bool[keyState.Length];
+
+        public struct QoLKeyState
+        {
+            [Flags]
+            public enum State
+            {
+                None = 0,
+                Held = 1,
+                KeyDown = 2,
+                KeyUp = 4,
+                ShortHold = 8
+            }
+
+            public State CurrentState { get; private set; }
+            public float HoldDuration { get; private set; }
+
+            public void Update(bool down)
+            {
+                if (down)
+                {
+                    var lastState = CurrentState;
+                    CurrentState = State.Held;
+                    if ((lastState & State.Held) == 0)
+                        CurrentState |= State.KeyDown;
+                    else if (HoldDuration >= 0.15f)
+                        CurrentState |= State.ShortHold;
+
+                    HoldDuration += (float)DalamudApi.Framework.UpdateDelta.TotalSeconds;
+                }
+                else if (CurrentState != State.None)
+                {
+                    CurrentState = CurrentState != State.KeyUp ? State.KeyUp : State.None;
+                    HoldDuration = 0;
+                }
+            }
+        }
+
+        private static readonly byte[] keyboardState = new byte[256];
+        private static readonly QoLKeyState[] keyState = new QoLKeyState[keyboardState.Length];
         private static bool Disabled => Game.IsGameTextInputActive || !Game.IsGameFocused || ImGui.GetIO().WantCaptureKeyboard;
 
         [DllImport("user32.dll")]
@@ -27,34 +70,29 @@ namespace QoLBar
 
         public static void SetupHotkeys(List<BarUI> bars)
         {
-            foreach (var bar in bars)
-                if (bar.IsVisible)
-                    bar.SetupHotkeys();
+            foreach (var bar in bars.Where(bar => bar.IsVisible))
+                bar.SetupHotkeys();
         }
 
         private static void GetKeyState()
         {
-            GetKeyboardState(keyState);
+            GetKeyboardState(keyboardState);
             for (int i = 0; i < keyState.Length; i++)
-            {
-                var down = IsKeyDown(i);
-                keyPressed[i] = down && !prevKeyState[i];
-                prevKeyState[i] = down;
-            }
+                keyState[i].Update((keyboardState[i] & 0x80) != 0);
         }
 
-        public static bool IsKeyDown(int i) => (keyState[i] & 0x80) != 0;
+        public static bool CheckKeyState(int i, QoLKeyState.State state) => i is >= 0 and < 256 && (keyState[i].CurrentState & state) != 0;
 
         public static int GetModifiers()
         {
             var key = 0;
             var io = ImGui.GetIO();
             if (io.KeyShift)
-                key |= (int)Keys.Shift;
+                key |= shiftModifier;
             if (io.KeyCtrl)
-                key |= (int)Keys.Control;
+                key |= controlModifier;
             if (io.KeyAlt)
-                key |= (int)Keys.Alt;
+                key |= altModifier;
             return key;
         }
 
@@ -62,8 +100,8 @@ namespace QoLBar
         {
             if (Disabled) return false;
 
-            var key = hotkey & ~(int)Keys.Modifiers;
-            var isDown = IsKeyDown(key) && hotkey == (key | GetModifiers());
+            var key = hotkey & ~modifierMask;
+            var isDown = CheckKeyState(key, QoLKeyState.State.Held) && hotkey == (key | GetModifiers());
             if (blockGame && isDown)
                 BlockGameKey(key);
             return isDown;
@@ -71,30 +109,29 @@ namespace QoLBar
 
         public static void BlockGameKey(int key)
         {
-            if (key <= 160)
-                DalamudApi.KeyState[key] = false;
+            try { DalamudApi.KeyState[key] = false; }
+            catch { }
         }
 
         private static void DoPieHotkeys()
         {
             if (!PieUI.enabled) return;
 
-            foreach (var bar in QoLBar.Plugin.ui.bars)
+            foreach (var bar in QoLBar.Plugin.ui.bars.Where(bar => bar.Config.Hotkey > 0 && bar.CheckConditionSet()))
             {
-                if (bar.Config.Hotkey > 0 && bar.CheckConditionSet())
+                if (IsHotkeyDown(bar.Config.Hotkey, true))
                 {
-                    if (IsHotkeyDown(bar.Config.Hotkey, true))
+                    if (bar.tempDisableHotkey <= 0)
                     {
-                        if (bar.tempDisableHotkey <= 0)
-                        {
-                            bar.openPie = true;
-                            return;
-                        }
+                        bar.openPie = true;
+                        return;
                     }
-                    else if (bar.tempDisableHotkey > 0)
-                        --bar.tempDisableHotkey;
-                    bar.openPie = false;
                 }
+                else if (bar.tempDisableHotkey > 0)
+                {
+                    --bar.tempDisableHotkey;
+                }
+                bar.openPie = false;
             }
 
             PieUI.enabled = false; // Used to disable all pies if the UI is hidden
@@ -103,45 +140,41 @@ namespace QoLBar
         private static void DoHotkeys()
         {
             if (Disabled) { hotkeys.Clear(); return; }
+            if (hotkeys.Count == 0) return;
 
-            if (hotkeys.Count > 0)
+            var key = GetModifiers();
+            for (var k = 0; k < 240; k++)
             {
-                var key = GetModifiers();
-                for (var k = 0; k < keyState.Length; k++)
+                if (k is >= 16 and <= 18 || !CheckKeyState(k, QoLKeyState.State.KeyDown)) continue;
+
+                var hotkey = key | k;
+                foreach (var (bar, sh) in hotkeys)
                 {
-                    if (16 <= k && k <= 18) continue;
+                    var cfg = sh.Config;
+                    if (cfg.Hotkey != hotkey) continue;
 
-                    if (keyPressed[k])
+                    if (cfg.Type == ShCfg.ShortcutType.Category && cfg.Mode == ShCfg.ShortcutMode.Default)
                     {
-                        var hotkey = (key | k);
-                        foreach ((var bar, var sh) in hotkeys)
+                        // TODO: Make less hacky
+                        bar.ForceReveal();
+                        var parent = sh.parent;
+                        while (parent != null)
                         {
-                            var cfg = sh.Config;
-                            if (cfg.Hotkey == hotkey)
-                            {
-                                if (cfg.Type == ShCfg.ShortcutType.Category && cfg.Mode == ShCfg.ShortcutMode.Default)
-                                {
-                                    // TODO: Make less hacky
-                                    bar.ForceReveal();
-                                    var parent = sh.parent;
-                                    while (parent != null)
-                                    {
-                                        parent._activated = true;
-                                        parent = parent.parent;
-                                    }
-                                    sh._activated = true;
-                                }
-                                else
-                                    sh.OnClick(false, false, false, true);
-
-                                if (!cfg.KeyPassthrough && k <= 160)
-                                    DalamudApi.KeyState[k] = false;
-                            }
+                            parent._activated = true;
+                            parent = parent.parent;
                         }
+                        sh._activated = true;
                     }
+                    else
+                    {
+                        sh.OnClick(false, false, false, true);
+                    }
+
+                    if (!cfg.KeyPassthrough)
+                        BlockGameKey(k);
                 }
-                hotkeys.Clear();
             }
+            hotkeys.Clear();
         }
 
         public static void AddHotkey(ShortcutUI sh) => hotkeys.Add((sh.parentBar, sh));
@@ -155,30 +188,25 @@ namespace QoLBar
                 var keysDown = ImGui.GetIO().KeysDown;
                 var key = 0;
                 if (ImGui.GetIO().KeyShift)
-                    key |= (int)Keys.Shift;
+                    key |= shiftModifier;
                 if (ImGui.GetIO().KeyCtrl)
-                    key |= (int)Keys.Control;
+                    key |= controlModifier;
                 if (ImGui.GetIO().KeyAlt)
-                    key |= (int)Keys.Alt;
-                for (var k = 0; k < keyState.Length; k++)
+                    key |= altModifier;
+                for (var k = 0; k < keysDown.Count; k++)
                 {
-                    if (16 <= k && k <= 18) continue;
+                    if (k is >= 16 and <= 18 || !keysDown[k] || ImGui.GetIO().KeysDownDuration[k] > 0) continue;
 
-                    if (keysDown[k] && ImGui.GetIO().KeysDownDuration[k] == 0)
-                    {
-                        key |= k;
-                        hotkey = key;
-                        return true;
-                    }
+                    key |= k;
+                    hotkey = key;
+                    return true;
                 }
             }
-            if (ImGui.IsItemDeactivated() && ImGui.GetIO().KeysDown[(int)Keys.Escape])
-            {
-                hotkey = 0;
-                return true;
-            }
 
-            return false;
+            if (!ImGui.IsItemDeactivated() || !ImGui.GetIO().KeysDown[(int)Keys.Escape]) return false;
+
+            hotkey = 0;
+            return true;
         }
 
         public static bool KeybindInput(ShCfg sh)
@@ -191,13 +219,11 @@ namespace QoLBar
             }
             ImGuiEx.SetItemTooltip("Press escape to clear the hotkey.");
 
-            if (sh.Hotkey > 0)
-            {
-                if (ImGui.Checkbox("Pass Input to Game", ref sh.KeyPassthrough))
-                    QoLBar.Config.Save();
-                ImGuiEx.SetItemTooltip("Disables the hotkey from blocking the game input.\n" +
-                    "Some keys are unable to be blocked.");
-            }
+            if (sh.Hotkey <= 0) return ret;
+
+            if (ImGui.Checkbox("Pass Input to Game", ref sh.KeyPassthrough))
+                QoLBar.Config.Save();
+            ImGuiEx.SetItemTooltip("Disables the hotkey from blocking the game input.");
             return ret;
         }
 
@@ -321,7 +347,7 @@ namespace QoLBar
             if (_keynames.TryGetValue(key, out var name))
                 return mod + name;
             else
-                return mod + key.ToString();
+                return mod + key;
         }
     }
 }
