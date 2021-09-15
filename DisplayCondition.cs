@@ -703,10 +703,10 @@ namespace QoLBar
 
         public static bool CheckCache()
         {
-            if (QoLBar.GetRunTime() > (_lastCache + (QoLBar.Config.NoConditionCache ? 0 : 0.1f)))
+            if (QoLBar.RunTime > (_lastCache + (QoLBar.Config.NoConditionCache ? 0 : 0.1f)))
             {
                 ClearCache();
-                _lastCache = QoLBar.GetRunTime();
+                _lastCache = QoLBar.RunTime;
                 return true;
             }
             else

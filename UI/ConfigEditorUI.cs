@@ -192,7 +192,7 @@ namespace QoLBar
                 if (sh.Config.Mode == ShortcutMode.Random)
                 {
                     var c = Math.Max(1, (sh.Config.Type == ShortcutType.Category) ? sh.children.Count : sh.Config.Command.Split('\n').Length);
-                    sh.Config._i = (int)(QoLBar.GetFrameCount() % c);
+                    sh.Config._i = (int)(QoLBar.FrameCount % c);
                 }
                 else
                     sh.Config._i = 0;

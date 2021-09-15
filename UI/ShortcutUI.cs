@@ -112,7 +112,7 @@ namespace QoLBar
                             {
                                 var lines = command.Split('\n');
                                 command = lines[Math.Min(_i, lines.Length - 1)];
-                                Config._i = (int)(QoLBar.GetFrameCount() % lines.Length); // With this game's FPS drops? Completely random.
+                                Config._i = (int)(QoLBar.FrameCount % lines.Length); // With this game's FPS drops? Completely random.
                                 QoLBar.Config.Save();
                                 break;
                             }
@@ -131,7 +131,7 @@ namespace QoLBar
                         case ShortcutMode.Random:
                             if (0 <= _i && _i < children.Count)
                                 children[_i].OnClick(v, true, wasHovered, outsideDraw);
-                            Config._i = (int)(QoLBar.GetFrameCount() % Math.Max(1, children.Count));
+                            Config._i = (int)(QoLBar.FrameCount % Math.Max(1, children.Count));
                             QoLBar.Config.Save();
                             break;
                         default:
@@ -700,7 +700,7 @@ namespace QoLBar
         {
             float r, g, b, a, x;
             r = g = b = a = 1;
-            var t = QoLBar.GetDrawTime();
+            var t = QoLBar.RunTime;
             var anim = Math.Round(c.W * 255) - 256;
 
             switch (anim)

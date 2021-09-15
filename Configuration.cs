@@ -189,7 +189,7 @@ namespace QoLBar
             try
             {
                 DalamudApi.PluginInterface.SavePluginConfig(this);
-                lastSave = QoLBar.GetRunTime();
+                lastSave = QoLBar.RunTime;
             }
             catch
             {
@@ -269,7 +269,7 @@ namespace QoLBar
 
         public void DoTimedBackup()
         {
-            if (BackupTimer <= 0 || lastSave < 0 || QoLBar.GetRunTime() < lastSave + BackupTimer * 60) return;
+            if (BackupTimer <= 0 || lastSave < 0 || QoLBar.RunTime < lastSave + BackupTimer * 60) return;
 
             SaveTimedConfig();
             lastSave = -1; // Prevent from pointlessly saving if the config is never changed

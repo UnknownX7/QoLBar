@@ -8,7 +8,6 @@ using System.Linq.Expressions;
 using Dalamud.Game;
 using Dalamud.Plugin;
 using Dalamud.Utility;
-using ImGuiNET;
 
 // Disclaimer: I have no idea what I'm doing.
 namespace QoLBar
@@ -133,15 +132,10 @@ namespace QoLBar
 
         public static bool IsLoggedIn() => ConditionCache.GetCondition(DisplayCondition.ConditionType.Misc, 0);
 
-        private static float _runTime = 0;
-        public static float GetRunTime() => _runTime;
-        private static long _frameCount = 0;
-        public static long GetFrameCount() => _frameCount;
+        public static float RunTime => (float)DalamudApi.PluginInterface.LoadTimeDelta.TotalSeconds;
+        public static long FrameCount => (long)DalamudApi.PluginInterface.UiBuilder.FrameCount;
         private void Update(Framework framework)
         {
-            _frameCount++;
-            _runTime += ImGui.GetIO().DeltaTime;
-
             if (!pluginReady) return;
 
             Config.DoTimedBackup();
@@ -150,14 +144,10 @@ namespace QoLBar
             Keybind.SetupHotkeys(ui.bars);
         }
 
-        private static float _drawTime = 0;
-        public static float GetDrawTime() => _drawTime;
         private void Draw()
         {
             if (_addUserIcons)
                 AddUserIcons(ref _addUserIcons);
-
-            _drawTime += ImGui.GetIO().DeltaTime;
 
             if (!pluginReady) return;
 
