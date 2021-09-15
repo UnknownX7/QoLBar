@@ -31,6 +31,9 @@ namespace QoLBar
 
             public State CurrentState { get; private set; }
             public float HoldDuration { get; private set; }
+            public bool useKeyUp;
+            public bool useShortHold;
+            public bool wasShortHeld;
 
             public void Update(bool down)
             {
@@ -40,13 +43,14 @@ namespace QoLBar
                     CurrentState = State.Held;
                     if ((lastState & State.Held) == 0)
                         CurrentState |= State.KeyDown;
-                    else if (HoldDuration >= 0.15f)
+                    else if (HoldDuration >= 0.2f)
                         CurrentState |= State.ShortHold;
 
                     HoldDuration += (float)DalamudApi.Framework.UpdateDelta.TotalSeconds;
                 }
                 else if (CurrentState != State.None)
                 {
+                    wasShortHeld = (CurrentState & State.ShortHold) != 0;
                     CurrentState = CurrentState != State.KeyUp ? State.KeyUp : State.None;
                     HoldDuration = 0;
                 }
@@ -83,6 +87,10 @@ namespace QoLBar
 
         public static bool CheckKeyState(int i, QoLKeyState.State state) => i is >= 0 and < 256 && (keyState[i].CurrentState & state) != 0;
 
+        public static bool IsHotkeyActivated(int i) => i is >= 0 and < 256 && (!keyState[i].useKeyUp
+            ? CheckKeyState(i, QoLKeyState.State.KeyDown)
+            : CheckKeyState(i, QoLKeyState.State.KeyUp));
+
         public static int GetModifiers()
         {
             var key = 0;
@@ -96,14 +104,25 @@ namespace QoLBar
             return key;
         }
 
-        public static bool IsHotkeyDown(int hotkey, bool blockGame = false)
+        public static bool IsHotkeyHeld(int hotkey, bool blockGame)
         {
             if (Disabled) return false;
 
             var key = hotkey & ~modifierMask;
             var isDown = CheckKeyState(key, QoLKeyState.State.Held) && hotkey == (key | GetModifiers());
-            if (blockGame && isDown)
-                BlockGameKey(key);
+
+            if (isDown)
+            {
+                if (keyState[key].useShortHold)
+                    isDown = CheckKeyState(key, QoLKeyState.State.ShortHold);
+
+                if (blockGame)
+                    BlockGameKey(key);
+            }
+
+            keyState[key].useKeyUp = true;
+            keyState[key].useShortHold = false;
+
             return isDown;
         }
 
@@ -119,7 +138,7 @@ namespace QoLBar
 
             foreach (var bar in QoLBar.Plugin.ui.bars.Where(bar => bar.Config.Hotkey > 0 && bar.CheckConditionSet()))
             {
-                if (IsHotkeyDown(bar.Config.Hotkey, true))
+                if (IsHotkeyHeld(bar.Config.Hotkey, true))
                 {
                     if (bar.tempDisableHotkey <= 0)
                     {
@@ -137,6 +156,8 @@ namespace QoLBar
             PieUI.enabled = false; // Used to disable all pies if the UI is hidden
         }
 
+        // TODO: Loop through hotkeys instead of all keys
+        // TODO: Fix bug where keys activate after being pressed if they use key up
         private static void DoHotkeys()
         {
             if (Disabled) { hotkeys.Clear(); return; }
@@ -145,13 +166,21 @@ namespace QoLBar
             var key = GetModifiers();
             for (var k = 0; k < 240; k++)
             {
-                if (k is >= 16 and <= 18 || !CheckKeyState(k, QoLKeyState.State.KeyDown)) continue;
-
+                var state = keyState[k];
+                var activated = k is < 16 or > 18 && IsHotkeyActivated(k) && (!state.useKeyUp || !state.wasShortHeld);
                 var hotkey = key | k;
                 foreach (var (bar, sh) in hotkeys)
                 {
                     var cfg = sh.Config;
                     if (cfg.Hotkey != hotkey) continue;
+
+                    if (state.useKeyUp)
+                    {
+                        keyState[k].useKeyUp = false;
+                        keyState[k].useShortHold = true;
+                    }
+
+                    if (!activated) break;
 
                     if (cfg.Type == ShCfg.ShortcutType.Category && cfg.Mode == ShCfg.ShortcutMode.Default)
                     {
