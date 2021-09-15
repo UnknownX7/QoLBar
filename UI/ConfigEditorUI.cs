@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ImGuiNET;
 using Dalamud.Interface;
+using Dalamud.Interface.Internal.Notifications;
 using static QoLBar.BarCfg;
 using static QoLBar.ShCfg;
 
@@ -410,5 +411,8 @@ namespace QoLBar
             if (ImGui.Checkbox("No Background", ref bar.Config.NoBackground))
                 QoLBar.Config.Save();
         }
+
+        public static void DisplayRightClickDeleteMessage(string text = "Right click to delete!") =>
+            DalamudApi.PluginInterface.UiBuilder.AddNotification($"\t\t\t{text}\t\t\t\n\n", null, NotificationType.Info);
     }
 }

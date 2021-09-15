@@ -172,10 +172,10 @@ namespace QoLBar
                 }
                 ImGui.SameLine();
                 if (ImGui.Button("Delete"))
-                    Game.ExecuteCommand("/echo <se> Right click to delete!");
+                    ConfigEditorUI.DisplayRightClickDeleteMessage();
                 if (ImGui.IsItemHovered())
                 {
-                    ImGui.SetTooltip($"Right click this button to delete this set!");
+                    ImGui.SetTooltip("Right click this button to delete this set!");
                     if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
                     {
                         ImGui.SetWindowFocus(null);
@@ -493,7 +493,7 @@ namespace QoLBar
                         }
                         ImGui.SameLine();
                         if (ImGui.Button("Delete"))
-                            Game.ExecuteCommand("/echo <se> Right click to delete!");
+                            ConfigEditorUI.DisplayRightClickDeleteMessage();
                         if (ImGui.IsItemHovered())
                         {
                             ImGui.SetTooltip($"Right click this button to delete this condition!");

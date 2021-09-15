@@ -430,7 +430,7 @@ namespace QoLBar
                 }
                 ImGui.SameLine();
                 if (ImGui.Button(QoLBar.Config.ExportOnDelete ? "Cut" : "Delete"))
-                    Game.ExecuteCommand("/echo <se> Right click to delete!");
+                    ConfigEditorUI.DisplayRightClickDeleteMessage();
                 //if (ImGui.IsItemClicked(1)) // Jesus christ I hate ImGui who made this function activate on PRESS AND NOT RELEASE??? THIS ISN'T A CLICK
                 if (ImGui.IsItemHovered())
                 {

@@ -217,7 +217,7 @@ namespace QoLBar
                 {
                     ImGui.SameLine();
                     if (ImGui.Button(QoLBar.Config.ExportOnDelete ? "Cut" : "Delete"))
-                        Game.ExecuteCommand("/echo <se> Right click to delete!");
+                        ConfigEditorUI.DisplayRightClickDeleteMessage();
                     if (ImGui.IsItemHovered())
                     {
                         ImGui.SetTooltip($"Right click this button to delete bar #{i + 1}!" +
@@ -413,7 +413,7 @@ namespace QoLBar
 
                         ImGui.SameLine();
                         if (ImGui.SmallButton("Delete"))
-                            Game.ExecuteCommand("/echo <se> Double right click to delete!");
+                            ConfigEditorUI.DisplayRightClickDeleteMessage("Double right click to delete!");
                         if (ImGui.IsItemHovered())
                         {
                             ImGui.SetTooltip($"Double right click this button to delete {file.Name}");
