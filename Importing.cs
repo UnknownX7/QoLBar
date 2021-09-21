@@ -134,6 +134,7 @@ namespace QoLBar
                 sh.CategoryFontScale = sh.GetDefaultValue(x => x.CategoryFontScale);
                 sh.CategoryNoBackground = sh.GetDefaultValue(x => x.CategoryNoBackground);
                 sh.CategoryOnHover = sh.GetDefaultValue(x => x.CategoryOnHover);
+                sh.CategoryHoverClose = sh.GetDefaultValue(x => x.CategoryHoverClose);
             }
             else
             {

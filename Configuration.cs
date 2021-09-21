@@ -91,6 +91,7 @@ namespace QoLBar
         [JsonProperty("cF")]  [DefaultValue(1.0f)]                 public float CategoryFontScale = 1.0f;
         [JsonProperty("cNB")] [DefaultValue(false)]                public bool CategoryNoBackground = false;
         [JsonProperty("cH")]  [DefaultValue(false)]                public bool CategoryOnHover = false;
+        [JsonProperty("cHC")] [DefaultValue(false)]                public bool CategoryHoverClose = false;
 
         [JsonProperty("_i")]  [DefaultValue(0)]                    public int _i = 0;
     }

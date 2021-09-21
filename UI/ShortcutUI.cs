@@ -27,15 +27,15 @@ namespace QoLBar
         public readonly BarUI parentBar;
         public readonly ShortcutUI parent;
         public readonly List<ShortcutUI> children = new();
+        public bool activated = false;
+        private bool isCategoryHovered = false;
+        private bool wasHoveredOnce = false;
+        private float animTime = -1;
 
         private bool IsConfigPopupOpen() => QoLBar.Plugin.ui.IsConfigPopupOpen();
         private void SetConfigPopupOpen() => QoLBar.Plugin.ui.SetConfigPopupOpen();
 
         public ShortcutUI DisplayedUI => (Config.Type == ShortcutType.Category && Config.Mode != ShortcutMode.Default && children.Count > 0) ? children[Math.Min(Config._i, children.Count - 1)] : this;
-
-        public bool _activated = false; // TODO :)
-
-        private float _animTime = -1;
 
         public ShortcutUI(BarUI bar)
         {
@@ -74,10 +74,10 @@ namespace QoLBar
 
         public void ClearActivated()
         {
-            if (_animTime == 0)
-                _animTime = -1;
+            if (animTime == 0)
+                animTime = -1;
 
-            _activated = false;
+            activated = false;
             if (Config.Type == ShortcutType.Category)
             {
                 foreach (var ui in children)
@@ -88,9 +88,9 @@ namespace QoLBar
         public void OnClick(bool v, bool mouse, bool wasHovered, bool outsideDraw = false)
         {
             if (mouse)
-                _animTime = -1;
+                animTime = -1;
             else
-                _animTime = 0;
+                animTime = 0;
 
             var _i = Config._i;
 
@@ -151,17 +151,17 @@ namespace QoLBar
         // TODO: rewrite these functions cause they suck
         public void DrawShortcut(float width)
         {
-            if (_animTime >= 0.35f)
-                _animTime = -1;
-            else if (_animTime >= 0)
-                _animTime += ImGui.GetIO().DeltaTime;
+            if (animTime >= 0.35f)
+                animTime = -1;
+            else if (animTime >= 0)
+                animTime += ImGui.GetIO().DeltaTime;
 
             var inCategory = parent != null;
             var ui = DisplayedUI;
             var sh = ui.Config;
 
             var name = sh.Name;
-            var useIcon = ParseName(ref name, out string tooltip, out int icon, out string args);
+            var useIcon = ParseName(ref name, out var tooltip, out var icon, out var args);
 
             if (inCategory)
             {
@@ -185,7 +185,7 @@ namespace QoLBar
                 if (useIcon)
                 {
                     ImGuiEx.PushClipRectFullScreen();
-                    DrawIcon(icon, new Vector2(height), sh.IconZoom, new Vector2(sh.IconOffset[0], sh.IconOffset[1]), sh.IconRotation, ImGui.ColorConvertFloat4ToU32(c), _animTime, args, false, true);
+                    DrawIcon(icon, new Vector2(height), sh.IconZoom, new Vector2(sh.IconOffset[0], sh.IconOffset[1]), sh.IconRotation, ImGui.ColorConvertFloat4ToU32(c), animTime, args, false, true);
                     ImGui.PopClipRect();
                 }
                 else
@@ -205,7 +205,7 @@ namespace QoLBar
             else if (useIcon)
             {
                 ImGuiEx.PushClipRectFullScreen();
-                clicked = DrawIcon(icon, new Vector2(height), sh.IconZoom, new Vector2(sh.IconOffset[0], sh.IconOffset[1]), sh.IconRotation, ImGui.ColorConvertFloat4ToU32(c), _animTime, args);
+                clicked = DrawIcon(icon, new Vector2(height), sh.IconZoom, new Vector2(sh.IconOffset[0], sh.IconOffset[1]), sh.IconRotation, ImGui.ColorConvertFloat4ToU32(c), animTime, args);
                 ImGui.PopClipRect();
             }
             else
@@ -216,18 +216,19 @@ namespace QoLBar
             }
             ImGuiEx.PopFontScale();
 
-            if (!inCategory)
+            if (inCategory)
+            {
+                ImGui.PopStyleColor();
+            }
+            else
             {
                 var size = ImGui.GetItemRectMax() - ImGui.GetWindowPos();
                 parentBar.MaxWidth = size.X;
                 parentBar.MaxHeight = size.Y;
             }
 
-            if (inCategory)
-                ImGui.PopStyleColor();
-
             var wasHovered = false;
-            clicked = clicked || (_activated && !parentBar.WasActivated);
+            clicked = clicked || (activated && !parentBar.WasActivated);
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
             {
                 if (ImGui.IsMouseReleased(ImGuiMouseButton.Left))
@@ -251,18 +252,18 @@ namespace QoLBar
             if (clicked && !parentBar.IsDragging && !IsConfigPopupOpen())
             {
                 if (!inCategory)
-                    OnClick(parentBar.IsVertical, !_activated, wasHovered);
+                    OnClick(parentBar.IsVertical, !activated, wasHovered);
                 else
                 {
                     var cols = parent.Config.CategoryColumns;
-                    OnClick(cols > 0 && parent.children.Count >= (cols * (cols - 1) + 1), !_activated, wasHovered);
+                    OnClick(cols > 0 && parent.children.Count >= (cols * (cols - 1) + 1), !activated, wasHovered);
                     if (!parent.Config.CategoryStaysOpen && sh.Type == ShortcutType.Command)
                         ImGui.SetWindowFocus(null);
                 }
 
-                if (_activated)
+                if (activated)
                 {
-                    _activated = false;
+                    activated = false;
                     parentBar.WasActivated = true;
                 }
             }
@@ -295,164 +296,173 @@ namespace QoLBar
                 _fuckImGui = false;
             }
 
-            if (ImGui.BeginPopup("ShortcutCategory", (Config.CategoryNoBackground ? ImGuiWindowFlags.NoBackground : ImGuiWindowFlags.None) | ImGuiWindowFlags.NoMove))
+            if (!ImGui.BeginPopup("ShortcutCategory", (Config.CategoryNoBackground ? ImGuiWindowFlags.NoBackground : ImGuiWindowFlags.None) | ImGuiWindowFlags.NoMove))
             {
-                if (ImGui.IsWindowAppearing())
-                    _fuckImGui = true;
-
-                parentBar.Reveal();
-
-                if (ImGui.IsWindowHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right) && !ImGui.IsAnyItemHovered()) // Why are the ImGui hover flags just not working ???
-                    ImGui.OpenPopup("editShortcut");
-
-                // Dupe code but only cause ImGui sucks
-                PluginUI.DrawExternalWindow(() => DrawConfig(Config.Name.StartsWith("::")), parentBar.IsDocked);
-
-                var cols = Config.CategoryColumns;
-                var width = (float)Math.Round(Config.CategoryWidth * ImGuiHelpers.GlobalScale * Config.CategoryScale);
-
-                for (int i = 0; i < children.Count; i++)
-                {
-                    ImGui.PushID(i);
-
-                    children[i].DrawShortcut(width);
-
-                    if (cols <= 0 || i % cols != cols - 1)
-                        ImGui.SameLine();
-
-                    ImGui.PopID();
-                }
-
-                if (parentBar.Config.Editing || Config.SubList.Count < 1)
-                {
-                    if (!Config.CategoryNoBackground)
-                        ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
-                    else
-                        ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(0.08f, 0.08f, 0.08f, 0.94f));
-                    var height = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
-                    ImGuiEx.PushFontScale(ImGuiEx.GetFontScale() * Config.CategoryFontScale);
-                    if (ImGui.Button("+", new Vector2(width, height)))
-                        ImGui.OpenPopup("addShortcut");
-                    ImGuiEx.PopFontScale();
-                    ImGui.PopStyleColor();
-                    ImGuiEx.SetItemTooltip("Add a new shortcut.");
-                }
-
-                if (ImGui.IsWindowHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right) && ImGui.GetIO().KeyShift)
-                    ImGui.OpenPopup("addShortcut");
-
-                PluginUI.DrawExternalWindow(() => DrawAddShortcut(null, this), parentBar.IsDocked);
-
-                ImGuiEx.ClampWindowPosToViewport();
-
-                ImGui.EndPopup();
+                wasHoveredOnce = false;
+                return;
             }
+
+            if (ImGui.IsWindowAppearing())
+                _fuckImGui = true;
+
+            parentBar.Reveal();
+
+            if (ImGui.IsWindowHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right) && !ImGui.IsAnyItemHovered()) // Why are the ImGui hover flags just not working ???
+                ImGui.OpenPopup("editShortcut");
+
+            // Dupe code but only cause ImGui sucks
+            PluginUI.DrawExternalWindow(() => DrawConfig(Config.Name.StartsWith("::")), parentBar.IsDocked);
+
+            var windowHovered = ImGui.IsWindowHovered(ImGuiHoveredFlags.AllowWhenBlockedByActiveItem | ImGuiHoveredFlags.ChildWindows);
+            isCategoryHovered = windowHovered || !wasHoveredOnce || ImGui.IsPopupOpen(null, ImGuiPopupFlags.AnyPopupId);
+            if (windowHovered)
+                wasHoveredOnce = true;
+
+            var cols = Config.CategoryColumns;
+            var width = (float)Math.Round(Config.CategoryWidth * ImGuiHelpers.GlobalScale * Config.CategoryScale);
+
+            for (int i = 0; i < children.Count; i++)
+            {
+                ImGui.PushID(i);
+
+                children[i].DrawShortcut(width);
+
+                if (cols <= 0 || i % cols != cols - 1)
+                    ImGui.SameLine();
+
+                ImGui.PopID();
+            }
+
+            if (parentBar.Config.Editing || Config.SubList.Count < 1)
+            {
+                ImGui.PushStyleColor(ImGuiCol.Button, !Config.CategoryNoBackground ? Vector4.Zero : new Vector4(0.08f, 0.08f, 0.08f, 0.94f));
+                var height = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
+                ImGuiEx.PushFontScale(ImGuiEx.GetFontScale() * Config.CategoryFontScale);
+                if (ImGui.Button("+", new Vector2(width, height)))
+                    ImGui.OpenPopup("addShortcut");
+                ImGuiEx.PopFontScale();
+                ImGui.PopStyleColor();
+                ImGuiEx.SetItemTooltip("Add a new shortcut.");
+            }
+
+            if (ImGui.IsWindowHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right) && ImGui.GetIO().KeyShift)
+                ImGui.OpenPopup("addShortcut");
+
+            PluginUI.DrawExternalWindow(() => DrawAddShortcut(null, this), parentBar.IsDocked);
+
+            ImGuiEx.ClampWindowPosToViewport();
+
+            if (Config.CategoryHoverClose && !isCategoryHovered)
+                ImGui.CloseCurrentPopup();
+
+            ImGui.EndPopup();
         }
 
         private void DrawConfig(bool hasIcon)
         {
-            if (ImGui.BeginPopup("editShortcut"))
+            if (!ImGui.BeginPopup("editShortcut")) return;
+
+            parentBar.Reveal();
+            SetConfigPopupOpen();
+
+            ConfigEditorUI.AutoPasteIcon(Config);
+
+            if (ImGui.BeginTabBar("Config Tabs", ImGuiTabBarFlags.NoTooltip))
             {
-                parentBar.Reveal();
-                SetConfigPopupOpen();
-
-                ConfigEditorUI.AutoPasteIcon(Config);
-
-                if (ImGui.BeginTabBar("Config Tabs", ImGuiTabBarFlags.NoTooltip))
+                if (ImGui.BeginTabItem("Shortcut"))
                 {
-                    if (ImGui.BeginTabItem("Shortcut"))
-                    {
-                        ConfigEditorUI.EditShortcutConfigBase(Config, true, hasIcon);
+                    ConfigEditorUI.EditShortcutConfigBase(Config, true, hasIcon);
 
-                        if (Config.Type != ShortcutType.Spacer)
-                            ConfigEditorUI.EditShortcutMode(this);
+                    if (Config.Type != ShortcutType.Spacer)
+                        ConfigEditorUI.EditShortcutMode(this);
 
-                        ConfigEditorUI.EditShortcutColor(this);
+                    ConfigEditorUI.EditShortcutColor(this);
 
-                        if (Config.Type != ShortcutType.Spacer)
-                            Keybind.KeybindInput(Config);
+                    if (Config.Type != ShortcutType.Spacer)
+                        Keybind.KeybindInput(Config);
 
-                        ImGui.EndTabItem();
-                    }
-
-                    if (Config.Type == ShortcutType.Category && ImGui.BeginTabItem("Category"))
-                    {
-                        ConfigEditorUI.EditShortcutCategoryOptions(this);
-                        ImGui.EndTabItem();
-                    }
-
-                    if (hasIcon && ImGui.BeginTabItem("Icon"))
-                    {
-                        ConfigEditorUI.EditShortcutIconOptions(this);
-                        ImGui.EndTabItem();
-                    }
-
-                    ImGui.EndTabBar();
+                    ImGui.EndTabItem();
                 }
 
-                bool vertical;
-                if (parent != null)
+                if (Config.Type == ShortcutType.Category && ImGui.BeginTabItem("Category"))
                 {
-                    var cols = parent.Config.CategoryColumns;
-                    vertical = cols > 0 && parent.children.Count >= (cols * (cols - 1) + 1);
-                }
-                else
-                    vertical = parentBar.IsVertical;
-
-                ImGui.PushFont(UiBuilder.IconFont);
-                ImGui.Button(vertical ? FontAwesomeIcon.ArrowsAltV.ToIconString() : FontAwesomeIcon.ArrowsAltH.ToIconString(), new Vector2(30 * ImGuiHelpers.GlobalScale, 0));
-                ImGui.PopFont();
-                if (ImGui.IsItemActive() && ImGui.IsMouseDragging(ImGuiMouseButton.Left))
-                {
-                    ImGui.CloseCurrentPopup();
-
-                    ImGuiEx.SetupSlider(vertical, 32 * ImGuiHelpers.GlobalScale, (hitInterval, increment, closing) =>
-                    {
-                        parentBar.Reveal();
-                        SetConfigPopupOpen();
-
-                        if (hitInterval)
-                            ShiftThis(increment);
-                    });
-                }
-                ImGuiEx.SetItemTooltip("Drag to move the shortcut.");
-
-                ImGui.SameLine();
-                if (ImGui.Button("Export"))
-                    ImGui.SetClipboardText(Importing.ExportShortcut(Config, false));
-                if (ImGui.IsItemHovered())
-                {
-                    ImGui.SetTooltip("Export to clipboard with minimal settings (May change with updates).\n" +
-                        "Right click to export with every setting (Longer string, doesn't change).");
-
-                    if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
-                        ImGui.SetClipboardText(Importing.ExportShortcut(Config, true));
-                }
-                ImGui.SameLine();
-                if (ImGui.Button(QoLBar.Config.ExportOnDelete ? "Cut" : "Delete"))
-                    ConfigEditorUI.DisplayRightClickDeleteMessage();
-                //if (ImGui.IsItemClicked(1)) // Jesus christ I hate ImGui who made this function activate on PRESS AND NOT RELEASE??? THIS ISN'T A CLICK
-                if (ImGui.IsItemHovered())
-                {
-                    ImGui.SetTooltip("Right click this button to delete the shortcut!" +
-                        (QoLBar.Config.ExportOnDelete ? "\nThe shortcut will be exported to clipboard first." : ""));
-
-                    if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
-                    {
-                        if (QoLBar.Config.ExportOnDelete)
-                            ImGui.SetClipboardText(Importing.ExportShortcut(Config, false));
-
-                        DeleteThis();
-                        ImGui.CloseCurrentPopup();
-                    }
+                    ConfigEditorUI.EditShortcutCategoryOptions(this);
+                    ImGui.EndTabItem();
                 }
 
-                DrawIconBrowserButton();
+                if (hasIcon && ImGui.BeginTabItem("Icon"))
+                {
+                    ConfigEditorUI.EditShortcutIconOptions(this);
+                    ImGui.EndTabItem();
+                }
 
-                ImGuiEx.ClampWindowPosToViewport();
-
-                ImGui.EndPopup();
+                ImGui.EndTabBar();
             }
+
+            bool vertical;
+            if (parent != null)
+            {
+                var cols = parent.Config.CategoryColumns;
+                vertical = cols > 0 && parent.children.Count >= (cols * (cols - 1) + 1);
+            }
+            else
+            {
+                vertical = parentBar.IsVertical;
+            }
+
+            ImGui.PushFont(UiBuilder.IconFont);
+            ImGui.Button(vertical ? FontAwesomeIcon.ArrowsAltV.ToIconString() : FontAwesomeIcon.ArrowsAltH.ToIconString(), new Vector2(30 * ImGuiHelpers.GlobalScale, 0));
+            ImGui.PopFont();
+            if (ImGui.IsItemActive() && ImGui.IsMouseDragging(ImGuiMouseButton.Left))
+            {
+                ImGui.CloseCurrentPopup();
+
+                ImGuiEx.SetupSlider(vertical, 32 * ImGuiHelpers.GlobalScale, (hitInterval, increment, closing) =>
+                {
+                    parentBar.Reveal();
+                    SetConfigPopupOpen();
+
+                    if (hitInterval)
+                        ShiftThis(increment);
+                });
+            }
+            ImGuiEx.SetItemTooltip("Drag to move the shortcut.");
+
+            ImGui.SameLine();
+            if (ImGui.Button("Export"))
+                ImGui.SetClipboardText(Importing.ExportShortcut(Config, false));
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip("Export to clipboard with minimal settings (May change with updates).\n" +
+                    "Right click to export with every setting (Longer string, doesn't change).");
+
+                if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
+                    ImGui.SetClipboardText(Importing.ExportShortcut(Config, true));
+            }
+            ImGui.SameLine();
+            if (ImGui.Button(QoLBar.Config.ExportOnDelete ? "Cut" : "Delete"))
+                ConfigEditorUI.DisplayRightClickDeleteMessage();
+            //if (ImGui.IsItemClicked(1)) // Jesus christ I hate ImGui who made this function activate on PRESS AND NOT RELEASE??? THIS ISN'T A CLICK
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetTooltip("Right click this button to delete the shortcut!" +
+                    (QoLBar.Config.ExportOnDelete ? "\nThe shortcut will be exported to clipboard first." : ""));
+
+                if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
+                {
+                    if (QoLBar.Config.ExportOnDelete)
+                        ImGui.SetClipboardText(Importing.ExportShortcut(Config, false));
+
+                    DeleteThis();
+                    ImGui.CloseCurrentPopup();
+                }
+            }
+
+            DrawIconBrowserButton();
+
+            ImGuiEx.ClampWindowPosToViewport();
+
+            ImGui.EndPopup();
         }
 
         public void AddShortcut(ShCfg sh)
@@ -535,42 +545,39 @@ namespace QoLBar
             tooltip = (split.Length > 1) ? split[1] : string.Empty;
 
             icon = 0;
-            if (name.StartsWith("::"))
+            if (!name.StartsWith("::")) return false;
+
+            var substart = 2;
+
+            // Parse icon arguments
+            var done = false;
+            while (!done)
             {
-                var substart = 2;
-
-                // Parse icon arguments
-                var done = false;
-                while (!done)
+                if (name.Length > substart)
                 {
-                    if (name.Length > substart)
+                    var arg = name[substart];
+                    switch (arg)
                     {
-                        var arg = name[substart];
-                        switch (arg)
-                        {
-                            case 'f': // Frame
-                            case 'n': // No frame
-                            case 'l': // LR icon
-                            case 'h': // HR icon
-                            case 'g': // Grayscale
-                            case 'r': // Reverse
-                                args += arg;
-                                substart++;
-                                break;
-                            default:
-                                done = true;
-                                break;
-                        }
+                        case 'f': // Frame
+                        case 'n': // No frame
+                        case 'l': // LR icon
+                        case 'h': // HR icon
+                        case 'g': // Grayscale
+                        case 'r': // Reverse
+                            args += arg;
+                            substart++;
+                            break;
+                        default:
+                            done = true;
+                            break;
                     }
-                    else
-                        done = true;
                 }
-
-                _ = int.TryParse(name[substart..], out icon);
-                return true;
+                else
+                    done = true;
             }
-            else
-                return false;
+
+            _ = int.TryParse(name[substart..], out icon);
+            return true;
         }
 
         public static void DrawIconBrowserButton()
@@ -587,55 +594,54 @@ namespace QoLBar
 
         public static void DrawAddShortcut(BarUI barUI, ShortcutUI shUI)
         {
-            if (ImGui.BeginPopup("addShortcut"))
+            if (!ImGui.BeginPopup("addShortcut")) return;
+
+            barUI?.Reveal();
+            shUI?.parentBar.Reveal();
+            QoLBar.Plugin.ui.SetConfigPopupOpen();
+
+            BarUI.tempSh ??= new ShCfg();
+            var newSh = BarUI.tempSh;
+
+            ConfigEditorUI.AutoPasteIcon(newSh);
+
+            ConfigEditorUI.EditShortcutConfigBase(newSh, false, false);
+
+            if (ImGui.Button("Create"))
             {
-                barUI?.Reveal();
-                shUI?.parentBar.Reveal();
-                QoLBar.Plugin.ui.SetConfigPopupOpen();
-
-                BarUI.tempSh ??= new ShCfg();
-                var newSh = BarUI.tempSh;
-
-                ConfigEditorUI.AutoPasteIcon(newSh);
-
-                ConfigEditorUI.EditShortcutConfigBase(newSh, false, false);
-
-                if (ImGui.Button("Create"))
-                {
-                    barUI?.AddShortcut(newSh);
-                    shUI?.AddShortcut(newSh);
-                    BarUI.tempSh = null;
-                    ImGui.CloseCurrentPopup();
-                }
-                ImGui.SameLine();
-                if (ImGui.Button("Import"))
-                {
-                    var imports = Importing.TryImport(ImGuiEx.TryGetClipboardText(), true);
-                    if (imports.shortcut != null)
-                    {
-                        barUI?.AddShortcut(imports.shortcut);
-                        shUI?.AddShortcut(imports.shortcut);
-                    }
-                    else if (imports.bar != null)
-                    {
-                        foreach (var sh in imports.bar.ShortcutList)
-                        {
-                            barUI?.AddShortcut(sh);
-                            shUI?.AddShortcut(sh);
-                        }
-                    }
-                    QoLBar.Config.Save();
-                    ImGui.CloseCurrentPopup();
-                }
-                ImGuiEx.SetItemTooltip("Import a shortcut from the clipboard,\n" +
-                    "or import all of another bar's shortcuts.");
-
-                DrawIconBrowserButton();
-
-                ImGuiEx.ClampWindowPosToViewport();
-
-                ImGui.EndPopup();
+                barUI?.AddShortcut(newSh);
+                shUI?.AddShortcut(newSh);
+                BarUI.tempSh = null;
+                ImGui.CloseCurrentPopup();
             }
+            ImGui.SameLine();
+            if (ImGui.Button("Import"))
+            {
+                var imports = Importing.TryImport(ImGuiEx.TryGetClipboardText(), true);
+                if (imports.shortcut != null)
+                {
+                    barUI?.AddShortcut(imports.shortcut);
+                    shUI?.AddShortcut(imports.shortcut);
+                }
+                else if (imports.bar != null)
+                {
+                    foreach (var sh in imports.bar.ShortcutList)
+                    {
+                        barUI?.AddShortcut(sh);
+                        shUI?.AddShortcut(sh);
+                    }
+                }
+                QoLBar.Config.Save();
+                ImGui.CloseCurrentPopup();
+            }
+            ImGuiEx.SetItemTooltip("Import a shortcut from the clipboard,\n" +
+                "or import all of another bar's shortcuts.");
+
+            DrawIconBrowserButton();
+
+            ImGuiEx.ClampWindowPosToViewport();
+
+            ImGui.EndPopup();
         }
 
         public static bool DrawIcon(int icon, Vector2 size, float zoom, Vector2 offset, float rotation, uint color, float animTime, string args = null, bool retExists = false, bool noButton = false)

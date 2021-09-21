@@ -249,10 +249,13 @@ namespace QoLBar
             if (ImGui.Checkbox("Open on Hover", ref sh.Config.CategoryOnHover))
                 QoLBar.Config.Save();
             ImGui.SameLine(ImGui.GetWindowWidth() / 2);
+            if (ImGui.Checkbox("Close When Not Hovered", ref sh.Config.CategoryHoverClose))
+                QoLBar.Config.Save();
+
             if (ImGui.Checkbox("Stay Open on Selection", ref sh.Config.CategoryStaysOpen))
                 QoLBar.Config.Save();
             ImGuiEx.SetItemTooltip("Keeps the category open when pressing shortcuts within it.\nMay not work if the shortcut interacts with other plugins.");
-
+            ImGui.SameLine(ImGui.GetWindowWidth() / 2);
             if (ImGui.Checkbox("No Background", ref sh.Config.CategoryNoBackground))
                 QoLBar.Config.Save();
         }

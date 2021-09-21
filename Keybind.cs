@@ -180,10 +180,10 @@ namespace QoLBar
                     var parent = sh.parent;
                     while (parent != null)
                     {
-                        parent._activated = true;
+                        parent.activated = true;
                         parent = parent.parent;
                     }
-                    sh._activated = true;
+                    sh.activated = true;
                 }
                 else
                 {
