@@ -31,8 +31,6 @@ namespace QoLBar
 
             public State CurrentState { get; private set; }
             public float HoldDuration { get; private set; }
-            public bool useKeyUp;
-            public bool useShortHold;
             public bool wasShortHeld;
 
             public void Update(bool down)
@@ -58,7 +56,8 @@ namespace QoLBar
         }
 
         private static readonly byte[] keyboardState = new byte[256];
-        private static readonly QoLKeyState[] keyState = new QoLKeyState[keyboardState.Length];
+        private static readonly QoLKeyState[] keyStates = new QoLKeyState[keyboardState.Length];
+        private static readonly HashSet<int> conflictingHotkeys = new();
         private static bool Disabled => Game.IsGameTextInputActive || !Game.IsGameFocused || ImGui.GetIO().WantCaptureKeyboard;
 
         [DllImport("user32.dll")]
@@ -67,7 +66,7 @@ namespace QoLBar
 
         public static void Run()
         {
-            GetKeyState();
+            GetKeyStates();
             DoPieHotkeys();
             DoHotkeys();
         }
@@ -78,18 +77,24 @@ namespace QoLBar
                 bar.SetupHotkeys();
         }
 
-        private static void GetKeyState()
+        private static void CheckConflicts(int hotkey)
         {
-            GetKeyboardState(keyboardState);
-            for (int i = 0; i < keyState.Length; i++)
-                keyState[i].Update((keyboardState[i] & 0x80) != 0);
+            if (hotkeys.Any(kv => kv.Item2.Config.Hotkey == hotkey))
+                conflictingHotkeys.Add(hotkey);
         }
 
-        public static bool CheckKeyState(int i, QoLKeyState.State state) => i is >= 0 and < 256 && (keyState[i].CurrentState & state) != 0;
+        private static void GetKeyStates()
+        {
+            GetKeyboardState(keyboardState);
+            for (int i = 0; i < keyStates.Length; i++)
+                keyStates[i].Update((keyboardState[i] & 0x80) != 0);
+        }
 
-        public static bool IsHotkeyActivated(int i) => i is >= 0 and < 256 && (!keyState[i].useKeyUp
-            ? CheckKeyState(i, QoLKeyState.State.KeyDown)
-            : CheckKeyState(i, QoLKeyState.State.KeyUp));
+        public static bool CheckKeyState(int i, QoLKeyState.State state) => i is >= 0 and < 256 && (keyStates[i].CurrentState & state) != 0;
+
+        public static bool IsHotkeyActivated(int i, bool onUp) => i is >= 0 and < 256 && (onUp
+            ? CheckKeyState(i, QoLKeyState.State.KeyUp)
+            : CheckKeyState(i, QoLKeyState.State.KeyDown));
 
         public static int GetModifiers()
         {
@@ -104,24 +109,23 @@ namespace QoLBar
             return key;
         }
 
+        private static int GetBaseHotkey(int hotkey) => hotkey & ~modifierMask;
+
         public static bool IsHotkeyHeld(int hotkey, bool blockGame)
         {
             if (Disabled) return false;
 
-            var key = hotkey & ~modifierMask;
+            var key = GetBaseHotkey(hotkey);
             var isDown = CheckKeyState(key, QoLKeyState.State.Held) && hotkey == (key | GetModifiers());
 
             if (isDown)
             {
-                if (keyState[key].useShortHold)
+                if (conflictingHotkeys.Contains(hotkey))
                     isDown = CheckKeyState(key, QoLKeyState.State.ShortHold);
 
                 if (blockGame)
                     BlockGameKey(key);
             }
-
-            keyState[key].useKeyUp = true;
-            keyState[key].useShortHold = false;
 
             return isDown;
         }
@@ -134,11 +138,16 @@ namespace QoLBar
 
         private static void DoPieHotkeys()
         {
+            conflictingHotkeys.Clear();
+
             if (!PieUI.enabled) return;
 
             foreach (var bar in QoLBar.Plugin.ui.bars.Where(bar => bar.Config.Hotkey > 0 && bar.CheckConditionSet()))
             {
-                if (IsHotkeyHeld(bar.Config.Hotkey, true))
+                var hotkey = bar.Config.Hotkey;
+                CheckConflicts(hotkey);
+
+                if (IsHotkeyHeld(hotkey, true))
                 {
                     if (bar.tempDisableHotkey <= 0)
                     {
@@ -150,59 +159,49 @@ namespace QoLBar
                 {
                     --bar.tempDisableHotkey;
                 }
+
                 bar.openPie = false;
             }
 
             PieUI.enabled = false; // Used to disable all pies if the UI is hidden
         }
 
-        // TODO: Loop through hotkeys instead of all keys
         // TODO: Fix bug where keys activate after being pressed if they use key up
         private static void DoHotkeys()
         {
             if (Disabled) { hotkeys.Clear(); return; }
-            if (hotkeys.Count == 0) return;
 
-            var key = GetModifiers();
-            for (var k = 0; k < 240; k++)
+            var modifiers = GetModifiers();
+            foreach (var (bar, sh) in hotkeys)
             {
-                var state = keyState[k];
-                var activated = k is < 16 or > 18 && IsHotkeyActivated(k) && (!state.useKeyUp || !state.wasShortHeld);
-                var hotkey = key | k;
-                foreach (var (bar, sh) in hotkeys)
+                var config = sh.Config;
+                var key = GetBaseHotkey(config.Hotkey);
+                var state = keyStates[key];
+                var onUp = conflictingHotkeys.Contains(config.Hotkey);
+                var activated = IsHotkeyActivated(key, onUp) && (!onUp || !state.wasShortHeld) && (key | modifiers) == config.Hotkey;
+                if (!activated) continue;
+
+                if (config.Type == ShCfg.ShortcutType.Category && config.Mode == ShCfg.ShortcutMode.Default)
                 {
-                    var cfg = sh.Config;
-                    if (cfg.Hotkey != hotkey) continue;
-
-                    if (state.useKeyUp)
+                    // TODO: Make less hacky
+                    bar.ForceReveal();
+                    var parent = sh.parent;
+                    while (parent != null)
                     {
-                        keyState[k].useKeyUp = false;
-                        keyState[k].useShortHold = true;
+                        parent._activated = true;
+                        parent = parent.parent;
                     }
-
-                    if (!activated) break;
-
-                    if (cfg.Type == ShCfg.ShortcutType.Category && cfg.Mode == ShCfg.ShortcutMode.Default)
-                    {
-                        // TODO: Make less hacky
-                        bar.ForceReveal();
-                        var parent = sh.parent;
-                        while (parent != null)
-                        {
-                            parent._activated = true;
-                            parent = parent.parent;
-                        }
-                        sh._activated = true;
-                    }
-                    else
-                    {
-                        sh.OnClick(false, false, false, true);
-                    }
-
-                    if (!cfg.KeyPassthrough)
-                        BlockGameKey(k);
+                    sh._activated = true;
                 }
+                else
+                {
+                    sh.OnClick(false, false, false, true);
+                }
+
+                if (!config.KeyPassthrough)
+                    BlockGameKey(key);
             }
+
             hotkeys.Clear();
         }
 
