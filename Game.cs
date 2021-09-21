@@ -6,12 +6,17 @@ using Dalamud;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Hooking;
 using Dalamud.Logging;
+using FFXIVClientStructs.FFXIV.Client.System.Framework;
+using FFXIVClientStructs.FFXIV.Client.UI;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Client.UI.Misc;
+using FFXIVClientStructs.FFXIV.Client.UI.Shell;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using QoLBar.Structures;
 
 namespace QoLBar
 {
-    public static class Game
+    public static unsafe class Game
     {
         private const int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
 
@@ -39,34 +44,34 @@ namespace QoLBar
             }
         }
 
-        public static unsafe DateTimeOffset EorzeaTime => DateTimeOffset.FromUnixTimeSeconds(*(long*)(DalamudApi.Framework.Address.BaseAddress + 0x1608));
+        public static DateTimeOffset EorzeaTime => DateTimeOffset.FromUnixTimeSeconds(*(long*)(DalamudApi.Framework.Address.BaseAddress + 0x1608));
 
-        public static Wrappers.UIModule uiModule;
+        public static UIModule* uiModule;
 
-        public static IntPtr textActiveBoolPtr = IntPtr.Zero;
-        public static unsafe bool IsGameTextInputActive => textActiveBoolPtr != IntPtr.Zero && *(bool*)textActiveBoolPtr;
-        public static unsafe bool IsMacroRunning => *(int*)(raptureShellModule + 0x2C0) >= 0;
+        public static IntPtr isTextInputActivePtr = IntPtr.Zero;
+        public static bool IsGameTextInputActive => isTextInputActivePtr != IntPtr.Zero && *(bool*)isTextInputActivePtr;
+        public static bool IsMacroRunning => *(int*)((IntPtr)raptureShellModule + 0x2C0) >= 0;
 
-        public static IntPtr agentModule = IntPtr.Zero;
+        public static AgentModule* agentModule;
 
-        public static IntPtr addonConfig = IntPtr.Zero;
-        public static unsafe byte CurrentHUDLayout => *(byte*)(*(IntPtr*)(addonConfig + 0x50) + 0x59E8);
+        public static IntPtr addonConfig;
+        public static byte CurrentHUDLayout => *(byte*)(*(IntPtr*)(addonConfig + 0x50) + 0x59E8);
 
         // Command Execution
-        public delegate void ProcessChatBoxDelegate(IntPtr uiModule, IntPtr message, IntPtr unused, byte a4);
+        public delegate void ProcessChatBoxDelegate(UIModule* uiModule, IntPtr message, IntPtr unused, byte a4);
         public static ProcessChatBoxDelegate ProcessChatBox;
 
-        public delegate int GetCommandHandlerDelegate(IntPtr raptureShellModule, IntPtr message, IntPtr unused);
+        public delegate int GetCommandHandlerDelegate(RaptureShellModule* raptureShellModule, IntPtr message, IntPtr unused);
         public static GetCommandHandlerDelegate GetCommandHandler;
 
         // Macro Execution
-        public delegate void ExecuteMacroDelegate(IntPtr raptureShellModule, IntPtr macro);
+        public delegate void ExecuteMacroDelegate(RaptureShellModule* raptureShellModule, IntPtr macro);
         public static Hook<ExecuteMacroDelegate> ExecuteMacroHook;
-        public static IntPtr raptureShellModule = IntPtr.Zero;
-        public static IntPtr raptureMacroModule = IntPtr.Zero;
+        public static RaptureShellModule* raptureShellModule;
+        public static RaptureMacroModule* raptureMacroModule;
 
         public static IntPtr numCopiedMacroLinesPtr = IntPtr.Zero;
-        public static unsafe byte NumCopiedMacroLines
+        public static byte NumCopiedMacroLines
         {
             get => *(byte*)numCopiedMacroLinesPtr;
             set
@@ -77,7 +82,7 @@ namespace QoLBar
         }
 
         public static IntPtr numExecutedMacroLinesPtr = IntPtr.Zero;
-        public static unsafe byte NumExecutedMacroLines
+        public static byte NumExecutedMacroLines
         {
             get => *(byte*)numExecutedMacroLinesPtr;
             set
@@ -87,16 +92,16 @@ namespace QoLBar
             }
         }
 
-        public static unsafe void Initialize()
+        public static void Initialize()
         {
-            uiModule = new Wrappers.UIModule(DalamudApi.GameGui.GetUIModule());
+            uiModule = Framework.Instance()->GetUiModule();
 
-            raptureShellModule = uiModule.GetRaptureShellModule();
-            raptureMacroModule = uiModule.GetRaptureMacroModule();
-            addonConfig = uiModule.GetAddonConfig();
-            agentModule = uiModule.GetAgentModule();
+            raptureShellModule = uiModule->GetRaptureShellModule();
+            raptureMacroModule = uiModule->GetRaptureMacroModule();
+            addonConfig = ((delegate*<UIModule*, IntPtr>)uiModule->vfunc[19])(uiModule);
+            agentModule = uiModule->GetAgentModule();
 
-            try { textActiveBoolPtr = *(IntPtr*)((IntPtr)AtkStage.GetSingleton() + 0x28) + 0x188E; }
+            try { isTextInputActivePtr = *(IntPtr*)((IntPtr)AtkStage.GetSingleton() + 0x28) + 0x188E; } // Located in AtkInputManager
             catch { PluginLog.Error("Failed loading textActiveBoolPtr"); }
 
             try
@@ -111,7 +116,7 @@ namespace QoLBar
 
                 try
                 {
-                    ExecuteMacroHook = new Hook<ExecuteMacroDelegate>(DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28"), new ExecuteMacroDelegate(ExecuteMacroDetour));
+                    ExecuteMacroHook = new Hook<ExecuteMacroDelegate>(DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28"), ExecuteMacroDetour);
 
                     numCopiedMacroLinesPtr = DalamudApi.SigScanner.ScanText("49 8D 5E 70 BF ?? 00 00 00") + 0x5;
                     numExecutedMacroLinesPtr = DalamudApi.SigScanner.ScanText("41 83 F8 ?? 0F 8D ?? ?? ?? ?? 49 6B C8 68") + 0x3;
@@ -123,12 +128,12 @@ namespace QoLBar
             catch { PluginLog.Error("Failed loading plugin"); }
         }
 
-        public static unsafe IntPtr GetAgentByInternalID(int id) => *(IntPtr*)(agentModule + 0x20 + id * 0x8); // Client::UI::Agent::AgentModule_GetAgentByInternalID, not going to try and sig a function this small
+        public static IntPtr GetAgentByInternalID(uint id) => (IntPtr)agentModule->GetAgentByInternalID(id);
 
         public static void DEBUG_FindAgent(long agent)
         {
             var found = false;
-            for (int i = 0; i < 800; i++) // Dunno how many there are
+            for (uint i = 0; i < 800; i++) // Dunno how many there are
             {
                 if (GetAgentByInternalID(i).ToInt64() != agent) continue;
                 QoLBar.PrintEcho(i.ToString());
@@ -141,7 +146,7 @@ namespace QoLBar
         }
 
 
-        public static void ExecuteMacroDetour(IntPtr raptureShellModule, IntPtr macro)
+        public static void ExecuteMacroDetour(RaptureShellModule* raptureShellModule, IntPtr macro)
         {
             NumCopiedMacroLines = Macro.numLines;
             NumExecutedMacroLines = Macro.numLines;
@@ -170,7 +175,7 @@ namespace QoLBar
             foreach (var c in command.Split('\n'))
             {
                 if (!string.IsNullOrEmpty(c))
-                    commandQueue.Enqueue(c.Substring(0, Math.Min(c.Length, maxCommandLength)));
+                    commandQueue.Enqueue(c[..Math.Min(c.Length, maxCommandLength)]);
             }
         }
 
@@ -192,7 +197,7 @@ namespace QoLBar
                                 if (int.TryParse(command[1..], out var macro))
                                 {
                                     if (macro is >= 0 and < 200)
-                                        ExecuteMacroHook.Original(raptureShellModule, raptureMacroModule + 0x58 + (Macro.size * macro));
+                                        ExecuteMacroHook.Original(raptureShellModule, (IntPtr)raptureMacroModule + 0x58 + (Macro.size * macro));
                                     else
                                         QoLBar.PrintError("Invalid macro. Usage: \"//m0\" for individual macro #0, \"//m100\" for shared macro #0, valid up to 199.");
                                 }
@@ -250,7 +255,7 @@ namespace QoLBar
                     if (chat)
                         chatQueueTimer = 1f / 6f;
 
-                    ProcessChatBox(uiModule.Address, stringPtr, IntPtr.Zero, 0);
+                    ProcessChatBox(uiModule, stringPtr, IntPtr.Zero, 0);
                 }
                 else
                     chatQueue.Enqueue(command);
@@ -317,9 +322,9 @@ namespace QoLBar
             macroQueue.Clear();
         }
 
-        public static unsafe bool IsWeaponDrawn(PlayerCharacter player) => (*(byte*)(player.Address + 0x19A0) & 0b100) > 0;
+        public static bool IsWeaponDrawn(PlayerCharacter player) => (*(byte*)(player.Address + 0x19A0) & 0b100) > 0;
 
-        public static unsafe AtkUnitBase* GetAddonStructByName(string name, int index)
+        public static AtkUnitBase* GetAddonStructByName(string name, int index)
         {
             var atkStage = AtkStage.GetSingleton();
             if (atkStage == null)

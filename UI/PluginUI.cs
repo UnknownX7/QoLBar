@@ -435,7 +435,7 @@ namespace QoLBar
 
         private string debug_SerializedImport = string.Empty;
         private string debug_DeserializedImport = string.Empty;
-        private void DrawDebugMenu()
+        private unsafe void DrawDebugMenu()
         {
             ImGui.TextUnformatted("Game Data Pointers");
             ImGui.Indent();
@@ -443,25 +443,25 @@ namespace QoLBar
 
             ImGui.TextUnformatted("UI Module");
             ImGui.NextColumn();
-            ImGuiEx.TextCopyable($"{Game.uiModule.Address:X}");
+            ImGuiEx.TextCopyable($"{(IntPtr)Game.uiModule:X}");
             ImGui.NextColumn();
             ImGui.NextColumn();
 
             ImGui.TextUnformatted("Agent Module");
             ImGui.NextColumn();
-            ImGuiEx.TextCopyable($"{Game.agentModule:X}");
+            ImGuiEx.TextCopyable($"{(IntPtr)Game.agentModule:X}");
             ImGui.NextColumn();
             ImGui.NextColumn();
 
             ImGui.TextUnformatted("Rapture Shell Module");
             ImGui.NextColumn();
-            ImGuiEx.TextCopyable($"{Game.raptureShellModule:X}");
+            ImGuiEx.TextCopyable($"{(IntPtr)Game.raptureShellModule:X}");
             ImGui.NextColumn();
             ImGui.NextColumn();
 
             ImGui.TextUnformatted("Rapture Macro Module");
             ImGui.NextColumn();
-            ImGuiEx.TextCopyable($"{Game.raptureMacroModule:X}");
+            ImGuiEx.TextCopyable($"{(IntPtr)Game.raptureMacroModule:X}");
             ImGui.NextColumn();
             ImGui.TextUnformatted($"{Game.IsMacroRunning}");
             ImGui.NextColumn();
@@ -475,7 +475,7 @@ namespace QoLBar
 
             ImGui.TextUnformatted("Game Text Input Active");
             ImGui.NextColumn();
-            ImGuiEx.TextCopyable($"{Game.textActiveBoolPtr:X}");
+            ImGuiEx.TextCopyable($"{Game.isTextInputActivePtr:X}");
             ImGui.NextColumn();
             ImGui.TextUnformatted($"{Game.IsGameTextInputActive}");
 
