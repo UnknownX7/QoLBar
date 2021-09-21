@@ -50,6 +50,7 @@ namespace QoLBar
         public bool IsVertical => (Config.Columns > 0) && children.Count >= (Config.Columns * (Config.Columns - 1) + 1);
         public bool IsDocked { get; private set; } = true;
         public bool IsDragging { get; private set; } = false;
+        public bool IsHovered { get; private set; } = false;
 
         public List<ShortcutUI> children = new();
         public static ShCfg tempSh;
@@ -291,7 +292,9 @@ namespace QoLBar
 
                 if (_mouseRevealed && ImGui.IsWindowHovered(ImGuiHoveredFlags.RectOnly))
                     Reveal();
-                if (ImGui.IsWindowHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right))
+
+                IsHovered = ImGui.IsWindowHovered();
+                if (IsHovered && ImGui.IsMouseReleased(ImGuiMouseButton.Right))
                     ImGui.OpenPopup($"BarConfig##{ID}");
 
                 DrawShortcuts();
@@ -389,7 +392,7 @@ namespace QoLBar
             {
                 // I greatly dislike this
                 var dragging = !IsDragging
-                    ? ImGui.IsWindowFocused() && ImGui.IsWindowHovered() && !ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.IsMouseDragging(ImGuiMouseButton.Left, 0)
+                    ? ImGui.IsWindowFocused() && IsHovered && !ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.IsMouseDragging(ImGuiMouseButton.Left, 0)
                     : IsDragging && !ImGui.IsMouseReleased(ImGuiMouseButton.Left);
 
                 // Began dragging
@@ -459,7 +462,7 @@ namespace QoLBar
                 MaxHeight = size.Y;
             }
 
-            if (ImGui.IsWindowHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right) && ImGui.GetIO().KeyShift)
+            if (IsHovered && ImGui.IsMouseReleased(ImGuiMouseButton.Right) && ImGui.GetIO().KeyShift)
                 ImGui.OpenPopup("addShortcut");
 
             PluginUI.DrawExternalWindow(() => ShortcutUI.DrawAddShortcut(this, null), IsDocked);

@@ -1,6 +1,7 @@
 using System;
 using System.Numerics;
 using System.Collections.Generic;
+using System.Linq;
 using ImGuiNET;
 using Dalamud.Interface;
 using static QoLBar.ShCfg;
@@ -28,8 +29,9 @@ namespace QoLBar
         public readonly ShortcutUI parent;
         public readonly List<ShortcutUI> children = new();
         public bool activated = false;
+        private bool isHovered;
         private bool isCategoryHovered = false;
-        private bool wasHoveredOnce = false;
+        private bool wasCategoryHovered = false;
         private float animTime = -1;
 
         private bool IsConfigPopupOpen() => QoLBar.Plugin.ui.IsConfigPopupOpen();
@@ -227,6 +229,8 @@ namespace QoLBar
                 parentBar.MaxHeight = size.Y;
             }
 
+            isHovered = ImGui.IsItemHovered(ImGuiHoveredFlags.RectOnly);
+
             var wasHovered = false;
             clicked = clicked || (activated && !parentBar.WasActivated);
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
@@ -298,7 +302,7 @@ namespace QoLBar
 
             if (!ImGui.BeginPopup("ShortcutCategory", (Config.CategoryNoBackground ? ImGuiWindowFlags.NoBackground : ImGuiWindowFlags.None) | ImGuiWindowFlags.NoMove))
             {
-                wasHoveredOnce = false;
+                wasCategoryHovered = false;
                 return;
             }
 
@@ -314,9 +318,14 @@ namespace QoLBar
             PluginUI.DrawExternalWindow(() => DrawConfig(Config.Name.StartsWith("::")), parentBar.IsDocked);
 
             var windowHovered = ImGui.IsWindowHovered(ImGuiHoveredFlags.AllowWhenBlockedByActiveItem | ImGuiHoveredFlags.ChildWindows);
-            isCategoryHovered = windowHovered || !wasHoveredOnce || ImGui.IsPopupOpen(null, ImGuiPopupFlags.AnyPopupId);
-            if (windowHovered)
-                wasHoveredOnce = true;
+            isCategoryHovered = windowHovered || !wasCategoryHovered || ImGui.IsPopupOpen(null, ImGuiPopupFlags.AnyPopupId);
+
+            if (Config.CategoryHoverClose)
+            {
+                var shortcuts = parent?.children ?? parentBar.children;
+                if (!wasCategoryHovered && (windowHovered || !isHovered && shortcuts.Any(sh => sh.isHovered)))
+                    wasCategoryHovered = true;
+            }
 
             var cols = Config.CategoryColumns;
             var width = (float)Math.Round(Config.CategoryWidth * ImGuiHelpers.GlobalScale * Config.CategoryScale);
