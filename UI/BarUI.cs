@@ -63,7 +63,6 @@ namespace QoLBar
         private Vector2 piv = Vector2.Zero;
         private Vector2 hidePos = Vector2.Zero;
         private Vector2 revealPos = Vector2.Zero;
-        public int tempDisableHotkey = 0;
         public bool openPie = false;
         private bool _displayOutsideMain = true;
 

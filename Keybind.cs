@@ -98,15 +98,15 @@ namespace QoLBar
 
         public static int GetModifiers()
         {
-            var key = 0;
+            var modifiers = 0;
             var io = ImGui.GetIO();
             if (io.KeyShift)
-                key |= shiftModifier;
+                modifiers |= shiftModifier;
             if (io.KeyCtrl)
-                key |= controlModifier;
+                modifiers |= controlModifier;
             if (io.KeyAlt)
-                key |= altModifier;
-            return key;
+                modifiers |= altModifier;
+            return modifiers;
         }
 
         private static int GetBaseHotkey(int hotkey) => hotkey & ~modifierMask;
@@ -149,15 +149,8 @@ namespace QoLBar
 
                 if (IsHotkeyHeld(hotkey, true))
                 {
-                    if (bar.tempDisableHotkey <= 0)
-                    {
-                        bar.openPie = true;
-                        return;
-                    }
-                }
-                else if (bar.tempDisableHotkey > 0)
-                {
-                    --bar.tempDisableHotkey;
+                    bar.openPie = true;
+                    return;
                 }
 
                 bar.openPie = false;
@@ -166,7 +159,6 @@ namespace QoLBar
             PieUI.enabled = false; // Used to disable all pies if the UI is hidden
         }
 
-        // TODO: Fix bug where keys activate after being pressed if they use key up
         private static void DoHotkeys()
         {
             if (Disabled) { hotkeys.Clear(); return; }
@@ -213,20 +205,12 @@ namespace QoLBar
             ImGui.InputText($"{id}##{hotkey}", ref dispKey, 200, ImGuiInputTextFlags.ReadOnly | ImGuiInputTextFlags.AllowTabInput); // delete the box to delete focus 4head
             if (ImGui.IsItemActive())
             {
-                var keysDown = ImGui.GetIO().KeysDown;
-                var key = 0;
-                if (ImGui.GetIO().KeyShift)
-                    key |= shiftModifier;
-                if (ImGui.GetIO().KeyCtrl)
-                    key |= controlModifier;
-                if (ImGui.GetIO().KeyAlt)
-                    key |= altModifier;
-                for (var k = 0; k < keysDown.Count; k++)
+                var modifiers = GetModifiers();
+                for (var k = 0; k < keyStates.Length; k++)
                 {
-                    if (k is >= 16 and <= 18 || !keysDown[k] || ImGui.GetIO().KeysDownDuration[k] > 0) continue;
-
-                    key |= k;
-                    hotkey = key;
+                    var keyState = keyStates[k];
+                    if (k is >= 16 and <= 18 or >= 160 and <= 165 || k <= 2 && modifiers == 0 || (keyState.CurrentState & QoLKeyState.State.KeyUp) == 0) continue;
+                    hotkey = k | modifiers;
                     return true;
                 }
             }

@@ -345,8 +345,7 @@ namespace QoLBar
                 }
             }
 
-            if (Keybind.KeybindInput(bar.Config))
-                bar.tempDisableHotkey = 3; // Takes 2 frames before the game detects this as being held down
+            Keybind.KeybindInput(bar.Config);
 
             if (ImGui.Checkbox("Edit Mode", ref bar.Config.Editing))
             {
