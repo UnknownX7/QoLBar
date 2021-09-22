@@ -153,6 +153,7 @@ namespace QoLBar
                    "\t' //m ' - Begins or ends a custom macro. The following lines\n" +
                    "will execute as a macro instead of a shortcut (allowing for\n" +
                    "/wait, /macrolock, etc), until //m is used again, up to 30 lines.\n" +
+                   "\t' //i <ID/Name> ' - Uses an item, cannot be used with //m.\n" +
                    "\t' // <Comment> ' - Adds a comment.");
             }
         }

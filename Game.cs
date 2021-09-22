@@ -244,6 +244,10 @@ namespace QoLBar
                                 else
                                     UseItem(command[2..]);
                             }
+                            else
+                            {
+                                QoLBar.PrintError("Macros do not support item usage.");
+                            }
                             break;
                         case ' ': // Comment
                             commandReady = true;
