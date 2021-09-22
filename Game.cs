@@ -54,8 +54,6 @@ namespace QoLBar
 
         public static AgentModule* agentModule;
         public static IntPtr itemContextMenuAgent;
-        private static Dictionary<uint, string> usables;
-        private static delegate*<IntPtr, uint, uint, uint, short, void> useItem;
 
         public static IntPtr addonConfig;
         public static byte CurrentHUDLayout => *(byte*)(*(IntPtr*)(addonConfig + 0x50) + 0x59E8);
@@ -95,6 +93,9 @@ namespace QoLBar
             }
         }
 
+        private static Dictionary<uint, string> usables;
+        private static delegate* unmanaged<IntPtr, uint, uint, uint, short, void> useItem;
+
         public static void Initialize()
         {
             uiModule = Framework.Instance()->GetUiModule();
@@ -130,7 +131,7 @@ namespace QoLBar
 
                 try
                 {
-                    useItem = (delegate*<IntPtr, uint, uint, uint, short, void>)DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 41 B0 01 BA 13 00 00 00");
+                    useItem = (delegate* unmanaged<IntPtr, uint, uint, uint, short, void>)DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 41 B0 01 BA 13 00 00 00");
                     itemContextMenuAgent = GetAgentByInternalID(10);
 
                     usables = DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Item>().Where(i => i.ItemAction.Row > 0).ToDictionary(i => i.RowId, i => i.Name.ToString().ToLower())
@@ -234,10 +235,10 @@ namespace QoLBar
                         case 'i': // Item
                             if (!macroMode)
                             {
-                                if (uint.TryParse(command[1..], out var id))
+                                if (uint.TryParse(command[2..], out var id))
                                     UseItem(id);
                                 else
-                                    UseItem(command[1..]);
+                                    UseItem(command[2..]);
                             }
                             break;
                         case ' ': // Comment
