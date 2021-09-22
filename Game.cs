@@ -53,6 +53,9 @@ namespace QoLBar
         public static bool IsMacroRunning => *(int*)((IntPtr)raptureShellModule + 0x2C0) >= 0;
 
         public static AgentModule* agentModule;
+        public static IntPtr itemContextMenuAgent;
+        private static Dictionary<uint, string> usables;
+        private static delegate*<IntPtr, uint, uint, uint, short, void> useItem;
 
         public static IntPtr addonConfig;
         public static byte CurrentHUDLayout => *(byte*)(*(IntPtr*)(addonConfig + 0x50) + 0x59E8);
@@ -101,18 +104,18 @@ namespace QoLBar
             addonConfig = ((delegate*<UIModule*, IntPtr>)uiModule->vfunc[19])(uiModule);
             agentModule = uiModule->GetAgentModule();
 
-            try { isTextInputActivePtr = *(IntPtr*)((IntPtr)AtkStage.GetSingleton() + 0x28) + 0x188E; } // Located in AtkInputManager
-            catch { PluginLog.Error("Failed loading textActiveBoolPtr"); }
-
             try
             {
                 GetCommandHandler = Marshal.GetDelegateForFunctionPointer<GetCommandHandlerDelegate>(DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? 83 F8 FE 74 1E"));
+
+                try { isTextInputActivePtr = *(IntPtr*)((IntPtr)AtkStage.GetSingleton() + 0x28) + 0x188E; } // Located in AtkInputManager
+                catch { PluginLog.LogError("Failed loading textActiveBoolPtr"); }
 
                 try
                 {
                     ProcessChatBox = Marshal.GetDelegateForFunctionPointer<ProcessChatBoxDelegate>(DalamudApi.SigScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9"));
                 }
-                catch { PluginLog.Error("Failed loading ExecuteCommand"); }
+                catch { PluginLog.LogError("Failed loading ExecuteCommand"); }
 
                 try
                 {
@@ -123,9 +126,20 @@ namespace QoLBar
 
                     ExecuteMacroHook.Enable();
                 }
-                catch { PluginLog.Error("Failed loading ExecuteMacro"); }
+                catch { PluginLog.LogError("Failed loading ExecuteMacro"); }
+
+                try
+                {
+                    useItem = (delegate*<IntPtr, uint, uint, uint, short, void>)DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 41 B0 01 BA 13 00 00 00");
+                    itemContextMenuAgent = GetAgentByInternalID(10);
+
+                    usables = DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Item>().Where(i => i.ItemAction.Row > 0).ToDictionary(i => i.RowId, i => i.Name.ToString().ToLower())
+                        .Concat(DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.EventItem>().Where(i => i.Action.Row > 0).ToDictionary(i => i.RowId, i => i.Name.ToString().ToLower()))
+                        .ToDictionary(kv => kv.Key, kv => kv.Value);
+                }
+                catch { PluginLog.LogError("Failed to load UseItem"); }
             }
-            catch { PluginLog.Error("Failed loading plugin"); }
+            catch { PluginLog.LogError("Failed loading plugin"); }
         }
 
         public static IntPtr GetAgentByInternalID(uint id) => (IntPtr)agentModule->GetAgentByInternalID(id);
@@ -216,6 +230,15 @@ namespace QoLBar
                                 }
                             }
                             catch { QoLBar.PrintError("Failed running macro"); }
+                            break;
+                        case 'i': // Item
+                            if (!macroMode)
+                            {
+                                if (uint.TryParse(command[1..], out var id))
+                                    UseItem(id);
+                                else
+                                    UseItem(command[1..]);
+                            }
                             break;
                         case ' ': // Comment
                             commandReady = true;
@@ -336,6 +359,25 @@ namespace QoLBar
 
             var addon = unitMgr->GetAddonByName(name, index);
             return addon;
+        }
+
+        public static void UseItem(uint id)
+        {
+            PluginLog.LogError(id.ToString());
+            if (id > 0 && usables.ContainsKey(id is >= 1_000_000 and < 2_000_000 ? id - 1_000_000 : id))
+                useItem(itemContextMenuAgent, id, 9999, 0, 0);
+        }
+
+        public static void UseItem(string name)
+        {
+            if (usables == null || string.IsNullOrWhiteSpace(name)) return;
+
+            var newName = name.Replace("\uE03C", ""); // Remove HQ Symbol
+            var useHQ = newName != name;
+            newName = newName.ToLower().Trim(' ');
+
+            try { UseItem(usables.First(i => i.Value == newName).Key + (uint)(useHQ ? 1_000_000 : 0)); }
+            catch { }
         }
 
         public static void Dispose()
