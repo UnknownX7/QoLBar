@@ -93,8 +93,10 @@ namespace QoLBar
             }
         }
 
+        // Misc
         private static Dictionary<uint, string> usables;
         private static delegate* unmanaged<IntPtr, uint, uint, uint, short, void> useItem;
+        private static delegate* unmanaged<UIModule*, ushort, byte> executeMainCommand;
 
         public static void Initialize()
         {
@@ -104,6 +106,8 @@ namespace QoLBar
             raptureMacroModule = uiModule->GetRaptureMacroModule();
             addonConfig = ((delegate*<UIModule*, IntPtr>)uiModule->vfunc[19])(uiModule);
             agentModule = uiModule->GetAgentModule();
+
+            executeMainCommand = (delegate* unmanaged<UIModule*, ushort, byte>)uiModule->vfunc[171];
 
             try
             {
@@ -364,7 +368,6 @@ namespace QoLBar
 
         public static void UseItem(uint id)
         {
-            PluginLog.LogError(id.ToString());
             if (id > 0 && usables.ContainsKey(id is >= 1_000_000 and < 2_000_000 ? id - 1_000_000 : id))
                 useItem(itemContextMenuAgent, id, 9999, 0, 0);
         }
@@ -380,6 +383,8 @@ namespace QoLBar
             try { UseItem(usables.First(i => i.Value == newName).Key + (uint)(useHQ ? 1_000_000 : 0)); }
             catch { }
         }
+
+        public static void ExecuteMainCommand(ushort id) => executeMainCommand(uiModule, id);
 
         public static void Dispose()
         {

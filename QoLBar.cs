@@ -128,6 +128,16 @@ namespace QoLBar
                 PrintError("Usage: /qolvisible [on|off|toggle] <bar>");
         }
 
+        [Command("/maincommand")]
+        [HelpMessage("Executes a main command, from the Actions & Traits menu, by ID (can be seen using Simple Tweaks' \"Show ID\" tweak).")]
+        private void OnMainCommand(string command, string argument)
+        {
+            if (ushort.TryParse(argument, out var id))
+                Game.ExecuteMainCommand(id);
+            else
+                PrintError("Invalid ID.");
+        }
+
         public static bool HasPlugin(string name) => DalamudApi.PluginInterface.PluginInternalNames.Any(x => x == name);
 
         public static bool IsLoggedIn() => ConditionCache.GetCondition(DisplayCondition.ConditionType.Misc, 0);
