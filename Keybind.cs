@@ -266,7 +266,7 @@ namespace QoLBar
                 {
                     ImGui.PushID(i);
 
-                    (_, var ui) = hotkeys[i];
+                    var (_, ui) = hotkeys[i];
                     var sh = ui.Config;
                     if (ImGui.SmallButton("Delete"))
                     {
@@ -308,6 +308,11 @@ namespace QoLBar
 
         private static readonly Dictionary<Keys, string> _keynames = new()
         {
+            [Keys.LButton] = "Mouse 1",
+            [Keys.RButton] = "Mouse 2",
+            [Keys.MButton] = "Mouse 3",
+            [Keys.XButton1] = "Mouse 4",
+            [Keys.XButton2] = "Mouse 5",
             [Keys.ShiftKey] = "Shift",
             [Keys.ControlKey] = "Ctrl",
             [Keys.Menu] = "Alt",
