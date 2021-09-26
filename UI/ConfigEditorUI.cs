@@ -290,7 +290,9 @@ namespace QoLBar
                 QoLBar.Config.Save();
 
             var _dock = (int)bar.Config.DockSide;
-            if (ImGui.Combo("Side", ref _dock, "Top\0Right\0Bottom\0Left\0Undocked"))
+            if (ImGui.Combo("Side", ref _dock, (ImGui.GetIO().ConfigFlags & ImGuiConfigFlags.ViewportsEnable) != 0
+                ? "Top\0Right\0Bottom\0Left\0Undocked"
+                : "Top\0Right\0Bottom\0Left"))
             {
                 bar.Config.DockSide = (BarDock)_dock;
                 if (bar.Config.DockSide == BarDock.Undocked && bar.Config.Visibility == BarVisibility.Slide)
