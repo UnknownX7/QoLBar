@@ -104,7 +104,7 @@ namespace QoLBar
 
             raptureShellModule = uiModule->GetRaptureShellModule();
             raptureMacroModule = uiModule->GetRaptureMacroModule();
-            addonConfig = ((delegate*<UIModule*, IntPtr>)uiModule->vfunc[19])(uiModule);
+            addonConfig = ((delegate* unmanaged<UIModule*, IntPtr>)uiModule->vfunc[19])(uiModule);
             agentModule = uiModule->GetAgentModule();
 
             executeMainCommand = (delegate* unmanaged<UIModule*, ushort, byte>)uiModule->vfunc[171];

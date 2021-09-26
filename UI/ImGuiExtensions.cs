@@ -157,72 +157,113 @@ namespace QoLBar
 
         public static void AddIcon(this ImDrawListPtr drawList, ImGuiScene.TextureWrap tex, Vector2 pos, Vector2 size, Vector2 uv1, Vector2 uv3, double rotation, bool flipped, uint color, bool hovered, float activeTime, bool frame)
         {
-            if (tex != null)
-            {
-                var p1 = pos;
-                var p2 = pos + new Vector2(size.X, 0);
-                var p3 = pos + size;
-                var p4 = pos + new Vector2(0, size.Y);
+            if (tex == null) return;
 
-                var rCos = (float)Math.Cos(rotation);
-                var rSin = (float)-Math.Sin(rotation);
-                var uvHalfSize = (uv3 - uv1) / 2;
-                var uvCenter = uv1 + uvHalfSize;
-                uv1 = uvCenter + RotateVector(-uvHalfSize, rCos, rSin);
-                var uv2 = uvCenter + RotateVector(new Vector2(uvHalfSize.X, -uvHalfSize.Y), rCos, rSin);
-                uv3 = uvCenter + RotateVector(uvHalfSize, rCos, rSin);
-                var uv4 = uvCenter + RotateVector(new Vector2(-uvHalfSize.X, uvHalfSize.Y), rCos, rSin);
+            var p1 = pos;
+            var p2 = pos + new Vector2(size.X, 0);
+            var p3 = pos + size;
+            var p4 = pos + new Vector2(0, size.Y);
 
-                if (hovered && !frame)
-                    drawList.AddRectFilled(p1, p3, (activeTime > 0 || activeTime < 0) ? ImGui.GetColorU32(ImGuiCol.ButtonActive) : ImGui.GetColorU32(ImGuiCol.ButtonHovered));
+            var rCos = (float)Math.Cos(rotation);
+            var rSin = (float)-Math.Sin(rotation);
+            var uvHalfSize = (uv3 - uv1) / 2;
+            var uvCenter = uv1 + uvHalfSize;
+            uv1 = uvCenter + RotateVector(-uvHalfSize, rCos, rSin);
+            var uv2 = uvCenter + RotateVector(new Vector2(uvHalfSize.X, -uvHalfSize.Y), rCos, rSin);
+            uv3 = uvCenter + RotateVector(uvHalfSize, rCos, rSin);
+            var uv4 = uvCenter + RotateVector(new Vector2(-uvHalfSize.X, uvHalfSize.Y), rCos, rSin);
 
-                if (!flipped)
-                    drawList.AddImageQuad(tex.ImGuiHandle, p1, p2, p3, p4, uv1, uv2, uv3, uv4, color);
-                else
-                    drawList.AddImageQuad(tex.ImGuiHandle, p2, p1, p4, p3, uv1, uv2, uv3, uv4, color);
+            if (hovered && !frame)
+                drawList.AddRectFilled(p1, p3, (activeTime != 0) ? ImGui.GetColorU32(ImGuiCol.ButtonActive) : ImGui.GetColorU32(ImGuiCol.ButtonHovered));
 
-                if (frame)
-                    drawList.AddIconFrame(p1, size, hovered, activeTime);
-            }
+            if (!flipped)
+                drawList.AddImageQuad(tex.ImGuiHandle, p1, p2, p3, p4, uv1, uv2, uv3, uv4, color);
+            else
+                drawList.AddImageQuad(tex.ImGuiHandle, p2, p1, p4, p3, uv1, uv2, uv3, uv4, color);
+
+            if (frame)
+                drawList.AddIconFrame(p1, size, hovered, activeTime);
         }
 
-        public static Vector2 iconFrameUV0 = new(1f / 426f, 141f / 426f);
-        public static Vector2 iconFrameUV1 = new(47f / 426f, 187f / 426f);
-        public static Vector2 iconHoverUV0 = new(49f / 426f, 238f / 426f);
-        public static Vector2 iconHoverUV1 = new(95f / 426f, 284f / 426f);
-        public static Vector2 iconHoverFrameUV0 = new(242f / 426f, 143f / 426f);
-        public static Vector2 iconHoverFrameUV1 = new(310f / 426f, 211f / 426f);
-        public static Vector2 iconClickUV0 = new(241f / 426f, 214f / 426f);
-        public static Vector2 iconClickUV1 = new(303f / 426f, 276f / 426f);
+        private static readonly Vector2 iconFrameUV0 = new(1f / 426f, 141f / 426f);
+        private static readonly Vector2 iconFrameUV1 = new(47f / 426f, 187f / 426f);
+        private static readonly Vector2 iconHoverUV0 = new(49f / 426f, 238f / 426f);
+        private static readonly Vector2 iconHoverUV1 = new(95f / 426f, 284f / 426f);
+        private static readonly Vector2 iconHoverFrameUV0 = new(242f / 426f, 143f / 426f);
+        private static readonly Vector2 iconHoverFrameUV1 = new(310f / 426f, 211f / 426f);
+        private static readonly Vector2 iconClickUV0 = new(241f / 426f, 214f / 426f);
+        private static readonly Vector2 iconClickUV1 = new(303f / 426f, 276f / 426f);
 
         public static void AddIconFrame(this ImDrawListPtr drawList, Vector2 pos, Vector2 size, bool hovered, float activeTime)
         {
             var frameSheet = QoLBar.TextureDictionary[TextureDictionary.FrameIconID];
-            if (frameSheet != null && frameSheet.ImGuiHandle != IntPtr.Zero)
-            {
-                var frameSize = size * 0.075f;
-                var fMin = pos - frameSize;
-                var fMax = pos + size + frameSize;
-                drawList.AddImage(frameSheet.ImGuiHandle, fMin, fMax, iconFrameUV0, iconFrameUV1); // Frame
-                if (hovered)
-                {
-                    drawList.AddImage(frameSheet.ImGuiHandle, fMin, fMax, iconHoverUV0, iconHoverUV1, 0x85FFFFFF); // Frame Center Glow
-                    fMax.Y += frameSize.Y * 0.70f; // I love rectangles
-                    drawList.AddImage(frameSheet.ImGuiHandle, fMin - (frameSize * 3.5f), fMax + (frameSize * 3.5f), iconHoverFrameUV0, iconHoverFrameUV1); // Edge glow (its a fucking rectangle why)
+            if (frameSheet == null || frameSheet.ImGuiHandle == IntPtr.Zero) return;
 
-                    if (activeTime > 0 || activeTime < 0)
-                    {
-                        var animScale = ((activeTime >= 0) ? activeTime : ImGui.GetIO().MouseDownDuration[0]) / 0.2f;
-                        if (animScale < 1.5)
-                        {
-                            var halfSize = size / 2;
-                            var center = pos + halfSize;
-                            var animSize = new Vector2(1.5f) + halfSize * animScale;
-                            ImGui.GetForegroundDrawList().AddImage(frameSheet.ImGuiHandle, center - animSize, center + animSize, iconClickUV0, iconClickUV1, ImGui.ColorConvertFloat4ToU32(new Vector4(1, 1, 1, 1 - 0.65f * animScale))); // Click
-                        }
-                    }
-                }
+            var frameSize = size * 0.075f;
+            var fMin = pos - frameSize;
+            var fMax = pos + size + frameSize;
+            drawList.AddImage(frameSheet.ImGuiHandle, fMin, fMax, iconFrameUV0, iconFrameUV1); // Frame
+            if (!hovered) return;
+
+            drawList.AddImage(frameSheet.ImGuiHandle, fMin, fMax, iconHoverUV0, iconHoverUV1, 0x85FFFFFF); // Frame Center Glow
+            fMax.Y += frameSize.Y * 0.70f; // I love rectangles
+            drawList.AddImage(frameSheet.ImGuiHandle, fMin - (frameSize * 3.5f), fMax + (frameSize * 3.5f), iconHoverFrameUV0, iconHoverFrameUV1); // Edge glow (its a fucking rectangle why)
+            if (activeTime == 0) return;
+
+            var animScale = ((activeTime >= 0) ? activeTime : ImGui.GetIO().MouseDownDuration[0]) / 0.2f;
+            if (animScale >= 1.5) return;
+
+            var halfSize = size / 2;
+            var center = pos + halfSize;
+            var animSize = new Vector2(1.5f) + halfSize * animScale;
+            ImGui.GetForegroundDrawList().AddImage(frameSheet.ImGuiHandle, center - animSize, center + animSize, iconClickUV0, iconClickUV1, ImGui.ColorConvertFloat4ToU32(new Vector4(1, 1, 1, 1 - 0.65f * animScale))); // Click
+        }
+
+        private const byte maxCooldownPhase = 80;
+        private static readonly Vector2 iconCooldownSize = new(44);
+        private static readonly Vector2 iconCooldownSection = new(44, 48);
+        private static readonly Vector2 iconCooldownSheetSize1 = new(432, 432);
+        private static readonly Vector2 iconCooldownSheetSize2 = new(792, 792);
+        private static readonly Vector2 iconCooldownUV0Mult1 = iconCooldownSection / iconCooldownSheetSize1;
+        private static readonly Vector2 iconCooldownUV0Mult2 = iconCooldownSection / iconCooldownSheetSize2;
+        private static readonly Vector2 iconCooldownUV1Add1 = iconCooldownSize / iconCooldownSheetSize1;
+        private static readonly Vector2 iconCooldownUV1Add2 = iconCooldownSize / iconCooldownSheetSize2;
+        private static readonly Vector2 iconCooldownSheetUVOffset1 = new Vector2(18, -1) / iconCooldownSheetSize1; // Due to squaring
+        private static readonly Vector2 iconCooldownSheetUVOffset2 = new Vector2(0, 179) / iconCooldownSheetSize2;
+
+        public static void AddIconCooldown(this ImDrawListPtr drawList, Vector2 min, Vector2 max, float progress, byte style)
+        {
+            var cooldownSheet = style switch
+            {
+                0 => QoLBar.TextureDictionary[TextureDictionary.GetSafeIconID(1)],
+                1 => QoLBar.TextureDictionary[TextureDictionary.GetSafeIconID(2)],
+                2 => QoLBar.TextureDictionary[TextureDictionary.GetSafeIconID(2)],
+                _ => null
+            };
+
+            if (cooldownSheet == null || cooldownSheet.ImGuiHandle == IntPtr.Zero) return;
+
+            var phase = (byte)Math.Min(Math.Max(maxCooldownPhase * progress, 0), maxCooldownPhase);
+            var row = Math.DivRem(phase, 9, out var column);
+            var uv0 = new Vector2(column, row);
+            Vector2 uv1;
+            switch (style)
+            {
+                case 0:
+                    uv0 = uv0 * iconCooldownUV0Mult1 + iconCooldownSheetUVOffset1;
+                    uv1 = uv0 + iconCooldownUV1Add1;
+                    break;
+                case 1:
+                    uv0 = uv0 * iconCooldownUV0Mult2 + iconCooldownSheetUVOffset2;
+                    uv1 = uv0 + iconCooldownUV1Add2;
+                    break;
+                default:
+                    uv0 = uv0 * iconCooldownUV0Mult2 + iconCooldownSheetUVOffset2 + new Vector2(0.5f, 0);
+                    uv1 = uv0 + iconCooldownUV1Add2;
+                    break;
             }
+
+            drawList.AddImage(cooldownSheet.ImGuiHandle, min, max, uv0, uv1);
         }
 
         private static void DrawIcon(ImGuiScene.TextureWrap icon, Vector2 size, float zoom, Vector2 offset, double rotation, bool flipped, uint color, bool hovered, float activeTime, bool frame)
