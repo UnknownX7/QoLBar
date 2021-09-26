@@ -655,8 +655,7 @@ namespace QoLBar
 
         public static bool DrawIcon(int icon, Vector2 size, float zoom, Vector2 offset, float rotation, uint color, float animTime, string args = null, bool retExists = false, bool noButton = false)
         {
-            bool ret = false;
-
+            var ret = false;
             var hasArgs = !string.IsNullOrEmpty(args);
 
             TextureDictionary texd = null;
@@ -701,9 +700,32 @@ namespace QoLBar
                 }
 
                 if (!noButton)
-                    ret = ImGuiEx.IconButton("icon", tex, size, zoom, offset, rotation, hasArgs && args.Contains("r"), color, animTime, frameArg);
+                    ret = ImGuiEx.IconButton("icon", tex, new ImGuiEx.IconSettings
+                    {
+                        size = size,
+                        zoom = zoom,
+                        offset = offset,
+                        rotation = rotation,
+                        flipped = hasArgs && args.Contains("r"),
+                        color = color,
+                        activeTime = animTime,
+                        frame = frameArg,
+                        cooldown = -1,
+                        cooldownStyle = 0
+                    });
                 else
-                    ImGuiEx.Icon(tex, size, zoom, offset, rotation, hasArgs && args.Contains("r"), color, frameArg);
+                    ImGuiEx.Icon(tex, new ImGuiEx.IconSettings
+                    {
+                        size = size,
+                        zoom = zoom,
+                        offset = offset,
+                        rotation = rotation,
+                        flipped = hasArgs && args.Contains("r"),
+                        color = color,
+                        frame = frameArg,
+                        cooldown = -1,
+                        cooldownStyle = 0
+                    });
 
                 if (retExists)
                     ret = true;

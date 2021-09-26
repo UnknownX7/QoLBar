@@ -164,13 +164,8 @@ namespace QoLBar
                     var tex = texd[icon];
                     if (tex != null)
                     {
-                        var z = 0.5f / sh.IconZoom;
-                        var offsetX = sh.IconOffset[0];
-                        var offsetY = sh.IconOffset[1];
                         var size = new Vector2(ImGui.GetFontSize() + ImGui.GetStyle().FramePadding.Y * 2);
                         var pos = center - size / 2;
-                        var uv0 = new Vector2(0.5f - z + offsetX, 0.5f - z + offsetY);
-                        var uv1 = new Vector2(0.5f + z + offsetX, 0.5f + z + offsetY);
 
                         var frameArg = QoLBar.Config.UseIconFrame;
                         if (hasArgs)
@@ -182,7 +177,19 @@ namespace QoLBar
                         }
 
                         ImGui.PushStyleColor(ImGuiCol.ButtonHovered, 0);
-                        drawList.AddIcon(tex, pos, size, uv0, uv1, sh.IconRotation, hasArgs && args.Contains("r"), color, hovered, 0, frameArg);
+                        drawList.AddIcon(tex, pos, new ImGuiEx.IconSettings
+                        {
+                            size = size,
+                            zoom = sh.IconZoom,
+                            offset = new Vector2(sh.IconOffset[0], sh.IconOffset[1]),
+                            rotation = sh.IconRotation,
+                            flipped = hasArgs && args.Contains("r"),
+                            color = color,
+                            hovered = hovered,
+                            frame = frameArg,
+                            cooldown = -1,
+                            cooldownStyle = 0
+                        });
                         ImGui.PopStyleColor();
                     }
                 }
