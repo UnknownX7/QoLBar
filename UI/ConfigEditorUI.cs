@@ -360,6 +360,12 @@ namespace QoLBar
                 QoLBar.Config.Save();
             }
             ImGui.SameLine(ImGui.GetWindowWidth() / 2);
+            if (ImGui.Checkbox("Click Through", ref bar.Config.ClickThrough))
+                QoLBar.Config.Save();
+            ImGuiEx.SetItemTooltip("WARNING: This will prevent you from interacting with this bar.\n" +
+                "To edit the settings again, you will need to use the \"O\" button\n" +
+                "next to the bar's name inside the general config.");
+
             if (ImGui.Checkbox("Lock Position", ref bar.Config.LockedPosition))
                 QoLBar.Config.Save();
 

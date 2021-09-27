@@ -30,6 +30,7 @@ namespace QoLBar
                 var flags = ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoSavedSettings | ImGuiWindowFlags.NoFocusOnAppearing;
                 if (IsDocked || Config.LockedPosition) flags |= ImGuiWindowFlags.NoMove;
                 if (Config.NoBackground) flags |= ImGuiWindowFlags.NoBackground;
+                if (Config.ClickThrough) flags |= ImGuiWindowFlags.NoInputs;
                 return flags;
             }
         }
