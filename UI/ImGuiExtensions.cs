@@ -204,8 +204,7 @@ namespace QoLBar
             if (settings.cooldownSkill > 0)
                 settings.cooldown = Game.GetCooldownPercentage(1, settings.cooldownSkill);
 
-            if (settings.frame)
-                drawList.AddIconFrame(p1, settings.size, settings.hovered, settings.activeTime, settings.cooldown, settings.cooldownStyle);
+            drawList.AddIconFrame(p1, settings.size, settings.frame, settings.hovered, settings.activeTime, settings.cooldown, settings.cooldownStyle);
         }
 
         private static readonly Vector2 iconFrameUV0 = new(1f / 426f, 141f / 426f);
@@ -217,7 +216,7 @@ namespace QoLBar
         private static readonly Vector2 iconClickUV0 = new(241f / 426f, 214f / 426f);
         private static readonly Vector2 iconClickUV1 = new(303f / 426f, 276f / 426f);
 
-        public static void AddIconFrame(this ImDrawListPtr drawList, Vector2 pos, Vector2 size, bool hovered, float activeTime, float cooldown, byte cooldownStyle)
+        public static void AddIconFrame(this ImDrawListPtr drawList, Vector2 pos, Vector2 size, bool frame, bool hovered, float activeTime, float cooldown, byte cooldownStyle)
         {
             var frameSheet = QoLBar.TextureDictionary[TextureDictionary.FrameIconID];
             if (frameSheet == null || frameSheet.ImGuiHandle == IntPtr.Zero) return;
@@ -225,12 +224,14 @@ namespace QoLBar
             var frameSize = size * 0.075f;
             var fMin = pos - frameSize;
             var fMax = pos + size + frameSize;
-            drawList.AddImage(frameSheet.ImGuiHandle, fMin, fMax, iconFrameUV0, iconFrameUV1); // Frame
+
+            if (frame && (cooldown < 0 || cooldownStyle != 0))
+                drawList.AddImage(frameSheet.ImGuiHandle, fMin, fMax, iconFrameUV0, iconFrameUV1); // Frame
 
             if (cooldown > 0)
-                drawList.AddIconCooldown(fMin, fMax, cooldown, cooldownStyle);
+                drawList.AddIconCooldown(fMin, fMax, cooldown, cooldownStyle); // Cooldown Spin
 
-            if (!hovered) return;
+            if (!frame || !hovered) return;
 
             drawList.AddImage(frameSheet.ImGuiHandle, fMin, fMax, iconHoverUV0, iconHoverUV1, 0x85FFFFFF); // Frame Center Glow
             fMax.Y += frameSize.Y * 0.70f; // I love rectangles
@@ -277,6 +278,8 @@ namespace QoLBar
             switch (style)
             {
                 case 0:
+                    min += Vector2.One;
+                    max -= Vector2.One;
                     uv0 = uv0 * iconCooldownUV0Mult1 + iconCooldownSheetUVOffset1;
                     uv1 = uv0 + iconCooldownUV1Add1;
                     break;
