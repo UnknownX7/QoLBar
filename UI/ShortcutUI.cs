@@ -186,7 +186,17 @@ namespace QoLBar
             if (useIcon)
             {
                 ImGuiEx.PushClipRectFullScreen();
-                clicked = DrawIcon(icon, new Vector2(height), sh.IconZoom, new Vector2(sh.IconOffset[0], sh.IconOffset[1]), sh.IconRotation, ImGui.ColorConvertFloat4ToU32(c), animTime, args, false, spacer);
+                clicked = DrawIcon(icon, new ImGuiEx.IconSettings
+                {
+                    size = new Vector2(height),
+                    zoom = sh.IconZoom,
+                    offset = new Vector2(sh.IconOffset[0], sh.IconOffset[1]),
+                    rotation = sh.IconRotation,
+                    color = ImGui.ColorConvertFloat4ToU32(c),
+                    activeTime = animTime,
+                    cooldownStyle = 0,
+                    cooldownSkill = 0
+                }, args, false, spacer);
                 ImGui.PopClipRect();
             }
             else
@@ -585,7 +595,7 @@ namespace QoLBar
         {
             var iconSize = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
             ImGui.SameLine(ImGui.GetWindowContentRegionWidth() + Style.WindowPadding.X - iconSize);
-            if (DrawIcon(46, new Vector2(iconSize), 1.0f, Vector2.Zero, 0, 0xFFFFFFFF, -1, "nl"))
+            if (DrawIcon(46, new ImGuiEx.IconSettings { size = new Vector2(iconSize) }, "nl"))
                 QoLBar.Plugin.ToggleIconBrowser();
             ImGuiEx.SetItemTooltip("Opens up a list of all icons you can use instead of text.\n" +
                 "Warning: This will load EVERY icon available so it will probably lag for a moment.\n" +
@@ -645,7 +655,7 @@ namespace QoLBar
             ImGui.EndPopup();
         }
 
-        public static bool DrawIcon(int icon, Vector2 size, float zoom, Vector2 offset, float rotation, uint color, float animTime, string args = null, bool retExists = false, bool noButton = false)
+        public static bool DrawIcon(int icon, ImGuiEx.IconSettings settings, string args = null, bool retExists = false, bool noButton = false)
         {
             var ret = false;
             var hasArgs = !string.IsNullOrEmpty(args);
@@ -667,60 +677,44 @@ namespace QoLBar
             var tex = texd[icon];
             if (tex == null)
             {
-                if (!retExists)
+                if (retExists) return false;
+
+                if (icon == 66001)
                 {
-                    if (icon == 66001)
-                    {
-                        if (noButton)
-                            ImGui.Dummy(size);
-                        else
-                            ret = ImGui.Button("X##FailedTexture", size);
-                    }
+                    if (noButton)
+                        ImGui.Dummy(settings.size);
                     else
-                        ret = DrawIcon(66001, size, zoom, offset, rotation, color, animTime, args, retExists, noButton);
+                        ret = ImGui.Button("X##FailedTexture", settings.size);
+                }
+                else
+                {
+                    ret = DrawIcon(66001, settings, args, false, noButton);
                 }
             }
             else
             {
-                var frameArg = QoLBar.Config.UseIconFrame;
+                settings.frame = QoLBar.Config.UseIconFrame;
                 if (hasArgs)
                 {
                     if (args.Contains("f"))
-                        frameArg = true;
+                        settings.frame = true;
                     else if (args.Contains("n"))
-                        frameArg = false;
+                        settings.frame = false;
                 }
 
-                if (!noButton)
-                    ret = ImGuiEx.IconButton("icon", tex, new ImGuiEx.IconSettings
-                    {
-                        size = size,
-                        zoom = zoom,
-                        offset = offset,
-                        rotation = rotation,
-                        flipped = hasArgs && args.Contains("r"),
-                        color = color,
-                        activeTime = animTime,
-                        frame = frameArg,
-                        cooldown = -1,
-                        cooldownStyle = 0
-                    });
-                else
-                    ImGuiEx.Icon(tex, new ImGuiEx.IconSettings
-                    {
-                        size = size,
-                        zoom = zoom,
-                        offset = offset,
-                        rotation = rotation,
-                        flipped = hasArgs && args.Contains("r"),
-                        color = color,
-                        frame = frameArg,
-                        cooldown = -1,
-                        cooldownStyle = 0
-                    });
+                settings.flipped = hasArgs && args.Contains("r");
 
-                if (retExists)
-                    ret = true;
+                if (!noButton)
+                {
+                    ret = ImGuiEx.IconButton("icon", tex, settings);
+                }
+                else
+                {
+                    settings.activeTime = 0;
+                    ImGuiEx.Icon(tex, settings);
+                }
+
+                if (retExists) return true;
             }
             return ret;
         }

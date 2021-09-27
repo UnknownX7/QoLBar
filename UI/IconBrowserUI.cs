@@ -243,6 +243,7 @@ namespace QoLBar
             clipper.Begin(cache.Count / _columns + 1, _iconSize + ImGui.GetStyle().ItemSpacing.Y);
 
             var iconSize = new Vector2(_iconSize);
+            var settings = new ImGuiEx.IconSettings { size = iconSize };
             while (clipper.Step())
             {
                 for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; row++)
@@ -252,7 +253,7 @@ namespace QoLBar
                     for (int i = start; i < end; i++)
                     {
                         var icon = cache[i];
-                        ShortcutUI.DrawIcon(icon, iconSize, 1.0f, Vector2.Zero, 0, 0xFFFFFFFF, -1, "n");
+                        ShortcutUI.DrawIcon(icon, settings, "n");
                         if (ImGui.IsItemClicked())
                         {
                             doPasteIcon = true;

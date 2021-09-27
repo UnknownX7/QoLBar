@@ -164,7 +164,7 @@ namespace QoLBar
             public bool flipped = false;
             public uint color = 0xFFFFFFFF;
             public bool hovered = false;
-            public float activeTime = 0;
+            public float activeTime = -1;
             public bool frame = false;
             public float cooldown = -1;
             public byte cooldownStyle = 0;
@@ -339,7 +339,14 @@ namespace QoLBar
             }
 
             ImGui.SetCursorPos(buttonPos);
-            ShortcutUI.DrawIcon(icon, buttonSize, zoom, offset, rotation, color, -1, args, false, true);
+            ShortcutUI.DrawIcon(icon, new IconSettings
+            {
+                size = buttonSize,
+                zoom = zoom,
+                offset = offset,
+                rotation = rotation,
+                color = color
+            }, args, false, true);
 
             ImGui.PopClipRect();
             ImGui.SetCursorPos(prevCursorPos);
