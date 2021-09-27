@@ -6,6 +6,7 @@ using Dalamud;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Hooking;
 using Dalamud.Logging;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -97,6 +98,7 @@ namespace QoLBar
         private static Dictionary<uint, string> usables;
         private static delegate* unmanaged<IntPtr, uint, uint, uint, short, void> useItem;
         private static delegate* unmanaged<UIModule*, ushort, byte> executeMainCommand;
+        private static ActionManager* actionManager;
 
         public static void Initialize()
         {
@@ -106,6 +108,7 @@ namespace QoLBar
             raptureMacroModule = uiModule->GetRaptureMacroModule();
             addonConfig = ((delegate* unmanaged<UIModule*, IntPtr>)uiModule->vfunc[19])(uiModule);
             agentModule = uiModule->GetAgentModule();
+            actionManager = ActionManager.Instance();
 
             executeMainCommand = (delegate* unmanaged<UIModule*, ushort, byte>)uiModule->vfunc[171];
 
@@ -389,6 +392,15 @@ namespace QoLBar
         }
 
         public static void ExecuteMainCommand(ushort id) => executeMainCommand(uiModule, id);
+
+        public static float GetCooldownPercentage(ActionType actionType, uint actionID)
+        {
+            var recast = actionManager->GetRecastTime(actionType, actionID);
+            if (recast == 0) return -1;
+            return actionManager->GetRecastTimeElapsed(actionType, actionID) / recast;
+        }
+
+        public static float GetCooldownPercentage(byte actionType, uint actionID) => GetCooldownPercentage((ActionType)actionType, actionID);
 
         public static void Dispose()
         {

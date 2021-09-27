@@ -168,6 +168,7 @@ namespace QoLBar
             public bool frame = false;
             public float cooldown = -1;
             public byte cooldownStyle = 0;
+            public uint cooldownSkill = 0;
         }
 
         public static void AddIcon(this ImDrawListPtr drawList, ImGuiScene.TextureWrap tex, Vector2 pos, IconSettings settings)
@@ -199,6 +200,9 @@ namespace QoLBar
                 drawList.AddImageQuad(tex.ImGuiHandle, p1, p2, p3, p4, uv1, uv2, uv3, uv4, settings.color);
             else
                 drawList.AddImageQuad(tex.ImGuiHandle, p2, p1, p4, p3, uv1, uv2, uv3, uv4, settings.color);
+
+            if (settings.cooldownSkill > 0)
+                settings.cooldown = Game.GetCooldownPercentage(1, settings.cooldownSkill);
 
             if (settings.frame)
                 drawList.AddIconFrame(p1, settings.size, settings.hovered, settings.activeTime, settings.cooldown, settings.cooldownStyle);
