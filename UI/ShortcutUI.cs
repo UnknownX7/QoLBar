@@ -164,6 +164,7 @@ namespace QoLBar
 
             var name = sh.Name;
             var useIcon = ParseName(ref name, out var tooltip, out var icon, out var args);
+            var spacer = sh.Type == ShortcutType.Spacer;
 
             if (inCategory)
             {
@@ -182,39 +183,30 @@ namespace QoLBar
                 c = AnimateColor(c);
 
             ImGuiEx.PushFontScale(ImGuiEx.GetFontScale() * (!inCategory ? parentBar.Config.FontScale : parent.Config.CategoryFontScale));
-            if (sh.Type == ShortcutType.Spacer)
-            {
-                if (useIcon)
-                {
-                    ImGuiEx.PushClipRectFullScreen();
-                    DrawIcon(icon, new Vector2(height), sh.IconZoom, new Vector2(sh.IconOffset[0], sh.IconOffset[1]), sh.IconRotation, ImGui.ColorConvertFloat4ToU32(c), animTime, args, false, true);
-                    ImGui.PopClipRect();
-                }
-                else
-                {
-                    var wantedSize = ImGui.GetFontSize();
-                    var textSize = ImGui.CalcTextSize(name);
-                    ImGui.BeginChild((uint)ID, new Vector2((width == 0) ? (textSize.X + Style.FramePadding.X * 2) : width, height));
-                    ImGui.SameLine((ImGui.GetContentRegionAvail().X - textSize.X) / 2);
-                    ImGui.SetCursorPosY((ImGui.GetContentRegionAvail().Y - textSize.Y) / 2);
-                    // What the fuck ImGui
-                    ImGui.SetWindowFontScale(wantedSize / ImGui.GetFontSize());
-                    ImGui.TextColored(c, name);
-                    ImGui.SetWindowFontScale(1);
-                    ImGui.EndChild();
-                }
-            }
-            else if (useIcon)
+            if (useIcon)
             {
                 ImGuiEx.PushClipRectFullScreen();
-                clicked = DrawIcon(icon, new Vector2(height), sh.IconZoom, new Vector2(sh.IconOffset[0], sh.IconOffset[1]), sh.IconRotation, ImGui.ColorConvertFloat4ToU32(c), animTime, args);
+                clicked = DrawIcon(icon, new Vector2(height), sh.IconZoom, new Vector2(sh.IconOffset[0], sh.IconOffset[1]), sh.IconRotation, ImGui.ColorConvertFloat4ToU32(c), animTime, args, false, spacer);
                 ImGui.PopClipRect();
             }
             else
             {
+                if (spacer)
+                {
+                    ImGui.PushStyleColor(ImGuiCol.Button, 0);
+                    ImGui.PushStyleColor(ImGuiCol.ButtonActive, 0);
+                    ImGui.PushStyleColor(ImGuiCol.ButtonHovered, 0);
+                }
+
                 ImGui.PushStyleColor(ImGuiCol.Text, c);
                 clicked = ImGui.Button(name, new Vector2(width, height));
                 ImGui.PopStyleColor();
+
+                if (spacer)
+                {
+                    ImGui.PopStyleColor(3);
+                    clicked = false;
+                }
             }
             ImGuiEx.PopFontScale();
 
