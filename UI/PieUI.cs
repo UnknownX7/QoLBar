@@ -186,6 +186,7 @@ namespace QoLBar
                             flipped = hasArgs && args.Contains("r"),
                             color = color,
                             hovered = hovered,
+                            activeTime = 0,
                             frame = frameArg,
                             cooldown = -1,
                             cooldownStyle = 0
