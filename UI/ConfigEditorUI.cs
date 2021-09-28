@@ -282,6 +282,33 @@ namespace QoLBar
                 sh.Config.IconRotation = (float)(r / 180 * Math.PI);
                 QoLBar.Config.Save();
             }
+
+            var _ = (int)sh.Config.CooldownAction;
+            if (ImGui.InputInt("Cooldown Action ID", ref _))
+            {
+                sh.Config.CooldownAction = (uint)Math.Max(_, uint.MinValue);
+                QoLBar.Config.Save();
+            }
+
+            if (sh.Config.CooldownAction > 0)
+            {
+                var save = ImGui.CheckboxFlags("##CooldownNumber", ref sh.Config.CooldownStyle, (int)ImGuiEx.IconSettings.CooldownStyle.Number);
+                ImGuiEx.SetItemTooltip("Number");
+                ImGui.SameLine();
+                save |= ImGui.CheckboxFlags("##CooldownDisable", ref sh.Config.CooldownStyle, (int)ImGuiEx.IconSettings.CooldownStyle.Disable);
+                ImGuiEx.SetItemTooltip("Darken (Forces the icon frame)");
+                ImGui.SameLine();
+                save |= ImGui.CheckboxFlags("##CooldownDefault", ref sh.Config.CooldownStyle, (int)ImGuiEx.IconSettings.CooldownStyle.Cooldown);
+                ImGuiEx.SetItemTooltip("Default Spinner (Forces the icon frame)");
+                ImGui.SameLine();
+                save |= ImGui.CheckboxFlags("##CooldownGCD", ref sh.Config.CooldownStyle, (int)ImGuiEx.IconSettings.CooldownStyle.GCDCooldown);
+                ImGuiEx.SetItemTooltip("Orange GCD Spinner");
+                ImGui.SameLine();
+                save |= ImGui.CheckboxFlags("Cooldown Style Flags##CooldownCharge", ref sh.Config.CooldownStyle, (int)ImGuiEx.IconSettings.CooldownStyle.ChargeCooldown);
+                ImGuiEx.SetItemTooltip("Charge Spinner");
+                if (save)
+                    QoLBar.Config.Save();
+            }
         }
 
         public static void EditBarGeneralOptions(BarUI bar)

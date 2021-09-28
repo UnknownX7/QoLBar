@@ -153,6 +153,8 @@ namespace QoLBar
             {
                 sh.IconZoom = sh.GetDefaultValue(x => x.IconZoom);
                 sh.IconOffset = sh.GetDefaultValue(x => x.IconOffset);
+                sh.CooldownAction = sh.GetDefaultValue(x => x.CooldownAction);
+                sh.CooldownStyle = sh.GetDefaultValue(x => x.CooldownStyle);
             }
             //else if (sh.ColorAnimation == 0)
             //    sh.ColorBg = sh.GetDefaultValue(x => x.ColorBg);

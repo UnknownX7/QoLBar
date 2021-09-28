@@ -188,8 +188,6 @@ namespace QoLBar
                             hovered = hovered,
                             activeTime = 0,
                             frame = frameArg,
-                            cooldown = -1,
-                            cooldownStyle = 0
                         });
                         ImGui.PopStyleColor();
                     }

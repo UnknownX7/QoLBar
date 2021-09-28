@@ -157,6 +157,17 @@ namespace QoLBar
 
         public class IconSettings
         {
+            [Flags]
+            public enum CooldownStyle
+            {
+                None = 0,
+                Number = 1,
+                Disable = 2,
+                Cooldown = 4,
+                GCDCooldown = 8,
+                ChargeCooldown = 16
+            }
+
             public Vector2 size = Vector2.One;
             public float zoom = 1;
             public Vector2 offset = Vector2.Zero;
@@ -166,9 +177,10 @@ namespace QoLBar
             public bool hovered = false;
             public float activeTime = -1;
             public bool frame = false;
-            public float cooldown = -1;
-            public byte cooldownStyle = 0;
-            public uint cooldownSkill = 0;
+            public float cooldownCurrent = -1;
+            public float cooldownMax = -1;
+            public uint cooldownAction = 0;
+            public CooldownStyle cooldownStyle = CooldownStyle.None;
         }
 
         public static void AddIcon(this ImDrawListPtr drawList, ImGuiScene.TextureWrap tex, Vector2 pos, IconSettings settings)
@@ -201,10 +213,13 @@ namespace QoLBar
             else
                 drawList.AddImageQuad(tex.ImGuiHandle, p2, p1, p4, p3, uv1, uv2, uv3, uv4, settings.color);
 
-            if (settings.cooldownSkill > 0)
-                settings.cooldown = Game.GetCooldownPercentage(1, settings.cooldownSkill);
+            if (settings.cooldownAction > 0)
+            {
+                settings.cooldownCurrent = Game.GetRecastTimeElapsed(1, settings.cooldownAction);
+                settings.cooldownMax = Game.GetRecastTime(1, settings.cooldownAction);
+            }
 
-            drawList.AddIconFrame(p1, settings.size, settings.frame, settings.hovered, settings.activeTime, settings.cooldown, settings.cooldownStyle);
+            drawList.AddIconFrame(p1, settings.size, settings.frame, settings.hovered, settings.activeTime, settings.cooldownCurrent, settings.cooldownMax, settings.cooldownStyle);
         }
 
         private static readonly Vector2 iconFrameUV0 = new(1f / 426f, 141f / 426f);
@@ -216,20 +231,54 @@ namespace QoLBar
         private static readonly Vector2 iconClickUV0 = new(241f / 426f, 214f / 426f);
         private static readonly Vector2 iconClickUV1 = new(303f / 426f, 276f / 426f);
 
-        public static void AddIconFrame(this ImDrawListPtr drawList, Vector2 pos, Vector2 size, bool frame, bool hovered, float activeTime, float cooldown, byte cooldownStyle)
+        public static void AddIconFrame(this ImDrawListPtr drawList, Vector2 pos, Vector2 size, bool frame, bool hovered, float activeTime, float cooldownCurrent, float cooldownMax, IconSettings.CooldownStyle cooldownStyle)
         {
             var frameSheet = QoLBar.TextureDictionary[TextureDictionary.FrameIconID];
             if (frameSheet == null || frameSheet.ImGuiHandle == IntPtr.Zero) return;
 
+            var halfSize = size / 2;
+            var center = pos + halfSize;
             var frameSize = size * 0.075f;
             var fMin = pos - frameSize;
             var fMax = pos + size + frameSize;
 
-            if (frame && (cooldown < 0 || cooldownStyle != 0))
+            if (frame && (cooldownMax < 0 || (cooldownStyle & (IconSettings.CooldownStyle.Cooldown | IconSettings.CooldownStyle.Disable)) == 0))
                 drawList.AddImage(frameSheet.ImGuiHandle, fMin, fMax, iconFrameUV0, iconFrameUV1); // Frame
 
-            if (cooldown > 0)
-                drawList.AddIconCooldown(fMin, fMax, cooldown, cooldownStyle); // Cooldown Spin
+            // Cooldown Spin
+            if (cooldownMax > 0)
+            {
+                var progress = cooldownCurrent / cooldownMax;
+                if ((cooldownStyle & IconSettings.CooldownStyle.Disable) != 0)
+                    drawList.AddIconCooldown(fMin, fMax, 0, 0);
+                if ((cooldownStyle & IconSettings.CooldownStyle.GCDCooldown) != 0)
+                    drawList.AddIconCooldown(fMin, fMax, progress, 1);
+                if ((cooldownStyle & IconSettings.CooldownStyle.ChargeCooldown) != 0)
+                    drawList.AddIconCooldown(fMin, fMax, progress, 2);
+                if ((cooldownStyle & IconSettings.CooldownStyle.Cooldown) != 0)
+                    drawList.AddIconCooldown(fMin, fMax, progress, 0);
+
+                if ((cooldownStyle & IconSettings.CooldownStyle.Number) != 0)
+                {
+                    ImGui.PushFont(QoLBar.BigFont);
+
+                    var wantedSize = size.X * 0.75f;
+                    var str = $"{Math.Ceiling(cooldownMax - cooldownCurrent)}";
+
+                    PushFontScale(wantedSize / QoLBar.BigFontSize);
+
+                    // Outline
+                    var textOutlinePos = center - ImGui.CalcTextSize(str) / 2 + new Vector2(0, wantedSize * 0.05f);
+                    drawList.AddText(QoLBar.BigFont, wantedSize, textOutlinePos, 0xFF000000, str);
+
+                    var textPos = center - ImGui.CalcTextSize(str) / 2 - Vector2.UnitY;
+                    drawList.AddText(QoLBar.BigFont, wantedSize, textPos, 0xFFFFFFFF, str);
+
+                    PopFontScale();
+
+                    ImGui.PopFont();
+                }
+            }
 
             if (!frame || !hovered) return;
 
@@ -241,8 +290,6 @@ namespace QoLBar
             var animScale = ((activeTime >= 0) ? activeTime : ImGui.GetIO().MouseDownDuration[0]) / 0.2f;
             if (animScale >= 1.5) return;
 
-            var halfSize = size / 2;
-            var center = pos + halfSize;
             var animSize = new Vector2(1.5f) + halfSize * animScale;
             ImGui.GetForegroundDrawList().AddImage(frameSheet.ImGuiHandle, center - animSize, center + animSize, iconClickUV0, iconClickUV1, ImGui.ColorConvertFloat4ToU32(new Vector4(1, 1, 1, 1 - 0.65f * animScale))); // Click
         }

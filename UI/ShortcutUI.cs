@@ -194,8 +194,8 @@ namespace QoLBar
                     rotation = sh.IconRotation,
                     color = ImGui.ColorConvertFloat4ToU32(c),
                     activeTime = animTime,
-                    cooldownStyle = 0,
-                    cooldownSkill = 0
+                    cooldownAction = sh.CooldownAction,
+                    cooldownStyle = (ImGuiEx.IconSettings.CooldownStyle)sh.CooldownStyle
                 }, args, false, spacer);
                 ImGui.PopClipRect();
             }

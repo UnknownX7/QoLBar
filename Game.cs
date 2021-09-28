@@ -393,14 +393,18 @@ namespace QoLBar
 
         public static void ExecuteMainCommand(ushort id) => executeMainCommand(uiModule, id);
 
-        public static float GetCooldownPercentage(ActionType actionType, uint actionID)
+        public static float GetRecastTime(ActionType actionType, uint actionID)
         {
             var recast = actionManager->GetRecastTime(actionType, actionID);
             if (recast == 0) return -1;
-            return actionManager->GetRecastTimeElapsed(actionType, actionID) / recast;
+            return recast;
         }
 
-        public static float GetCooldownPercentage(byte actionType, uint actionID) => GetCooldownPercentage((ActionType)actionType, actionID);
+        public static float GetRecastTime(byte actionType, uint actionID) => GetRecastTime((ActionType)actionType, actionID);
+
+        public static float GetRecastTimeElapsed(ActionType actionType, uint actionID) => actionManager->GetRecastTimeElapsed(actionType, actionID);
+
+        public static float GetRecastTimeElapsed(byte actionType, uint actionID) => GetRecastTimeElapsed((ActionType)actionType, actionID);
 
         public static void Dispose()
         {

@@ -2,12 +2,14 @@ using System;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Reflection;
 using System.Linq;
 using System.Linq.Expressions;
 using Dalamud.Game;
 using Dalamud.Plugin;
 using Dalamud.Utility;
+using ImGuiNET;
 
 // Disclaimer: I have no idea what I'm doing.
 namespace QoLBar
@@ -27,6 +29,9 @@ namespace QoLBar
         public static readonly TextureDictionary textureDictionaryGSLR = new(false, true);
         public static readonly TextureDictionary textureDictionaryGSHR = new(true, true);
 
+        public const int BigFontSize = 50;
+        public static ImFontPtr BigFont;
+
         public QoLBar(DalamudPluginInterface pluginInterface)
         {
             Plugin = this;
@@ -41,6 +46,8 @@ namespace QoLBar
             ui = new PluginUI();
             DalamudApi.PluginInterface.UiBuilder.OpenConfigUi += ToggleConfig;
             DalamudApi.PluginInterface.UiBuilder.Draw += Draw;
+            DalamudApi.PluginInterface.UiBuilder.BuildFonts += BuildFonts;
+            DalamudApi.PluginInterface.UiBuilder.RebuildFonts();
 
             CheckHideOptOuts();
 
@@ -164,6 +171,8 @@ namespace QoLBar
             Config.DrawUpdateWindow();
             ui.Draw();
         }
+
+        private void BuildFonts() => BigFont = ImGui.GetIO().Fonts.AddFontFromFileTTF(Path.Combine(DalamudApi.PluginInterface.DalamudAssetDirectory.FullName, "UIRes", "NotoSansCJKjp-Medium.otf"), BigFontSize);
 
         public void CheckHideOptOuts()
         {
@@ -310,6 +319,7 @@ namespace QoLBar
             DalamudApi.Framework.Update -= Update;
             DalamudApi.PluginInterface.UiBuilder.OpenConfigUi -= ToggleConfig;
             DalamudApi.PluginInterface.UiBuilder.Draw -= Draw;
+            DalamudApi.PluginInterface.UiBuilder.BuildFonts -= BuildFonts;
             DalamudApi.Dispose();
 
             ui.Dispose();
