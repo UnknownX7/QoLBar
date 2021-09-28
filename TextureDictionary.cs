@@ -92,7 +92,7 @@ namespace QoLBar
                         if (tex != null && tex.ImGuiHandle != IntPtr.Zero)
                             TryUpdate(i, tex, null);
                     }
-                    catch { }
+                    catch (Exception e) { PluginLog.LogError($"Failed to load icon {i}:\n{e}"); }
                 });
 
                 loadQueue.Enqueue((doSync, t));
