@@ -478,6 +478,7 @@ namespace QoLBar
             ImGuiEx.TextCopyable($"{Game.isTextInputActivePtr:X}");
             ImGui.NextColumn();
             ImGui.TextUnformatted($"{Game.IsGameTextInputActive}");
+            ImGui.NextColumn();
 
             ImGui.TextUnformatted("Item Context Menu Agent");
             ImGui.NextColumn();
