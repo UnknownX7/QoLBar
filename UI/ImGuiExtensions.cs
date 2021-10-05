@@ -269,16 +269,18 @@ namespace QoLBar
                     var wantedSize = size.X * 0.75f;
                     var str = $"{Math.Ceiling(cooldownMax - cooldownCurrent)}";
 
-                    PushFontScale(wantedSize / ImGui.GetFont().FontSize);
+                    PushFontSize(wantedSize);
+
+                    var textSizeHalf = ImGui.CalcTextSize(str) / (2 * ImGuiHelpers.GlobalScale); // I don't know but it works
 
                     // Outline
-                    var textOutlinePos = center - ImGui.CalcTextSize(str) / 2 + new Vector2(0, wantedSize * 0.05f);
+                    var textOutlinePos = center - textSizeHalf + new Vector2(0, wantedSize * 0.05f);
                     drawList.AddText(QoLBar.BigFont, wantedSize, textOutlinePos, 0xFF000000, str);
 
-                    var textPos = center - ImGui.CalcTextSize(str) / 2 - Vector2.UnitY;
+                    var textPos = center - textSizeHalf - Vector2.UnitY;
                     drawList.AddText(QoLBar.BigFont, wantedSize, textPos, 0xFFFFFFFF, str);
 
-                    PopFontScale();
+                    PopFontSize();
 
                     ImGui.PopFont();
                 }
