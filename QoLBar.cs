@@ -6,7 +6,9 @@ using System.IO;
 using System.Reflection;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Runtime.InteropServices;
 using Dalamud.Game;
+using Dalamud.Interface;
 using Dalamud.Plugin;
 using Dalamud.Utility;
 using ImGuiNET;
@@ -29,7 +31,8 @@ namespace QoLBar
         public static readonly TextureDictionary textureDictionaryGSLR = new(false, true);
         public static readonly TextureDictionary textureDictionaryGSHR = new(true, true);
 
-        public const int BigFontSize = 50;
+        public const float FontSize = 50;
+        public const float DownscaledFontSize = 17;
         public static ImFontPtr BigFont;
 
         public QoLBar(DalamudPluginInterface pluginInterface)
@@ -173,7 +176,12 @@ namespace QoLBar
             ui.Draw();
         }
 
-        private void BuildFonts() => BigFont = ImGui.GetIO().Fonts.AddFontFromFileTTF(Path.Combine(DalamudApi.PluginInterface.DalamudAssetDirectory.FullName, "UIRes", "NotoSansCJKjp-Medium.otf"), BigFontSize);
+        private void BuildFonts()
+        {
+            var japaneseRangeHandle = GCHandle.Alloc(GlyphRangesJapanese.GlyphRanges, GCHandleType.Pinned);
+            BigFont = ImGui.GetIO().Fonts.AddFontFromFileTTF(Path.Combine(DalamudApi.PluginInterface.DalamudAssetDirectory.FullName, "UIRes", "NotoSansCJKjp-Medium.otf"), FontSize, null, japaneseRangeHandle.AddrOfPinnedObject());
+            japaneseRangeHandle.Free();
+        }
 
         public void CheckHideOptOuts()
         {

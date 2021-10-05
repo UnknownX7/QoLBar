@@ -2,6 +2,7 @@ using System;
 using System.Numerics;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using Newtonsoft.Json;
 using Dalamud.Interface;
 using ImGuiNET;
@@ -225,42 +226,88 @@ namespace QoLBar
 
     public static class Legacy
     {
-        private static readonly Dictionary<string, Action<Configuration>> upgradeActions = new()
+        private static readonly Dictionary<string, Action<Configuration, Importing.ExportInfo>> upgradeActions = new()
         {
-            ["1.3.2.0"] = (config) =>
+            ["1.3.2.0"] = (config, import) =>
             {
                 static void DeleteRecursive(Shortcut sh)
                 {
-                    if (sh.Type == Shortcut.ShortcutType.Category)
-                    {
-                        sh.Command = string.Empty;
-                        if (sh.SubList != null)
-                        {
-                            foreach (var sh2 in sh.SubList)
-                                DeleteRecursive(sh2);
-                        }
-                    }
+                    if (sh.Type != Shortcut.ShortcutType.Category) return;
+
+                    sh.Command = string.Empty;
+                    if (sh.SubList == null) return;
+
+                    foreach (var sh2 in sh.SubList)
+                        DeleteRecursive(sh2);
                 }
 
-                foreach (var bar in config.BarConfigs)
+                if (config != null)
                 {
-                    foreach (var sh in bar.ShortcutList)
+                    foreach (var sh in config.BarConfigs.SelectMany(bar => bar.ShortcutList))
                         DeleteRecursive(sh);
+                }
+
+                if (import != null)
+                {
+                    if (import.b1?.ShortcutList != null)
+                    {
+                        foreach (var sh in import.b1.ShortcutList)
+                            DeleteRecursive(sh);
+                    }
+
+                    if (import.s1 != null)
+                        DeleteRecursive(import.s1);
+                }
+            },
+            ["2.2.0.1"] = (config, import) =>
+            {
+                static void FixScaleRecursive(ShCfg sh)
+                {
+                    if (sh.Type != ShCfg.ShortcutType.Category) return;
+
+                    sh.CategoryScale *= sh.CategoryScale;
+                    if (sh.SubList == null) return;
+
+                    foreach (var sh2 in sh.SubList)
+                        FixScaleRecursive(sh2);
+                }
+
+                if (config != null)
+                {
+                    foreach (var sh in config.BarCfgs.SelectMany(bar => bar.ShortcutList))
+                        FixScaleRecursive(sh);
+                }
+
+                if (import != null)
+                {
+                    if (import.b2?.ShortcutList != null)
+                    {
+                        foreach (var sh in import.b2?.ShortcutList)
+                            FixScaleRecursive(sh);
+                    }
+
+                    if (import.s2 != null)
+                        FixScaleRecursive(import.s2);
                 }
             }
         };
 
         public static void UpdateConfig(Configuration config)
         {
-            if (!string.IsNullOrEmpty(config.PluginVersion))
-            {
-                var v = new Version(config.PluginVersion);
-                foreach (var kv in upgradeActions)
-                {
-                    if (new Version(kv.Key) >= v)
-                        kv.Value(config);
-                }
-            }
+            if (string.IsNullOrEmpty(config.PluginVersion)) return;
+
+            var v = new Version(config.PluginVersion);
+            foreach (var kv in upgradeActions.Where(kv => v <= new Version(kv.Key)))
+                kv.Value(config, null);
+        }
+
+        public static void UpdateImport(Importing.ExportInfo import)
+        {
+            if (string.IsNullOrEmpty(import.v)) return;
+
+            var v = new Version(import.v);
+            foreach (var kv in upgradeActions.Where(kv => v <= new Version(kv.Key)))
+                kv.Value(null, import);
         }
     }
 }

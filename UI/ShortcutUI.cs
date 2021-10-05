@@ -252,7 +252,11 @@ namespace QoLBar
                 }
 
                 if (!string.IsNullOrEmpty(tooltip))
+                {
+                    ImGui.PopFont();
                     ImGui.SetTooltip(tooltip);
+                    ImGui.PushFont(QoLBar.BigFont);
+                }
             }
 
             if (clicked && !parentBar.IsDragging && !IsConfigPopupOpen())
@@ -281,7 +285,7 @@ namespace QoLBar
                 if (parentBar.IsDocked)
                     ImGuiHelpers.ForceNextWindowMainViewport();
                 ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(sh.CategorySpacing[0], sh.CategorySpacing[1]));
-                ImGuiEx.PushFontScale(sh.CategoryScale);
+                ImGuiEx.PushFontScale(1); // Popups will square this value for some reason, so it has to be reset temporarily
                 DrawCategory();
                 ImGuiEx.PopFontScale();
                 ImGui.PopStyleVar();
@@ -307,6 +311,8 @@ namespace QoLBar
                 wasCategoryHovered = false;
                 return;
             }
+
+            ImGuiEx.PushFontSize(QoLBar.DownscaledFontSize * Config.CategoryScale);
 
             if (ImGui.IsWindowAppearing())
                 _fuckImGui = true;
@@ -353,7 +359,9 @@ namespace QoLBar
                     ImGui.OpenPopup("addShortcut");
                 ImGuiEx.PopFontScale();
                 ImGui.PopStyleColor();
+                ImGui.PopFont();
                 ImGuiEx.SetItemTooltip("Add a new shortcut.");
+                ImGui.PushFont(QoLBar.BigFont);
             }
 
             if (ImGui.IsWindowHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right) && ImGui.GetIO().KeyShift)
@@ -365,6 +373,8 @@ namespace QoLBar
 
             if (Config.CategoryHoverClose && !isCategoryHovered)
                 ImGui.CloseCurrentPopup();
+
+            ImGuiEx.PopFontSize();
 
             ImGui.EndPopup();
         }

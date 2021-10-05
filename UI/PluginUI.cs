@@ -698,11 +698,13 @@ namespace QoLBar
         {
             if (noViewport)
                 ImGuiHelpers.ForceNextWindowMainViewport();
+            ImGui.PopFont();
             ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, defaultSpacing);
-            ImGuiEx.PushFontScale(1);
+            ImGuiEx.PushFontSize(QoLBar.DownscaledFontSize);
             draw();
-            ImGuiEx.PopFontScale();
+            ImGuiEx.PopFontSize();
             ImGui.PopStyleVar();
+            ImGui.PushFont(QoLBar.BigFont);
         }
     }
 }

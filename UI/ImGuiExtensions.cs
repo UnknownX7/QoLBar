@@ -16,22 +16,26 @@ namespace QoLBar
         }
 
         // Why is this not a basic feature of ImGui...
-        private static readonly Stack<float> _fontScaleStack = new();
-        private static float _curScale = 1;
+        private static readonly Stack<float> fontScaleStack = new();
+        private static float curScale = 1;
         public static void PushFontScale(float scale)
         {
-            _fontScaleStack.Push(_curScale);
-            _curScale = scale;
-            ImGui.SetWindowFontScale(_curScale);
+            fontScaleStack.Push(curScale);
+            curScale = scale;
+            ImGui.SetWindowFontScale(curScale);
         }
 
         public static void PopFontScale()
         {
-            _curScale = _fontScaleStack.Pop();
-            ImGui.SetWindowFontScale(_curScale);
+            curScale = fontScaleStack.Pop();
+            ImGui.SetWindowFontScale(curScale);
         }
 
-        public static float GetFontScale() => _curScale;
+        public static void PushFontSize(float size) => PushFontScale(size / ImGui.GetFont().FontSize);
+
+        public static void PopFontSize() => PopFontScale();
+
+        public static float GetFontScale() => curScale;
 
         public static void ClampWindowPosToViewport()
         {
@@ -73,23 +77,23 @@ namespace QoLBar
             catch { return string.Empty; }
         }
 
-        private static bool _sliderEnabled = false;
-        private static bool _sliderVertical = false;
-        private static float _sliderInterval = 0;
-        private static int _lastHitInterval = 0;
-        private static Action<bool, bool, bool> _sliderAction;
+        private static bool sliderEnabled = false;
+        private static bool sliderVertical = false;
+        private static float sliderInterval = 0;
+        private static int lastHitInterval = 0;
+        private static Action<bool, bool, bool> sliderAction;
         public static void SetupSlider(bool vertical, float interval, Action<bool, bool, bool> action)
         {
-            _sliderEnabled = true;
-            _sliderVertical = vertical;
-            _sliderInterval = interval;
-            _lastHitInterval = 0;
-            _sliderAction = action;
+            sliderEnabled = true;
+            sliderVertical = vertical;
+            sliderInterval = interval;
+            lastHitInterval = 0;
+            sliderAction = action;
         }
 
         public static void DoSlider()
         {
-            if (!_sliderEnabled) return;
+            if (!sliderEnabled) return;
 
             // You can blame ImGui for this
             var popupOpen = !ImGui.IsPopupOpen("_SLIDER") && ImGui.IsPopupOpen(null, ImGuiPopupFlags.AnyPopup);
@@ -101,33 +105,33 @@ namespace QoLBar
                 if (!ImGui.BeginPopup("_SLIDER")) return;
             }
 
-            var drag = _sliderVertical ? ImGui.GetMouseDragDelta().Y : ImGui.GetMouseDragDelta().X;
-            var dragInterval = (int)(drag / _sliderInterval);
+            var drag = sliderVertical ? ImGui.GetMouseDragDelta().Y : ImGui.GetMouseDragDelta().X;
+            var dragInterval = (int)(drag / sliderInterval);
             var hit = false;
             var increment = false;
-            if (dragInterval > _lastHitInterval)
+            if (dragInterval > lastHitInterval)
             {
                 hit = true;
                 increment = true;
             }
-            else if (dragInterval < _lastHitInterval)
+            else if (dragInterval < lastHitInterval)
                 hit = true;
 
             var closing = !ImGui.IsMouseDown(ImGuiMouseButton.Left);
 
-            if (_lastHitInterval != dragInterval)
+            if (lastHitInterval != dragInterval)
             {
-                while (_lastHitInterval != dragInterval)
+                while (lastHitInterval != dragInterval)
                 {
-                    _lastHitInterval += increment ? 1 : -1;
-                    _sliderAction(hit, increment, closing && _lastHitInterval == dragInterval);
+                    lastHitInterval += increment ? 1 : -1;
+                    sliderAction(hit, increment, closing && lastHitInterval == dragInterval);
                 }
             }
             else
-                _sliderAction(false, false, closing);
+                sliderAction(false, false, closing);
 
             if (closing)
-                _sliderEnabled = false;
+                sliderEnabled = false;
 
             if (!popupOpen)
                 ImGui.EndPopup();
@@ -265,7 +269,7 @@ namespace QoLBar
                     var wantedSize = size.X * 0.75f;
                     var str = $"{Math.Ceiling(cooldownMax - cooldownCurrent)}";
 
-                    PushFontScale(wantedSize / QoLBar.BigFontSize);
+                    PushFontScale(wantedSize / ImGui.GetFont().FontSize);
 
                     // Outline
                     var textOutlinePos = center - ImGui.CalcTextSize(str) / 2 + new Vector2(0, wantedSize * 0.05f);

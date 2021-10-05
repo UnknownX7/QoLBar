@@ -285,11 +285,13 @@ namespace QoLBar
                 ImGui.SetNextWindowSize(barSize);
                 ImGui.Begin($"QoLBar##{ID}", WindowFlags);
 
+                ImGui.PushFont(QoLBar.BigFont);
+
                 // Hide the bar if game isn't focused and it's outside the main viewport
                 if (!IsDocked)
                     ImGuiEx.ShouldDrawInViewport(out _displayOutsideMain);
 
-                ImGuiEx.PushFontScale(Config.Scale);
+                ImGuiEx.PushFontSize(QoLBar.DownscaledFontSize * Config.Scale);
 
                 if (_mouseRevealed && ImGui.IsWindowHovered(ImGuiHoveredFlags.RectOnly))
                     Reveal();
@@ -307,12 +309,14 @@ namespace QoLBar
 
                 SetupSize();
 
-                ImGuiEx.PopFontScale();
+                ImGuiEx.PopFontSize();
 
                 ImGui.End();
 
                 ImGui.PopStyleColor();
                 ImGui.PopStyleVar(3);
+
+                ImGui.PopFont();
             }
 
             if (!_reveal)
@@ -455,8 +459,10 @@ namespace QoLBar
                 ImGuiEx.PushFontScale(ImGuiEx.GetFontScale() * Config.FontScale);
                 if (ImGui.Button("+", new Vector2(Config.ButtonWidth * ImGuiHelpers.GlobalScale * Config.Scale, height)))
                     ImGui.OpenPopup("addShortcut");
-                ImGuiEx.SetItemTooltip("Add a new shortcut.\nRight click this (or the bar background) for options.\nRight click other shortcuts to edit them.", ImGuiHoveredFlags.AllowWhenBlockedByPopup);
                 ImGuiEx.PopFontScale();
+                ImGui.PopFont();
+                ImGuiEx.SetItemTooltip("Add a new shortcut.\nRight click this (or the bar background) for options.\nRight click other shortcuts to edit them.", ImGuiHoveredFlags.AllowWhenBlockedByPopup);
+                ImGui.PushFont(QoLBar.BigFont);
 
                 var size = ImGui.GetItemRectMax() - ImGui.GetWindowPos();
                 MaxWidth = size.X;

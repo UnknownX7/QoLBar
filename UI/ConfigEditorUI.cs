@@ -237,7 +237,7 @@ namespace QoLBar
             ImGuiEx.SetItemTooltip("Number of shortcuts in each row before starting another.\n" +
                 "Set to 0 to specify infinite.");
 
-            if (ImGui.DragFloat("Scale", ref sh.Config.CategoryScale, 0.002f, 0.7f, 1.5f, "%.2f"))
+            if (ImGui.DragFloat("Scale", ref sh.Config.CategoryScale, 0.002f, 0.7f, 2f, "%.2f"))
                 QoLBar.Config.Save();
 
             if (ImGui.DragFloat("Font Scale", ref sh.Config.CategoryFontScale, 0.0018f, 0.5f, 1.0f, "%.2f"))

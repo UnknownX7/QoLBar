@@ -317,6 +317,8 @@ namespace QoLBar
 
             if (imported != null)
             {
+                Legacy.UpdateImport(imported);
+
                 if (imported.b1 != null)
                     imported.b2 = imported.b1.Upgrade();
                 else if (imported.s1 != null)
