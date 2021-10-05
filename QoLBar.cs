@@ -31,7 +31,7 @@ namespace QoLBar
         public static readonly TextureDictionary textureDictionaryGSLR = new(false, true);
         public static readonly TextureDictionary textureDictionaryGSHR = new(true, true);
 
-        public const float FontSize = 50;
+        public const float FontSize = 32;
         public const float DownscaledFontSize = 17;
         public static ImFontPtr BigFont;
 
