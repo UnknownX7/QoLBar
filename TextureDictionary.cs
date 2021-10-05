@@ -4,16 +4,21 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Dalamud;
 using Dalamud.Logging;
 using Dalamud.Utility;
 using ImGuiScene;
+using Lumina.Data.Files;
 
 namespace QoLBar
 {
     public class TextureDictionary : ConcurrentDictionary<int, TextureWrap>, IDisposable
     {
         public const int FrameIconID = 10_000_000;
+        private const string IconFileFormat = "ui/icon/{0:D3}000/{1}{2:D6}{3}.tex";
+
         public static int GetSafeIconID(ushort i) => FrameIconID + i;
+        public bool IsEmptying { get; private set; } = false;
 
         private readonly Dictionary<int, string> userIcons = new();
         private readonly Dictionary<int, string> textureOverrides = new();
@@ -23,7 +28,6 @@ namespace QoLBar
         private Task loadTask;
         private readonly bool useHR = false;
         private readonly bool useGrayscale = false;
-        public bool IsEmptying { get; private set; } = false;
 
         public TextureDictionary(bool hr, bool gs)
         {
@@ -45,11 +49,10 @@ namespace QoLBar
 
         public void TryDispose(int k)
         {
-            if (TryGetValue(k, out var tex))
-            {
-                tex?.Dispose();
-                TryUpdate(k, disposedTexture, null);
-            }
+            if (!TryGetValue(k, out var tex)) return;
+
+            tex?.Dispose();
+            TryUpdate(k, disposedTexture, null);
         }
 
         public bool IsTextureLoading() => loadingTasks > 0 || !loadQueue.IsEmpty;
@@ -77,33 +80,34 @@ namespace QoLBar
         private void LoadTextureWrap(int i, bool overwrite, bool doSync, Func<TextureWrap> loadFunc)
         {
             var contains = TryGetValue(i, out var _tex);
-            if (!contains || overwrite || _tex?.ImGuiHandle == IntPtr.Zero)
+            if (contains && !overwrite && _tex?.ImGuiHandle != IntPtr.Zero) return;
+
+            _tex?.Dispose();
+            this[i] = null;
+
+            var t = new Task(() =>
             {
-                _tex?.Dispose();
-                this[i] = null;
-
-                var t = new Task(() =>
+                try
                 {
-                    try
-                    {
-                        if (IsEmptying) { TryUpdate(i, disposedTexture, null); return; }
+                    if (IsEmptying) { TryUpdate(i, disposedTexture, null); return; }
 
-                        var tex = loadFunc();
-                        if (tex != null && tex.ImGuiHandle != IntPtr.Zero)
-                            TryUpdate(i, tex, null);
-                    }
-                    catch (Exception e) { PluginLog.LogError($"Failed to load icon {i}:\n{e}"); }
-                });
-
-                loadQueue.Enqueue((doSync, t));
-
-                if (!doSync)
-                {
-                    if (loadTask?.IsCompleted != false)
-                        loadTask = Task.Run(DoLoadQueueAsync);
+                    var tex = loadFunc();
+                    if (tex != null && tex.ImGuiHandle != IntPtr.Zero)
+                        TryUpdate(i, tex, null);
                 }
-                else
-                    DoLoadQueueAsync(); // Temporary fix to reduce nvwgf2umx.dll crashing (this wont actually run sync if any tasks are waiting/loading)
+                catch (Exception e) { PluginLog.LogError($"Failed to load icon {i}:\n{e}"); }
+            });
+
+            loadQueue.Enqueue((doSync, t));
+
+            if (!doSync)
+            {
+                if (loadTask?.IsCompleted != false)
+                    loadTask = Task.Run(DoLoadQueueAsync);
+            }
+            else
+            {
+                DoLoadQueueAsync(); // Temporary fix to reduce nvwgf2umx.dll crashing (this wont actually run sync if any tasks are waiting/loading)
             }
         }
 
@@ -130,7 +134,7 @@ namespace QoLBar
 
         private void LoadIcon(uint icon, bool overwrite) => LoadTextureWrap((int)icon, overwrite, false, () =>
         {
-            var iconTex = useHR ? GetHRIcon(icon) : DalamudApi.DataManager.GetIcon(icon);
+            var iconTex = GetIconTex(icon);
             return (iconTex == null) ? null : LoadTextureWrapSquare(iconTex);
         });
 
@@ -145,7 +149,7 @@ namespace QoLBar
 
         private void LoadTex(int iconSlot, string path, bool overwrite) => LoadTextureWrap(iconSlot, overwrite, false, () =>
         {
-            var iconTex = DalamudApi.DataManager.GetFile<Lumina.Data.Files.TexFile>(path);
+            var iconTex = GetTex(IPC.PenumbraEnabled && QoLBar.Config.UsePenumbra ? IPC.ResolvePenumbraPath(path) : path);
             return (iconTex == null) ? null : LoadTextureWrapSquare(iconTex);
         });
 
@@ -158,13 +162,50 @@ namespace QoLBar
         // Seems to cause a nvwgf2umx.dll crash (System Access Violation Exception) if used async
         private void LoadImage(int iconSlot, string path, bool overwrite) => LoadTextureWrap(iconSlot, overwrite, true, () => DalamudApi.PluginInterface.UiBuilder.LoadImage(path));
 
-        private static Lumina.Data.Files.TexFile GetHRIcon(uint icon)
+        public static string GetIconPath(uint icon, ClientLanguage language, bool hr)
         {
-            var path = $"ui/icon/{icon / 1000 * 1000:000000}/{icon:000000}_hr1.tex";
-            return DalamudApi.DataManager.GetFile<Lumina.Data.Files.TexFile>(path) ?? DalamudApi.DataManager.GetIcon(icon);
+            var languagePath = language switch
+            {
+                ClientLanguage.Japanese => "ja/",
+                ClientLanguage.English => "en/",
+                ClientLanguage.German => "de/",
+                ClientLanguage.French => "fr/",
+                _ => "en/"
+            };
+
+            return GetIconPath(icon, languagePath, hr);
         }
 
-        private TextureWrap LoadTextureWrapSquare(Lumina.Data.Files.TexFile tex)
+        public static string GetIconPath(uint icon, string language, bool hr)
+        {
+            var path = string.Format(IconFileFormat, icon / 1000, language, icon, hr ? "_hr1" : string.Empty);
+
+            if (IPC.PenumbraEnabled && QoLBar.Config.UsePenumbra)
+                path = IPC.ResolvePenumbraPath(path);
+
+            return path;
+        }
+
+        private TexFile GetIconTex(uint icon) =>
+            GetTex(GetIconPath(icon, string.Empty, useHR))
+            ?? GetTex(GetIconPath(icon, DalamudApi.DataManager.Language, useHR));
+
+        private TexFile GetTex(string path)
+        {
+            TexFile tex = null;
+
+            try
+            {
+                if (path[0] == '/' || path[1] == ':')
+                    tex = DalamudApi.DataManager.GameData.GetFileFromDisk<TexFile>(path);
+            }
+            catch { }
+
+            tex ??= DalamudApi.DataManager.GetFile<TexFile>(path);
+            return tex;
+        }
+
+        private TextureWrap LoadTextureWrapSquare(TexFile tex)
         {
             var imageData = !useGrayscale ? tex.GetRgbaImageData() : tex.GetGrayscaleImageData();
             if (tex.Header.Width > tex.Header.Height)

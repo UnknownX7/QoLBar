@@ -122,6 +122,7 @@ namespace QoLBar
         public bool PiesMoveMouse = false;
         public bool PiesReturnMouse = false;
         public bool PiesReadjustMouse = false;
+        public bool UsePenumbra = false;
 
         public string PluginVersion = ".INITIAL";
         [JsonIgnore] public string PrevPluginVersion = string.Empty;

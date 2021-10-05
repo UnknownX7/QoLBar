@@ -197,7 +197,9 @@ namespace QoLBar
                     sh.Config._i = (int)(QoLBar.FrameCount % c);
                 }
                 else
+                {
                     sh.Config._i = 0;
+                }
 
                 QoLBar.Config.Save();
 
@@ -219,7 +221,9 @@ namespace QoLBar
                 return true;
             }
             else
+            {
                 return false;
+            }
         }
 
         public static void EditShortcutCategoryOptions(ShortcutUI sh)

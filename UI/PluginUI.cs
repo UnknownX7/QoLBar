@@ -290,6 +290,16 @@ namespace QoLBar
                 QoLBar.Config.Save();
             ImGuiEx.SetItemTooltip("Number of minutes since the last save to perform a backup. Set to 0 to disable.");
 
+            if (IPC.PenumbraEnabled)
+            {
+                if (ImGui.Checkbox("Enable Penumbra Support", ref QoLBar.Config.UsePenumbra))
+                {
+                    QoLBar.CleanTextures(false);
+                    QoLBar.Config.Save();
+                }
+                ImGuiEx.SetItemTooltip("Loads icons from Penumbra.");
+            }
+
             ImGui.Spacing();
             ImGui.Spacing();
             ImGui.TextUnformatted("Pie Settings");

@@ -52,11 +52,12 @@ namespace QoLBar
             CheckHideOptOuts();
 
             ReadyPlugin();
-            //SetupIPC();
         }
 
         public void ReadyPlugin()
         {
+            IPC.Initialize();
+
             var iconPath = Config.GetPluginIconPath();
             textureDictionaryLR.AddUserIcons(iconPath);
             textureDictionaryHR.AddUserIcons(iconPath);
