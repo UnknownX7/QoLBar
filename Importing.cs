@@ -400,7 +400,7 @@ namespace QoLBar
                 try { imported.s1 = ImportShortcut(import); }
                 catch { return null; }
             }
-            imported.v = "1.3.2.1";
+            imported.v = "1.3.2.0";
             return imported;
         }
     }
