@@ -399,6 +399,13 @@ namespace QoLBar
 
             if (ImGui.Checkbox("Lock Position", ref bar.Config.LockedPosition))
                 QoLBar.Config.Save();
+            if (bar.IsDocked && bar.Config.Visibility != BarVisibility.Always)
+            {
+                ImGui.SameLine(ImGui.GetWindowWidth() / 2);
+                if (ImGui.Checkbox("Hint", ref bar.Config.Hint))
+                    QoLBar.Config.Save();
+                ImGuiEx.SetItemTooltip("Will prevent the bar from sleeping, increasing CPU load.");
+            }
 
             if (!bar.Config.LockedPosition)
             {
@@ -415,13 +422,6 @@ namespace QoLBar
                     else
                         bar._setPos = true;
                 }
-            }
-
-            if (bar.IsDocked && bar.Config.Visibility != BarVisibility.Always)
-            {
-                if (ImGui.Checkbox("Hint", ref bar.Config.Hint))
-                    QoLBar.Config.Save();
-                ImGuiEx.SetItemTooltip("Will prevent the bar from sleeping, increasing CPU load.");
             }
         }
 
