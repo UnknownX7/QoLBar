@@ -134,7 +134,9 @@ namespace QoLBar
 
         private void LoadIcon(uint icon, bool overwrite) => LoadTextureWrap((int)icon, overwrite, false, () =>
         {
-            var iconTex = GetIconTex(icon);
+            var iconTex = GetIconTex(icon, useHR);
+            if (useHR)
+                iconTex ??= GetIconTex(icon, false);
             return (iconTex == null) ? null : LoadTextureWrapSquare(iconTex);
         });
 
@@ -186,11 +188,15 @@ namespace QoLBar
             return path;
         }
 
-        private TexFile GetIconTex(uint icon) =>
-            GetTex(GetIconPath(icon, string.Empty, useHR))
-            ?? GetTex(GetIconPath(icon, DalamudApi.DataManager.Language, useHR));
+        public static bool IconExists(uint icon) =>
+            DalamudApi.DataManager.FileExists(GetIconPath(icon, "", false))
+            || DalamudApi.DataManager.FileExists(GetIconPath(icon, "en/", false));
 
-        private TexFile GetTex(string path)
+        private static TexFile GetIconTex(uint icon, bool hr) =>
+            GetTex(GetIconPath(icon, string.Empty, hr))
+            ?? GetTex(GetIconPath(icon, DalamudApi.DataManager.Language, hr));
+
+        private static TexFile GetTex(string path)
         {
             TexFile tex = null;
 

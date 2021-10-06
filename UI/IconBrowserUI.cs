@@ -13,13 +13,13 @@ namespace QoLBar
         public static bool iconBrowserOpen = false;
         public static bool doPasteIcon = false;
         public static int pasteIcon = 0;
-        public static bool cleaningIconsOnClose = false;
 
         private static bool _tabExists = false;
         private static int _i, _columns;
         private static string _name;
         private static float _iconSize;
         private static string _tooltip;
+        private static bool _useLowQuality = false;
         private static List<(int, int)> _iconList;
         private static bool _displayOutsideMain = true;
 
@@ -147,7 +147,7 @@ namespace QoLBar
                 AddIcons(10_000, 20_000);
                 EndIconList();
 
-                BeginIconList("Garbage", iconSize, QoLBar.Config.UseHRIcons);
+                BeginIconList("Garbage", iconSize, true);
                 AddIcons(61_000, 61_100, "Splash Logos");
                 AddIcons(62_620, 62_800, "World Map");
                 AddIcons(63_200, 63_900, "Zone Maps");
@@ -160,7 +160,8 @@ namespace QoLBar
                 AddIcons(81_000, 82_060, "Notebooks 2");
                 AddIcons(84_000, 85_000, "Hunts");
                 AddIcons(85_000, 90_000, "UI 3");
-                AddIcons(150_000, 180_000, "Tutorials");
+                AddIcons(150_000, 170_000, "Tutorials");
+                //AddIcons(170_000, 180_000, "Placeholder"); // TODO: 170k - 180k are blank placeholder files, check if they get used in EW
                 EndIconList();
 
                 BeginIconList("Spoilers", iconSize, true);
@@ -183,14 +184,11 @@ namespace QoLBar
             }
             ImGui.End();
 
-            if (!iconBrowserOpen && cleaningIconsOnClose)
-            {
-                QoLBar.CleanTextures(false);
-                cleaningIconsOnClose = false;
-            }
+            if (iconBrowserOpen) return;
+            QoLBar.CleanTextures(false);
         }
 
-        private static bool BeginIconList(string name, float iconSize, bool cleanIcons = false)
+        private static bool BeginIconList(string name, float iconSize, bool useLowQuality = false)
         {
             _tooltip = "Contains:";
             if (ImGui.BeginTabItem(name))
@@ -202,8 +200,8 @@ namespace QoLBar
                 _iconSize = iconSize;
                 _iconList = new List<(int, int)>();
 
-                if (cleanIcons)
-                    cleaningIconsOnClose = true;
+                if (useLowQuality)
+                    _useLowQuality = true;
             }
             else
                 _tabExists = false;
@@ -253,7 +251,7 @@ namespace QoLBar
                     for (int i = start; i < end; i++)
                     {
                         var icon = cache[i];
-                        ShortcutUI.DrawIcon(icon, settings, "n");
+                        ShortcutUI.DrawIcon(icon, settings, _useLowQuality ? "ln" : "n");
                         if (ImGui.IsItemClicked())
                         {
                             doPasteIcon = true;
@@ -314,10 +312,11 @@ namespace QoLBar
             {
                 for (int i = 0; i < iconMax; i++)
                 {
-                    if (DalamudApi.DataManager.FileExists($"ui/icon/{i / 1000 * 1000:000000}/{i:000000}.tex")
-                        || DalamudApi.DataManager.FileExists($"ui/icon/{i / 1000 * 1000:000000}/en/{i:000000}.tex"))
+                    if (TextureDictionary.IconExists((uint)i))
                         _iconExistsCache.Add(i);
                 }
+
+                _iconExistsCache.Remove(125052); // Remove broken image (TextureFormat R8G8B8X8 is not supported for image conversion)
 
                 QoLBar.Config.SaveIconCache(_iconExistsCache);
             }
