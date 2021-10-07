@@ -8,6 +8,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Runtime.InteropServices;
 using Dalamud.Game;
+using Dalamud.Game.Gui;
 using Dalamud.Interface;
 using Dalamud.Plugin;
 using Dalamud.Utility;
@@ -31,6 +32,9 @@ namespace QoLBar
         public static readonly TextureDictionary textureDictionaryGSLR = new(false, true);
         public static readonly TextureDictionary textureDictionaryGSHR = new(true, true);
 
+        public static uint lastHoveredActionID = 0;
+        public static uint lastHoveredActionType = 0;
+
         public const float FontSize = 32;
         public const float DownscaledFontSize = 17;
         public static ImFontPtr BigFont;
@@ -51,6 +55,8 @@ namespace QoLBar
             DalamudApi.PluginInterface.UiBuilder.Draw += Draw;
             DalamudApi.PluginInterface.UiBuilder.BuildFonts += BuildFonts;
             DalamudApi.PluginInterface.UiBuilder.RebuildFonts();
+
+            DalamudApi.GameGui.HoveredActionChanged += HoveredActionChanged;
 
             CheckHideOptOuts();
 
@@ -183,6 +189,30 @@ namespace QoLBar
             japaneseRangeHandle.Free();
         }
 
+        private void HoveredActionChanged(object sender, HoveredAction action)
+        {
+            // 2 = ???, 3 = ???, 4 = Interaction, 13 = Mount, 20 = Accessorize (Fashion)
+            switch (action.ActionKind)
+            {
+                case HoverActionKind.Action:
+                    lastHoveredActionType = 1;
+                    break;
+                case HoverActionKind.GeneralAction:
+                    lastHoveredActionType = 5;
+                    break;
+                //case HoverActionKind.None:
+                //case HoverActionKind.CompanionOrder:
+                //case HoverActionKind.MainCommand:
+                //case HoverActionKind.ExtraCommand:
+                //case HoverActionKind.PetOrder:
+                //case HoverActionKind.Trait:
+                default:
+                    return;
+            }
+
+            lastHoveredActionID = action.BaseActionID;
+        }
+
         public void CheckHideOptOuts()
         {
             //pluginInterface.UiBuilder.DisableAutomaticUiHide = false;
@@ -237,6 +267,7 @@ namespace QoLBar
             DalamudApi.PluginInterface.UiBuilder.OpenConfigUi -= ToggleConfig;
             DalamudApi.PluginInterface.UiBuilder.Draw -= Draw;
             DalamudApi.PluginInterface.UiBuilder.BuildFonts -= BuildFonts;
+            DalamudApi.GameGui.HoveredActionChanged -= HoveredActionChanged;
             DalamudApi.Dispose();
 
             ui.Dispose();

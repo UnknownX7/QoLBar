@@ -100,6 +100,7 @@ namespace QoLBar
         private static delegate* unmanaged<UIModule*, ushort, byte> executeMainCommand;
         private static ActionManager* actionManager;
         private static RaptureAtkUnitManager* raptureAtkUnitManager;
+        private static delegate* unmanaged<uint, uint, uint> getActionID;
 
         public static void Initialize()
         {
@@ -117,6 +118,7 @@ namespace QoLBar
             try
             {
                 GetCommandHandler = Marshal.GetDelegateForFunctionPointer<GetCommandHandlerDelegate>(DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? 83 F8 FE 74 1E"));
+                getActionID = (delegate* unmanaged<uint, uint, uint>)DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? 44 8B 4B 2C");
 
                 try { isTextInputActivePtr = *(IntPtr*)((IntPtr)AtkStage.GetSingleton() + 0x28) + 0x188E; } // Located in AtkInputManager
                 catch { PluginLog.LogError("Failed loading textActiveBoolPtr"); }
@@ -389,6 +391,8 @@ namespace QoLBar
         }
 
         public static void ExecuteMainCommand(ushort id) => executeMainCommand(uiModule, id);
+
+        public static uint GetActionID(uint actionType, uint actionCategoryID) => getActionID(actionType, actionCategoryID);
 
         public static float GetRecastTime(ActionType actionType, uint actionID)
         {

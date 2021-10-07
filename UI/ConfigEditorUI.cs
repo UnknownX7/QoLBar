@@ -291,7 +291,23 @@ namespace QoLBar
             if (ImGui.InputInt("Cooldown Action ID", ref _))
             {
                 sh.Config.CooldownAction = (uint)Math.Max(_, uint.MinValue);
+
+                if (sh.Config.CooldownAction == 0)
+                    sh.Config.CooldownStyle = 0;
+
                 QoLBar.Config.Save();
+            }
+
+            if (ImGui.IsItemHovered())
+            {
+                var actionID = Game.GetActionID(QoLBar.lastHoveredActionType, QoLBar.lastHoveredActionID);
+                if (ImGui.IsMouseReleased(ImGuiMouseButton.Right) && actionID > 0)
+                {
+                    sh.Config.CooldownAction = actionID;
+                    QoLBar.Config.Save();
+                }
+
+                ImGui.SetTooltip($"Right click to insert the last hovered action: {actionID}");
             }
 
             if (sh.Config.CooldownAction > 0)

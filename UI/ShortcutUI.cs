@@ -608,7 +608,7 @@ namespace QoLBar
             if (DrawIcon(46, new ImGuiEx.IconSettings { size = new Vector2(iconSize) }, "nl"))
                 QoLBar.Plugin.ToggleIconBrowser();
             ImGuiEx.SetItemTooltip("Opens up a list of all icons you can use instead of text.\n" +
-                "Warning: This will load EVERY icon available so it will probably lag for a moment.\n" +
+                "Warning: The last 3 tabs contain very large images and will use several GB of memory.\n" +
                 "Clicking on one will copy text to be pasted into the \"Name\" field of a shortcut.\n" +
                 "Additionally, while the browser is open it will autofill the \"Name\" of shortcuts.");
         }
