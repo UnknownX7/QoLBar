@@ -2,6 +2,7 @@ using System;
 using System.Numerics;
 using System.Text.RegularExpressions;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Interface;
 using ImGuiNET;
@@ -42,7 +43,7 @@ namespace QoLBar
         public bool IsEquals() => IsLogic() && Condition == 3;
     }
 
-    public class DisplayConditionSet
+    public unsafe class DisplayConditionSet
     {
         public string Name = string.Empty;
         public readonly List<DisplayCondition> Conditions = new();
@@ -399,13 +400,25 @@ namespace QoLBar
                                                 ImGui.SameLine();
                                                 string addon = cond.Arg is string ? cond.Arg : string.Empty;
                                                 ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
-                                                if (ImGui.InputText("##UIName", ref addon, 32))
+                                                var focusedAddon = Game.GetFocusedAddon();
+                                                var addonName = focusedAddon != null ? Marshal.PtrToStringAnsi((IntPtr)focusedAddon->Name) : string.Empty;
+                                                if (ImGui.InputTextWithHint("##UIName", addonName, ref addon, 32))
                                                 {
                                                     cond.Arg = addon;
                                                     config.Save();
                                                 }
 
-                                                ImGuiEx.SetItemTooltip("See \"/xldata ai\" to find the names of various windows.");
+                                                if (ImGui.IsItemHovered())
+                                                {
+                                                    if (ImGui.IsMouseReleased(ImGuiMouseButton.Right) && !string.IsNullOrEmpty(addonName))
+                                                    {
+                                                        cond.Arg = addonName;
+                                                        config.Save();
+                                                    }
+
+                                                    ImGui.SetTooltip("See \"/xldata ai\" to find the names of various windows.\n" +
+                                                        "Right click to set this to the currently focused UI addon's name.");
+                                                }
                                             }
                                             break;
                                         case 10:
@@ -603,7 +616,7 @@ namespace QoLBar
         }
     }
 
-    public static class ConditionCache
+    public static unsafe class ConditionCache
     {
         private static readonly Dictionary<(DisplayCondition.ConditionType, int, dynamic), bool> _conditionCache = new();
         private static float _lastCache = 0;
@@ -611,7 +624,7 @@ namespace QoLBar
 
         public const string TimespanRegex = @"^([0-9Xx]{1,2}:[0-9Xx]{2})\s*-\s*([0-9Xx]{1,2}:[0-9Xx]{2})$";
 
-        public static unsafe bool GetCondition(DisplayCondition.ConditionType type, int cond, dynamic arg = null)
+        public static bool GetCondition(DisplayCondition.ConditionType type, int cond, dynamic arg = null)
         {
             CheckCache();
 

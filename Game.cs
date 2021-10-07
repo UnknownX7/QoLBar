@@ -99,6 +99,7 @@ namespace QoLBar
         private static delegate* unmanaged<IntPtr, uint, uint, uint, short, void> useItem;
         private static delegate* unmanaged<UIModule*, ushort, byte> executeMainCommand;
         private static ActionManager* actionManager;
+        private static RaptureAtkUnitManager* raptureAtkUnitManager;
 
         public static void Initialize()
         {
@@ -109,6 +110,7 @@ namespace QoLBar
             addonConfig = ((delegate* unmanaged<UIModule*, IntPtr>)uiModule->vfunc[19])(uiModule);
             agentModule = uiModule->GetAgentModule();
             actionManager = ActionManager.Instance();
+            raptureAtkUnitManager = AtkStage.GetSingleton()->RaptureAtkUnitManager;
 
             executeMainCommand = (delegate* unmanaged<UIModule*, ushort, byte>)uiModule->vfunc[171];
 
@@ -359,18 +361,13 @@ namespace QoLBar
 
         public static bool IsWeaponDrawn(PlayerCharacter player) => (*(byte*)(player.Address + 0x19A0) & 0b100) > 0;
 
-        public static AtkUnitBase* GetAddonStructByName(string name, int index)
+        public static AtkUnitBase* GetAddonStructByName(string name, int index) => (AtkUnitBase*)DalamudApi.GameGui.GetAddonByName(name, index);
+
+        public static AtkUnitBase* GetFocusedAddon()
         {
-            var atkStage = AtkStage.GetSingleton();
-            if (atkStage == null)
-                return null;
-
-            var unitMgr = atkStage->RaptureAtkUnitManager;
-            if (unitMgr == null)
-                return null;
-
-            var addon = unitMgr->GetAddonByName(name, index);
-            return addon;
+            var units = raptureAtkUnitManager->AtkUnitManager.FocusedUnitsList;
+            var count = units.Count;
+            return count == 0 ? null : (&units.AtkUnitEntries)[count - 1];
         }
 
         public static void UseItem(uint id)
