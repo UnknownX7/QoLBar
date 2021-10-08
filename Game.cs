@@ -27,6 +27,7 @@ namespace QoLBar
         private static readonly Queue<string> commandQueue = new();
         private static readonly Queue<string> macroQueue = new();
         private static readonly Queue<string> chatQueue = new();
+        private static uint retryItem = 0;
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)] private static extern IntPtr GetForegroundWindow();
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)] private static extern int GetWindowThreadProcessId(IntPtr handle, out int processId);
@@ -184,8 +185,17 @@ namespace QoLBar
             if (chatQueueTimer > 0 && (chatQueueTimer -= ImGuiNET.ImGui.GetIO().DeltaTime) <= 0 && chatQueue.Count > 0)
                 ExecuteCommand(chatQueue.Dequeue(), true);
 
-            commandReady = true;
-            RunCommandQueue();
+            if (retryItem > 0)
+            {
+                commandReady = false;
+                UseItem(retryItem); // Gross bandaid to "fix" failed items
+                retryItem = 0;
+            }
+            else
+            {
+                commandReady = true;
+                RunCommandQueue();
+            }
 
             if (!commandReady) return;
 
@@ -374,8 +384,20 @@ namespace QoLBar
 
         public static void UseItem(uint id)
         {
-            if (id > 0 && usables.ContainsKey(id is >= 1_000_000 and < 2_000_000 ? id - 1_000_000 : id))
-                useItem(itemContextMenuAgent, id, 9999, 0, 0);
+            if (id == 0 || !usables.ContainsKey(id is >= 1_000_000 and < 2_000_000 ? id - 1_000_000 : id)) return;
+
+            // Dumb fix for dumb bug
+            if (retryItem == 0 && id < 2_000_000)
+            {
+                var actionID = getActionID(2, id);
+                if (actionID == 0)
+                {
+                    retryItem = id;
+                    return;
+                }
+            }
+
+            useItem(itemContextMenuAgent, id, 9999, 0, 0);
         }
 
         public static void UseItem(string name)

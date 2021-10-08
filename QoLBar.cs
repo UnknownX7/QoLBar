@@ -191,7 +191,7 @@ namespace QoLBar
 
         private void HoveredActionChanged(object sender, HoveredAction action)
         {
-            // 2 = ???, 3 = ???, 4 = Interaction, 13 = Mount, 20 = Accessorize (Fashion)
+            // 2 = Item, 3 = Event Item, 4 = Interaction, 13 = Mount, 20 = Accessorize (Fashion)
             switch (action.ActionKind)
             {
                 case HoverActionKind.Action:
