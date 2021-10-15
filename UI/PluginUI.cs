@@ -111,15 +111,15 @@ namespace QoLBar
                     ImGui.EndTabItem();
                 }
 
-                if (ImGui.BeginTabItem("Settings"))
-                {
-                    DrawSettingsMenu();
-                    ImGui.EndTabItem();
-                }
-
                 if (ImGui.BeginTabItem("Backups"))
                 {
                     DrawBackupManager();
+                    ImGui.EndTabItem();
+                }
+
+                if (ImGui.BeginTabItem("Settings"))
+                {
+                    DrawSettingsMenu();
                     ImGui.EndTabItem();
                 }
 
