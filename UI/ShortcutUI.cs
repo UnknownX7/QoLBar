@@ -255,7 +255,7 @@ namespace QoLBar
                 {
                     ImGui.PopFont();
                     ImGui.SetTooltip(tooltip);
-                    ImGui.PushFont(QoLBar.BigFont);
+                    ImGui.PushFont(QoLBar.Font);
                 }
             }
 
@@ -312,7 +312,7 @@ namespace QoLBar
                 return;
             }
 
-            ImGuiEx.PushFontSize(QoLBar.DownscaledFontSize * Config.CategoryScale);
+            ImGuiEx.PushFontSize(QoLBar.DefaultFontSize * Config.CategoryScale);
 
             if (ImGui.IsWindowAppearing())
                 _fuckImGui = true;
@@ -361,7 +361,7 @@ namespace QoLBar
                 ImGui.PopStyleColor();
                 ImGui.PopFont();
                 ImGuiEx.SetItemTooltip("Add a new shortcut.");
-                ImGui.PushFont(QoLBar.BigFont);
+                ImGui.PushFont(QoLBar.Font);
             }
 
             if (ImGui.IsWindowHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right) && ImGui.GetIO().KeyShift)

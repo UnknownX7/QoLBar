@@ -35,9 +35,10 @@ namespace QoLBar
         public static uint lastHoveredActionID = 0;
         public static uint lastHoveredActionType = 0;
 
-        public const float FontSize = 32;
-        public const float DownscaledFontSize = 17;
-        public static ImFontPtr BigFont;
+        public const float DefaultFontSize = 17;
+        public const float MaxFontSize = 64;
+        public static ImFontPtr Font { get; private set; }
+        private static bool fontEnabled = false;
 
         public QoLBar(DalamudPluginInterface pluginInterface)
         {
@@ -53,8 +54,7 @@ namespace QoLBar
             ui = new PluginUI();
             DalamudApi.PluginInterface.UiBuilder.OpenConfigUi += ToggleConfig;
             DalamudApi.PluginInterface.UiBuilder.Draw += Draw;
-            DalamudApi.PluginInterface.UiBuilder.BuildFonts += BuildFonts;
-            DalamudApi.PluginInterface.UiBuilder.RebuildFonts();
+            ToggleFont(Config.FontSize != DefaultFontSize);
 
             DalamudApi.GameGui.HoveredActionChanged += HoveredActionChanged;
 
@@ -182,11 +182,42 @@ namespace QoLBar
             ui.Draw();
         }
 
-        private void BuildFonts()
+        public void ToggleFont(bool enable)
         {
-            var japaneseRangeHandle = GCHandle.Alloc(GlyphRangesJapanese.GlyphRanges, GCHandleType.Pinned);
-            BigFont = ImGui.GetIO().Fonts.AddFontFromFileTTF(Path.Combine(DalamudApi.PluginInterface.DalamudAssetDirectory.FullName, "UIRes", "NotoSansCJKjp-Medium.otf"), FontSize, null, japaneseRangeHandle.AddrOfPinnedObject());
-            japaneseRangeHandle.Free();
+            if (enable)
+            {
+                if (!fontEnabled)
+                    DalamudApi.PluginInterface.UiBuilder.BuildFonts += BuildFonts;
+                DalamudApi.PluginInterface.UiBuilder.RebuildFonts();
+                fontEnabled = true;
+            }
+            else
+            {
+                if (fontEnabled)
+                {
+                    DalamudApi.PluginInterface.UiBuilder.BuildFonts -= BuildFonts;
+                    //DalamudApi.PluginInterface.UiBuilder.RebuildFonts();
+                    Font = null;
+                }
+                fontEnabled = false;
+            }
+        }
+
+        private unsafe void BuildFonts()
+        {
+            var fontBuilder = new ImFontGlyphRangesBuilderPtr(ImGuiNative.ImFontGlyphRangesBuilder_ImFontGlyphRangesBuilder());
+            var fontAtlas = ImGui.GetIO().Fonts;
+            fontBuilder.AddRanges(fontAtlas.GetGlyphRangesDefault());
+            fontBuilder.AddRanges(fontAtlas.GetGlyphRangesJapanese());
+            //fontBuilder.AddRanges(fontAtlas.GetGlyphRangesChineseFull()); // Includes Default and Japanese
+            fontBuilder.AddRanges(fontAtlas.GetGlyphRangesCyrillic());
+            //fontBuilder.AddRanges(fontAtlas.GetGlyphRangesKorean());
+            //fontBuilder.AddRanges(fontAtlas.GetGlyphRangesThai());
+            //fontBuilder.AddRanges(fontAtlas.GetGlyphRangesVietnamese());
+            fontBuilder.BuildRanges(out var ranges);
+            Font = fontAtlas.AddFontFromFileTTF(Path.Combine(DalamudApi.PluginInterface.DalamudAssetDirectory.FullName, "UIRes",
+                "NotoSansCJKjp-Medium.otf"), Math.Min(Math.Max(Config.FontSize, 1), MaxFontSize), null, ranges.Data);
+            fontBuilder.Destroy();
         }
 
         private void HoveredActionChanged(object sender, HoveredAction action)
@@ -283,8 +314,8 @@ namespace QoLBar
             DalamudApi.Framework.Update -= Update;
             DalamudApi.PluginInterface.UiBuilder.OpenConfigUi -= ToggleConfig;
             DalamudApi.PluginInterface.UiBuilder.Draw -= Draw;
-            DalamudApi.PluginInterface.UiBuilder.BuildFonts -= BuildFonts;
             DalamudApi.GameGui.HoveredActionChanged -= HoveredActionChanged;
+            ToggleFont(false);
             DalamudApi.Dispose();
 
             ui.Dispose();

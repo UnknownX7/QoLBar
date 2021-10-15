@@ -123,6 +123,7 @@ namespace QoLBar
         public bool PiesReturnMouse = false;
         public bool PiesReadjustMouse = false;
         public bool UsePenumbra = false;
+        public float FontSize = QoLBar.DefaultFontSize;
 
         public string PluginVersion = ".INITIAL";
         [JsonIgnore] public string PrevPluginVersion = string.Empty;

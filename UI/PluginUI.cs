@@ -286,6 +286,15 @@ namespace QoLBar
             ImGuiEx.SetItemTooltip("Disables the 100ms delay between checking conditions, increasing CPU load.");
             ImGui.SameLine(halfWidth);
             ImGui.SetNextItemWidth(quarterWidth);
+            if (ImGui.InputFloat("Bar Font Size", ref QoLBar.Config.FontSize, 1, 8, "%.f", ImGuiInputTextFlags.EnterReturnsTrue))
+            {
+                QoLBar.Config.FontSize = Math.Min(Math.Max(QoLBar.Config.FontSize, 1), QoLBar.MaxFontSize);
+                QoLBar.Config.Save();
+                QoLBar.Plugin.ToggleFont(QoLBar.Config.FontSize != QoLBar.DefaultFontSize);
+            }
+            ImGuiEx.SetItemTooltip($"Default: {QoLBar.DefaultFontSize}");
+
+            ImGui.SetNextItemWidth(quarterWidth);
             if (ImGui.InputInt("Backup Timer", ref QoLBar.Config.BackupTimer))
                 QoLBar.Config.Save();
             ImGuiEx.SetItemTooltip("Number of minutes since the last save to perform a backup. Set to 0 to disable.");
@@ -700,11 +709,11 @@ namespace QoLBar
                 ImGuiHelpers.ForceNextWindowMainViewport();
             ImGui.PopFont();
             ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, defaultSpacing);
-            ImGuiEx.PushFontSize(QoLBar.DownscaledFontSize);
+            ImGuiEx.PushFontSize(QoLBar.DefaultFontSize);
             draw();
             ImGuiEx.PopFontSize();
             ImGui.PopStyleVar();
-            ImGui.PushFont(QoLBar.BigFont);
+            ImGui.PushFont(QoLBar.Font);
         }
     }
 }

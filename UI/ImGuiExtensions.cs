@@ -264,7 +264,7 @@ namespace QoLBar
 
                 if ((cooldownStyle & IconSettings.CooldownStyle.Number) != 0)
                 {
-                    ImGui.PushFont(QoLBar.BigFont);
+                    ImGui.PushFont(QoLBar.Font);
 
                     var wantedSize = size.X * 0.75f;
                     var str = $"{Math.Ceiling(cooldownMax - cooldownCurrent)}";
@@ -275,10 +275,10 @@ namespace QoLBar
 
                     // Outline
                     var textOutlinePos = center - textSizeHalf + new Vector2(0, wantedSize * 0.05f);
-                    drawList.AddText(QoLBar.BigFont, wantedSize, textOutlinePos, 0xFF000000, str);
+                    drawList.AddText(QoLBar.Font, wantedSize, textOutlinePos, 0xFF000000, str);
 
                     var textPos = center - textSizeHalf - Vector2.UnitY;
-                    drawList.AddText(QoLBar.BigFont, wantedSize, textPos, 0xFFFFFFFF, str);
+                    drawList.AddText(QoLBar.Font, wantedSize, textPos, 0xFFFFFFFF, str);
 
                     PopFontSize();
 
