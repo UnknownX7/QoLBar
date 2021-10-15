@@ -223,11 +223,28 @@ namespace QoLBar
 
         public static Dictionary<int, string> GetUserIcons() => TextureDictionary.GetUserIcons();
 
+        // TODO: .
         private bool _addUserIcons = false;
+        private bool _iconsLR = false;
+        private bool _iconsHR = false;
         private void AddUserIcons(ref bool b)
         {
-            b = !TextureDictionary.AddUserIcons(Config.GetPluginIconPath());
-            IconBrowserUI.BuildCache(false);
+            if (!_iconsLR && !_iconsHR)
+            {
+                _iconsLR = true;
+                _iconsHR = true;
+            }
+
+            var iconPath = Config.GetPluginIconPath();
+
+            if (_iconsLR)
+                _iconsLR = !textureDictionaryLR.AddUserIcons(iconPath);
+
+            if (_iconsHR)
+                _iconsHR = !textureDictionaryHR.AddUserIcons(iconPath);
+
+            if (!(b = _iconsLR || _iconsHR))
+                IconBrowserUI.BuildCache(false);
         }
 
         public void AddUserIcons() => _addUserIcons = true;
