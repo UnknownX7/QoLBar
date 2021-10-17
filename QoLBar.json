@@ -17,5 +17,5 @@
   "ApplicableVersion": "any",
   "DalamudApiLevel": 4,
   "LoadPriority": 0,
-  "Changelog": "Items, hotkey changes, /maincommand, new options, bug fixes"
+  "Changelog": ""
 }
