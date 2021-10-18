@@ -11,6 +11,7 @@ env:
   EXTERNAL_NAME: QoL Bar
   RELEASE_DIR: ./Publish
   PLUGIN_REPO_FORK: UnknownX7/DalamudPlugins
+  PLUGIN_REPO_BRANCH: api4
 
 jobs:
   build:
@@ -53,6 +54,7 @@ jobs:
     - uses: actions/checkout@v2
       with:
         repository: ${{ env.PLUGIN_REPO_FORK }}
+        ref: ${{ env.PLUGIN_REPO_BRANCH }}
         token: ${{ secrets.PAT }}
 
     - uses: actions/download-artifact@v2
@@ -63,5 +65,5 @@ jobs:
     - uses: EndBug/add-and-commit@v7
       with:
         add: --all
-        branch: api4
+        branch: ${{ env.PLUGIN_REPO_BRANCH }}
         message: ${{ env.EXTERNAL_NAME }} ${{ steps.get_version.outputs.VERSION }}
