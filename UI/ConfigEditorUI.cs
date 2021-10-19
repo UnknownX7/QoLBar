@@ -95,19 +95,19 @@ namespace QoLBar
 
         public static void AutoPasteIcon(ShCfg sh)
         {
-            if (IconBrowserUI.iconBrowserOpen && IconBrowserUI.doPasteIcon)
-            {
-                var split = sh.Name.Split(new[] { "##" }, 2, StringSplitOptions.None);
-                sh.Name = $"::{IconBrowserUI.pasteIcon}" + (split.Length > 1 ? $"##{split[1]}" : "");
-                QoLBar.Config.Save();
-                IconBrowserUI.doPasteIcon = false;
-            }
+            if (!IconBrowserUI.iconBrowserOpen || !IconBrowserUI.doPasteIcon) return;
+
+            var split = sh.Name.Split(new[] { "##" }, 2, StringSplitOptions.None);
+            var split2 = split[0].Split(new[] { "::" }, 2, StringSplitOptions.None);
+            sh.Name = $"{split2[0]}::{IconBrowserUI.pasteIcon}" + (split.Length > 1 ? $"##{split[1]}" : "");
+            QoLBar.Config.Save();
+            IconBrowserUI.doPasteIcon = false;
         }
 
         public static void EditShortcutConfigBase(ShCfg sh, bool editing, bool hasIcon)
         {
             EditShortcutName(sh, editing);
-            ImGuiEx.SetItemTooltip("Start the name with ::x where x is a number to use icons, i.e. \"::2914\".\n" +
+            ImGuiEx.SetItemTooltip("Start or end the name with ::x where x is a number to use icons, i.e. \"::2914\".\n" +
                 "Use ## anywhere in the name to make the text afterwards into a tooltip,\ni.e. \"Name##This is a Tooltip\"."
                 + (hasIcon ?
                     "\n\nIcons accept arguments between \"::\" and their ID. I.e. \"::f21\".\n" +

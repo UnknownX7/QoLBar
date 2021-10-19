@@ -129,10 +129,10 @@ namespace QoLBar
         {
             var sh = ui.DisplayedUI.Config;
             var bar = ui.parentBar.Config;
-            return (Vector2 center, bool hovered) =>
+            return (center, hovered) =>
             {
                 var name = sh.Name;
-                var useIcon = ShortcutUI.ParseName(ref name, out string tooltip, out int icon, out string args);
+                var useIcon = ShortcutUI.ParseName(ref name, out _, out var tooltip, out var icon, out var args);
 
                 var c = ImGui.ColorConvertU32ToFloat4(sh.Color);
                 c.W += sh.ColorAnimation / 255f; // Temporary

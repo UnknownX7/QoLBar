@@ -149,7 +149,7 @@ namespace QoLBar
                 sh.Mode = sh.GetDefaultValue(x => x.Mode);
             }
 
-            if (!sh.Name.StartsWith("::"))
+            if (!sh.Name.Contains("::"))
             {
                 sh.IconZoom = sh.GetDefaultValue(x => x.IconZoom);
                 sh.IconOffset = sh.GetDefaultValue(x => x.IconOffset);

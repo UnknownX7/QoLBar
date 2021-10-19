@@ -163,7 +163,8 @@ namespace QoLBar
             var sh = ui.Config;
 
             var name = sh.Name;
-            var useIcon = ParseName(ref name, out var tooltip, out var icon, out var args);
+            var useIcon = ParseName(ref name, out var subName, out var tooltip, out var icon, out var args);
+            var hasSubName = !string.IsNullOrEmpty(subName);
             var spacer = sh.Type == ShortcutType.Spacer;
 
             if (inCategory)
@@ -182,9 +183,53 @@ namespace QoLBar
             if (c.W > 1)
                 c = AnimateColor(c);
 
+            var cursorPos = Vector2.Zero;
+
             ImGuiEx.PushFontScale(ImGuiEx.GetFontScale() * (!inCategory ? parentBar.Config.FontScale : parent.Config.CategoryFontScale));
+            if (!useIcon || hasSubName)
+            {
+                var size = new Vector2(width, height);
+
+                if (hasSubName)
+                {
+                    ImGui.BeginGroup();
+                    ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, Vector2.Zero);
+
+                    cursorPos = ImGui.GetCursorPos();
+                    ImGui.SetCursorPosX(cursorPos.X + height);
+
+                    name = subName;
+                    if (size.X > 0)
+                        size.X = Math.Max(size.X - size.Y, 1);
+                }
+
+                if (spacer)
+                {
+                    ImGui.PushStyleColor(ImGuiCol.Button, 0);
+                    ImGui.PushStyleColor(ImGuiCol.ButtonActive, 0);
+                    ImGui.PushStyleColor(ImGuiCol.ButtonHovered, 0);
+                }
+
+                ImGui.PushStyleColor(ImGuiCol.Text, c);
+                clicked = ImGui.Button(name, size);
+                ImGui.PopStyleColor();
+
+                if (spacer)
+                {
+                    ImGui.PopStyleColor(3);
+                    clicked = false;
+                }
+            }
+
             if (useIcon)
             {
+                if (hasSubName)
+                {
+                    //var lastPos = ImGui.GetCursorPos();
+                    ImGui.SetCursorPos(cursorPos);
+                    //cursorPos = lastPos;
+                }
+
                 ImGuiEx.PushClipRectFullScreen();
                 clicked = DrawIcon(icon, new ImGuiEx.IconSettings
                 {
@@ -196,26 +241,14 @@ namespace QoLBar
                     activeTime = animTime,
                     cooldownAction = sh.CooldownAction,
                     cooldownStyle = (ImGuiEx.IconSettings.CooldownStyle)sh.CooldownStyle
-                }, args, false, spacer);
+                }, args, false, spacer) || clicked;
                 ImGui.PopClipRect();
-            }
-            else
-            {
-                if (spacer)
-                {
-                    ImGui.PushStyleColor(ImGuiCol.Button, 0);
-                    ImGui.PushStyleColor(ImGuiCol.ButtonActive, 0);
-                    ImGui.PushStyleColor(ImGuiCol.ButtonHovered, 0);
-                }
 
-                ImGui.PushStyleColor(ImGuiCol.Text, c);
-                clicked = ImGui.Button(name, new Vector2(width, height));
-                ImGui.PopStyleColor();
-
-                if (spacer)
+                if (hasSubName)
                 {
-                    ImGui.PopStyleColor(3);
-                    clicked = false;
+                    ImGui.PopStyleVar();
+                    ImGui.EndGroup();
+                    //ImGui.SetCursorPos(cursorPos);
                 }
             }
             ImGuiEx.PopFontScale();
@@ -323,7 +356,7 @@ namespace QoLBar
                 ImGui.OpenPopup("editShortcut");
 
             // Dupe code but only cause ImGui sucks
-            PluginUI.DrawExternalWindow(() => DrawConfig(Config.Name.StartsWith("::")), parentBar.IsDocked);
+            PluginUI.DrawExternalWindow(() => DrawConfig(Config.Name.Contains("::")), parentBar.IsDocked);
 
             var windowHovered = ImGui.IsWindowHovered(ImGuiHoveredFlags.AllowWhenBlockedByActiveItem | ImGuiHoveredFlags.ChildWindows);
             isCategoryHovered = windowHovered || !wasCategoryHovered || ImGui.IsPopupOpen(null, ImGuiPopupFlags.AnyPopupId);
@@ -550,8 +583,9 @@ namespace QoLBar
                 ui.Dispose();
         }
 
-        public static bool ParseName(ref string name, out string tooltip, out int icon, out string args)
+        public static bool ParseName(ref string name, out string subName, out string tooltip, out int icon, out string args)
         {
+            subName = string.Empty;
             args = string.Empty;
             if (name == string.Empty)
             {
@@ -566,9 +600,14 @@ namespace QoLBar
             tooltip = (split.Length > 1) ? split[1] : string.Empty;
 
             icon = 0;
-            if (!name.StartsWith("::")) return false;
 
-            var substart = 2;
+            var split2 = name.Split(new[] { "::" }, 2, StringSplitOptions.None);
+            if (split2.Length < 2) return false;
+
+            subName = split2[0];
+            name = split2[1];
+
+            var substart = 0;
 
             // Parse icon arguments
             var done = false;
