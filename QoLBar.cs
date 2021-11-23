@@ -6,10 +6,8 @@ using System.IO;
 using System.Reflection;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Runtime.InteropServices;
 using Dalamud.Game;
 using Dalamud.Game.Gui;
-using Dalamud.Interface;
 using Dalamud.Plugin;
 using Dalamud.Utility;
 using ImGuiNET;
@@ -77,6 +75,7 @@ namespace QoLBar
             IconBrowserUI.BuildCache(false);
 
             Game.Initialize();
+            ConditionManager.Initialize();
 
             pluginReady = true;
         }

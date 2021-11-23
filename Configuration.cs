@@ -84,7 +84,7 @@ namespace QoLBar
         [JsonProperty("iZ")]  [DefaultValue(1.0f)]                 public float IconZoom = 1.0f;
         [JsonProperty("iO")]  [DefaultValue(new[] { 0f, 0f })]     public float[] IconOffset = new float[2];
         [JsonProperty("iR")]  [DefaultValue(0)]                    public float IconRotation = 0.0f;
-        [JsonProperty("cdA")] [DefaultValue(0u)]                    public uint CooldownAction = 0;
+        [JsonProperty("cdA")] [DefaultValue(0u)]                   public uint CooldownAction = 0;
         [JsonProperty("cdS")] [DefaultValue(0)]                    public int CooldownStyle = 0;
         [JsonProperty("cW")]  [DefaultValue(140)]                  public int CategoryWidth = 140;
         [JsonProperty("cSO")] [DefaultValue(false)]                public bool CategoryStaysOpen = false;
@@ -97,6 +97,20 @@ namespace QoLBar
         [JsonProperty("cHC")] [DefaultValue(false)]                public bool CategoryHoverClose = false;
 
         [JsonProperty("_i")]  [DefaultValue(0)]                    public int _i = 0;
+    }
+
+    public class CndCfg
+    {
+        [JsonProperty("i")] [DefaultValue("")]                                  public string ID;
+        [JsonProperty("u")] [DefaultValue(false)]                               public bool Negate;
+        [JsonProperty("b")] [DefaultValue(ConditionManager.BinaryOperator.AND)] public ConditionManager.BinaryOperator Operator;
+        [JsonProperty("a")] [DefaultValue(0)]                                   public dynamic Arg = 0;
+    }
+
+    public class CndSet
+    {
+        [JsonProperty("n")] [DefaultValue("")]   public string Name;
+        [JsonProperty("c")] [DefaultValue(null)] public List<CndCfg> Conditions;
     }
 
     public class Configuration : IPluginConfiguration
