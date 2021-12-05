@@ -98,7 +98,6 @@ namespace QoLBar
         // Misc
         private static Dictionary<uint, string> usables;
         private static delegate* unmanaged<IntPtr, uint, uint, uint, short, void> useItem;
-        private static delegate* unmanaged<UIModule*, ushort, byte> executeMainCommand;
         private static ActionManager* actionManager;
         private static RaptureAtkUnitManager* raptureAtkUnitManager;
         private static delegate* unmanaged<uint, uint, uint> getActionID;
@@ -113,8 +112,6 @@ namespace QoLBar
             agentModule = uiModule->GetAgentModule();
             actionManager = ActionManager.Instance();
             raptureAtkUnitManager = AtkStage.GetSingleton()->RaptureAtkUnitManager;
-
-            executeMainCommand = (delegate* unmanaged<UIModule*, ushort, byte>)uiModule->vfunc[171];
 
             try
             {
@@ -411,8 +408,6 @@ namespace QoLBar
             try { UseItem(usables.First(i => i.Value == newName).Key + (uint)(useHQ ? 1_000_000 : 0)); }
             catch { }
         }
-
-        public static void ExecuteMainCommand(ushort id) => executeMainCommand(uiModule, id);
 
         public static uint GetActionID(uint actionType, uint actionCategoryID) => getActionID(actionType, actionCategoryID);
 
