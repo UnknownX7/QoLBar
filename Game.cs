@@ -368,8 +368,6 @@ namespace QoLBar
             macroQueue.Clear();
         }
 
-        public static bool IsWeaponDrawn(PlayerCharacter player) => (*(byte*)(player.Address + 0x19A0) & 0b100) > 0;
-
         public static AtkUnitBase* GetAddonStructByName(string name, int index) => (AtkUnitBase*)DalamudApi.GameGui.GetAddonByName(name, index);
 
         public static AtkUnitBase* GetFocusedAddon()

@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Interface;
 using ImGuiNET;
 
@@ -643,7 +644,7 @@ namespace QoLBar
                     1 => arg is not string && (ulong)arg == DalamudApi.ClientState.LocalContentId,
                     2 => DalamudApi.TargetManager.Target != null,
                     3 => DalamudApi.TargetManager.FocusTarget != null,
-                    4 => DalamudApi.ClientState.LocalPlayer is {} player && Game.IsWeaponDrawn(player),
+                    4 => DalamudApi.ClientState.LocalPlayer is {} player && (player.StatusFlags & StatusFlags.WeaponOut) != 0,
                     5 => arg is string range && CheckEorzeaTimeCondition(range),
                     6 => arg is string range && CheckLocalTimeCondition(range),
                     7 => arg is not string && (byte)arg == Game.CurrentHUDLayout,
