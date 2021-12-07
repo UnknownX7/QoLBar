@@ -11,7 +11,7 @@ env:
   EXTERNAL_NAME: QoL Bar
   RELEASE_DIR: ./Publish
   PLUGIN_REPO_FORK: UnknownX7/DalamudPlugins
-  PLUGIN_REPO_BRANCH: api4
+  PLUGIN_REPO_BRANCH: api5
 
 jobs:
   build:
