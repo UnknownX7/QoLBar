@@ -397,7 +397,7 @@ namespace QoLBar
             {
                 // I greatly dislike this
                 var dragging = !IsDragging
-                    ? ImGui.IsWindowFocused() && IsHovered && !ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.IsMouseDragging(ImGuiMouseButton.Left, 0)
+                    ? ImGui.IsWindowFocused() && IsHovered && !ImGui.IsMouseClicked(ImGuiMouseButton.Left) && ImGui.IsMouseDragging(ImGuiMouseButton.Left, 5)
                     : IsDragging && !ImGui.IsMouseReleased(ImGuiMouseButton.Left);
 
                 // Began dragging
