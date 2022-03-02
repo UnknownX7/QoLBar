@@ -143,7 +143,7 @@ namespace QoLBar
                 PrintError("Usage: /qolvisible [on|off|toggle] <bar>");
         }
 
-        public static bool HasPlugin(string name) => DalamudApi.PluginInterface.PluginInternalNames.Any(x => x == name);
+        public static bool HasPlugin(string name) => DalamudApi.PluginInterface.PluginInternalNames.Contains(name);
 
         public static bool IsLoggedIn() => ConditionCache.GetCondition(DisplayCondition.ConditionType.Misc, 0);
 

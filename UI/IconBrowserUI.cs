@@ -204,7 +204,9 @@ namespace QoLBar
                     _useLowQuality = true;
             }
             else
+            {
                 _tabExists = false;
+            }
 
             return _tabExists;
         }
@@ -220,7 +222,9 @@ namespace QoLBar
                 ImGui.EndTabItem();
             }
             else if (!string.IsNullOrEmpty(_tooltip))
+            {
                 ImGuiEx.SetItemTooltip(_tooltip);
+            }
         }
 
         private static void AddIcons(int start, int end, string desc = "")
@@ -232,6 +236,8 @@ namespace QoLBar
 
         private static void DrawIconList()
         {
+            if (_columns <= 0) return;
+
             ImGui.BeginChild($"{_name}##IconList");
 
             var cache = _iconCache[_name];
