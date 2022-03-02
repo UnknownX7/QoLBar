@@ -238,7 +238,7 @@ namespace QoLBar
 
             ImGuiListClipperPtr clipper;
             unsafe { clipper = new(ImGuiNative.ImGuiListClipper_ImGuiListClipper()); }
-            clipper.Begin(cache.Count / _columns + 1, _iconSize + ImGui.GetStyle().ItemSpacing.Y);
+            clipper.Begin((cache.Count - 1) / _columns + 1, _iconSize + ImGui.GetStyle().ItemSpacing.Y);
 
             var iconSize = new Vector2(_iconSize);
             var settings = new ImGuiEx.IconSettings { size = iconSize };

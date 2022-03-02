@@ -11,17 +11,17 @@ env:
   EXTERNAL_NAME: QoL Bar
   RELEASE_DIR: ./Publish
   PLUGIN_REPO_FORK: UnknownX7/DalamudPlugins
-  PLUGIN_REPO_BRANCH: api4
+  PLUGIN_REPO_BRANCH: api5
 
 jobs:
   build:
-    runs-on: [windows-latest]
+    runs-on: [windows-2022]
 
     steps:
       - uses: actions/checkout@v2
 
       - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v1.0.2
+        uses: microsoft/setup-msbuild@v1.1
 
       - name: Setup NuGet
         uses: NuGet/setup-nuget@v1.0.5

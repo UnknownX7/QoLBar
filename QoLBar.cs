@@ -6,10 +6,8 @@ using System.IO;
 using System.Reflection;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Runtime.InteropServices;
 using Dalamud.Game;
 using Dalamud.Game.Gui;
-using Dalamud.Interface;
 using Dalamud.Plugin;
 using Dalamud.Utility;
 using ImGuiNET;
@@ -143,16 +141,6 @@ namespace QoLBar
             }
             else
                 PrintError("Usage: /qolvisible [on|off|toggle] <bar>");
-        }
-
-        [Command("/maincommand")]
-        [HelpMessage("Executes a main command, from the Actions & Traits menu, by ID (can be seen using Simple Tweaks' \"Show ID\" tweak).")]
-        private void OnMainCommand(string command, string argument)
-        {
-            if (ushort.TryParse(argument, out var id))
-                Game.ExecuteMainCommand(id);
-            else
-                PrintError("Invalid ID.");
         }
 
         public static bool HasPlugin(string name) => DalamudApi.PluginInterface.PluginInternalNames.Any(x => x == name);
