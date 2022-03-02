@@ -45,7 +45,7 @@ namespace QoLBar
             }
         }
 
-        public static DateTimeOffset EorzeaTime => DateTimeOffset.FromUnixTimeSeconds(*(long*)(DalamudApi.Framework.Address.BaseAddress + 0x1608));
+        public static DateTimeOffset EorzeaTime => DateTimeOffset.FromUnixTimeSeconds(Framework.Instance()->EorzeaTime);
 
         public static UIModule* uiModule;
 
