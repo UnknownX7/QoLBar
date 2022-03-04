@@ -1,3 +1,5 @@
+using Dalamud.Game.ClientState.Conditions;
+
 namespace QoLBar.Conditions
 {
     public class ConditionFlagCondition : ICondition, IConditionCategory
@@ -6,6 +8,6 @@ namespace QoLBar.Conditions
         public string ConditionName => "Condition Flag";
         public string CategoryName => "Condition Flag";
         public int DisplayPriority => 0;
-        public bool Check(dynamic arg) => true;
+        public bool Check(dynamic arg) => arg is not string && DalamudApi.Condition[(ConditionFlag)arg];
     }
 }

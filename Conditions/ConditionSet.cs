@@ -6,6 +6,6 @@ namespace QoLBar.Conditions
         public string ConditionName => "Condition Set";
         public string CategoryName => "Condition Set";
         public int DisplayPriority => 0;
-        public bool Check(dynamic arg) => true;
+        public bool Check(dynamic arg) => arg is not string && ConditionManager.CheckConditionSet((int)arg);
     }
 }
