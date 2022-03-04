@@ -2,30 +2,25 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Dalamud.Logging;
 
 namespace QoLBar
 {
-    public interface ICondition
+    public interface IDisplayPriority
+    {
+        public int DisplayPriority { get; }
+    }
+
+    public interface ICondition : IDisplayPriority
     {
         public string ID { get; }
+        public string ConditionName { get; }
         public bool Check(dynamic arg);
     }
 
-    [AttributeUsage(AttributeTargets.Class)]
-    public class MiscConditionAttribute : Attribute { }
-
-    [MiscCondition]
-    public class SomeCondition : ICondition
+    public interface IConditionCategory : IDisplayPriority
     {
-        public string ID => "s";
-        public bool Check(dynamic arg) => true;
-    }
-
-    [MiscCondition]
-    public class IsLoggedInCondition : ICondition
-    {
-        public string ID => "l";
-        public bool Check(dynamic arg) => DalamudApi.Condition.Any();
+        public string CategoryName { get; }
     }
 
     public static class ConditionManager
@@ -39,7 +34,7 @@ namespace QoLBar
         }
 
         private static readonly Dictionary<string, ICondition> conditions = new();
-        private static readonly List<ICondition> miscConditions = new();
+        private static List<(IConditionCategory category, List<ICondition> conditions)> categories = new();
         private static readonly Dictionary<(ICondition, dynamic), bool> conditionCache = new();
         private static readonly Dictionary<CndSet, (bool prev, float time)> conditionSetCache = new();
         private static readonly HashSet<CndSet> lockedSets = new();
@@ -47,6 +42,18 @@ namespace QoLBar
 
         public static void Initialize()
         {
+            foreach (var t in Assembly.GetExecutingAssembly().GetTypes().Where(t => t.IsAssignableTo(typeof(IConditionCategory)) && !t.IsInterface))
+            {
+                var category = (IConditionCategory)Activator.CreateInstance(t);
+                if (category == null) continue;
+
+                var list = new List<ICondition>();
+                categories.Add((category, list));
+                if (!t.IsAssignableTo(typeof(ICondition))) continue;
+
+                list.Add((ICondition)category);
+            }
+
             foreach (var t in Assembly.GetExecutingAssembly().GetTypes().Where(t => t.IsAssignableTo(typeof(ICondition)) && !t.IsInterface))
             {
                 var condition = (ICondition)Activator.CreateInstance(t);
@@ -54,8 +61,28 @@ namespace QoLBar
 
                 conditions.Add(condition.ID, condition);
 
-                if (t.GetCustomAttribute<MiscConditionAttribute>() != null)
-                    miscConditions.Add(condition);
+                var categoryType = t.GetCustomAttributes().FirstOrDefault(attr => attr.GetType().IsAssignableTo(typeof(IConditionCategory)))?.GetType();
+                if (categoryType == null) continue;
+
+                var (category, list) = categories.FirstOrDefault(tuple => tuple.category.GetType() == categoryType);
+                if (category == null) continue;
+
+                list.Add(condition);
+            }
+
+            categories = categories.OrderBy(t => t.category.DisplayPriority).ToList();
+            for (int i = 0; i < categories.Count; i++)
+            {
+                var (category, list) = categories[i];
+                categories[i] = (category, list.OrderBy(c => c.DisplayPriority).ToList());
+            }
+
+            foreach (var (attribute, list) in categories)
+            {
+                foreach (var condition in list)
+                {
+                    PluginLog.Error($"{attribute} -> {condition}");
+                }
             }
         }
 
@@ -91,10 +118,7 @@ namespace QoLBar
             };
         }
 
-        public static bool CheckConditionSet(int i)
-        {
-            return true;
-        }
+        public static bool CheckConditionSet(int i) => i >= 0 && i < QoLBar.Config.CndSets.Count && CheckConditionSet(QoLBar.Config.CndSets[i]);
 
         public static bool CheckConditionSet(CndSet set)
         {

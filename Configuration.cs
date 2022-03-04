@@ -119,7 +119,8 @@ namespace QoLBar
 
         [Obsolete] public List<BarConfig> BarConfigs { internal get; set; }
         public List<BarCfg> BarCfgs = new();
-        public List<DisplayConditionSet> ConditionSets = new();
+        [Obsolete] public List<DisplayConditionSet> ConditionSets = new(); //{ internal get; set; }
+        public List<CndSet> CndSets = new();
         public bool ExportOnDelete = true;
         public bool UseIconFrame = false;
         public bool AlwaysDisplayBars = false;
