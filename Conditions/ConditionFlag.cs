@@ -8,6 +8,6 @@ namespace QoLBar.Conditions
         public string ConditionName => "Condition Flag";
         public string CategoryName => "Condition Flag";
         public int DisplayPriority => 0;
-        public bool Check(dynamic arg) => arg is not string && DalamudApi.Condition[(ConditionFlag)arg];
+        public bool Check(dynamic arg) => DalamudApi.Condition[(ConditionFlag)arg];
     }
 }

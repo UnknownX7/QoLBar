@@ -99,12 +99,30 @@ namespace QoLBar
             if (conditionCache.TryGetValue((condition, arg), out bool cache)) // ReSharper / Rider hates this being a var for some reason
                 return cache;
 
-            cache = condition.Check(arg);
+            try
+            {
+                cache = condition.Check(arg);
+            }
+            catch
+            {
+                cache = false;
+            }
+
             conditionCache[(condition, arg)] = cache;
             return cache;
         }
 
-        private static bool CheckUnaryCondition(bool negate, ICondition condition, dynamic arg) => !negate ? condition.Check(arg) : !condition.Check(arg);
+        private static bool CheckUnaryCondition(bool negate, ICondition condition, dynamic arg)
+        {
+            try
+            {
+                return !negate ? condition.Check(arg) : !condition.Check(arg);
+            }
+            catch
+            {
+                return false;
+            }
+        }
 
         private static bool CheckBinaryCondition(bool prev, BinaryOperator op, bool negate, ICondition condition, dynamic arg)
         {

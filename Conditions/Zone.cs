@@ -6,6 +6,6 @@ namespace QoLBar.Conditions
         public string ConditionName => "Zone";
         public string CategoryName => "Zone";
         public int DisplayPriority => 0;
-        public bool Check(dynamic arg) => arg is not string && DalamudApi.ClientState.TerritoryType == (ushort)arg;
+        public bool Check(dynamic arg) => DalamudApi.ClientState.TerritoryType == (ushort)arg;
     }
 }

@@ -74,7 +74,7 @@ namespace QoLBar.Conditions
         public string ID => "c";
         public string ConditionName => "Character ID";
         public int DisplayPriority => 0;
-        public bool Check(dynamic arg) => arg is not string && (ulong)arg == DalamudApi.ClientState.LocalContentId;
+        public bool Check(dynamic arg) => (ulong)arg == DalamudApi.ClientState.LocalContentId;
     }
 
     [MiscCondition]
@@ -142,7 +142,7 @@ namespace QoLBar.Conditions
         public string ID => "hl";
         public string ConditionName => "Current HUD Layout";
         public int DisplayPriority => 0;
-        public bool Check(dynamic arg) => arg is not string && (byte)arg == Game.CurrentHUDLayout;
+        public bool Check(dynamic arg) => (byte)arg == Game.CurrentHUDLayout;
     }
 
     [MiscCondition]
