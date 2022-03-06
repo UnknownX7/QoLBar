@@ -4,7 +4,9 @@ namespace QoLBar.Conditions
 {
     public class ConditionSetCondition : ICondition, IDrawableCondition, IConditionCategory
     {
-        public string ID => "cs";
+        public const string constID = "cs";
+
+        public string ID => constID;
         public string ConditionName => "Condition Set";
         public string CategoryName => "Condition Set";
         public int DisplayPriority => 0;

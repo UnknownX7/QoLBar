@@ -207,5 +207,74 @@ namespace QoLBar
             conditionCache.Clear();
             lastConditionCache = QoLBar.RunTime;
         }
+
+        public static void SwapConditionSet(int from, int to)
+        {
+            var set = QoLBar.Config.CndSets[from];
+
+            foreach (var bar in QoLBar.Config.BarCfgs)
+            {
+                if (bar.ConditionSet == from)
+                    bar.ConditionSet = to;
+                else if (bar.ConditionSet == to)
+                    bar.ConditionSet = from;
+            }
+
+            foreach (var condition in from s in QoLBar.Config.CndSets from condition in s.Conditions where condition.ID == Conditions.ConditionSetCondition.constID select condition)
+            {
+                if (condition.Arg == from)
+                    condition.Arg = to;
+                else if (condition.Arg == to)
+                    condition.Arg = from;
+            }
+
+            QoLBar.Config.CndSets.RemoveAt(from);
+            QoLBar.Config.CndSets.Insert(to, set);
+            QoLBar.Config.Save();
+
+            IPC.MovedConditionSetProvider.SendMessage(from, to);
+        }
+
+        public static void RemoveConditionSet(int i)
+        {
+            foreach (var bar in QoLBar.Config.BarCfgs)
+            {
+                if (bar.ConditionSet > i)
+                    bar.ConditionSet -= 1;
+                else if (bar.ConditionSet == i)
+                    bar.ConditionSet = -1;
+            }
+
+            foreach (var s in QoLBar.Config.CndSets)
+            {
+                for (int j = s.Conditions.Count - 1; j >= 0; j--)
+                {
+                    var cond = s.Conditions[j];
+                    if (cond.ID != Conditions.ConditionSetCondition.constID) continue;
+
+                    if (cond.Arg > i)
+                        cond.Arg -= 1;
+                    else if (cond.Arg == i)
+                        s.Conditions.RemoveAt(j);
+                }
+            }
+
+            QoLBar.Config.CndSets.RemoveAt(i);
+            QoLBar.Config.Save();
+
+            IPC.RemovedConditionSetProvider.SendMessage(i);
+        }
+
+        public static void ShiftCondition(CndSet set, CndCfg cndCfg, bool increment)
+        {
+            var i = set.Conditions.IndexOf(cndCfg);
+            if (!increment ? i <= 0 : i >= (set.Conditions.Count - 1)) return;
+
+            var j = (increment ? i + 1 : i - 1);
+            var condition = set.Conditions[i];
+            set.Conditions.RemoveAt(i);
+            set.Conditions.Insert(j, condition);
+            QoLBar.Config.Save();
+        }
     }
 }

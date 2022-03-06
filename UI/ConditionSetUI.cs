@@ -41,7 +41,7 @@ namespace QoLBar
             ImGui.SameLine();
 
             if (ImGui.Button(FontAwesomeIcon.SignOutAlt.ToIconString(), buttonSize) && hasSelectedSet)
-                ;//ImGui.SetClipboardText(EXPORT);
+                ;//ImGui.SetClipboardText(EXPORT); // TODO
             ImGui.PopFont();
             ImGuiEx.SetItemTooltip("Export condition set to clipboard.");
             ImGui.PushFont(UiBuilder.IconFont);
@@ -52,7 +52,7 @@ namespace QoLBar
             {
                 try
                 {
-                    //var set = IMPORT(ImGui.GetClipboardText());
+                    //var set = IMPORT(ImGui.GetClipboardText()); // TODO
                     //QoLBar.Config.CndSets.Add(set);
                     //QoLBar.Config.Save();
                 }
@@ -69,24 +69,18 @@ namespace QoLBar
 
             if (ImGui.Button(FontAwesomeIcon.ArrowUp.ToIconString(), buttonSize) && hasSelectedSet)
             {
-                QoLBar.Config.CndSets.RemoveAt(selectedSet);
-
+                var prev = selectedSet;
                 selectedSet = Math.Max(selectedSet - 1, 0);
-
-                QoLBar.Config.CndSets.Insert(selectedSet, currentSet);
-                QoLBar.Config.Save();
+                ConditionManager.SwapConditionSet(prev, selectedSet);
             }
 
             ImGui.SameLine();
 
             if (ImGui.Button(FontAwesomeIcon.ArrowDown.ToIconString(), buttonSize) && hasSelectedSet)
             {
-                QoLBar.Config.CndSets.RemoveAt(selectedSet);
-
-                selectedSet = Math.Min(selectedSet + 1, QoLBar.Config.CndSets.Count);
-
-                QoLBar.Config.CndSets.Insert(selectedSet, currentSet);
-                QoLBar.Config.Save();
+                var prev = selectedSet;
+                selectedSet = Math.Min(selectedSet + 1, QoLBar.Config.CndSets.Count - 1);
+                ConditionManager.SwapConditionSet(prev, selectedSet);
             }
 
             ImGui.SameLine();
@@ -96,11 +90,10 @@ namespace QoLBar
             {
                 if (ImGui.Selectable(FontAwesomeIcon.TrashAlt.ToIconString()))
                 {
-                    QoLBar.Config.CndSets.RemoveAt(selectedSet);
+                    ConditionManager.RemoveConditionSet(selectedSet);
                     selectedSet = Math.Min(selectedSet, QoLBar.Config.CndSets.Count - 1);
                     currentSet = CurrentSet;
                     hasSelectedSet = currentSet != null;
-                    QoLBar.Config.Save();
                 }
                 ImGui.EndPopup();
             }
@@ -138,6 +131,10 @@ namespace QoLBar
             ImGui.BeginChild("QoLBarConditionSetEditor", ImGui.GetContentRegionAvail(), true);
             DrawConditionSetEditor(currentSet);
             ImGui.EndChild();
+
+            // TODO
+            //if (ImGui.Button("Open Condition Data", new Vector2(ImGui.GetContentRegionAvail().X, 0)))
+            //    Game.ExecuteCommand("/xldata condition");
         }
 
         public static void DrawConditionSetList()
@@ -228,7 +225,7 @@ namespace QoLBar
                     ImGuiEx.SetupSlider(true, ImGui.GetItemRectSize().Y + ImGui.GetStyle().ItemSpacing.Y, (hitInterval, increment, closing) =>
                     {
                         if (hitInterval)
-                            ShiftCondition(set, cndCfg, increment);
+                            ConditionManager.ShiftCondition(set, cndCfg, increment);
                     });
                 }
 
@@ -238,7 +235,7 @@ namespace QoLBar
 
                     if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
                     {
-                        set.Conditions.RemoveAt(i--);
+                        set.Conditions.RemoveAt(i);
                         QoLBar.Config.Save();
                     }
                 }
@@ -279,7 +276,7 @@ namespace QoLBar
 
                     if (ImGui.Button(FontAwesomeIcon.Plus.ToIconString(), new Vector2(comboSize, 0)))
                     {
-                        set.Conditions.Add(new() { ID = "cf" });
+                        set.Conditions.Add(new() { ID = Conditions.ConditionFlagCondition.constID });
                         QoLBar.Config.Save();
                     }
 
@@ -321,7 +318,7 @@ namespace QoLBar
                 }
 
                 ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
-                if (ImGui.BeginCombo("##Category", selectedCategory.CategoryName))
+                if (ImGui.BeginCombo("##Category", selectedCategory.CategoryName, ImGuiComboFlags.NoArrowButton))
                 {
                     foreach (var (category, list) in ConditionManager.ConditionCategories)
                     {
@@ -408,18 +405,6 @@ namespace QoLBar
             }
 
             ImGui.PopStyleVar();
-        }
-
-        public static void ShiftCondition(CndSet set, CndCfg cndCfg, bool increment)
-        {
-            var i = set.Conditions.IndexOf(cndCfg);
-            if (!increment ? i <= 0 : i >= (set.Conditions.Count - 1)) return;
-
-            var j = (increment ? i + 1 : i - 1);
-            var condition = set.Conditions[i];
-            set.Conditions.RemoveAt(i);
-            set.Conditions.Insert(j, condition);
-            QoLBar.Config.Save();
         }
     }
 }

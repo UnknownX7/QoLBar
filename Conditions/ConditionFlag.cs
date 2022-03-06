@@ -6,9 +6,10 @@ namespace QoLBar.Conditions
 {
     public class ConditionFlagCondition : ICondition, IDrawableCondition, IConditionCategory
     {
+        public const string constID = "cf";
         private static readonly Array conditionFlags = Enum.GetValues(typeof(ConditionFlag));
 
-        public string ID => "cf";
+        public string ID => constID;
         public string ConditionName => "Condition Flag";
         public string CategoryName => "Condition Flag";
         public int DisplayPriority => 0;
