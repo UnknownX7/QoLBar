@@ -1,8 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Dalamud.Logging;
 
 namespace QoLBar
 {
@@ -18,6 +17,18 @@ namespace QoLBar
         public bool Check(dynamic arg);
     }
 
+    public interface IDrawableCondition
+    {
+        public string GetTooltip(CndCfg cndCfg);
+        public string GetSelectableTooltip(CndCfg cndCfg);
+        public void Draw(CndCfg cndCfg);
+    }
+
+    public interface IArgCondition
+    {
+        public dynamic GetDefaultArg(CndCfg cndCfg);
+    }
+
     public interface IConditionCategory : IDisplayPriority
     {
         public string CategoryName { get; }
@@ -29,16 +40,19 @@ namespace QoLBar
         {
             AND,
             OR,
-            XOR,
-            EQUALS
+            EQUALS,
+            XOR
         }
 
         private static readonly Dictionary<string, ICondition> conditions = new();
-        private static List<(IConditionCategory category, List<ICondition> conditions)> categories = new();
+        private static readonly Dictionary<ICondition, IConditionCategory> categoryMap = new();
         private static readonly Dictionary<(ICondition, dynamic), bool> conditionCache = new();
         private static readonly Dictionary<CndSet, (bool prev, float time)> conditionSetCache = new();
+        private static readonly Dictionary<CndSet, List<bool>> debugSteps = new();
         private static readonly HashSet<CndSet> lockedSets = new();
         private static float lastConditionCache = 0;
+
+        public static List<(IConditionCategory category, List<ICondition> conditions)> ConditionCategories { get; private set; } = new();
 
         public static void Initialize()
         {
@@ -48,7 +62,7 @@ namespace QoLBar
                 if (category == null) continue;
 
                 var list = new List<ICondition>();
-                categories.Add((category, list));
+                ConditionCategories.Add((category, list));
                 if (!t.IsAssignableTo(typeof(ICondition))) continue;
 
                 list.Add((ICondition)category);
@@ -62,36 +76,38 @@ namespace QoLBar
                 conditions.Add(condition.ID, condition);
 
                 var categoryType = t.GetCustomAttributes().FirstOrDefault(attr => attr.GetType().IsAssignableTo(typeof(IConditionCategory)))?.GetType();
-                if (categoryType == null) continue;
+                if (categoryType == null)
+                {
+                    if (t.IsAssignableTo(typeof(IConditionCategory)))
+                        categoryMap.Add(condition, (IConditionCategory)condition);
+                    continue;
+                }
 
-                var (category, list) = categories.FirstOrDefault(tuple => tuple.category.GetType() == categoryType);
+                var (category, list) = ConditionCategories.FirstOrDefault(tuple => tuple.category.GetType() == categoryType);
                 if (category == null) continue;
 
                 list.Add(condition);
+                categoryMap.Add(condition, category);
             }
 
-            categories = categories.OrderBy(t => t.category.DisplayPriority).ToList();
-            for (int i = 0; i < categories.Count; i++)
+            ConditionCategories = ConditionCategories.OrderBy(t => t.category.DisplayPriority).ToList();
+            for (int i = 0; i < ConditionCategories.Count; i++)
             {
-                var (category, list) = categories[i];
-                categories[i] = (category, list.OrderBy(c => c.DisplayPriority).ToList());
-            }
-
-            foreach (var (attribute, list) in categories)
-            {
-                foreach (var condition in list)
-                {
-                    PluginLog.Error($"{attribute} -> {condition}");
-                }
+                var (category, list) = ConditionCategories[i];
+                ConditionCategories[i] = (category, list.OrderBy(c => c.DisplayPriority).ToList());
             }
         }
 
         public static ICondition GetCondition(string id) => conditions.TryGetValue(id, out var condition) ? condition : null;
 
-        public static bool CheckCondition(string id, dynamic arg = null)
+        public static IConditionCategory GetConditionCategory(ICondition condition) => categoryMap[condition];
+
+        public static IConditionCategory GetConditionCategory(string id) => GetConditionCategory(GetCondition(id));
+
+        public static bool CheckCondition(string id, dynamic arg = null, bool negate = false)
         {
             var condition = GetCondition(id);
-            return condition != null && CheckCondition(condition, arg);
+            return condition != null && (!negate ? CheckCondition(condition, arg) : !CheckCondition(condition, arg));
         }
 
         private static bool CheckCondition(ICondition condition, dynamic arg)
@@ -130,8 +146,8 @@ namespace QoLBar
             {
                 BinaryOperator.AND => prev && CheckUnaryCondition(negate, condition, arg),
                 BinaryOperator.OR => prev || CheckUnaryCondition(negate, condition, arg),
-                BinaryOperator.XOR => prev ^ CheckUnaryCondition(negate, condition, arg),
                 BinaryOperator.EQUALS => prev == CheckUnaryCondition(negate, condition, arg),
+                BinaryOperator.XOR => prev ^ CheckUnaryCondition(negate, condition, arg),
                 _ => prev
             };
         }
@@ -150,6 +166,7 @@ namespace QoLBar
 
             var first = true;
             var prev = true;
+            var steps = new List<bool>();
             foreach (var cnd in set.Conditions)
             {
                 var condition = GetCondition(cnd.ID);
@@ -164,13 +181,18 @@ namespace QoLBar
                 {
                     prev = CheckBinaryCondition(prev, cnd.Operator, cnd.Negate, condition, cnd.Arg);
                 }
+
+                steps.Add(prev);
             }
 
             lockedSets.Remove(set);
 
             conditionSetCache[set] = (prev, QoLBar.RunTime);
+            debugSteps[set] = steps;
             return prev;
         }
+
+        public static List<bool> GetDebugSteps(CndSet set) => debugSteps.TryGetValue(set, out var steps) ? steps : null;
 
         public static void UpdateCache()
         {

@@ -92,7 +92,7 @@ namespace QoLBar
         {
             if (!ImGuiEx.SetBoolOnGameFocus(ref _displayOutsideMain)) return;
 
-            ImGui.SetNextWindowSizeConstraints(new Vector2(588, 500), ImGuiHelpers.MainViewport.Size);
+            ImGui.SetNextWindowSizeConstraints(new Vector2(600, 650) * ImGuiHelpers.GlobalScale, ImGuiHelpers.MainViewport.Size);
             ImGui.Begin("QoL Bar Configuration", ref configOpen);
 
             ImGuiEx.ShouldDrawInViewport(out _displayOutsideMain);
@@ -106,6 +106,12 @@ namespace QoLBar
                 }
 
                 if (ImGui.BeginTabItem("Condition Sets"))
+                {
+                    ConditionSetUI.Draw();
+                    ImGui.EndTabItem();
+                }
+
+                if (ImGui.BeginTabItem("Old Condition Sets"))
                 {
                     DisplayConditionSet.DrawEditor();
                     ImGui.EndTabItem();

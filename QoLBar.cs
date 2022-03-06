@@ -158,6 +158,7 @@ namespace QoLBar
             Game.ReadyCommand();
             Keybind.Run();
             Keybind.SetupHotkeys(ui.bars);
+            ConditionManager.UpdateCache();
         }
 
         private void Draw()

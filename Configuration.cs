@@ -101,16 +101,16 @@ namespace QoLBar
 
     public class CndCfg
     {
-        [JsonProperty("i")] [DefaultValue("")]                                  public string ID;
-        [JsonProperty("u")] [DefaultValue(false)]                               public bool Negate;
-        [JsonProperty("b")] [DefaultValue(ConditionManager.BinaryOperator.AND)] public ConditionManager.BinaryOperator Operator;
+        [JsonProperty("i")] [DefaultValue("")]                                  public string ID = "";
+        [JsonProperty("u")] [DefaultValue(false)]                               public bool Negate = false;
+        [JsonProperty("b")] [DefaultValue(ConditionManager.BinaryOperator.AND)] public ConditionManager.BinaryOperator Operator = ConditionManager.BinaryOperator.AND;
         [JsonProperty("a")] [DefaultValue(0)]                                   public dynamic Arg = 0;
     }
 
     public class CndSet
     {
-        [JsonProperty("n")] [DefaultValue("")]   public string Name;
-        [JsonProperty("c")] [DefaultValue(null)] public List<CndCfg> Conditions;
+        [JsonProperty("n")] [DefaultValue("")]   public string Name = "";
+        [JsonProperty("c")] [DefaultValue(null)] public List<CndCfg> Conditions = new();
     }
 
     public class Configuration : IPluginConfiguration

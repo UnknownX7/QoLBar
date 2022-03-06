@@ -1,6 +1,10 @@
 using System;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Dalamud.Game.ClientState.Objects.Enums;
+using Dalamud.Interface;
+using Dalamud.Logging;
+using ImGuiNET;
 
 namespace QoLBar.Conditions
 {
@@ -50,6 +54,63 @@ namespace QoLBar.Conditions
             }
             return (minTime < maxTime) ? (minTime <= curTime && curTime < maxTime) : (minTime <= curTime || curTime < maxTime);
         }
+
+        public static void DrawTimespanInput(CndCfg cndCfg)
+        {
+            string timespan = cndCfg.Arg is string ? cndCfg.Arg : string.Empty;
+            var reg = Regex.Match(timespan, TimespanRegex);
+            if (ImGui.InputText("##Timespan", ref timespan, 16))
+            {
+                cndCfg.Arg = timespan;
+                QoLBar.Config.Save();
+            }
+            if (!reg.Success)
+                ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), 0x200000FF, 5f);
+
+            if (!ImGui.IsItemHovered()) return;
+
+            var regexInfo = "Failed regex!";
+            if (reg.Success)
+            {
+                var min = ParseTime(reg.Groups[1].Value);
+                var max = ParseTime(reg.Groups[2].Value);
+                var use1 = min.Item1 >= 0 && max.Item1 >= 0;
+                var use2 = min.Item2 >= 0 && max.Item2 >= 0;
+                var use3 = min.Item3 >= 0 && max.Item3 >= 0;
+                var use4 = min.Item4 >= 0 && max.Item4 >= 0;
+                var minStr = $"{(use1 ? min.Item1.ToString() : "X")}{(use2 ? min.Item2.ToString() : "X")}:{(use3 ? min.Item3.ToString() : "X")}{(use4 ? min.Item4.ToString() : "X")}";
+                var maxStr = $"{(use1 ? max.Item1.ToString() : "X")}{(use2 ? max.Item2.ToString() : "X")}:{(use3 ? max.Item3.ToString() : "X")}{(use4 ? max.Item4.ToString() : "X")}";
+                regexInfo = $"Minimum: {minStr}\nMaximum: {maxStr} {(minStr == maxStr ? "\nWarning: this will always be true!" : string.Empty)}";
+            }
+
+            ImGui.SetTooltip("Timespan should be formatted as \"XX:XX-XX:XX\" (24h) and may contain \"X\" wildcards.\n" +
+                "I.e \"XX:30-XX:10\" will return true for times such as 01:30, 13:54, and 21:09.\n" +
+                "The minimum time is inclusive, but the maximum is not.\n\n" +
+                regexInfo);
+        }
+
+        public static unsafe void DrawAddonInput(CndCfg cndCfg)
+        {
+            string addon = cndCfg.Arg is string ? cndCfg.Arg : string.Empty;
+            var focusedAddon = Game.GetFocusedAddon();
+            var addonName = focusedAddon != null ? Marshal.PtrToStringAnsi((IntPtr)focusedAddon->Name) : string.Empty;
+            if (ImGui.InputTextWithHint("##UIName", addonName, ref addon, 32))
+            {
+                cndCfg.Arg = addon;
+                QoLBar.Config.Save();
+            }
+
+            if (!ImGui.IsItemHovered()) return;
+
+            if (ImGui.IsMouseReleased(ImGuiMouseButton.Right) && !string.IsNullOrEmpty(addonName))
+            {
+                cndCfg.Arg = addonName;
+                QoLBar.Config.Save();
+            }
+
+            ImGui.SetTooltip("See \"/xldata ai\" to find the names of various windows.\n" +
+                "Right click to set this to the currently focused UI addon's name.");
+        }
     }
 
     [AttributeUsage(AttributeTargets.Class)]
@@ -69,12 +130,16 @@ namespace QoLBar.Conditions
     }
 
     [MiscCondition]
-    public class CharacterCondition : ICondition
+    public class CharacterCondition : ICondition, IDrawableCondition, IArgCondition
     {
         public string ID => "c";
         public string ConditionName => "Character ID";
         public int DisplayPriority => 0;
         public bool Check(dynamic arg) => (ulong)arg == DalamudApi.ClientState.LocalContentId;
+        public string GetTooltip(CndCfg cndCfg) => $"ID: {cndCfg.Arg}";
+        public string GetSelectableTooltip(CndCfg cndCfg) => "Selecting this will assign the current character's ID to this condition.";
+        public void Draw(CndCfg cndCfg) { }
+        public dynamic GetDefaultArg(CndCfg cndCfg) => DalamudApi.ClientState.LocalContentId;
     }
 
     [MiscCondition]
@@ -105,70 +170,112 @@ namespace QoLBar.Conditions
     }
 
     [MiscCondition]
-    public class EorzeaTimespanCondition : ICondition
+    public class EorzeaTimespanCondition : ICondition, IDrawableCondition, IArgCondition
     {
         public string ID => "et";
         public string ConditionName => "Eorzea Timespan";
         public int DisplayPriority => 0;
-
         private static bool CheckEorzeaTimeCondition(string arg)
         {
             var reg = Regex.Match(arg, MiscConditionHelpers.TimespanRegex);
             return reg.Success && MiscConditionHelpers.IsTimeBetween(Game.EorzeaTime.ToString("HH:mm"), reg.Groups[1].Value, reg.Groups[2].Value);
         }
-
         public bool Check(dynamic arg) => arg is string range && CheckEorzeaTimeCondition(range);
+        public string GetTooltip(CndCfg cndCfg) => null;
+        public string GetSelectableTooltip(CndCfg cndCfg) => null;
+        public void Draw(CndCfg cndCfg) => MiscConditionHelpers.DrawTimespanInput(cndCfg);
+        public dynamic GetDefaultArg(CndCfg cndCfg) => cndCfg.Arg is string ? cndCfg.Arg : string.Empty;
     }
 
     [MiscCondition]
-    public class LocalTimespanCondition : ICondition
+    public class LocalTimespanCondition : ICondition, IDrawableCondition, IArgCondition
     {
         public string ID => "lt";
         public string ConditionName => "Local Timespan";
         public int DisplayPriority => 0;
-
         private static bool CheckLocalTimeCondition(string arg)
         {
             var reg = Regex.Match(arg, MiscConditionHelpers.TimespanRegex);
             return reg.Success && MiscConditionHelpers.IsTimeBetween(DateTime.Now.ToString("HH:mm"), reg.Groups[1].Value, reg.Groups[2].Value);
         }
-
         public bool Check(dynamic arg) => arg is string range && CheckLocalTimeCondition(range);
+        public string GetTooltip(CndCfg cndCfg) => null;
+        public string GetSelectableTooltip(CndCfg cndCfg) => null;
+        public void Draw(CndCfg cndCfg) => MiscConditionHelpers.DrawTimespanInput(cndCfg);
+        public dynamic GetDefaultArg(CndCfg cndCfg) => cndCfg.Arg is string ? cndCfg.Arg : string.Empty;
     }
 
     [MiscCondition]
-    public class HUDLayoutCondition : ICondition
+    public class HUDLayoutCondition : ICondition, IDrawableCondition, IArgCondition
     {
         public string ID => "hl";
         public string ConditionName => "Current HUD Layout";
         public int DisplayPriority => 0;
         public bool Check(dynamic arg) => (byte)arg == Game.CurrentHUDLayout;
+        public string GetTooltip(CndCfg cndCfg) => $"Layout: {cndCfg.Arg + 1}";
+        public string GetSelectableTooltip(CndCfg cndCfg) => "Selecting this will assign the current HUD layout preset to this condition.";
+        public void Draw(CndCfg cndCfg) { }
+        public dynamic GetDefaultArg(CndCfg cndCfg) => Game.CurrentHUDLayout;
     }
 
     [MiscCondition]
-    public class AddonExistsCondition : ICondition
+    public class AddonExistsCondition : ICondition, IDrawableCondition, IArgCondition
     {
         public string ID => "ae";
         public string ConditionName => "Addon Exists";
         public int DisplayPriority => 100;
         public unsafe bool Check(dynamic arg) => arg is string addon && Game.GetAddonStructByName(addon, 1) != null;
+        public string GetTooltip(CndCfg cndCfg) => null;
+        public string GetSelectableTooltip(CndCfg cndCfg) => "Advanced condition.";
+        public void Draw(CndCfg cndCfg) => MiscConditionHelpers.DrawAddonInput(cndCfg);
+        public dynamic GetDefaultArg(CndCfg cndCfg) => cndCfg.Arg is string ? cndCfg.Arg : string.Empty;
     }
 
     [MiscCondition]
-    public class AddonVisibleCondition : ICondition
+    public class AddonVisibleCondition : ICondition, IDrawableCondition, IArgCondition
     {
         public string ID => "av";
         public string ConditionName => "Addon Visible";
         public int DisplayPriority => 101;
         public unsafe bool Check(dynamic arg) => arg is string addon && Game.GetAddonStructByName(addon, 1) is var atkBase && atkBase != null && atkBase->IsVisible;
+        public string GetTooltip(CndCfg cndCfg) => null;
+        public string GetSelectableTooltip(CndCfg cndCfg) => "Advanced condition.";
+        public void Draw(CndCfg cndCfg) => MiscConditionHelpers.DrawAddonInput(cndCfg);
+        public dynamic GetDefaultArg(CndCfg cndCfg) => cndCfg.Arg is string ? cndCfg.Arg : string.Empty;
     }
 
     [MiscCondition]
-    public class PluginCondition : ICondition
+    public class PluginCondition : ICondition, IDrawableCondition, IArgCondition
     {
         public string ID => "p";
         public string ConditionName => "Plugin Enabled";
         public int DisplayPriority => 102;
         public bool Check(dynamic arg) => arg is string plugin && QoLBar.HasPlugin(plugin);
+        public string GetTooltip(CndCfg cndCfg) => null;
+        public string GetSelectableTooltip(CndCfg cndCfg) => null;
+
+        public void Draw(CndCfg cndCfg)
+        {
+            if (ImGui.BeginCombo("##PluginsList", cndCfg.Arg is string ? cndCfg.Arg : string.Empty))
+            {
+                for (int i = 0; i < DalamudApi.PluginInterface.PluginInternalNames.Count; i++)
+                {
+                    var name = DalamudApi.PluginInterface.PluginInternalNames[i];
+                    if (!ImGui.Selectable($"{name}##{i}", cndCfg.Arg == name)) continue;
+
+                    cndCfg.Arg = name;
+                    QoLBar.Config.Save();
+                }
+
+                ImGui.EndCombo();
+            }
+
+            if (cndCfg.Arg is not "QoLBar") return;
+
+            ImGui.PushFont(UiBuilder.IconFont);
+            ImGuiEx.SetItemTooltip(FontAwesomeIcon.Poo.ToIconString());
+            ImGui.PopFont();
+        }
+        public dynamic GetDefaultArg(CndCfg cndCfg) => cndCfg.Arg is string ? cndCfg.Arg : string.Empty;
     }
 }
