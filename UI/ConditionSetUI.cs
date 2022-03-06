@@ -11,7 +11,6 @@ namespace QoLBar
     public static class ConditionSetUI
     {
         private static int selectedSet = -1;
-        private static CndSet CurrentSet => 0 <= selectedSet && selectedSet < QoLBar.Config.CndSets.Count ? QoLBar.Config.CndSets[selectedSet] : null;
         private static bool editingName = false;
         private static bool focusNameInput = false;
         private static readonly List<string> binaryOperators = new()
@@ -21,6 +20,8 @@ namespace QoLBar
             "==",
             " !="
         };
+
+        private static CndSet CurrentSet => selectedSet >= 0 && selectedSet < QoLBar.Config.CndSets.Count ? QoLBar.Config.CndSets[selectedSet] : null;
 
         public static void Draw()
         {
@@ -134,16 +135,6 @@ namespace QoLBar
 
             if (!hasSelectedSet) return;
 
-            ImGui.PushFont(UiBuilder.IconFont);
-
-            if (ImGui.Button($"{FontAwesomeIcon.Plus.ToIconString()}##Set", buttonSize))
-            {
-                currentSet.Conditions.Add(new() { ID = "cf" });
-                QoLBar.Config.Save();
-            }
-
-            ImGui.PopFont();
-
             ImGui.BeginChild("QoLBarConditionSetEditor", ImGui.GetContentRegionAvail(), true);
             DrawConditionSetEditor(currentSet);
             ImGui.EndChild();
@@ -194,9 +185,31 @@ namespace QoLBar
         public static void DrawConditionSetEditor(CndSet set)
         {
             var debugSteps = ConditionManager.GetDebugSteps(set);
+            var comboSize = ImGui.CalcTextSize("AND").X;
+
+            ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(4, ImGui.GetStyle().ItemSpacing.Y));
+
+            if (set.Conditions.Count == 0)
+            {
+                ImGui.PushFont(UiBuilder.IconFont);
+
+                if (ImGui.Button($"{FontAwesomeIcon.Plus.ToIconString()}##Set", new Vector2(comboSize, 0)))
+                {
+                    set.Conditions.Add(new() { ID = "cf" });
+                    QoLBar.Config.Save();
+                }
+
+                ImGui.PopFont();
+                ImGui.PopStyleVar();
+
+                return;
+            }
+
             for (int i = 0; i < set.Conditions.Count; i++)
             {
                 ImGui.PushID(i);
+
+                ImGui.BeginGroup();
 
                 var cndCfg = set.Conditions[i];
                 var selectedCondition = ConditionManager.GetCondition(cndCfg.ID);
@@ -204,7 +217,33 @@ namespace QoLBar
 
                 ImGui.Columns(3, null, false);
 
-                var comboSize = ImGui.CalcTextSize("AND").X;
+                ImGui.PushFont(UiBuilder.IconFont);
+                ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(2, ImGui.GetStyle().FramePadding.Y));
+                ImGui.Button(FontAwesomeIcon.ArrowsAltV.ToIconString());
+                ImGui.PopStyleVar();
+                ImGui.PopFont();
+
+                if (ImGui.IsItemActive() && ImGui.IsMouseDragging(ImGuiMouseButton.Left))
+                {
+                    ImGuiEx.SetupSlider(true, ImGui.GetItemRectSize().Y + ImGui.GetStyle().ItemSpacing.Y, (hitInterval, increment, closing) =>
+                    {
+                        if (hitInterval)
+                            ShiftCondition(set, cndCfg, increment);
+                    });
+                }
+
+                if (ImGui.IsItemHovered())
+                {
+                    ImGui.SetTooltip("Right click this button to delete this condition!");
+
+                    if (ImGui.IsMouseReleased(ImGuiMouseButton.Right))
+                    {
+                        set.Conditions.RemoveAt(i--);
+                        QoLBar.Config.Save();
+                    }
+                }
+
+                ImGui.SameLine();
 
                 if (i != 0)
                 {
@@ -236,7 +275,15 @@ namespace QoLBar
                 }
                 else
                 {
-                    ImGui.Dummy(new Vector2(comboSize, 0));
+                    ImGui.PushFont(UiBuilder.IconFont);
+
+                    if (ImGui.Button(FontAwesomeIcon.Plus.ToIconString(), new Vector2(comboSize, 0)))
+                    {
+                        set.Conditions.Add(new() { ID = "cf" });
+                        QoLBar.Config.Save();
+                    }
+
+                    ImGui.PopFont();
                 }
 
                 ImGui.SameLine();
@@ -359,6 +406,20 @@ namespace QoLBar
 
                 ImGui.PopID();
             }
+
+            ImGui.PopStyleVar();
+        }
+
+        public static void ShiftCondition(CndSet set, CndCfg cndCfg, bool increment)
+        {
+            var i = set.Conditions.IndexOf(cndCfg);
+            if (!increment ? i <= 0 : i >= (set.Conditions.Count - 1)) return;
+
+            var j = (increment ? i + 1 : i - 1);
+            var condition = set.Conditions[i];
+            set.Conditions.RemoveAt(i);
+            set.Conditions.Insert(j, condition);
+            QoLBar.Config.Save();
         }
     }
 }
