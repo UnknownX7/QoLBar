@@ -32,8 +32,8 @@ namespace QoLBar
             GetVersionProvider.RegisterFunc(() => QoLBar.Config.PluginVersion);
             GetIPCVersionProvider.RegisterFunc(() => IPCVersion);
             ImportBarProvider.RegisterAction(import => QoLBar.Plugin.ui.ImportBar(import));
-            GetConditionSetsProvider.RegisterFunc(() => QoLBar.Config.ConditionSets.Select(s => s.Name).ToArray());
-            CheckConditionSetProvider.RegisterFunc(i => i >= 0 && i < QoLBar.Config.ConditionSets.Count && QoLBar.Config.ConditionSets[i].CheckConditions());
+            GetConditionSetsProvider.RegisterFunc(() => QoLBar.Config.CndSets.Select(s => s.Name).ToArray());
+            CheckConditionSetProvider.RegisterFunc(i => i >= 0 && i < QoLBar.Config.CndSets.Count && ConditionManager.CheckConditionSet(i));
 
             penumbraApiVersionSubscriber = DalamudApi.PluginInterface.GetIpcSubscriber<int>("Penumbra.ApiVersion");
 

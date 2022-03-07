@@ -224,6 +224,125 @@ namespace QoLBar
         }
     }
 
+    public class DisplayCondition
+    {
+        public enum ConditionType
+        {
+            Logic,
+            ConditionFlag,
+            Job,
+            Role,
+            Misc,
+            Zone,
+            ConditionSet
+        }
+
+        public ConditionType Type = ConditionType.Logic;
+        public int Condition = 0;
+        public dynamic Arg = 0;
+
+        public CndCfg Upgrade()
+        {
+            var cndCfg = new CndCfg { Arg = Arg };
+
+            switch (Type)
+            {
+                case ConditionType.ConditionFlag:
+                    cndCfg.ID = new Conditions.ConditionFlagCondition().ID;
+                    cndCfg.Arg = Condition;
+                    break;
+                case ConditionType.Job:
+                    cndCfg.ID = new Conditions.JobCondition().ID;
+                    cndCfg.Arg = Condition;
+                    break;
+                case ConditionType.Role:
+                    cndCfg.ID = new Conditions.RoleCondition().ID;
+                    cndCfg.Arg = Condition;
+                    break;
+                case ConditionType.Zone:
+                    cndCfg.ID = new Conditions.ZoneCondition().ID;
+                    cndCfg.Arg = Condition;
+                    break;
+                case ConditionType.ConditionSet:
+                    cndCfg.ID = new Conditions.ConditionSetCondition().ID;
+                    cndCfg.Arg = Condition;
+                    break;
+                case ConditionType.Misc:
+                    cndCfg.ID = Condition switch
+                    {
+                        0 => new Conditions.LoggedInCondition().ID,
+                        1 => new Conditions.CharacterCondition().ID,
+                        2 => new Conditions.HaveTargetCondition().ID,
+                        3 => new Conditions.HaveFocusTargetCondition().ID,
+                        4 => new Conditions.WeaponDrawnCondition().ID,
+                        5 => new Conditions.EorzeaTimespanCondition().ID,
+                        6 => new Conditions.LocalTimespanCondition().ID,
+                        7 => new Conditions.HUDLayoutCondition().ID,
+                        8 => new Conditions.AddonExistsCondition().ID,
+                        9 => new Conditions.AddonVisibleCondition().ID,
+                        10 => new Conditions.PluginCondition().ID,
+                        _ => throw new ApplicationException($"Unrecognized misc condition: {Condition}")
+                    };
+                    break;
+            }
+
+            return cndCfg;
+        }
+    }
+
+    public class DisplayConditionSet
+    {
+        public string Name = string.Empty;
+        public readonly List<DisplayCondition> Conditions = new();
+
+        public CndSet Upgrade()
+        {
+            var set = new CndSet { Name = Name };
+
+            var not = false;
+            var op = ConditionManager.BinaryOperator.AND;
+            foreach (var condition in Conditions)
+            {
+                switch (condition.Type)
+                {
+                    case DisplayCondition.ConditionType.Logic:
+                        if (condition.Condition != 2 && op != ConditionManager.BinaryOperator.AND)
+                        {
+                            op = ConditionManager.BinaryOperator.AND;
+                            break;
+                        }
+
+                        switch (condition.Condition)
+                        {
+                            case 0:
+                                op = ConditionManager.BinaryOperator.OR;
+                                break;
+                            case 1:
+                                op = ConditionManager.BinaryOperator.XOR;
+                                break;
+                            case 2:
+                                not ^= true;
+                                break;
+                            case 3:
+                                op = ConditionManager.BinaryOperator.EQUALS;
+                                break;
+                        }
+                        break;
+                    default:
+                        var cndCfg = condition.Upgrade();
+                        cndCfg.Operator = op;
+                        cndCfg.Negate = not;
+                        op = ConditionManager.BinaryOperator.AND;
+                        not = false;
+                        set.Conditions.Add(cndCfg);
+                        break;
+                }
+            }
+
+            return set;
+        }
+    }
+
     public static class Legacy
     {
         private static readonly Dictionary<string, Action<Configuration, Importing.ExportInfo>> upgradeActions = new()

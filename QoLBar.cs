@@ -146,7 +146,7 @@ namespace QoLBar
 
         public static bool HasPlugin(string name) => DalamudApi.PluginInterface.PluginInternalNames.Contains(name);
 
-        public static bool IsLoggedIn() => ConditionCache.GetCondition(DisplayCondition.ConditionType.Misc, 0);
+        public static bool IsLoggedIn() => ConditionManager.CheckCondition("l");
 
         public static float RunTime => (float)DalamudApi.PluginInterface.LoadTimeDelta.TotalSeconds;
         public static long FrameCount => (long)DalamudApi.PluginInterface.UiBuilder.FrameCount;

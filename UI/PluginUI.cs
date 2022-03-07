@@ -42,14 +42,6 @@ namespace QoLBar
             for (int i = 0; i < QoLBar.Config.BarCfgs.Count; i++)
                 bars.Add(new BarUI(i));
 
-            Task.Run(async () =>
-            {
-                while (!DalamudApi.DataManager.IsDataReady)
-                    await Task.Delay(1000);
-                DisplayConditionSet.classDictionary = DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.ClassJob>().ToDictionary(i => i.RowId);
-                DisplayConditionSet.territoryDictionary = DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.TerritoryType>().ToDictionary(i => i.RowId);
-            });
-
             if (!QoLBar.Config.FirstStart) return;
 
             AddBar(new BarCfg { Editing = true });
@@ -108,12 +100,6 @@ namespace QoLBar
                 if (ImGui.BeginTabItem("Condition Sets"))
                 {
                     ConditionSetUI.Draw();
-                    ImGui.EndTabItem();
-                }
-
-                if (ImGui.BeginTabItem("Old Condition Sets"))
-                {
-                    DisplayConditionSet.DrawEditor();
                     ImGui.EndTabItem();
                 }
 
@@ -178,7 +164,7 @@ namespace QoLBar
                     bars[i].IsHidden = !bars[i].IsHidden;
                 ImGuiEx.SetItemTooltip(bar.Hidden ? "Reveal" : "Hide");
                 ImGui.SameLine();
-                var preview = ((bar.ConditionSet >= 0) && (bar.ConditionSet < QoLBar.Config.ConditionSets.Count)) ? $"[{bar.ConditionSet + 1}] {QoLBar.Config.ConditionSets[bar.ConditionSet].Name}" : "Condition Set";
+                var preview = ((bar.ConditionSet >= 0) && (bar.ConditionSet < QoLBar.Config.CndSets.Count)) ? $"[{bar.ConditionSet + 1}] {QoLBar.Config.CndSets[bar.ConditionSet].Name}" : "Condition Set";
                 if (ImGui.BeginCombo("##Condition", preview))
                 {
                     if (ImGui.Selectable("None", bar.ConditionSet == -1))
@@ -186,9 +172,9 @@ namespace QoLBar
                         bar.ConditionSet = -1;
                         QoLBar.Config.Save();
                     }
-                    for (int idx = 0; idx < QoLBar.Config.ConditionSets.Count; idx++)
+                    for (int idx = 0; idx < QoLBar.Config.CndSets.Count; idx++)
                     {
-                        if (ImGui.Selectable($"[{idx + 1}] {QoLBar.Config.ConditionSets[idx].Name}", idx == bar.ConditionSet))
+                        if (ImGui.Selectable($"[{idx + 1}] {QoLBar.Config.CndSets[idx].Name}", idx == bar.ConditionSet))
                         {
                             bar.ConditionSet = idx;
                             QoLBar.Config.Save();

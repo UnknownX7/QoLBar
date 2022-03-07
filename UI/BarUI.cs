@@ -129,7 +129,7 @@ namespace QoLBar
                 children.Add(new ShortcutUI(this));
         }
 
-        public bool CheckConditionSet() => Config.ConditionSet < 0 || Config.ConditionSet >= QoLBar.Config.ConditionSets.Count || QoLBar.Config.ConditionSets[Config.ConditionSet].CheckConditions();
+        public bool CheckConditionSet() => Config.ConditionSet < 0 || Config.ConditionSet >= QoLBar.Config.CndSets.Count || ConditionManager.CheckConditionSet(Config.ConditionSet);
 
         public void SetupPivot()
         {

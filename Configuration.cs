@@ -119,7 +119,7 @@ namespace QoLBar
 
         [Obsolete] public List<BarConfig> BarConfigs { internal get; set; }
         public List<BarCfg> BarCfgs = new();
-        [Obsolete] public List<DisplayConditionSet> ConditionSets = new(); //{ internal get; set; }
+        [Obsolete] public List<DisplayConditionSet> ConditionSets { internal get; set; }
         public List<CndSet> CndSets = new();
         public bool ExportOnDelete = true;
         public bool UseIconFrame = false;
@@ -198,6 +198,14 @@ namespace QoLBar
                     BarCfgs.Add(BarConfigs[i].Upgrade());
                 BarConfigs = null;
                 Version++;
+            }
+
+            if (ConditionSets is { Count: > 0 })
+            {
+                CndSets.Clear();
+                foreach (var set in ConditionSets)
+                    CndSets.Add(set.Upgrade());
+                ConditionSets = null;
             }
 #pragma warning restore CS0612 // Type or member is obsolete
 
