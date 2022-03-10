@@ -2,71 +2,70 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
-namespace QoLBar.Structures
+namespace QoLBar.Structures;
+
+[StructLayout(LayoutKind.Sequential, Size = 0x688)]
+public readonly struct Macro : IDisposable
 {
-    [StructLayout(LayoutKind.Sequential, Size = 0x688)]
-    public readonly struct Macro : IDisposable
+    public const int numLines = 15;
+    public const int size = 0x8 + (UTF8String.size * (numLines + 1));
+
+    public readonly uint icon;
+    public readonly uint key;
+    public readonly UTF8String title;
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = numLines)]
+    public readonly UTF8String[] lines;
+
+    public Macro(IntPtr loc, string t, IReadOnlyList<string> commands)
     {
-        public const int numLines = 15;
-        public const int size = 0x8 + (UTF8String.size * (numLines + 1));
-
-        public readonly uint icon;
-        public readonly uint key;
-        public readonly UTF8String title;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = numLines)]
-        public readonly UTF8String[] lines;
-
-        public Macro(IntPtr loc, string t, IReadOnlyList<string> commands)
+        icon = 0x101D1; // 66001
+        key = 1;
+        title = new UTF8String(loc + 0x8, t);
+        lines = new UTF8String[numLines];
+        for (int i = 0; i < numLines; i++)
         {
-            icon = 0x101D1; // 66001
-            key = 1;
-            title = new UTF8String(loc + 0x8, t);
-            lines = new UTF8String[numLines];
-            for (int i = 0; i < numLines; i++)
-            {
-                var command = (commands.Count > i) ? commands[i] : string.Empty;
-                lines[i] = new UTF8String(loc + 0x8 + (UTF8String.size * (i + 1)), command);
-            }
-        }
-
-        public void Dispose()
-        {
-            title.Dispose();
-            for (int i = 0; i < numLines; i++)
-                lines[i].Dispose();
+            var command = (commands.Count > i) ? commands[i] : string.Empty;
+            lines[i] = new UTF8String(loc + 0x8 + (UTF8String.size * (i + 1)), command);
         }
     }
 
-    [StructLayout(LayoutKind.Sequential, Size = 0xCA0)]
-    public readonly struct ExtendedMacro : IDisposable
+    public void Dispose()
     {
-        public const int numLines = 30;
-        public const int size = 0x8 + (UTF8String.size * (numLines + 1));
+        title.Dispose();
+        for (int i = 0; i < numLines; i++)
+            lines[i].Dispose();
+    }
+}
 
-        private readonly uint icon;
-        private readonly uint key;
-        private readonly UTF8String title;
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = numLines)]
-        private readonly UTF8String[] lines;
+[StructLayout(LayoutKind.Sequential, Size = 0xCA0)]
+public readonly struct ExtendedMacro : IDisposable
+{
+    public const int numLines = 30;
+    public const int size = 0x8 + (UTF8String.size * (numLines + 1));
 
-        public ExtendedMacro(IntPtr loc, string t, IReadOnlyList<string> commands)
+    private readonly uint icon;
+    private readonly uint key;
+    private readonly UTF8String title;
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = numLines)]
+    private readonly UTF8String[] lines;
+
+    public ExtendedMacro(IntPtr loc, string t, IReadOnlyList<string> commands)
+    {
+        icon = 0x101D1; // 66001
+        key = 1;
+        title = new UTF8String(loc + 0x8, t);
+        lines = new UTF8String[numLines];
+        for (int i = 0; i < numLines; i++)
         {
-            icon = 0x101D1; // 66001
-            key = 1;
-            title = new UTF8String(loc + 0x8, t);
-            lines = new UTF8String[numLines];
-            for (int i = 0; i < numLines; i++)
-            {
-                var command = (commands.Count > i) ? commands[i] : string.Empty;
-                lines[i] = new UTF8String(loc + 0x8 + (UTF8String.size * (i + 1)), command);
-            }
+            var command = (commands.Count > i) ? commands[i] : string.Empty;
+            lines[i] = new UTF8String(loc + 0x8 + (UTF8String.size * (i + 1)), command);
         }
+    }
 
-        public void Dispose()
-        {
-            title.Dispose();
-            for (int i = 0; i < numLines; i++)
-                lines[i].Dispose();
-        }
+    public void Dispose()
+    {
+        title.Dispose();
+        for (int i = 0; i < numLines; i++)
+            lines[i].Dispose();
     }
 }
