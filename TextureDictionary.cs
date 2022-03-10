@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Dalamud;
 using Dalamud.Logging;
 using Dalamud.Utility;
 using ImGuiScene;

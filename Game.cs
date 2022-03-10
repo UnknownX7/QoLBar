@@ -95,6 +95,7 @@ public static unsafe class Game
     }
 
     // Misc
+    private const int aetherCompassID = 2_001_886;
     private static Dictionary<uint, string> usables;
     private static delegate* unmanaged<IntPtr, uint, uint, uint, short, void> useItem;
     private static ActionManager* actionManager;
@@ -142,9 +143,11 @@ public static unsafe class Game
                 useItem = (delegate* unmanaged<IntPtr, uint, uint, uint, short, void>)DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 41 B0 01 BA 13 00 00 00");
                 itemContextMenuAgent = GetAgentByInternalID(10);
 
-                usables = DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Item>().Where(i => i.ItemAction.Row > 0).ToDictionary(i => i.RowId, i => i.Name.ToString().ToLower())
-                    .Concat(DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.EventItem>().Where(i => i.Action.Row > 0).ToDictionary(i => i.RowId, i => i.Name.ToString().ToLower()))
+                usables = DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Item>()!.Where(i => i.ItemAction.Row > 0).ToDictionary(i => i.RowId, i => i.Name.ToString().ToLower())
+                    .Concat(DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.EventItem>()!.Where(i => i.Action.Row > 0).ToDictionary(i => i.RowId, i => i.Name.ToString().ToLower()))
                     .ToDictionary(kv => kv.Key, kv => kv.Value);
+
+                usables[aetherCompassID] = DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.EventItem>()!.GetRow(aetherCompassID)?.Name.ToString().ToLower();
             }
             catch { PluginLog.LogError("Failed to load UseItem"); }
         }
@@ -379,6 +382,13 @@ public static unsafe class Game
     public static void UseItem(uint id)
     {
         if (id == 0 || !usables.ContainsKey(id is >= 1_000_000 and < 2_000_000 ? id - 1_000_000 : id)) return;
+
+        // Aether Compass support
+        if (id == aetherCompassID)
+        {
+            actionManager->UseAction(ActionType.Spell, 26988);
+            return;
+        }
 
         // Dumb fix for dumb bug
         if (retryItem == 0 && id < 2_000_000)
