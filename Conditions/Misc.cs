@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Interface;
-using Dalamud.Logging;
+using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using ImGuiNET;
 
 namespace QoLBar.Conditions
@@ -240,10 +240,69 @@ namespace QoLBar.Conditions
         public string ConditionName => "Current HUD Layout";
         public int DisplayPriority => 0;
         public bool Check(dynamic arg) => (byte)arg == Game.CurrentHUDLayout;
-        public string GetTooltip(CndCfg cndCfg) => $"Layout: {cndCfg.Arg + 1}";
-        public string GetSelectableTooltip(CndCfg cndCfg) => "Selecting this will assign the current HUD layout preset to this condition.";
-        public void Draw(CndCfg cndCfg) { }
+        public string GetTooltip(CndCfg cndCfg) => null;
+        public string GetSelectableTooltip(CndCfg cndCfg) => null;
+        public void Draw(CndCfg cndCfg)
+        {
+            var _ = (int)cndCfg.Arg + 1;
+            if (ImGui.SliderInt("##HUDLayout", ref _, 1, 4))
+                cndCfg.Arg = _ - 1;
+        }
         public dynamic GetDefaultArg(CndCfg cndCfg) => Game.CurrentHUDLayout;
+    }
+
+    [MiscCondition]
+    public class KeyHeldCondition : ICondition, IDrawableCondition
+    {
+        public string ID => "k";
+        public string ConditionName => "Key Held";
+        public int DisplayPriority => 0;
+        public bool Check(dynamic arg) => Keybind.IsHotkeyHeld((int)arg, false);
+        public string GetTooltip(CndCfg cndCfg) => null;
+        public string GetSelectableTooltip(CndCfg cndCfg) => null;
+        public void Draw(CndCfg cndCfg)
+        {
+            var _ = (int)cndCfg.Arg;
+            if (Keybind.InputHotkey("##KeyHeldCondition", ref _))
+                cndCfg.Arg = _;
+            ImGuiEx.SetItemTooltip("Press escape to clear the hotkey.");
+        }
+    }
+
+    [MiscCondition]
+    public class PartyCondition : ICondition, IDrawableCondition, IArgCondition
+    {
+        public string ID => "pt";
+        public string ConditionName => "# Party Members";
+        public int DisplayPriority => 0;
+        public unsafe bool Check(dynamic arg) => Framework.Instance()->GetUiModule()->GetPronounModule()->ResolvePlaceholder($"<{arg}>", 0, 0) != null;
+        public string GetTooltip(CndCfg cndCfg) => null;
+        public string GetSelectableTooltip(CndCfg cndCfg) => null;
+        public void Draw(CndCfg cndCfg)
+        {
+            var _ = (int)cndCfg.Arg;
+            if (ImGui.SliderInt("##MemberCount", ref _, 2, 8))
+                cndCfg.Arg = _;
+        }
+        public dynamic GetDefaultArg(CndCfg cndCfg) => 2;
+    }
+
+    [MiscCondition]
+    public class PetCondition : ICondition
+    {
+        public string ID => "pe";
+        public string ConditionName => "Pet Exists";
+        public int DisplayPriority => 0;
+        public unsafe bool Check(dynamic arg) => Framework.Instance()->GetUiModule()->GetPronounModule()->ResolvePlaceholder("<pet>", 0, 0) != null;
+    }
+
+    [MiscCondition]
+    public class ChocoboCondition : ICondition
+    {
+        public string ID => "ce";
+        public string ConditionName => "Chocobo Exists";
+        public int DisplayPriority => 0;
+        public unsafe bool Check(dynamic arg) => Framework.Instance()->GetUiModule()->GetPronounModule()->ResolvePlaceholder("<c>", 0, 0) != null;
     }
 
     [MiscCondition]

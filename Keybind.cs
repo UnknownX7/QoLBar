@@ -199,7 +199,7 @@ namespace QoLBar
 
         public static void AddHotkey(ShortcutUI sh) => hotkeys.Add((sh.parentBar, sh));
 
-        private static bool InputHotkey(string id, ref int hotkey)
+        public static bool InputHotkey(string id, ref int hotkey)
         {
             var dispKey = GetKeyName(hotkey);
             ImGui.InputText($"{id}##{hotkey}", ref dispKey, 200, ImGuiInputTextFlags.ReadOnly | ImGuiInputTextFlags.AllowTabInput); // delete the box to delete focus 4head
