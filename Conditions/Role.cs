@@ -6,7 +6,7 @@ namespace QoLBar.Conditions
 {
     public class RoleCondition : ICondition, IDrawableCondition, IArgCondition, IConditionCategory
     {
-        private static readonly Dictionary<int, string> roleDictionary = new()
+        public static readonly Dictionary<int, string> roleDictionary = new()
         {
             [1] = "Tank",
             [2] = "Melee DPS",

@@ -109,8 +109,8 @@ namespace QoLBar
     {
         [JsonProperty("i")] [DefaultValue(Conditions.ConditionFlagCondition.constID)] public string ID = Conditions.ConditionFlagCondition.constID;
         [JsonProperty("a")] [DefaultValue(0)]                                         public dynamic Arg = 0;
-        [JsonProperty("u")] [DefaultValue(false)]                                     public bool Negate = false;
-        [JsonProperty("b")] [DefaultValue(ConditionManager.BinaryOperator.AND)]       public ConditionManager.BinaryOperator Operator = ConditionManager.BinaryOperator.AND;
+        [JsonProperty("n")] [DefaultValue(false)]                                     public bool Negate = false;
+        [JsonProperty("o")] [DefaultValue(ConditionManager.BinaryOperator.AND)]       public ConditionManager.BinaryOperator Operator = ConditionManager.BinaryOperator.AND;
     }
 
     public class Configuration : IPluginConfiguration

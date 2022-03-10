@@ -380,6 +380,7 @@ namespace QoLBar
             ImGui.SameLine(halfWidth);
             ImGui.Checkbox("Allow importing hotkeys", ref Importing.allowImportHotkeys);
             ImGui.Checkbox("Allow exporting sensitive condition sets", ref Importing.allowExportingSensitiveConditionSets);
+            ImGuiEx.SetItemTooltip("Allows exporting condition sets that contain personal information, such as your character ID.");
         }
 
         private void DrawBackupManager()

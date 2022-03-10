@@ -130,7 +130,7 @@ namespace QoLBar.Conditions
     }
 
     [MiscCondition]
-    public class CharacterCondition : ICondition, IDrawableCondition, IArgCondition
+    public class CharacterCondition : ICondition, IDrawableCondition, IArgCondition, IOnImportCondition
     {
         public string ID => "c";
         public string ConditionName => "Character ID";
@@ -138,26 +138,54 @@ namespace QoLBar.Conditions
         public bool Check(dynamic arg) => (ulong)arg == DalamudApi.ClientState.LocalContentId;
         public string GetTooltip(CndCfg cndCfg) => $"ID: {cndCfg.Arg}";
         public string GetSelectableTooltip(CndCfg cndCfg) => "Selecting this will assign the current character's ID to this condition.";
-        public void Draw(CndCfg cndCfg) { }
+        public void Draw(CndCfg cndCfg)
+        {
+            if (cndCfg.Arg != 0)
+            {
+                if (ImGui.Button("Clear Data"))
+                    cndCfg.Arg = 0;
+            }
+            else
+            {
+                if (ImGui.Button("Assign Data"))
+                    cndCfg.Arg = GetDefaultArg(cndCfg);
+            }
+
+            ImGuiEx.SetItemTooltip("If this condition has no data when imported,\nit will automatically be assigned.");
+        }
         public dynamic GetDefaultArg(CndCfg cndCfg) => DalamudApi.ClientState.LocalContentId;
+        public void OnImport(CndCfg cndCfg)
+        {
+            if (cndCfg.Arg == 0)
+                cndCfg.Arg = GetDefaultArg(cndCfg);
+        }
     }
 
     [MiscCondition]
-    public class HaveTargetCondition : ICondition
+    public class TargetCondition : ICondition, IDrawableCondition, IArgCondition
     {
-        public string ID => "ht";
-        public string ConditionName => "Have Target";
+        public string ID => "t";
+        public string ConditionName => "Target Exists";
         public int DisplayPriority => 0;
-        public bool Check(dynamic arg) => DalamudApi.TargetManager.Target != null;
-    }
-
-    [MiscCondition]
-    public class HaveFocusTargetCondition : ICondition
-    {
-        public string ID => "hf";
-        public string ConditionName => "Have Focus Target";
-        public int DisplayPriority => 0;
-        public bool Check(dynamic arg) => DalamudApi.TargetManager.FocusTarget != null;
+        public bool Check(dynamic arg)
+        {
+            return (int)arg switch
+            {
+                0 => DalamudApi.TargetManager.Target != null,
+                1 => DalamudApi.TargetManager.FocusTarget != null,
+                2 => DalamudApi.TargetManager.SoftTarget != null,
+                _ => false
+            };
+        }
+        public string GetTooltip(CndCfg cndCfg) => null;
+        public string GetSelectableTooltip(CndCfg cndCfg) => null;
+        public void Draw(CndCfg cndCfg)
+        {
+            var _ = (int)cndCfg.Arg;
+            if (ImGui.Combo("##TargetType", ref _, "Target\0Focus Target\0Soft Target\0"))
+                cndCfg.Arg = _;
+        }
+        public dynamic GetDefaultArg(CndCfg cndCfg) => 0;
     }
 
     [MiscCondition]

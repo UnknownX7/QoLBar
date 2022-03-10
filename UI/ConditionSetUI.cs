@@ -42,7 +42,7 @@ namespace QoLBar
             ImGui.SameLine();
 
             var characterConditionID = new CharacterCondition().ID;
-            var containsSensitiveInfo = !Importing.allowExportingSensitiveConditionSets && hasSelectedSet && currentSet.Conditions.Any(c => c.ID == characterConditionID);
+            var containsSensitiveInfo = !Importing.allowExportingSensitiveConditionSets && hasSelectedSet && currentSet.Conditions.Any(c => c.ID == characterConditionID && c.Arg != 0);
 
             if (containsSensitiveInfo)
             {
@@ -71,6 +71,12 @@ namespace QoLBar
                     var imports = Importing.TryImport(ImGui.GetClipboardText(), true);
                     if (imports.conditionSet != null)
                     {
+                        foreach (var condition in imports.conditionSet.Conditions)
+                        {
+                            if (ConditionManager.GetCondition(condition.ID) is IOnImportCondition c)
+                                c.OnImport(condition);
+                        }
+
                         QoLBar.Config.CndSetCfgs.Add(imports.conditionSet);
                         QoLBar.Config.Save();
                     }
@@ -129,7 +135,10 @@ namespace QoLBar
 
             ImGui.PopFont();
 
-            ImGuiEx.SetItemTooltip("Double click on a set to edit its name.");
+            ImGuiEx.SetItemTooltip("Double click on a set to edit its name.\n\nAdditionally, you can click this to open Dalamud's debug menu\nto see current Condition Flags.");
+
+            if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+                Game.ExecuteCommand("/xldata condition");
 
             var listHeight = 250 * ImGuiHelpers.GlobalScale;
             var listWidth = (ImGui.GetWindowContentRegionWidth() - ImGui.GetStyle().ItemSpacing.X) / 2;
@@ -143,6 +152,7 @@ namespace QoLBar
 
             ImGui.SameLine();
             ImGui.BeginChild("QoLBarConditionSetPresetList", new Vector2(0, listHeight), true);
+            DrawDynamicPresetsList();
             ImGui.EndChild();
 
             if (!hasSelectedSet) return;
@@ -150,10 +160,6 @@ namespace QoLBar
             ImGui.BeginChild("QoLBarConditionSetEditor", ImGui.GetContentRegionAvail(), true);
             DrawConditionSetEditor(currentSet);
             ImGui.EndChild();
-
-            // TODO
-            //if (ImGui.Button("Open Condition Data", new Vector2(ImGui.GetContentRegionAvail().X, 0)))
-            //    Game.ExecuteCommand("/xldata condition");
         }
 
         public static void DrawConditionSetList()
@@ -191,6 +197,36 @@ namespace QoLBar
                     {
                         editingName = false;
                         QoLBar.Config.Save();
+                    }
+                }
+
+                ImGui.PopID();
+            }
+        }
+
+        public static void DrawDynamicPresetsList()
+        {
+            for (int i = 0; i < ConditionManager.Presets.Count; i++)
+            {
+                ImGui.PushID(i);
+
+                var preset = ConditionManager.Presets[i];
+
+                ImGui.Selectable(preset.Name);
+                if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+                {
+                    try
+                    {
+                        var generatedSet = preset.Generate();
+                        if (generatedSet != null)
+                        {
+                            QoLBar.Config.CndSetCfgs.Add(generatedSet);
+                            QoLBar.Config.Save();
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        PluginLog.Error($"Error while generating set {preset}!\n{e}");
                     }
                 }
 

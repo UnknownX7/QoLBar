@@ -29,9 +29,20 @@ namespace QoLBar
         public dynamic GetDefaultArg(CndCfg cndCfg);
     }
 
+    public interface IOnImportCondition
+    {
+        public void OnImport(CndCfg cndCfg);
+    }
+
     public interface IConditionCategory : IDisplayPriority
     {
         public string CategoryName { get; }
+    }
+
+    public interface IConditionSetPreset
+    {
+        public string Name { get; }
+        public CndSetCfg Generate();
     }
 
     public static class ConditionManager
@@ -53,6 +64,7 @@ namespace QoLBar
         private static float lastConditionCache = 0;
 
         public static List<(IConditionCategory category, List<ICondition> conditions)> ConditionCategories { get; private set; } = new();
+        public static List<IConditionSetPreset> Presets { get; } = new();
 
         public static void Initialize()
         {
@@ -95,6 +107,13 @@ namespace QoLBar
             {
                 var (category, list) = ConditionCategories[i];
                 ConditionCategories[i] = (category, list.OrderBy(c => c.DisplayPriority).ToList());
+            }
+
+            foreach (var t in Assembly.GetExecutingAssembly().GetTypes().Where(t => t.IsAssignableTo(typeof(IConditionSetPreset)) && !t.IsInterface))
+            {
+                var preset = (IConditionSetPreset)Activator.CreateInstance(t);
+                if (preset == null) continue;
+                Presets.Add(preset);
             }
         }
 

@@ -272,8 +272,8 @@ namespace QoLBar
                     {
                         0 => new Conditions.LoggedInCondition().ID,
                         1 => new Conditions.CharacterCondition().ID,
-                        2 => new Conditions.HaveTargetCondition().ID,
-                        3 => new Conditions.HaveFocusTargetCondition().ID,
+                        2 => new Conditions.TargetCondition().ID,
+                        3 => new Conditions.TargetCondition().ID,
                         4 => new Conditions.WeaponDrawnCondition().ID,
                         5 => new Conditions.EorzeaTimespanCondition().ID,
                         6 => new Conditions.LocalTimespanCondition().ID,
@@ -283,6 +283,10 @@ namespace QoLBar
                         10 => new Conditions.PluginCondition().ID,
                         _ => throw new ApplicationException($"Unrecognized misc condition: {Condition}")
                     };
+
+                    if (Condition == 3)
+                        cndCfg.Arg = 1;
+
                     break;
             }
 
