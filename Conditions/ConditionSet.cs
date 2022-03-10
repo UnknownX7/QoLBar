@@ -16,11 +16,11 @@ namespace QoLBar.Conditions
         public void Draw(CndCfg cndCfg)
         {
             var i = (int)cndCfg.Arg;
-            if (!ImGui.BeginCombo("##Sets", (i >= 0 && i < QoLBar.Config.CndSets.Count) ? $"[{i + 1}] {QoLBar.Config.CndSets[i].Name}" : string.Empty)) return;
+            if (!ImGui.BeginCombo("##Sets", (i >= 0 && i < QoLBar.Config.CndSetCfgs.Count) ? $"[{i + 1}] {QoLBar.Config.CndSetCfgs[i].Name}" : string.Empty)) return;
 
-            for (int ind = 0; ind < QoLBar.Config.CndSets.Count; ind++)
+            for (int ind = 0; ind < QoLBar.Config.CndSetCfgs.Count; ind++)
             {
-                var s = QoLBar.Config.CndSets[ind];
+                var s = QoLBar.Config.CndSetCfgs[ind];
                 if (!ImGui.Selectable($"[{ind + 1}] {s.Name}", ind == i)) continue;
 
                 cndCfg.Arg = ind;

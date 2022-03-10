@@ -47,9 +47,9 @@ namespace QoLBar
         private static readonly Dictionary<string, ICondition> conditions = new();
         private static readonly Dictionary<ICondition, IConditionCategory> categoryMap = new();
         private static readonly Dictionary<(ICondition, dynamic), bool> conditionCache = new();
-        private static readonly Dictionary<CndSet, (bool prev, float time)> conditionSetCache = new();
-        private static readonly Dictionary<CndSet, List<bool>> debugSteps = new();
-        private static readonly HashSet<CndSet> lockedSets = new();
+        private static readonly Dictionary<CndSetCfg, (bool prev, float time)> conditionSetCache = new();
+        private static readonly Dictionary<CndSetCfg, List<bool>> debugSteps = new();
+        private static readonly HashSet<CndSetCfg> lockedSets = new();
         private static float lastConditionCache = 0;
 
         public static List<(IConditionCategory category, List<ICondition> conditions)> ConditionCategories { get; private set; } = new();
@@ -152,9 +152,9 @@ namespace QoLBar
             };
         }
 
-        public static bool CheckConditionSet(int i) => i >= 0 && i < QoLBar.Config.CndSets.Count && CheckConditionSet(QoLBar.Config.CndSets[i]);
+        public static bool CheckConditionSet(int i) => i >= 0 && i < QoLBar.Config.CndSetCfgs.Count && CheckConditionSet(QoLBar.Config.CndSetCfgs[i]);
 
-        public static bool CheckConditionSet(CndSet set)
+        public static bool CheckConditionSet(CndSetCfg set)
         {
             if (lockedSets.Contains(set))
                 return conditionSetCache.TryGetValue(set, out var c) && c.prev;
@@ -192,7 +192,7 @@ namespace QoLBar
             return prev;
         }
 
-        public static List<bool> GetDebugSteps(CndSet set) => debugSteps.TryGetValue(set, out var steps) ? steps : null;
+        public static List<bool> GetDebugSteps(CndSetCfg set) => debugSteps.TryGetValue(set, out var steps) ? steps : null;
 
         public static void UpdateCache()
         {
@@ -210,7 +210,7 @@ namespace QoLBar
 
         public static void SwapConditionSet(int from, int to)
         {
-            var set = QoLBar.Config.CndSets[from];
+            var set = QoLBar.Config.CndSetCfgs[from];
 
             foreach (var bar in QoLBar.Config.BarCfgs)
             {
@@ -220,7 +220,7 @@ namespace QoLBar
                     bar.ConditionSet = from;
             }
 
-            foreach (var condition in from s in QoLBar.Config.CndSets from condition in s.Conditions where condition.ID == Conditions.ConditionSetCondition.constID select condition)
+            foreach (var condition in from s in QoLBar.Config.CndSetCfgs from condition in s.Conditions where condition.ID == Conditions.ConditionSetCondition.constID select condition)
             {
                 if (condition.Arg == from)
                     condition.Arg = to;
@@ -228,8 +228,8 @@ namespace QoLBar
                     condition.Arg = from;
             }
 
-            QoLBar.Config.CndSets.RemoveAt(from);
-            QoLBar.Config.CndSets.Insert(to, set);
+            QoLBar.Config.CndSetCfgs.RemoveAt(from);
+            QoLBar.Config.CndSetCfgs.Insert(to, set);
             QoLBar.Config.Save();
 
             IPC.MovedConditionSetProvider.SendMessage(from, to);
@@ -245,7 +245,7 @@ namespace QoLBar
                     bar.ConditionSet = -1;
             }
 
-            foreach (var s in QoLBar.Config.CndSets)
+            foreach (var s in QoLBar.Config.CndSetCfgs)
             {
                 for (int j = s.Conditions.Count - 1; j >= 0; j--)
                 {
@@ -259,13 +259,13 @@ namespace QoLBar
                 }
             }
 
-            QoLBar.Config.CndSets.RemoveAt(i);
+            QoLBar.Config.CndSetCfgs.RemoveAt(i);
             QoLBar.Config.Save();
 
             IPC.RemovedConditionSetProvider.SendMessage(i);
         }
 
-        public static void ShiftCondition(CndSet set, CndCfg cndCfg, bool increment)
+        public static void ShiftCondition(CndSetCfg set, CndCfg cndCfg, bool increment)
         {
             var i = set.Conditions.IndexOf(cndCfg);
             if (!increment ? i <= 0 : i >= (set.Conditions.Count - 1)) return;

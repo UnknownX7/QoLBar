@@ -99,18 +99,18 @@ namespace QoLBar
         [JsonProperty("_i")]  [DefaultValue(0)]                    public int _i = 0;
     }
 
-    public class CndCfg
-    {
-        [JsonProperty("i")] [DefaultValue("")]                                  public string ID = "";
-        [JsonProperty("u")] [DefaultValue(false)]                               public bool Negate = false;
-        [JsonProperty("b")] [DefaultValue(ConditionManager.BinaryOperator.AND)] public ConditionManager.BinaryOperator Operator = ConditionManager.BinaryOperator.AND;
-        [JsonProperty("a")] [DefaultValue(0)]                                   public dynamic Arg = 0;
-    }
-
-    public class CndSet
+    public class CndSetCfg
     {
         [JsonProperty("n")] [DefaultValue("")]   public string Name = "";
         [JsonProperty("c")] [DefaultValue(null)] public List<CndCfg> Conditions = new();
+    }
+
+    public class CndCfg
+    {
+        [JsonProperty("i")] [DefaultValue(Conditions.ConditionFlagCondition.constID)] public string ID = Conditions.ConditionFlagCondition.constID;
+        [JsonProperty("a")] [DefaultValue(0)]                                         public dynamic Arg = 0;
+        [JsonProperty("u")] [DefaultValue(false)]                                     public bool Negate = false;
+        [JsonProperty("b")] [DefaultValue(ConditionManager.BinaryOperator.AND)]       public ConditionManager.BinaryOperator Operator = ConditionManager.BinaryOperator.AND;
     }
 
     public class Configuration : IPluginConfiguration
@@ -120,7 +120,7 @@ namespace QoLBar
         [Obsolete] public List<BarConfig> BarConfigs { internal get; set; }
         public List<BarCfg> BarCfgs = new();
         [Obsolete] public List<DisplayConditionSet> ConditionSets { internal get; set; }
-        public List<CndSet> CndSets = new();
+        public List<CndSetCfg> CndSetCfgs = new();
         public bool ExportOnDelete = true;
         public bool UseIconFrame = false;
         public bool AlwaysDisplayBars = false;
@@ -202,9 +202,9 @@ namespace QoLBar
 
             if (ConditionSets is { Count: > 0 })
             {
-                CndSets.Clear();
+                CndSetCfgs.Clear();
                 foreach (var set in ConditionSets)
-                    CndSets.Add(set.Upgrade());
+                    CndSetCfgs.Add(set.Upgrade());
                 ConditionSets = null;
             }
 #pragma warning restore CS0612 // Type or member is obsolete

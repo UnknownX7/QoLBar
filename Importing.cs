@@ -17,30 +17,46 @@ namespace QoLBar
         private static readonly Type shortcutType = typeof(Shortcut);
         private static readonly Type barType2 = typeof(BarCfg);
         private static readonly Type shortcutType2 = typeof(ShCfg);
+        private static readonly Type conditionSetType = typeof(CndSetCfg);
+        private static readonly Type conditionType = typeof(CndCfg);
         private static readonly Type vector2Type = typeof(Vector2);
         private static readonly Type vector4Type = typeof(Vector4);
-        private static readonly string exportShortName = "e";
-        private static readonly string barShortName = "b";
-        private static readonly string shortcutShortName = "s";
-        private static readonly string barShortName2 = "b2";
-        private static readonly string shortcutShortName2 = "s2";
-        private static readonly string vector2ShortName = "2";
-        private static readonly string vector4ShortName = "4";
+        private const string exportShortName = "e";
+        private const string barShortName = "b";
+        private const string shortcutShortName = "s";
+        private const string barShortName2 = "b2";
+        private const string shortcutShortName2 = "s2";
+        private const string conditionSetShortName = "cs";
+        private const string conditionShortName = "c";
+        private const string vector2ShortName = "2";
+        private const string vector4ShortName = "4";
         private static readonly Dictionary<string, Type> types = new()
         {
-            [exportType.FullName] = exportType,
+            [exportType.FullName!] = exportType,
             [exportShortName] = exportType,
-            [barType.FullName] = barType,
+
+            [barType.FullName!] = barType,
             [barShortName] = barType,
-            [shortcutType.FullName] = shortcutType,
+
+            [shortcutType.FullName!] = shortcutType,
             [shortcutShortName] = shortcutType,
-            [barType2.FullName] = barType2,
+
+            [barType2.FullName!] = barType2,
             [barShortName2] = barType2,
-            [shortcutType2.FullName] = shortcutType2,
+
+            [shortcutType2.FullName!] = shortcutType2,
             [shortcutShortName2] = shortcutType2,
-            [vector2Type.FullName] = vector2Type,
+
+            [conditionSetType.FullName!] = conditionSetType,
+            [conditionSetShortName] = conditionSetType,
+
+            [conditionType.FullName!] = conditionType,
+            [conditionShortName] = conditionType,
+
+            [vector2Type.FullName!] = vector2Type,
             [vector2ShortName] = vector2Type,
-            [vector4Type.FullName] = vector4Type,
+
+            [vector4Type.FullName!] = vector4Type,
             [vector4ShortName] = vector4Type
         };
         private static readonly Dictionary<Type, string> typeNames = new()
@@ -50,6 +66,8 @@ namespace QoLBar
             [shortcutType] = shortcutShortName,
             [barType2] = barShortName2,
             [shortcutType2] = shortcutShortName2,
+            [conditionSetType] = conditionSetShortName,
+            [conditionType] = conditionShortName,
             [vector2Type] = vector2ShortName,
             [vector4Type] = vector4ShortName
         };
@@ -80,6 +98,7 @@ namespace QoLBar
         {
             public BarCfg bar;
             public ShCfg shortcut;
+            public CndSetCfg conditionSet;
         }
 
         public class ExportInfo
@@ -88,6 +107,7 @@ namespace QoLBar
             public BarCfg b2;
             public Shortcut s1;
             public ShCfg s2;
+            public CndSetCfg cs;
             public string v = QoLBar.Config.PluginVersion;
         }
 
@@ -201,9 +221,9 @@ namespace QoLBar
         public static string DecompressString(string s)
         {
             var data = Convert.FromBase64String(s);
-            byte[] lengthBuffer = new byte[4];
+            var lengthBuffer = new byte[4];
             Array.Copy(data, data.Length - 4, lengthBuffer, 0, 4);
-            int uncompressedSize = BitConverter.ToInt32(lengthBuffer, 0);
+            var uncompressedSize = BitConverter.ToInt32(lengthBuffer, 0);
 
             var buffer = new byte[uncompressedSize];
             using (var ms = new MemoryStream(data))
@@ -243,11 +263,10 @@ namespace QoLBar
                 {
                     sh.Hotkey = sh.GetDefaultValue(x => x.Hotkey);
                     sh.KeyPassthrough = sh.GetDefaultValue(x => x.KeyPassthrough);
-                    if (sh.SubList != null && sh.SubList.Count > 0)
-                    {
-                        foreach (var sub in sh.SubList)
-                            removeHotkeys(sub);
-                    }
+                    if (sh.SubList is not { Count: > 0 }) return;
+
+                    foreach (var sub in sh.SubList)
+                        removeHotkeys(sub);
                 }
                 foreach (var sh in bar.ShortcutList)
                     removeHotkeys(sh);
@@ -276,17 +295,19 @@ namespace QoLBar
                 {
                     sh.Hotkey = sh.GetDefaultValue(x => x.Hotkey);
                     sh.KeyPassthrough = sh.GetDefaultValue(x => x.KeyPassthrough);
-                    if (sh.SubList != null && sh.SubList.Count > 0)
-                    {
-                        foreach (var sub in sh.SubList)
-                            removeHotkeys(sub);
-                    }
+                    if (sh.SubList is not { Count: > 0 }) return;
+
+                    foreach (var sub in sh.SubList)
+                        removeHotkeys(sub);
                 }
                 removeHotkeys(sh);
             }
 
             return sh;
         }
+
+        public static bool allowExportingSensitiveConditionSets = false;
+        public static string ExportConditionSet(CndSetCfg cndSet) => ExportObject(new ExportInfo { cs = cndSet }, false);
 
         public static ImportInfo TryImport(string import, bool printError = false)
         {
@@ -302,10 +323,10 @@ namespace QoLBar
                     PluginLog.LogError($"{e.GetType()}\n{e.Message}");
                     switch (e)
                     {
-                        case FormatException _:
+                        case FormatException:
                             QoLBar.PrintError("Failed to import from clipboard! Import string is invalid or incomplete.");
                             break;
-                        case JsonSerializationException _:
+                        case JsonSerializationException:
                             QoLBar.PrintError("Failed to import from clipboard! Import string does not contain an importable object.");
                             break;
                         default:
@@ -348,11 +369,11 @@ namespace QoLBar
                             sh.KeyPassthrough = sh.GetDefaultValue(x => x.KeyPassthrough);
                             hotkeyRemoved = true;
                         }
-                        if (sh.SubList != null && sh.SubList.Count > 0)
-                        {
-                            foreach (var sub in sh.SubList)
-                                removeHotkeys(sub);
-                        }
+
+                        if (sh.SubList is not { Count: > 0 }) return;
+
+                        foreach (var sub in sh.SubList)
+                            removeHotkeys(sub);
                     }
 
                     if (imported.b2 != null)
@@ -387,7 +408,8 @@ namespace QoLBar
             return new ImportInfo
             {
                 bar = imported?.b2,
-                shortcut = imported?.s2
+                shortcut = imported?.s2,
+                conditionSet = imported?.cs
             };
         }
 

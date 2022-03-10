@@ -164,7 +164,7 @@ namespace QoLBar
                     bars[i].IsHidden = !bars[i].IsHidden;
                 ImGuiEx.SetItemTooltip(bar.Hidden ? "Reveal" : "Hide");
                 ImGui.SameLine();
-                var preview = ((bar.ConditionSet >= 0) && (bar.ConditionSet < QoLBar.Config.CndSets.Count)) ? $"[{bar.ConditionSet + 1}] {QoLBar.Config.CndSets[bar.ConditionSet].Name}" : "Condition Set";
+                var preview = ((bar.ConditionSet >= 0) && (bar.ConditionSet < QoLBar.Config.CndSetCfgs.Count)) ? $"[{bar.ConditionSet + 1}] {QoLBar.Config.CndSetCfgs[bar.ConditionSet].Name}" : "Condition Set";
                 if (ImGui.BeginCombo("##Condition", preview))
                 {
                     if (ImGui.Selectable("None", bar.ConditionSet == -1))
@@ -172,9 +172,9 @@ namespace QoLBar
                         bar.ConditionSet = -1;
                         QoLBar.Config.Save();
                     }
-                    for (int idx = 0; idx < QoLBar.Config.CndSets.Count; idx++)
+                    for (int idx = 0; idx < QoLBar.Config.CndSetCfgs.Count; idx++)
                     {
-                        if (ImGui.Selectable($"[{idx + 1}] {QoLBar.Config.CndSets[idx].Name}", idx == bar.ConditionSet))
+                        if (ImGui.Selectable($"[{idx + 1}] {QoLBar.Config.CndSetCfgs[idx].Name}", idx == bar.ConditionSet))
                         {
                             bar.ConditionSet = idx;
                             QoLBar.Config.Save();
@@ -379,6 +379,7 @@ namespace QoLBar
             ImGui.Checkbox("Allow importing conditions", ref Importing.allowImportConditions);
             ImGui.SameLine(halfWidth);
             ImGui.Checkbox("Allow importing hotkeys", ref Importing.allowImportHotkeys);
+            ImGui.Checkbox("Allow exporting sensitive condition sets", ref Importing.allowExportingSensitiveConditionSets);
         }
 
         private void DrawBackupManager()

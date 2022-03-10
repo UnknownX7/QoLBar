@@ -5,6 +5,7 @@ using System.Linq;
 using ImGuiNET;
 using Dalamud.Interface;
 using Dalamud.Logging;
+using QoLBar.Conditions;
 
 namespace QoLBar
 {
@@ -21,7 +22,7 @@ namespace QoLBar
             " !="
         };
 
-        private static CndSet CurrentSet => selectedSet >= 0 && selectedSet < QoLBar.Config.CndSets.Count ? QoLBar.Config.CndSets[selectedSet] : null;
+        private static CndSetCfg CurrentSet => selectedSet >= 0 && selectedSet < QoLBar.Config.CndSetCfgs.Count ? QoLBar.Config.CndSetCfgs[selectedSet] : null;
 
         public static void Draw()
         {
@@ -34,16 +35,31 @@ namespace QoLBar
 
             if (ImGui.Button(FontAwesomeIcon.Plus.ToIconString(), buttonSize))
             {
-                QoLBar.Config.CndSets.Add(new() { Name = "New Set" });
+                QoLBar.Config.CndSetCfgs.Add(new() { Name = "New Set" });
                 QoLBar.Config.Save();
             }
 
             ImGui.SameLine();
 
-            if (ImGui.Button(FontAwesomeIcon.SignOutAlt.ToIconString(), buttonSize) && hasSelectedSet)
-                ;//ImGui.SetClipboardText(EXPORT); // TODO
+            var characterConditionID = new CharacterCondition().ID;
+            var containsSensitiveInfo = !Importing.allowExportingSensitiveConditionSets && hasSelectedSet && currentSet.Conditions.Any(c => c.ID == characterConditionID);
+
+            if (containsSensitiveInfo)
+            {
+                ImGui.PushStyleColor(ImGuiCol.Button, ImGui.GetColorU32(ImGuiCol.Button, 0.3f));
+                ImGui.PushStyleColor(ImGuiCol.ButtonActive, ImGui.GetColorU32(ImGuiCol.ButtonActive, 0.3f));
+                ImGui.PushStyleColor(ImGuiCol.ButtonHovered, ImGui.GetColorU32(ImGuiCol.ButtonHovered, 0.3f));
+                ImGui.PushStyleColor(ImGuiCol.Text, ImGui.GetColorU32(ImGuiCol.Text, 0.3f));
+            }
+
+            if (ImGui.Button(FontAwesomeIcon.SignOutAlt.ToIconString(), buttonSize) && hasSelectedSet && !containsSensitiveInfo)
+                ImGui.SetClipboardText(Importing.ExportConditionSet(currentSet));
+
+            if (containsSensitiveInfo)
+                ImGui.PopStyleColor(4);
+
             ImGui.PopFont();
-            ImGuiEx.SetItemTooltip("Export condition set to clipboard.");
+            ImGuiEx.SetItemTooltip(!containsSensitiveInfo ? "Export condition set to clipboard." : "Please enable the \"Allow exporting sensitive condition sets\" setting to export this set.");
             ImGui.PushFont(UiBuilder.IconFont);
 
             ImGui.SameLine();
@@ -52,9 +68,12 @@ namespace QoLBar
             {
                 try
                 {
-                    //var set = IMPORT(ImGui.GetClipboardText()); // TODO
-                    //QoLBar.Config.CndSets.Add(set);
-                    //QoLBar.Config.Save();
+                    var imports = Importing.TryImport(ImGui.GetClipboardText(), true);
+                    if (imports.conditionSet != null)
+                    {
+                        QoLBar.Config.CndSetCfgs.Add(imports.conditionSet);
+                        QoLBar.Config.Save();
+                    }
                 }
                 catch (Exception e)
                 {
@@ -79,7 +98,7 @@ namespace QoLBar
             if (ImGui.Button(FontAwesomeIcon.ArrowDown.ToIconString(), buttonSize) && hasSelectedSet)
             {
                 var prev = selectedSet;
-                selectedSet = Math.Min(selectedSet + 1, QoLBar.Config.CndSets.Count - 1);
+                selectedSet = Math.Min(selectedSet + 1, QoLBar.Config.CndSetCfgs.Count - 1);
                 ConditionManager.SwapConditionSet(prev, selectedSet);
             }
 
@@ -91,7 +110,7 @@ namespace QoLBar
                 if (ImGui.Selectable(FontAwesomeIcon.TrashAlt.ToIconString()))
                 {
                     ConditionManager.RemoveConditionSet(selectedSet);
-                    selectedSet = Math.Min(selectedSet, QoLBar.Config.CndSets.Count - 1);
+                    selectedSet = Math.Min(selectedSet, QoLBar.Config.CndSetCfgs.Count - 1);
                     currentSet = CurrentSet;
                     hasSelectedSet = currentSet != null;
                 }
@@ -116,7 +135,7 @@ namespace QoLBar
             var listWidth = (ImGui.GetWindowContentRegionWidth() - ImGui.GetStyle().ItemSpacing.X) / 2;
 
             ImGui.SameLine(listWidth);
-            ImGui.TextUnformatted("\t\tPresets");
+            ImGui.TextUnformatted("\t\tDynamic Presets");
 
             ImGui.BeginChild("QoLBarConditionSetList", new Vector2(listWidth, listHeight), true);
             DrawConditionSetList();
@@ -139,11 +158,11 @@ namespace QoLBar
 
         public static void DrawConditionSetList()
         {
-            for (int i = 0; i < QoLBar.Config.CndSets.Count; i++)
+            for (int i = 0; i < QoLBar.Config.CndSetCfgs.Count; i++)
             {
                 ImGui.PushID(i);
 
-                var set = QoLBar.Config.CndSets[i];
+                var set = QoLBar.Config.CndSetCfgs[i];
 
                 if (!editingName || selectedSet != i)
                 {
@@ -179,7 +198,7 @@ namespace QoLBar
             }
         }
 
-        public static void DrawConditionSetEditor(CndSet set)
+        public static void DrawConditionSetEditor(CndSetCfg set)
         {
             var debugSteps = ConditionManager.GetDebugSteps(set);
             var comboSize = ImGui.CalcTextSize("AND").X;
@@ -192,7 +211,7 @@ namespace QoLBar
 
                 if (ImGui.Button($"{FontAwesomeIcon.Plus.ToIconString()}##Set", new Vector2(comboSize, 0)))
                 {
-                    set.Conditions.Add(new() { ID = "cf" });
+                    set.Conditions.Add(new());
                     QoLBar.Config.Save();
                 }
 

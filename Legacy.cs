@@ -295,9 +295,9 @@ namespace QoLBar
         public string Name = string.Empty;
         public readonly List<DisplayCondition> Conditions = new();
 
-        public CndSet Upgrade()
+        public CndSetCfg Upgrade()
         {
-            var set = new CndSet { Name = Name };
+            var set = new CndSetCfg { Name = Name };
 
             var not = false;
             var op = ConditionManager.BinaryOperator.AND;
