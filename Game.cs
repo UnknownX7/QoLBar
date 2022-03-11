@@ -107,6 +107,10 @@ public unsafe class Game
     private static RaptureAtkUnitManager* raptureAtkUnitManager;
     [Signature("E8 ?? ?? ?? ?? 44 8B 4B 2C")]
     private static delegate* unmanaged<uint, uint, uint> getActionID;
+    [Signature("48 8D 0D ?? ?? ?? ?? 4C 8B C0", ScanType = ScanType.StaticAddress, Offset = 3)]
+    private static IntPtr performanceStruct;
+    [Signature("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B D5")]
+    private static delegate* unmanaged<IntPtr, byte, void> startPerformance;
 
     public static void Initialize()
     {
@@ -412,6 +416,8 @@ public unsafe class Game
     public static float GetRecastTimeElapsed(ActionType actionType, uint actionID) => actionManager->GetRecastTimeElapsed(actionType, actionID);
 
     public static float GetRecastTimeElapsed(byte actionType, uint actionID) => GetRecastTimeElapsed((ActionType)actionType, actionID);
+
+    public static void StartPerformance(byte instrument) => startPerformance(performanceStruct, instrument);
 
     public static void Dispose()
     {

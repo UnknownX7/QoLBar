@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Linq.Expressions;
 using Dalamud.Game;
@@ -149,6 +150,21 @@ public class QoLBar : IDalamudPlugin
         }
         else
             PrintError("Usage: /qolvisible [on|off|toggle] <bar>");
+    }
+
+    [Command("/performance")]
+    [HelpMessage("Starts playing an instrument.")]
+    public void OnPerformance(string command, string argument)
+    {
+        if (!byte.TryParse(argument, out var b)
+            && DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Perform>()!.FirstOrDefault(r
+                => argument.Equals(r.Instrument, StringComparison.CurrentCultureIgnoreCase)) is { } r)
+            b = (byte)r.RowId;
+
+        if (b == 0)
+            PrintError("Invalid instrument.");
+        else
+            Game.StartPerformance(b);
     }
 
     public static bool HasPlugin(string name) => DalamudApi.PluginInterface.PluginInternalNames.Contains(name);
