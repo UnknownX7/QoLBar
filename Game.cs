@@ -57,7 +57,8 @@ public static unsafe class Game
     public static IntPtr itemContextMenuAgent;
 
     public static IntPtr addonConfig;
-    public static byte CurrentHUDLayout => *(byte*)(*(IntPtr*)(addonConfig + 0x50) + 0x59E8);
+    private static delegate* unmanaged<IntPtr, byte> getHUDLayout;
+    public static byte CurrentHUDLayout => getHUDLayout(addonConfig);
 
     // Command Execution
     public delegate void ProcessChatBoxDelegate(UIModule* uiModule, IntPtr message, IntPtr unused, byte a4);
@@ -150,6 +151,12 @@ public static unsafe class Game
                 usables[aetherCompassID] = DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.EventItem>()!.GetRow(aetherCompassID)?.Name.ToString().ToLower();
             }
             catch { PluginLog.LogError("Failed to load UseItem"); }
+
+            try
+            {
+                getHUDLayout = (delegate* unmanaged<IntPtr, byte>)DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? 4D 8B 4D 50");
+            }
+            catch { PluginLog.LogError("Failed loading CurrentHUDLayout"); }
         }
         catch { PluginLog.LogError("Failed loading plugin"); }
     }
