@@ -2,9 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Hooking;
-using Dalamud.Logging;
+using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI;
@@ -16,7 +15,7 @@ using QoLBar.Structures;
 
 namespace QoLBar;
 
-public static unsafe class Game
+public unsafe class Game
 {
     private const int maxCommandLength = 180; // 180 is the max per line for macros, 500 is the max you can actually type into the chat, however it is still possible to inject more
 
@@ -57,18 +56,22 @@ public static unsafe class Game
     public static IntPtr itemContextMenuAgent;
 
     public static IntPtr addonConfig;
+    [Signature("E8 ?? ?? ?? ?? 4D 8B 4D 50")]
     private static delegate* unmanaged<IntPtr, byte> getHUDLayout;
     public static byte CurrentHUDLayout => getHUDLayout(addonConfig);
 
     // Command Execution
     public delegate void ProcessChatBoxDelegate(UIModule* uiModule, IntPtr message, IntPtr unused, byte a4);
+    [Signature("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9")]
     public static ProcessChatBoxDelegate ProcessChatBox;
 
     public delegate int GetCommandHandlerDelegate(RaptureShellModule* raptureShellModule, IntPtr message, IntPtr unused);
+    [Signature("E8 ?? ?? ?? ?? 83 F8 FE 74 1E")]
     public static GetCommandHandlerDelegate GetCommandHandler;
 
     // Macro Execution
     public delegate void ExecuteMacroDelegate(RaptureShellModule* raptureShellModule, IntPtr macro);
+    [Signature("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28")]
     public static Hook<ExecuteMacroDelegate> ExecuteMacroHook;
     public static RaptureShellModule* raptureShellModule;
     public static RaptureMacroModule* raptureMacroModule;
@@ -98,9 +101,11 @@ public static unsafe class Game
     // Misc
     private const int aetherCompassID = 2_001_886;
     private static Dictionary<uint, string> usables;
+    [Signature("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 41 B0 01 BA 13 00 00 00")]
     private static delegate* unmanaged<IntPtr, uint, uint, uint, short, void> useItem;
     private static ActionManager* actionManager;
     private static RaptureAtkUnitManager* raptureAtkUnitManager;
+    [Signature("E8 ?? ?? ?? ?? 44 8B 4B 2C")]
     private static delegate* unmanaged<uint, uint, uint> getActionID;
 
     public static void Initialize()
@@ -114,51 +119,21 @@ public static unsafe class Game
         actionManager = ActionManager.Instance();
         raptureAtkUnitManager = AtkStage.GetSingleton()->RaptureAtkUnitManager;
 
-        try
-        {
-            GetCommandHandler = Marshal.GetDelegateForFunctionPointer<GetCommandHandlerDelegate>(DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? 83 F8 FE 74 1E"));
-            getActionID = (delegate* unmanaged<uint, uint, uint>)DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? 44 8B 4B 2C");
+        // TODO change back to static whenever support is added
+        //SignatureHelper.Initialise(typeof(Game));
+        SignatureHelper.Initialise(new Game());
 
-            try { isTextInputActivePtr = *(IntPtr*)((IntPtr)AtkStage.GetSingleton() + 0x28) + 0x188E; } // Located in AtkInputManager
-            catch { PluginLog.LogError("Failed loading textActiveBoolPtr"); }
+        isTextInputActivePtr = *(IntPtr*)((IntPtr)AtkStage.GetSingleton() + 0x28) + 0x188E; // Located in AtkInputManager
+        numCopiedMacroLinesPtr = DalamudApi.SigScanner.ScanText("49 8D 5E 70 BF ?? 00 00 00") + 0x5;
+        numExecutedMacroLinesPtr = DalamudApi.SigScanner.ScanText("41 83 F8 ?? 0F 8D ?? ?? ?? ?? 49 6B C8 68") + 0x3;
 
-            try
-            {
-                ProcessChatBox = Marshal.GetDelegateForFunctionPointer<ProcessChatBoxDelegate>(DalamudApi.SigScanner.ScanText("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9"));
-            }
-            catch { PluginLog.LogError("Failed loading ExecuteCommand"); }
+        itemContextMenuAgent = GetAgentByInternalID(10);
+        usables = DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Item>()!.Where(i => i.ItemAction.Row > 0).ToDictionary(i => i.RowId, i => i.Name.ToString().ToLower())
+            .Concat(DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.EventItem>()!.Where(i => i.Action.Row > 0).ToDictionary(i => i.RowId, i => i.Name.ToString().ToLower()))
+            .ToDictionary(kv => kv.Key, kv => kv.Value);
+        usables[aetherCompassID] = DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.EventItem>()!.GetRow(aetherCompassID)?.Name.ToString().ToLower();
 
-            try
-            {
-                ExecuteMacroHook = new Hook<ExecuteMacroDelegate>(DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28"), ExecuteMacroDetour);
-
-                numCopiedMacroLinesPtr = DalamudApi.SigScanner.ScanText("49 8D 5E 70 BF ?? 00 00 00") + 0x5;
-                numExecutedMacroLinesPtr = DalamudApi.SigScanner.ScanText("41 83 F8 ?? 0F 8D ?? ?? ?? ?? 49 6B C8 68") + 0x3;
-
-                ExecuteMacroHook.Enable();
-            }
-            catch { PluginLog.LogError("Failed loading ExecuteMacro"); }
-
-            try
-            {
-                useItem = (delegate* unmanaged<IntPtr, uint, uint, uint, short, void>)DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 41 B0 01 BA 13 00 00 00");
-                itemContextMenuAgent = GetAgentByInternalID(10);
-
-                usables = DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Item>()!.Where(i => i.ItemAction.Row > 0).ToDictionary(i => i.RowId, i => i.Name.ToString().ToLower())
-                    .Concat(DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.EventItem>()!.Where(i => i.Action.Row > 0).ToDictionary(i => i.RowId, i => i.Name.ToString().ToLower()))
-                    .ToDictionary(kv => kv.Key, kv => kv.Value);
-
-                usables[aetherCompassID] = DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.EventItem>()!.GetRow(aetherCompassID)?.Name.ToString().ToLower();
-            }
-            catch { PluginLog.LogError("Failed to load UseItem"); }
-
-            try
-            {
-                getHUDLayout = (delegate* unmanaged<IntPtr, byte>)DalamudApi.SigScanner.ScanText("E8 ?? ?? ?? ?? 4D 8B 4D 50");
-            }
-            catch { PluginLog.LogError("Failed loading CurrentHUDLayout"); }
-        }
-        catch { PluginLog.LogError("Failed loading plugin"); }
+        ExecuteMacroHook.Enable();
     }
 
     public static IntPtr GetAgentByInternalID(uint id) => (IntPtr)agentModule->GetAgentByInternalID(id);

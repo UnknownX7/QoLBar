@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Reflection;
-using System.Linq;
 using System.Linq.Expressions;
 using Dalamud.Game;
 using Dalamud.Game.Gui;
+using Dalamud.Logging;
 using Dalamud.Plugin;
 using Dalamud.Utility;
 using ImGuiNET;
@@ -63,21 +63,28 @@ public class QoLBar : IDalamudPlugin
 
     public void ReadyPlugin()
     {
-        IPC.Initialize();
+        try
+        {
+            IPC.Initialize();
 
-        var iconPath = Config.GetPluginIconPath();
-        textureDictionaryLR.AddUserIcons(iconPath);
-        textureDictionaryHR.AddUserIcons(iconPath);
+            var iconPath = Config.GetPluginIconPath();
+            textureDictionaryLR.AddUserIcons(iconPath);
+            textureDictionaryHR.AddUserIcons(iconPath);
 
-        textureDictionaryLR.LoadTexture(46); // Magnifying glass / Search
-        TextureDictionary.AddExtraTextures(textureDictionaryLR, textureDictionaryHR);
-        TextureDictionary.AddExtraTextures(textureDictionaryGSLR, textureDictionaryGSHR);
-        IconBrowserUI.BuildCache(false);
+            textureDictionaryLR.LoadTexture(46); // Magnifying glass / Search
+            TextureDictionary.AddExtraTextures(textureDictionaryLR, textureDictionaryHR);
+            TextureDictionary.AddExtraTextures(textureDictionaryGSLR, textureDictionaryGSHR);
+            IconBrowserUI.BuildCache(false);
 
-        Game.Initialize();
-        ConditionManager.Initialize();
+            Game.Initialize();
+            ConditionManager.Initialize();
 
-        pluginReady = true;
+            pluginReady = true;
+        }
+        catch (Exception e)
+        {
+            PluginLog.Error($"Failed loading QoLBar!\n{e}");
+        }
     }
 
     public void Reload()
