@@ -11,7 +11,7 @@ env:
   EXTERNAL_NAME: QoL Bar
   RELEASE_DIR: ./Publish
   PLUGIN_REPO_FORK: UnknownX7/DalamudPlugins
-  PLUGIN_REPO_BRANCH: api5
+  PLUGIN_REPO_BRANCH: api6
 
 jobs:
   build:
@@ -31,7 +31,7 @@ jobs:
 
       - name: Download Dalamud
         run: |
-          Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/latest.zip -OutFile latest.zip
+          Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/net5/latest.zip -OutFile latest.zip
           Expand-Archive -Force latest.zip "$env:AppData\XIVLauncher\addon\Hooks\dev\"
 
       - name: Build

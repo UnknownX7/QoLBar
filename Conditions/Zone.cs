@@ -33,5 +33,5 @@ public class ZoneCondition : ICondition, IDrawableCondition, IArgCondition, ICon
         ImGuiEx.SetItemTooltip($"ID: {cndCfg.Arg}");
     }
     // This list is completely and utterly awful so help people out a little bit
-    public dynamic GetDefaultArg(CndCfg cndCfg) => cndCfg.Arg = DalamudApi.ClientState.TerritoryType;
+    public dynamic GetDefaultArg(CndCfg cndCfg) => DalamudApi.ClientState.TerritoryType;
 }
