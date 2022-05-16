@@ -48,8 +48,7 @@ public unsafe class Game
 
     public static UIModule* uiModule;
 
-    public static IntPtr isTextInputActivePtr = IntPtr.Zero;
-    public static bool IsGameTextInputActive => isTextInputActivePtr != IntPtr.Zero && *(bool*)isTextInputActivePtr;
+    public static bool IsGameTextInputActive => uiModule->GetRaptureAtkModule()->AtkModule.IsTextInputActive() != 0;
     public static bool IsMacroRunning => *(int*)((IntPtr)raptureShellModule + 0x2C0) >= 0;
 
     public static AgentModule* agentModule;
@@ -127,7 +126,6 @@ public unsafe class Game
         //SignatureHelper.Initialise(typeof(Game));
         SignatureHelper.Initialise(new Game());
 
-        isTextInputActivePtr = *(IntPtr*)((IntPtr)AtkStage.GetSingleton() + 0x28) + 0x188E; // Located in AtkInputManager
         numCopiedMacroLinesPtr = DalamudApi.SigScanner.ScanText("49 8D 5E 70 BF ?? 00 00 00") + 0x5;
         numExecutedMacroLinesPtr = DalamudApi.SigScanner.ScanText("41 83 F8 ?? 0F 8D ?? ?? ?? ?? 49 6B C8 68") + 0x3;
 

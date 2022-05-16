@@ -454,10 +454,11 @@ public class PluginUI : IDisposable
         ImGui.Indent();
         ImGui.Columns(3, "DebugPointers", false);
 
-        ImGui.TextUnformatted("UI Module");
+        ImGui.TextUnformatted("UI Module (Text Input Active)");
         ImGui.NextColumn();
         ImGuiEx.TextCopyable($"{(IntPtr)Game.uiModule:X}");
         ImGui.NextColumn();
+        ImGui.TextUnformatted($"{Game.IsGameTextInputActive}");
         ImGui.NextColumn();
 
         ImGui.TextUnformatted("Agent Module");
@@ -484,13 +485,6 @@ public class PluginUI : IDisposable
         ImGuiEx.TextCopyable($"{Game.addonConfig:X}");
         ImGui.NextColumn();
         ImGui.TextUnformatted($"{Game.CurrentHUDLayout}");
-        ImGui.NextColumn();
-
-        ImGui.TextUnformatted("Game Text Input Active");
-        ImGui.NextColumn();
-        ImGuiEx.TextCopyable($"{Game.isTextInputActivePtr:X}");
-        ImGui.NextColumn();
-        ImGui.TextUnformatted($"{Game.IsGameTextInputActive}");
         ImGui.NextColumn();
 
         ImGui.TextUnformatted("Item Context Menu Agent");

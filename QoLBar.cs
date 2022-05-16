@@ -311,8 +311,8 @@ public class QoLBar : IDalamudPlugin
         }
     }
 
-    public static void PrintEcho(string message) => DalamudApi.ChatGui.Print($"[QoLBar] {message}");
-    public static void PrintError(string message) => DalamudApi.ChatGui.PrintError($"[QoLBar] {message}");
+    public static void PrintEcho(string message) => DalamudApi.ChatGui.Print($"[QoL Bar] {message}");
+    public static void PrintError(string message) => DalamudApi.ChatGui.PrintError($"[QoL Bar] {message}");
 
     #region IDisposable Support
     protected virtual void Dispose(bool disposing)
