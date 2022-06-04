@@ -37,7 +37,7 @@ public static class IPC
 
         penumbraApiVersionSubscriber = DalamudApi.PluginInterface.GetIpcSubscriber<int>("Penumbra.ApiVersion");
 
-        if (PenumbraApiVersion == 3)
+        if (PenumbraApiVersion == 4)
         {
             penumbraResolveDefaultSubscriber = DalamudApi.PluginInterface.GetIpcSubscriber<string, string>("Penumbra.ResolveDefaultPath");
             PenumbraEnabled = true;
