@@ -6,6 +6,8 @@ namespace QoLBar;
 public static class IPC
 {
     public const int IPCVersion = 1;
+    public static readonly ICallGateProvider<object> InitializedProvider = DalamudApi.PluginInterface.GetIpcProvider<object>("QoLBar.Initialized");
+    public static readonly ICallGateProvider<object> DisposedProvider = DalamudApi.PluginInterface.GetIpcProvider<object>("QoLBar.Disposed");
     public static readonly ICallGateProvider<string> GetVersionProvider = DalamudApi.PluginInterface.GetIpcProvider<string>("QoLBar.GetVersion");
     public static readonly ICallGateProvider<int> GetIPCVersionProvider = DalamudApi.PluginInterface.GetIpcProvider<int>("QoLBar.GetIPCVersion");
     public static readonly ICallGateProvider<string, object> ImportBarProvider = DalamudApi.PluginInterface.GetIpcProvider<string, object>("QoLBar.ImportBar");
@@ -16,6 +18,8 @@ public static class IPC
 
     // Penumbra support
     public static bool PenumbraEnabled { get; private set; } = false;
+    private static ICallGateSubscriber<object> penumbraInitializedSubscriber;
+    private static ICallGateSubscriber<object> penumbraDisposedSubscriber;
     private static ICallGateSubscriber<int> penumbraApiVersionSubscriber;
     private static ICallGateSubscriber<string, string> penumbraResolveDefaultSubscriber;
     public static int PenumbraApiVersion
@@ -35,13 +39,36 @@ public static class IPC
         GetConditionSetsProvider.RegisterFunc(() => QoLBar.Config.CndSetCfgs.Select(s => s.Name).ToArray());
         CheckConditionSetProvider.RegisterFunc(i => i >= 0 && i < QoLBar.Config.CndSetCfgs.Count && ConditionManager.CheckConditionSet(i));
 
+        penumbraInitializedSubscriber = DalamudApi.PluginInterface.GetIpcSubscriber<object>("Penumbra.Initialized");
+        penumbraDisposedSubscriber = DalamudApi.PluginInterface.GetIpcSubscriber<object>("Penumbra.Disposed");
         penumbraApiVersionSubscriber = DalamudApi.PluginInterface.GetIpcSubscriber<int>("Penumbra.ApiVersion");
+        penumbraResolveDefaultSubscriber = DalamudApi.PluginInterface.GetIpcSubscriber<string, string>("Penumbra.ResolveDefaultPath");
 
-        if (PenumbraApiVersion == 4)
-        {
-            penumbraResolveDefaultSubscriber = DalamudApi.PluginInterface.GetIpcSubscriber<string, string>("Penumbra.ResolveDefaultPath");
-            PenumbraEnabled = true;
-        }
+        penumbraInitializedSubscriber.Subscribe(EnablePenumbraApi);
+        penumbraDisposedSubscriber.Subscribe(DisablePenumbraApi);
+
+        // Check if Penumbra is already available
+        EnablePenumbraApi();
+    }
+
+    public static void EnablePenumbraApi()
+    {
+        if (PenumbraApiVersion != 4) return;
+
+        PenumbraEnabled = true;
+
+        if (QoLBar.Config.UsePenumbra)
+            DalamudApi.Framework.RunOnTick(() => QoLBar.CleanTextures(false));
+    }
+
+    public static void DisablePenumbraApi()
+    {
+        if (!PenumbraEnabled) return;
+
+        PenumbraEnabled = false;
+
+        if (QoLBar.Config.UsePenumbra)
+            QoLBar.CleanTextures(false);
     }
 
     public static string ResolvePenumbraPath(string path)
@@ -57,5 +84,8 @@ public static class IPC
         ImportBarProvider.UnregisterAction();
         GetConditionSetsProvider.UnregisterFunc();
         CheckConditionSetProvider.UnregisterFunc();
+
+        penumbraInitializedSubscriber.Unsubscribe(EnablePenumbraApi);
+        penumbraDisposedSubscriber.Unsubscribe(DisablePenumbraApi);
     }
 }

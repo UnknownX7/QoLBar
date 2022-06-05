@@ -177,19 +177,19 @@ public class TextureDictionary : ConcurrentDictionary<int, TextureWrap>, IDispos
         return GetIconPath(icon, languagePath, hr);
     }
 
-    public static string GetIconPath(uint icon, string language, bool hr)
+    public static string GetIconPath(uint icon, string language, bool hr, bool ignorePenumbra = false)
     {
         var path = string.Format(IconFileFormat, icon / 1000, language, icon, hr ? "_hr1" : string.Empty);
 
-        if (IPC.PenumbraEnabled && QoLBar.Config.UsePenumbra)
+        if (!ignorePenumbra && IPC.PenumbraEnabled && QoLBar.Config.UsePenumbra)
             path = IPC.ResolvePenumbraPath(path);
 
         return path;
     }
 
     public static bool IconExists(uint icon) =>
-        DalamudApi.DataManager.FileExists(GetIconPath(icon, "", false))
-        || DalamudApi.DataManager.FileExists(GetIconPath(icon, "en/", false));
+        DalamudApi.DataManager.FileExists(GetIconPath(icon, "", false, true))
+        || DalamudApi.DataManager.FileExists(GetIconPath(icon, "en/", false, true));
 
     private static TexFile GetIconTex(uint icon, bool hr) =>
         GetTex(GetIconPath(icon, string.Empty, hr))

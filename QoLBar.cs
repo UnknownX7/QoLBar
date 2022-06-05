@@ -81,6 +81,7 @@ public class QoLBar : IDalamudPlugin
             ConditionManager.Initialize();
 
             pluginReady = true;
+            IPC.InitializedProvider.SendMessage();
         }
         catch (Exception e)
         {
@@ -314,11 +315,11 @@ public class QoLBar : IDalamudPlugin
     public static void PrintEcho(string message) => DalamudApi.ChatGui.Print($"[QoL Bar] {message}");
     public static void PrintError(string message) => DalamudApi.ChatGui.PrintError($"[QoL Bar] {message}");
 
-    #region IDisposable Support
     protected virtual void Dispose(bool disposing)
     {
         if (!disposing) return;
 
+        IPC.DisposedProvider.SendMessage();
         IPC.Dispose();
 
         Config.Save();
@@ -341,7 +342,6 @@ public class QoLBar : IDalamudPlugin
         Dispose(true);
         GC.SuppressFinalize(this);
     }
-    #endregion
 }
 
 public static class Extensions
