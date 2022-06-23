@@ -53,7 +53,7 @@ public static class IPC
 
     public static void EnablePenumbraApi()
     {
-        if (PenumbraApiVersion != 4) return;
+        if (PenumbraApiVersion < 4) return;
 
         PenumbraEnabled = true;
 
