@@ -64,7 +64,7 @@ public class TextureDictionary : ConcurrentDictionary<int, TextureWrap>, IDispos
             if (!t.Item1)
             {
                 Interlocked.Increment(ref loadingTasks);
-                _ = t.Item2.ContinueWith((_) => Interlocked.Decrement(ref loadingTasks));
+                _ = t.Item2.ContinueWith(_ => Interlocked.Decrement(ref loadingTasks));
                 t.Item2.Start();
             }
             else
