@@ -72,7 +72,6 @@ public class QoLBar : IDalamudPlugin
             textureDictionaryLR.AddUserIcons(iconPath);
             textureDictionaryHR.AddUserIcons(iconPath);
 
-            textureDictionaryLR.LoadTexture(46); // Magnifying glass / Search
             TextureDictionary.AddExtraTextures(textureDictionaryLR, textureDictionaryHR);
             TextureDictionary.AddExtraTextures(textureDictionaryGSLR, textureDictionaryGSHR);
             IconBrowserUI.BuildCache(false);

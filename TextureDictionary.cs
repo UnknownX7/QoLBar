@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Dalamud.Game;
 using Dalamud.Logging;
 using Dalamud.Utility;
 using ImGuiScene;
@@ -17,14 +19,15 @@ public class TextureDictionary : ConcurrentDictionary<int, TextureWrap>, IDispos
     private const string IconFileFormat = "ui/icon/{0:D3}000/{1}{2:D6}{3}.tex";
 
     public static int GetSafeIconID(ushort i) => FrameIconID + i;
+    public bool IsLoading { get; private set; } = false;
     public bool IsEmptying { get; private set; } = false;
 
     private readonly Dictionary<int, string> userIcons = new();
     private readonly Dictionary<int, string> textureOverrides = new();
     private int loadingTasks = 0;
+    private readonly Queue<Task> loadingQueue = new();
+    private readonly Stopwatch emptyStopwatch = new();
     private static readonly TextureWrap disposedTexture = new GLTextureWrap(0, 0, 0);
-    private readonly ConcurrentQueue<(bool, Task)> loadQueue = new();
-    private Task loadTask;
     private readonly bool useHR = false;
     private readonly bool useGrayscale = false;
 
@@ -36,134 +39,47 @@ public class TextureDictionary : ConcurrentDictionary<int, TextureWrap>, IDispos
 
     public new TextureWrap this[int k]
     {
-        get
-        {
-            if (IsEmptying) return null;
-            if (TryGetValue(k, out var tex) && tex?.ImGuiHandle != IntPtr.Zero) return tex;
-            return LoadTexture(k) ? ((ConcurrentDictionary<int, TextureWrap>)this)[k] : null;
-        }
-
-        set => ((ConcurrentDictionary<int, TextureWrap>)this)[k] = value;
+        get => TryGetValue(k, out var tex) ? tex : null;
+        set => base[k] = value;
     }
 
-    public void TryDispose(int k)
+    public new bool TryGetValue(int k, out TextureWrap tex)
     {
-        if (!TryGetValue(k, out var tex)) return;
-
-        tex?.Dispose();
-        TryUpdate(k, disposedTexture, null);
+        if (!IsEmptying) return base.TryGetValue(k, out tex) && (tex == null || tex.ImGuiHandle != IntPtr.Zero) || LoadTexture(k, out tex);
+        tex = null;
+        return false;
     }
 
-    public bool IsTextureLoading() => loadingTasks > 0 || !loadQueue.IsEmpty;
+    public Dictionary<int, string> GetUserIcons() => userIcons;
 
-    private async void DoLoadQueueAsync()
+    public Dictionary<int, string> GetTextureOverrides() => textureOverrides;
+
+    public bool IsTaskLoading() => loadingTasks > 0 || loadingQueue.Count > 0;
+
+    private static string ResolvePath(string path) => IPC.PenumbraEnabled && QoLBar.Config.UsePenumbra ? IPC.ResolvePenumbraPath(path) : path;
+
+    private static TexFile GetTex(string path)
     {
-        while (!IsEmptying && loadQueue.TryDequeue(out var t))
+        path = ResolvePath(path);
+        TexFile tex = null;
+
+        try
         {
-            //while (loadingTasks > 100) ;
-            if (!t.Item1)
-            {
-                Interlocked.Increment(ref loadingTasks);
-                _ = t.Item2.ContinueWith(_ => Interlocked.Decrement(ref loadingTasks));
-                t.Item2.Start();
-            }
-            else
-            {
-                while (loadingTasks > 0)
-                    await Task.Yield();
-                t.Item2.RunSynchronously();
-            }
+            if (path[0] is '/' or '\\' || path[1] == ':')
+                tex = DalamudApi.DataManager.GameData.GetFileFromDisk<TexFile>(path);
         }
+        catch (Exception e)
+        {
+            PluginLog.LogError($"Failed to get tex at {path}:\n{e}");
+        }
+
+        tex ??= DalamudApi.DataManager.GetFile<TexFile>(path);
+        return tex;
     }
 
-    private void LoadTextureWrap(int i, bool overwrite, bool doSync, Func<TextureWrap> loadFunc)
-    {
-        var contains = TryGetValue(i, out var _tex);
-        if (contains && !overwrite && _tex?.ImGuiHandle != IntPtr.Zero) return;
+    private static string GetIconPath(uint icon, string language, bool hr) => string.Format(IconFileFormat, icon / 1000, language, icon, hr ? "_hr1" : string.Empty);
 
-        _tex?.Dispose();
-        this[i] = null;
-
-        var t = new Task(() =>
-        {
-            try
-            {
-                if (IsEmptying) { TryUpdate(i, disposedTexture, null); return; }
-
-                var tex = loadFunc();
-                if (tex != null && tex.ImGuiHandle != IntPtr.Zero)
-                    TryUpdate(i, tex, null);
-            }
-            catch (Exception e) { PluginLog.LogError($"Failed to load icon {i}:\n{e}"); }
-        });
-
-        loadQueue.Enqueue((doSync, t));
-
-        if (!doSync)
-        {
-            if (loadTask?.IsCompleted != false)
-                loadTask = Task.Run(DoLoadQueueAsync);
-        }
-        else
-        {
-            DoLoadQueueAsync(); // Temporary fix to reduce nvwgf2umx.dll crashing (this wont actually run sync if any tasks are waiting/loading)
-        }
-    }
-
-    public bool LoadTexture(int k, bool overwrite = false)
-    {
-        if (k < 0 && userIcons.TryGetValue(k, out var path))
-        {
-            LoadImage(k, path, overwrite);
-            return true;
-        }
-        else if (textureOverrides.TryGetValue(k, out var texPath))
-        {
-            LoadTex(k, texPath, overwrite);
-            return false;
-        }
-        else if (k >= 0)
-        {
-            LoadIcon((uint)k, overwrite);
-            return false;
-        }
-        else
-            return false;
-    }
-
-    private void LoadIcon(uint icon, bool overwrite) => LoadTextureWrap((int)icon, overwrite, false, () =>
-    {
-        var iconTex = GetIconTex(icon, useHR);
-        if (useHR)
-            iconTex ??= GetIconTex(icon, false);
-        return (iconTex == null) ? null : LoadTextureWrapSquare(iconTex);
-    });
-
-    public void AddTex(int iconSlot, string path, bool overwrite = false)
-    {
-        TryDispose(iconSlot);
-        if (overwrite)
-            textureOverrides[iconSlot] = path;
-        else
-            textureOverrides.Add(iconSlot, path);
-    }
-
-    private void LoadTex(int iconSlot, string path, bool overwrite) => LoadTextureWrap(iconSlot, overwrite, false, () =>
-    {
-        var iconTex = GetTex(IPC.PenumbraEnabled && QoLBar.Config.UsePenumbra ? IPC.ResolvePenumbraPath(path) : path);
-        return (iconTex == null) ? null : LoadTextureWrapSquare(iconTex);
-    });
-
-    public void AddImage(int iconSlot, string path)
-    {
-        TryDispose(iconSlot);
-        userIcons.Add(iconSlot, path);
-    }
-
-    // Seems to cause a nvwgf2umx.dll crash (System Access Violation Exception) if used async
-    private void LoadImage(int iconSlot, string path, bool overwrite) => LoadTextureWrap(iconSlot, overwrite, true, () => DalamudApi.PluginInterface.UiBuilder.LoadImage(path));
-
-    public static string GetIconPath(uint icon, ClientLanguage language, bool hr)
+    private static string GetIconPath(uint icon, ClientLanguage language, bool hr)
     {
         var languagePath = language switch
         {
@@ -177,38 +93,13 @@ public class TextureDictionary : ConcurrentDictionary<int, TextureWrap>, IDispos
         return GetIconPath(icon, languagePath, hr);
     }
 
-    public static string GetIconPath(uint icon, string language, bool hr, bool ignorePenumbra = false)
-    {
-        var path = string.Format(IconFileFormat, icon / 1000, language, icon, hr ? "_hr1" : string.Empty);
-
-        if (!ignorePenumbra && IPC.PenumbraEnabled && QoLBar.Config.UsePenumbra)
-            path = IPC.ResolvePenumbraPath(path);
-
-        return path;
-    }
-
-    public static bool IconExists(uint icon) =>
-        DalamudApi.DataManager.FileExists(GetIconPath(icon, "", false, true))
-        || DalamudApi.DataManager.FileExists(GetIconPath(icon, "en/", false, true));
-
     private static TexFile GetIconTex(uint icon, bool hr) =>
         GetTex(GetIconPath(icon, string.Empty, hr))
         ?? GetTex(GetIconPath(icon, DalamudApi.DataManager.Language, hr));
 
-    private static TexFile GetTex(string path)
-    {
-        TexFile tex = null;
-
-        try
-        {
-            if (path[0] == '/' || path[1] == ':')
-                tex = DalamudApi.DataManager.GameData.GetFileFromDisk<TexFile>(path);
-        }
-        catch { }
-
-        tex ??= DalamudApi.DataManager.GetFile<TexFile>(path);
-        return tex;
-    }
+    public static bool IconExists(uint icon) =>
+        DalamudApi.DataManager.FileExists(GetIconPath(icon, "", false))
+        || DalamudApi.DataManager.FileExists(GetIconPath(icon, "en/", false));
 
     private TextureWrap LoadTextureWrapSquare(TexFile tex)
     {
@@ -246,13 +137,112 @@ public class TextureDictionary : ConcurrentDictionary<int, TextureWrap>, IDispos
         }
     }
 
-    public Dictionary<int, string> GetUserIcons() => userIcons;
+    private void LoadTextureWrap(int i, Func<TextureWrap> loadFunc)
+    {
+        this[i] = null;
 
-    public Dictionary<int, string> GetTextureOverrides() => textureOverrides;
+        var t = new Task(() =>
+        {
+            try
+            {
+                TryUpdate(i, IsEmptying ? disposedTexture : loadFunc(), null);
+            }
+            catch (Exception e)
+            {
+                PluginLog.LogError($"Failed to load icon {i}:\n{e}");
+            }
+        });
+
+        loadingQueue.Enqueue(t);
+
+        if (IsLoading) return;
+        IsLoading = true;
+        DalamudApi.Framework.Update += UpdateLoad;
+    }
+
+    // Seems to cause a nvwgf2umx.dll crash (System Access Violation Exception) if used async
+    private TextureWrap LoadImage(int iconSlot, string path)
+    {
+        try
+        {
+            var tex = DalamudApi.PluginInterface.UiBuilder.LoadImage(path);
+            this[iconSlot] = tex;
+            return tex;
+        }
+        catch (Exception e)
+        {
+            PluginLog.LogError($"Failed to load user texture {path}:\n{e}");
+        }
+
+        return this[iconSlot];
+    }
+
+    private void LoadTex(int iconSlot, string path) => LoadTextureWrap(iconSlot, () =>
+    {
+        var iconTex = GetTex(path);
+        return (iconTex == null) ? null : LoadTextureWrapSquare(iconTex);
+    });
+
+    private void LoadIcon(uint icon) => LoadTextureWrap((int)icon, () =>
+    {
+        var iconTex = GetIconTex(icon, useHR);
+        return (iconTex == null) ? null : LoadTextureWrapSquare(iconTex);
+    });
+
+    private bool LoadTexture(int k, out TextureWrap tex)
+    {
+        tex = null;
+
+        if (k < 0 && userIcons.TryGetValue(k, out var path))
+        {
+            tex = LoadImage(k, path);
+            return true;
+        }
+        else if (textureOverrides.TryGetValue(k, out var texPath))
+        {
+            LoadTex(k, texPath);
+        }
+        else if (k >= 0)
+        {
+            LoadIcon((uint)k);
+        }
+
+        return false;
+    }
+
+    private void UpdateLoad(Framework framework)
+    {
+        if (IsEmptying)
+            loadingQueue.Clear();
+
+        while (loadingTasks < 100)
+        {
+            if (!loadingQueue.TryDequeue(out var t)) break;
+            Interlocked.Increment(ref loadingTasks);
+            _ = t.ContinueWith(_ => Interlocked.Decrement(ref loadingTasks));
+            t.Start();
+        }
+
+        if (loadingQueue.Count > 0) return;
+        IsLoading = false;
+        DalamudApi.Framework.Update -= UpdateLoad;
+    }
+
+    public void AddTex(int iconSlot, string path)
+    {
+        TryDispose(iconSlot);
+        textureOverrides.Add(iconSlot, path);
+    }
+
+    public void AddImage(int iconSlot, string path)
+    {
+        TryDispose(iconSlot);
+        userIcons.Add(iconSlot, path);
+    }
 
     public bool AddUserIcons(string path)
     {
-        if (IsTextureLoading()) return false;
+        if (IsTaskLoading()) return false;
 
         foreach (var kv in userIcons)
             TryDispose(kv.Key);
@@ -278,18 +268,36 @@ public class TextureDictionary : ConcurrentDictionary<int, TextureWrap>, IDispos
         if (IsEmptying) return;
 
         IsEmptying = true;
-        Task.Run(async () => {
-            while (IsTextureLoading() || loadTask?.IsCompleted == false)
-                await Task.Delay(1000);
-            Dispose();
-            IsEmptying = false;
-        });
+        emptyStopwatch.Restart();
+        DalamudApi.Framework.Update += UpdateEmpty;
+    }
+
+    private void UpdateEmpty(Framework framework)
+    {
+        if (emptyStopwatch.Elapsed.TotalSeconds < 1) return;
+
+        PluginLog.LogInformation("Emptying textures.");
+        Dispose();
+        Clear();
+        PluginLog.LogInformation("Done emptying textures!");
+
+        IsEmptying = false;
+        DalamudApi.Framework.Update -= UpdateEmpty;
+    }
+
+    private void TryDispose(int k)
+    {
+        if (!base.TryGetValue(k, out var tex)) return;
+
+        tex?.Dispose();
+        TryUpdate(k, disposedTexture, null);
     }
 
     public void Dispose()
     {
         foreach (var t in this)
             t.Value?.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     public static void AddExtraTextures(TextureDictionary lr, TextureDictionary hr)
@@ -302,9 +310,9 @@ public class TextureDictionary : ConcurrentDictionary<int, TextureWrap>, IDispos
                 hr.AddTex(id, path + (!noHR ? "_hr1.tex" : ".tex"));
         }
 
-        AddTexSheet(FrameIconID, "ui/uld/icona_frame"); // GetSafeIconID(0)
-        lr.LoadTexture(FrameIconID);
-        hr.LoadTexture(FrameIconID);
+        AddTexSheet(GetSafeIconID(0), "ui/uld/icona_frame");
+        //lr.LoadTexture(FrameIconID);
+        //hr.LoadTexture(FrameIconID);
         AddTexSheet(GetSafeIconID(1), "ui/uld/icona_recast");
         AddTexSheet(GetSafeIconID(2), "ui/uld/icona_recast2");
 
