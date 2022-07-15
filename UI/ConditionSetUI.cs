@@ -141,7 +141,7 @@ public static class ConditionSetUI
             Game.ExecuteCommand("/xldata condition");
 
         var listHeight = 250 * ImGuiHelpers.GlobalScale;
-        var listWidth = (ImGui.GetWindowContentRegionWidth() - ImGui.GetStyle().ItemSpacing.X) / 2;
+        var listWidth = (ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X - ImGui.GetStyle().ItemSpacing.X) / 2;
 
         ImGui.SameLine(listWidth);
         ImGui.TextUnformatted("\t\tDynamic Presets");

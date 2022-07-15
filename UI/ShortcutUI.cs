@@ -643,7 +643,7 @@ public class ShortcutUI : IDisposable
     public static void DrawIconBrowserButton()
     {
         var iconSize = ImGui.GetFontSize() + Style.FramePadding.Y * 2;
-        ImGui.SameLine(ImGui.GetWindowContentRegionWidth() + Style.WindowPadding.X - iconSize);
+        ImGui.SameLine(ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X + Style.WindowPadding.X - iconSize);
         if (DrawIcon(46, new ImGuiEx.IconSettings { size = new Vector2(iconSize) }, "nl"))
             QoLBar.Plugin.ToggleIconBrowser();
         ImGuiEx.SetItemTooltip("Opens up a list of all icons you can use instead of text.\n" +
