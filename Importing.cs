@@ -210,28 +210,19 @@ public static class Importing
     public static string CompressString(string s)
     {
         var bytes = Encoding.UTF8.GetBytes(s);
-        using var mso = new MemoryStream();
-        using (var gs = new GZipStream(mso, CompressionMode.Compress))
-        {
+        using var ms = new MemoryStream();
+        using (var gs = new GZipStream(ms, CompressionMode.Compress))
             gs.Write(bytes, 0, bytes.Length);
-        }
-        return Convert.ToBase64String(mso.ToArray());
+        return Convert.ToBase64String(ms.ToArray());
     }
 
     public static string DecompressString(string s)
     {
         var data = Convert.FromBase64String(s);
-        var lengthBuffer = new byte[4];
-        Array.Copy(data, data.Length - 4, lengthBuffer, 0, 4);
-        var uncompressedSize = BitConverter.ToInt32(lengthBuffer, 0);
-
-        var buffer = new byte[uncompressedSize];
-        using (var ms = new MemoryStream(data))
-        {
-            using var gzip = new GZipStream(ms, CompressionMode.Decompress);
-            gzip.Read(buffer, 0, uncompressedSize);
-        }
-        return Encoding.UTF8.GetString(buffer);
+        using var ms = new MemoryStream(data);
+        using var gs = new GZipStream(ms, CompressionMode.Decompress);
+        using var r = new StreamReader(gs);
+        return r.ReadToEnd();
     }
 
     public static string ExportObject(object o, bool saveAllValues) => CompressString(SerializeObject(o, saveAllValues));
@@ -319,8 +310,7 @@ public static class Importing
             imported = ImportLegacy(import);
             if (imported == null && printError)
             {
-                PluginLog.LogError("Invalid import string!");
-                PluginLog.LogError($"{e.GetType()}\n{e.Message}");
+                PluginLog.LogError($"Invalid import string!\n{e}");
                 switch (e)
                 {
                     case FormatException:
@@ -330,7 +320,7 @@ public static class Importing
                         QoLBar.PrintError("Failed to import from clipboard! Import string does not contain an importable object.");
                         break;
                     default:
-                        QoLBar.PrintError($"Failed to import from clipboard! {e.GetType()}");
+                        QoLBar.PrintError($"Failed to import from clipboard!\n{e}");
                         break;
                 }
             }
