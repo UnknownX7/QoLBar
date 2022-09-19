@@ -74,6 +74,7 @@ public class OutofTheWayPreset : IConditionSetPreset
         set.Conditions.Add(new() { ID = new ZoneCondition().ID, Arg = 827, Operator = ConditionManager.BinaryOperator.OR });
         set.Conditions.Add(new() { ID = new ZoneCondition().ID, Arg = 920, Operator = ConditionManager.BinaryOperator.OR });
         set.Conditions.Add(new() { ID = new ZoneCondition().ID, Arg = 975, Operator = ConditionManager.BinaryOperator.OR });
+        set.Conditions.Add(new() { ID = new ZoneCondition().ID, Arg = 1055, Operator = ConditionManager.BinaryOperator.OR });
         set.Conditions.Add(new() { ID = ConditionFlagCondition.constID, Arg = (int)ConditionFlag.BetweenAreas, Negate = true });
         set.Conditions.Add(new() { ID = ConditionFlagCondition.constID, Arg = (int)ConditionFlag.OccupiedInCutSceneEvent, Negate = true });
 
