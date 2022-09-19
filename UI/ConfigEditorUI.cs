@@ -287,27 +287,22 @@ public static class ConfigEditorUI
             QoLBar.Config.Save();
         }
 
-        var _ = (int)sh.Config.CooldownAction;
-        if (ImGui.InputInt("Cooldown Action ID", ref _))
+        static string formatName(Lumina.Excel.GeneratedSheets.Action a) => a.RowId switch
         {
-            sh.Config.CooldownAction = (uint)Math.Max(_, uint.MinValue);
+            0 => "None",
+            847 => "[847] Item",
+            _ => $"[{a.RowId}] {a.Name}"
+        };
+        if (ImGuiEx.ExcelSheetCombo<Lumina.Excel.GeneratedSheets.Action>("Cooldown Action ID", out var action, s => s.GetRow(sh.Config.CooldownAction) is { } a ? formatName(a) : sh.Config.CooldownAction.ToString(),
+                ImGuiComboFlags.None, (a, s) => (a.RowId is 0 || a.CooldownGroup > 0 && a.ClassJobCategory.Row > 0) && formatName(a).Contains(s, StringComparison.CurrentCultureIgnoreCase),
+                a => ImGui.Selectable(formatName(a), sh.Config.CooldownAction == a.RowId)))
+        {
+            sh.Config.CooldownAction = action.RowId;
 
             if (sh.Config.CooldownAction == 0)
                 sh.Config.CooldownStyle = 0;
 
             QoLBar.Config.Save();
-        }
-
-        if (ImGui.IsItemHovered())
-        {
-            var actionID = Game.GetActionID(QoLBar.lastHoveredActionType, QoLBar.lastHoveredActionID);
-            if (ImGui.IsMouseReleased(ImGuiMouseButton.Right) && actionID > 0)
-            {
-                sh.Config.CooldownAction = actionID;
-                QoLBar.Config.Save();
-            }
-
-            ImGui.SetTooltip($"Right click to insert the last hovered action: {actionID}");
         }
 
         if (sh.Config.CooldownAction > 0)

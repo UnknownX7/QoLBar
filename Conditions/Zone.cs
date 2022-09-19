@@ -1,3 +1,4 @@
+using System;
 using ImGuiNET;
 
 namespace QoLBar.Conditions;
@@ -13,24 +14,12 @@ public class ZoneCondition : ICondition, IDrawableCondition, IArgCondition, ICon
     public string GetSelectableTooltip(CndCfg cndCfg) => null;
     public void Draw(CndCfg cndCfg)
     {
-        var territories = DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.TerritoryType>();
-        if (territories == null) return;
-
-        var r = territories.GetRow((uint)cndCfg.Arg);
-        if (ImGui.BeginCombo("##Zone", r?.PlaceName.Value?.Name.ToString()))
-        {
-            foreach (var t in territories)
-            {
-                if (ImGui.Selectable($"{t.PlaceName.Value?.Name}##{t.RowId}", t.RowId == cndCfg.Arg))
-                {
-                    cndCfg.Arg = t.RowId;
-                    QoLBar.Config.Save();
-                }
-                ImGuiEx.SetItemTooltip($"ID: {t.RowId}");
-            }
-            ImGui.EndCombo();
-        }
-        ImGuiEx.SetItemTooltip($"ID: {cndCfg.Arg}");
+        static string formatName(Lumina.Excel.GeneratedSheets.TerritoryType t) => $"[{t.RowId}] {t.PlaceName.Value?.Name}";
+        if (!ImGuiEx.ExcelSheetCombo<Lumina.Excel.GeneratedSheets.TerritoryType>("##Zone", out var territory, s => formatName(s.GetRow((uint)cndCfg.Arg)),
+            ImGuiComboFlags.None, (t, s) => formatName(t).Contains(s, StringComparison.CurrentCultureIgnoreCase),
+            t => ImGui.Selectable(formatName(t), cndCfg.Arg == t.RowId))) return;
+        cndCfg.Arg = territory.RowId;
+        QoLBar.Config.Save();
     }
     // This list is completely and utterly awful so help people out a little bit
     public dynamic GetDefaultArg(CndCfg cndCfg) => DalamudApi.ClientState.TerritoryType;
