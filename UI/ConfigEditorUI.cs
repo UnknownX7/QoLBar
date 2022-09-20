@@ -294,8 +294,8 @@ public static class ConfigEditorUI
             _ => $"[{a.RowId}] {a.Name}"
         };
         if (ImGuiEx.ExcelSheetCombo<Lumina.Excel.GeneratedSheets.Action>("Cooldown Action ID", out var action, s => s.GetRow(sh.Config.CooldownAction) is { } a ? formatName(a) : sh.Config.CooldownAction.ToString(),
-                ImGuiComboFlags.None, (a, s) => (a.RowId is 0 || a.CooldownGroup > 0 && a.ClassJobCategory.Row > 0) && formatName(a).Contains(s, StringComparison.CurrentCultureIgnoreCase),
-                a => ImGui.Selectable(formatName(a), sh.Config.CooldownAction == a.RowId)))
+            ImGuiComboFlags.None, (a, s) => (a.RowId is 0 || a.CooldownGroup > 0 && a.ClassJobCategory.Row > 0) && formatName(a).Contains(s, StringComparison.CurrentCultureIgnoreCase),
+            a => ImGui.Selectable(formatName(a), sh.Config.CooldownAction == a.RowId)))
         {
             sh.Config.CooldownAction = action.RowId;
 

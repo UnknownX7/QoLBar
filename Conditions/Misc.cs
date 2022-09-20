@@ -273,10 +273,10 @@ public class KeyHeldCondition : ICondition, IDrawableCondition
 public class PartyCondition : ICondition, IDrawableCondition, IArgCondition
 {
     public string ID => "pt";
-    public string ConditionName => "# Party Members";
+    public string ConditionName => "# Party Member Exists";
     public int DisplayPriority => 0;
     public unsafe bool Check(dynamic arg) => Framework.Instance()->GetUiModule()->GetPronounModule()->ResolvePlaceholder($"<{arg}>", 0, 0) != null;
-    public string GetTooltip(CndCfg cndCfg) => null;
+    public string GetTooltip(CndCfg cndCfg) => "This will only return true if the party member exists in the current area.";
     public string GetSelectableTooltip(CndCfg cndCfg) => null;
     public void Draw(CndCfg cndCfg)
     {
@@ -303,6 +303,27 @@ public class ChocoboCondition : ICondition
     public string ConditionName => "Chocobo Exists";
     public int DisplayPriority => 0;
     public unsafe bool Check(dynamic arg) => Framework.Instance()->GetUiModule()->GetPronounModule()->ResolvePlaceholder("<c>", 0, 0) != null;
+}
+
+[MiscCondition]
+public class SanctuaryCondition : ICondition, IDrawableCondition
+{
+    public string ID => "is";
+    public string ConditionName => "In Sanctuary";
+    public int DisplayPriority => 0;
+    public bool Check(dynamic arg) => FFXIVClientStructs.FFXIV.Client.Game.GameMain.IsInSanctuary();
+    public string GetTooltip(CndCfg cndCfg) => null;
+    public string GetSelectableTooltip(CndCfg cndCfg) => "This refers to areas that accumulate rested experience.";
+    public void Draw(CndCfg cndCfg) { }
+}
+
+[MiscCondition]
+public class ExplorerModeCondition : ICondition
+{
+    public string ID => "em";
+    public string ConditionName => "In Explorer Mode";
+    public int DisplayPriority => 0;
+    public bool Check(dynamic arg) => Game.IsInExplorerMode;
 }
 
 [MiscCondition]

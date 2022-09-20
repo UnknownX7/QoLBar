@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using Dalamud.Hooking;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -45,6 +46,8 @@ public unsafe class Game
     }
 
     public static DateTimeOffset EorzeaTime => DateTimeOffset.FromUnixTimeSeconds(Framework.Instance()->EorzeaTime);
+
+    public static bool IsInExplorerMode => (*((byte*)EventFramework.Instance()->GetInstanceContentDirector() + 0x33C) & 1) != 0; // Offset can be found in Client::Game::GameMain_IsInInstanceArea
 
     public static UIModule* uiModule;
 
