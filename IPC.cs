@@ -21,7 +21,7 @@ public static class IPC
     private static ICallGateSubscriber<object> penumbraInitializedSubscriber;
     private static ICallGateSubscriber<object> penumbraDisposedSubscriber;
     private static ICallGateSubscriber<(int Breaking, int Features)> penumbraApiVersionsSubscriber;
-    private static ICallGateSubscriber<string, string> penumbraResolveDefaultSubscriber;
+    private static ICallGateSubscriber<string, string> penumbraResolveInterfacePathSubscriber;
     public static int PenumbraApiVersion
     {
         get
@@ -42,7 +42,7 @@ public static class IPC
         penumbraInitializedSubscriber = DalamudApi.PluginInterface.GetIpcSubscriber<object>("Penumbra.Initialized");
         penumbraDisposedSubscriber = DalamudApi.PluginInterface.GetIpcSubscriber<object>("Penumbra.Disposed");
         penumbraApiVersionsSubscriber = DalamudApi.PluginInterface.GetIpcSubscriber<(int, int)>("Penumbra.ApiVersions");
-        penumbraResolveDefaultSubscriber = DalamudApi.PluginInterface.GetIpcSubscriber<string, string>("Penumbra.ResolveDefaultPath");
+        penumbraResolveInterfacePathSubscriber = DalamudApi.PluginInterface.GetIpcSubscriber<string, string>("Penumbra.ResolveInterfacePath");
 
         penumbraInitializedSubscriber.Subscribe(EnablePenumbraApi);
         penumbraDisposedSubscriber.Subscribe(DisablePenumbraApi);
@@ -73,7 +73,7 @@ public static class IPC
 
     public static string ResolvePenumbraPath(string path)
     {
-        try { return penumbraResolveDefaultSubscriber.InvokeFunc(path); }
+        try { return penumbraResolveInterfacePathSubscriber.InvokeFunc(path); }
         catch { return path; }
     }
 
