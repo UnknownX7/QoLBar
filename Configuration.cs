@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -8,6 +8,7 @@ using ImGuiNET;
 using Dalamud.Configuration;
 using Dalamud.Interface;
 using Dalamud.Logging;
+using Gamepad;
 
 namespace QoLBar;
 
@@ -36,6 +37,7 @@ public class BarCfg
 
     [JsonProperty("n")]  [DefaultValue("")]                   public string Name = string.Empty;
     [JsonProperty("k")]  [DefaultValue(0)]                    public int Hotkey = 0;
+    [JsonProperty("g")]  [DefaultValue(null)]                 public GamepadBind HotPad = default;
     [JsonProperty("sL")] [DefaultValue(null)]                 public List<ShCfg> ShortcutList = new();
     [JsonProperty("h")]  [DefaultValue(false)]                public bool Hidden = false;
     [JsonProperty("d")]  [DefaultValue(BarDock.Bottom)]       public BarDock DockSide = BarDock.Bottom;
@@ -75,6 +77,7 @@ public class ShCfg
     [JsonProperty("t")]   [DefaultValue(ShortcutType.Command)] public ShortcutType Type = ShortcutType.Command;
     [JsonProperty("c")]   [DefaultValue("")]                   public string Command = string.Empty;
     [JsonProperty("k")]   [DefaultValue(0)]                    public int Hotkey = 0;
+    [JsonProperty("g")]   [DefaultValue(null)]                 public GamepadBind HotPad = default;
     [JsonProperty("kP")]  [DefaultValue(false)]                public bool KeyPassthrough = false;
     [JsonProperty("sL")]  [DefaultValue(null)]                 public List<ShCfg> SubList;
     [JsonProperty("m")]   [DefaultValue(ShortcutMode.Default)] public ShortcutMode Mode = ShortcutMode.Default;

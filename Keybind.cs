@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Dalamud.Interface;
+using Gamepad;
 using ImGuiNET;
 
 namespace QoLBar;
@@ -340,12 +341,12 @@ public static class Keybind
 
         if (!PieUI.enabled) return;
 
-        foreach (var bar in QoLBar.Plugin.ui.bars.Where(bar => bar.Config.Hotkey > 0 && bar.CheckConditionSet()))
+        foreach (var bar in QoLBar.Plugin.ui.bars.Where(bar => (bar.Config.Hotkey > 0 || !GamepadBind.IsNullOrUnset(bar.Config.HotPad)) && bar.CheckConditionSet()))
         {
             var hotkey = bar.Config.Hotkey;
             CheckConflicts(hotkey);
 
-            if (IsHotkeyHeld(hotkey, true))
+            if (IsHotkeyHeld(hotkey, true) || GamepadBind.IsActive(bar.Config.HotPad, QoLBar.GamepadState))
             {
                 bar.openPie = true;
                 return;
@@ -368,7 +369,7 @@ public static class Keybind
             var key = GetBaseHotkey(config.Hotkey);
             var state = keyStates[key];
             var onUp = conflictingHotkeys.Contains(config.Hotkey);
-            var activated = IsHotkeyActivated(key, onUp) && (!onUp || !state.wasShortHeld) && (key | modifiers) == config.Hotkey;
+            var activated = (IsHotkeyActivated(key, onUp)&& (!onUp || !state.wasShortHeld) && (key | modifiers) == config.Hotkey) || GamepadBind.IsPress(config.HotPad, QoLBar.GamepadState);
             if (!activated) continue;
 
             if (config.Type == ShCfg.ShortcutType.Category && config.Mode == ShCfg.ShortcutMode.Default)

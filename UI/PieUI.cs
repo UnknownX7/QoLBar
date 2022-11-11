@@ -21,7 +21,7 @@ public static class PieUI
 
         foreach (var bar in QoLBar.Plugin.ui.bars)
         {
-            if (bar.Config.Hotkey > 0 && bar.CheckConditionSet())
+            if ((bar.Config.Hotkey > 0 || !GamepadBind.IsNullOrUnset(bar.Config.HotPad)) && bar.CheckConditionSet())
             {
                 ImGui.PushID(bar.ID);
 

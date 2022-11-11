@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Numerics;
 using System.Collections.Generic;
 using System.Linq;
 using ImGuiNET;
 using Dalamud.Interface;
+using Gamepad;
 using Lumina.Excel;
 
 namespace QoLBar;
@@ -599,6 +600,11 @@ public static class ImGuiPie
 
         Vector2 oMousePos = ImGui.GetMousePos();
         Vector2 oDragDelta = new Vector2(oMousePos.X - s_oPieMenuContext.m_oCenter.X, oMousePos.Y - s_oPieMenuContext.m_oCenter.Y);
+        var di = GamepadBind.RightStick(QoLBar.GamepadState);
+        if (di.HasValue)
+        {
+            oDragDelta = di.Value * 3 * s_oPieMenuContext.m_fRadiusOverride * s_oPieMenuContext.m_fScale;
+        }
         float fDragDistSqr = oDragDelta.X * oDragDelta.X + oDragDelta.Y * oDragDelta.Y;
 
         float fCurrentRadius = PieMenuContext.c_iRadiusEmpty;
@@ -766,6 +772,16 @@ public static class ImGuiPie
                 s_oPieMenuContext.m_iLastHoveredIndex = iIndex;
                 break;
             }
+        }
+        
+        if (di.HasValue)
+        {
+            var lineColor = ImGui.ColorConvertFloat4ToU32(new Vector4(1, 1, 1, 0.5f));
+            pDrawList.AddCircleFilled(s_oPieMenuContext.m_oCenter, 10, lineColor );
+            pDrawList.AddLine(s_oPieMenuContext.m_oCenter, s_oPieMenuContext.m_oCenter+oDragDelta, lineColor, 4);
+
+            Vector2 endCircleCenter = s_oPieMenuContext.m_oCenter+oDragDelta;
+            pDrawList.AddCircleFilled(endCircleCenter, 4, lineColor);
         }
 
         pDrawList.PopClipRect();
