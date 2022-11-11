@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using ImGuiNET;
 using Dalamud.Interface;
+using Gamepad;
 using static QoLBar.ShCfg;
 
 namespace QoLBar;
