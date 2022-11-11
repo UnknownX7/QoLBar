@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Numerics;
 using System.Text;
 using Dalamud.Logging;
+using Gamepad;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
