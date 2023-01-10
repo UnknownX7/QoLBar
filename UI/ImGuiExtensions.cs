@@ -240,7 +240,7 @@ public static class ImGuiEx
     public static void AddIconFrame(this ImDrawListPtr drawList, Vector2 pos, Vector2 size, bool frame, bool hovered, float activeTime, float cooldownCurrent, float cooldownMax, IconSettings.CooldownStyle cooldownStyle)
     {
         var frameSheet = QoLBar.TextureDictionary[TextureDictionary.FrameIconID];
-        if (frameSheet == null || frameSheet.ImGuiHandle == IntPtr.Zero) return;
+        if (frameSheet == null || frameSheet.ImGuiHandle == nint.Zero) return;
 
         var halfSize = size / 2;
         var center = pos + halfSize;
@@ -324,7 +324,7 @@ public static class ImGuiEx
             _ => null
         };
 
-        if (cooldownSheet == null || cooldownSheet.ImGuiHandle == IntPtr.Zero) return;
+        if (cooldownSheet == null || cooldownSheet.ImGuiHandle == nint.Zero) return;
 
         var phase = (byte)Math.Min(Math.Max(Math.Ceiling(maxCooldownPhase * progress), 0), maxCooldownPhase);
         var row = Math.DivRem(phase, 9, out var column);

@@ -270,7 +270,7 @@ public static class IconBrowserUI
                         var tex = QoLBar.TextureDictionary[icon];
                         if (!ImGui.IsMouseDown(ImGuiMouseButton.Right))
                             ImGui.SetTooltip($"{icon}");
-                        else if (tex != null && tex.ImGuiHandle != IntPtr.Zero)
+                        else if (tex != null && tex.ImGuiHandle != nint.Zero)
                         {
                             ImGui.BeginTooltip();
                             ImGui.Image(tex.ImGuiHandle, new Vector2(700 * ImGuiHelpers.GlobalScale));

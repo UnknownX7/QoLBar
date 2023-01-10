@@ -456,26 +456,26 @@ public class PluginUI : IDisposable
 
         ImGui.TextUnformatted("UI Module (Text Input Active)");
         ImGui.NextColumn();
-        ImGuiEx.TextCopyable($"{(IntPtr)Game.uiModule:X}");
+        ImGuiEx.TextCopyable($"{(nint)Game.uiModule:X}");
         ImGui.NextColumn();
         ImGui.TextUnformatted($"{Game.IsGameTextInputActive}");
         ImGui.NextColumn();
 
         ImGui.TextUnformatted("Agent Module");
         ImGui.NextColumn();
-        ImGuiEx.TextCopyable($"{(IntPtr)Game.agentModule:X}");
+        ImGuiEx.TextCopyable($"{(nint)Game.agentModule:X}");
         ImGui.NextColumn();
         ImGui.NextColumn();
 
         ImGui.TextUnformatted("Rapture Shell Module");
         ImGui.NextColumn();
-        ImGuiEx.TextCopyable($"{(IntPtr)Game.raptureShellModule:X}");
+        ImGuiEx.TextCopyable($"{(nint)Game.raptureShellModule:X}");
         ImGui.NextColumn();
         ImGui.NextColumn();
 
         ImGui.TextUnformatted("Rapture Macro Module");
         ImGui.NextColumn();
-        ImGuiEx.TextCopyable($"{(IntPtr)Game.raptureMacroModule:X}");
+        ImGuiEx.TextCopyable($"{(nint)Game.raptureMacroModule:X}");
         ImGui.NextColumn();
         ImGui.TextUnformatted($"{Game.IsMacroRunning}");
         ImGui.NextColumn();

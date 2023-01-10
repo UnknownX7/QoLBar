@@ -93,7 +93,7 @@ public static class MiscConditionHelpers
     {
         string addon = cndCfg.Arg is string ? cndCfg.Arg : string.Empty;
         var focusedAddon = Game.GetFocusedAddon();
-        var addonName = focusedAddon != null ? Marshal.PtrToStringAnsi((IntPtr)focusedAddon->Name) : string.Empty;
+        var addonName = focusedAddon != null ? Marshal.PtrToStringAnsi((nint)focusedAddon->Name) : string.Empty;
         if (ImGui.InputTextWithHint("##UIName", addonName, ref addon, 32))
         {
             cndCfg.Arg = addon;

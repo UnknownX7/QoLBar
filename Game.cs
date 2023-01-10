@@ -28,14 +28,14 @@ public unsafe class Game
     private static readonly Queue<string> chatQueue = new();
     private static uint retryItem = 0;
 
-    [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)] private static extern IntPtr GetForegroundWindow();
-    [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)] private static extern int GetWindowThreadProcessId(IntPtr handle, out int processId);
+    [DllImport("user32.dll", CharSet = CharSet.Auto, ExactSpelling = true)] private static extern nint GetForegroundWindow();
+    [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)] private static extern int GetWindowThreadProcessId(nint handle, out int processId);
     public static bool IsGameFocused
     {
         get
         {
             var activatedHandle = GetForegroundWindow();
-            if (activatedHandle == IntPtr.Zero)
+            if (activatedHandle == nint.Zero)
                 return false;
 
             var procId = Environment.ProcessId;
@@ -51,51 +51,51 @@ public unsafe class Game
 
     public static UIModule* uiModule;
 
-    public static bool IsGameTextInputActive => uiModule->GetRaptureAtkModule()->AtkModule.IsTextInputActive() != 0;
-    public static bool IsMacroRunning => *(int*)((IntPtr)raptureShellModule + 0x2C0) >= 0;
+    public static bool IsGameTextInputActive => uiModule->GetRaptureAtkModule()->AtkModule.IsTextInputActive();
+    public static bool IsMacroRunning => *(int*)((nint)raptureShellModule + 0x2C0) >= 0;
 
     public static AgentModule* agentModule;
-    public static IntPtr itemContextMenuAgent;
+    public static nint itemContextMenuAgent;
 
-    public static IntPtr addonConfig;
+    public static nint addonConfig;
     [Signature("E8 ?? ?? ?? ?? 4D 8B 4D 50")]
-    private static delegate* unmanaged<IntPtr, byte> getHUDLayout;
+    private static delegate* unmanaged<nint, byte> getHUDLayout;
     public static byte CurrentHUDLayout => getHUDLayout(addonConfig);
 
     // Command Execution
-    public delegate void ProcessChatBoxDelegate(UIModule* uiModule, IntPtr message, IntPtr unused, byte a4);
+    public delegate void ProcessChatBoxDelegate(UIModule* uiModule, nint message, nint unused, byte a4);
     [Signature("48 89 5C 24 ?? 57 48 83 EC 20 48 8B FA 48 8B D9 45 84 C9")]
     public static ProcessChatBoxDelegate ProcessChatBox;
 
-    public delegate int GetCommandHandlerDelegate(RaptureShellModule* raptureShellModule, IntPtr message, IntPtr unused);
+    public delegate int GetCommandHandlerDelegate(RaptureShellModule* raptureShellModule, nint message, nint unused);
     [Signature("E8 ?? ?? ?? ?? 83 F8 FE 74 1E")]
     public static GetCommandHandlerDelegate GetCommandHandler;
 
     // Macro Execution
-    public delegate void ExecuteMacroDelegate(RaptureShellModule* raptureShellModule, IntPtr macro);
+    public delegate void ExecuteMacroDelegate(RaptureShellModule* raptureShellModule, nint macro);
     [Signature("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28")]
     public static Hook<ExecuteMacroDelegate> ExecuteMacroHook;
     public static RaptureShellModule* raptureShellModule;
     public static RaptureMacroModule* raptureMacroModule;
 
-    public static IntPtr numCopiedMacroLinesPtr = IntPtr.Zero;
+    public static nint numCopiedMacroLinesPtr = nint.Zero;
     public static byte NumCopiedMacroLines
     {
         get => *(byte*)numCopiedMacroLinesPtr;
         set
         {
-            if (numCopiedMacroLinesPtr != IntPtr.Zero)
+            if (numCopiedMacroLinesPtr != nint.Zero)
                 SafeMemory.WriteBytes(numCopiedMacroLinesPtr, new[] {value});
         }
     }
 
-    public static IntPtr numExecutedMacroLinesPtr = IntPtr.Zero;
+    public static nint numExecutedMacroLinesPtr = nint.Zero;
     public static byte NumExecutedMacroLines
     {
         get => *(byte*)numExecutedMacroLinesPtr;
         set
         {
-            if (numExecutedMacroLinesPtr != IntPtr.Zero)
+            if (numExecutedMacroLinesPtr != nint.Zero)
                 SafeMemory.WriteBytes(numExecutedMacroLinesPtr, new[] {value});
         }
     }
@@ -103,16 +103,16 @@ public unsafe class Game
     // Misc
     private const int aetherCompassID = 2_001_886;
     private static Dictionary<uint, string> usables;
-    [Signature("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 41 B0 01 BA 13 00 00 00")]
-    private static delegate* unmanaged<IntPtr, uint, uint, uint, short, void> useItem;
+    [Signature("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 89 7C 24 38")]
+    private static delegate* unmanaged<nint, uint, uint, uint, short, void> useItem;
     private static ActionManager* actionManager;
     private static RaptureAtkUnitManager* raptureAtkUnitManager;
     [Signature("E8 ?? ?? ?? ?? 44 8B 4B 2C")]
     private static delegate* unmanaged<uint, uint, uint> getActionID;
     [Signature("48 8D 0D ?? ?? ?? ?? 4C 8B C0", ScanType = ScanType.StaticAddress, Offset = 3)]
-    private static IntPtr performanceStruct;
+    private static nint performanceStruct;
     [Signature("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B D6")]
-    private static delegate* unmanaged<IntPtr, byte, void> startPerformance;
+    private static delegate* unmanaged<nint, byte, void> startPerformance;
 
     public static void Initialize()
     {
@@ -120,7 +120,7 @@ public unsafe class Game
 
         raptureShellModule = uiModule->GetRaptureShellModule();
         raptureMacroModule = uiModule->GetRaptureMacroModule();
-        addonConfig = ((delegate* unmanaged<UIModule*, IntPtr>)uiModule->vfunc[19])(uiModule);
+        addonConfig = ((delegate* unmanaged<UIModule*, nint>)uiModule->vfunc[19])(uiModule);
         agentModule = uiModule->GetAgentModule();
         actionManager = ActionManager.Instance();
         raptureAtkUnitManager = AtkStage.GetSingleton()->RaptureAtkUnitManager;
@@ -141,9 +141,9 @@ public unsafe class Game
         ExecuteMacroHook.Enable();
     }
 
-    public static IntPtr GetAgentByInternalID(AgentId id) => (IntPtr)agentModule->GetAgentByInternalId(id);
+    public static nint GetAgentByInternalID(AgentId id) => (nint)agentModule->GetAgentByInternalId(id);
 
-    public static IntPtr GetAgentByInternalID(uint id) => (IntPtr)agentModule->GetAgentByInternalID(id);
+    public static nint GetAgentByInternalID(uint id) => (nint)agentModule->GetAgentByInternalID(id);
 
     public static void DEBUG_FindAgent(long agent)
     {
@@ -161,7 +161,7 @@ public unsafe class Game
     }
 
 
-    public static void ExecuteMacroDetour(RaptureShellModule* raptureShellModule, IntPtr macro)
+    public static void ExecuteMacroDetour(RaptureShellModule* raptureShellModule, nint macro)
     {
         NumCopiedMacroLines = Macro.numLines;
         NumExecutedMacroLines = Macro.numLines;
@@ -221,7 +221,7 @@ public unsafe class Game
                             if (int.TryParse(command[1..], out var macro))
                             {
                                 if (macro is >= 0 and < 200)
-                                    ExecuteMacroHook.Original(raptureShellModule, (IntPtr)raptureMacroModule + 0x58 + (Macro.size * macro));
+                                    ExecuteMacroHook.Original(raptureShellModule, (nint)raptureMacroModule + 0x58 + (Macro.size * macro));
                                 else
                                     QoLBar.PrintError("Invalid macro. Usage: \"//m0\" for individual macro #0, \"//m100\" for shared macro #0, valid up to 199.");
                             }
@@ -279,7 +279,7 @@ public unsafe class Game
 
     public static void ExecuteCommand(string command, bool chat = false)
     {
-        var stringPtr = IntPtr.Zero;
+        var stringPtr = nint.Zero;
 
         try
         {
@@ -292,7 +292,7 @@ public unsafe class Game
                 if (chat)
                     chatQueueTimer = 1f / 6f;
 
-                ProcessChatBox(uiModule, stringPtr, IntPtr.Zero, 0);
+                ProcessChatBox(uiModule, stringPtr, nint.Zero, 0);
             }
             else
                 chatQueue.Enqueue(command);
@@ -308,14 +308,14 @@ public unsafe class Game
         if (split < 1) return split == 0 || !command.StartsWith("/");
 
         var handler = 0;
-        var stringPtr = IntPtr.Zero;
+        var stringPtr = nint.Zero;
 
         try
         {
             stringPtr = Marshal.AllocHGlobal(UTF8String.size);
             using var str = new UTF8String(stringPtr, command.Substring(0, split));
             Marshal.StructureToPtr(str, stringPtr, false);
-            handler = GetCommandHandler(raptureShellModule, stringPtr, IntPtr.Zero);
+            handler = GetCommandHandler(raptureShellModule, stringPtr, nint.Zero);
         }
         catch { }
 
@@ -331,7 +331,7 @@ public unsafe class Game
 
     private static void CreateAndExecuteMacro()
     {
-        var macroPtr = IntPtr.Zero;
+        var macroPtr = nint.Zero;
 
         try
         {
