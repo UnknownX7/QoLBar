@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Linq.Expressions;
 using Dalamud.Game;
+using Dalamud.Game.ClientState.GamePad;
 using Dalamud.Game.Gui;
 using Dalamud.Logging;
 using Dalamud.Plugin;
@@ -25,6 +26,7 @@ public class QoLBar : IDalamudPlugin
     public PluginUI ui;
     private bool pluginReady = false;
 
+    public static GamepadState GamepadState { get; private set; }
     public static TextureDictionary TextureDictionary => Config.UseHRIcons ? textureDictionaryHR : textureDictionaryLR;
     public static readonly TextureDictionary textureDictionaryLR = new(false, false);
     public static readonly TextureDictionary textureDictionaryHR = new(true, false);
@@ -36,10 +38,12 @@ public class QoLBar : IDalamudPlugin
     public static ImFontPtr Font { get; private set; }
     private static bool fontEnabled = false;
 
-    public QoLBar(DalamudPluginInterface pluginInterface)
+    public QoLBar(DalamudPluginInterface pluginInterface,
+        GamepadState gamepadState)
     {
         Plugin = this;
         DalamudApi.Initialize(this, pluginInterface);
+        GamepadState = gamepadState;
 
         Config = (Configuration)DalamudApi.PluginInterface.GetPluginConfig() ?? new();
         Config.Initialize();

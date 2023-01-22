@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Numerics;
 using System.Text;
 using Dalamud.Logging;
+using Gamepad;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -17,6 +18,7 @@ public class QoLSerializer : DefaultSerializationBinder
     private static readonly Type shortcutType = typeof(Shortcut);
     private static readonly Type barType2 = typeof(BarCfg);
     private static readonly Type shortcutType2 = typeof(ShCfg);
+    private static readonly Type gamepadType = typeof(GamepadBind);
     private static readonly Type conditionSetType = typeof(CndSetCfg);
     private static readonly Type conditionType = typeof(CndCfg);
     private static readonly Type vector2Type = typeof(Vector2);
@@ -26,6 +28,7 @@ public class QoLSerializer : DefaultSerializationBinder
     private const string shortcutShortName = "s";
     private const string barShortName2 = "b2";
     private const string shortcutShortName2 = "s2";
+    private const string gamepadShortName = "g";
     private const string conditionSetShortName = "cs";
     private const string conditionShortName = "c";
     private const string vector2ShortName = "2";
@@ -47,6 +50,9 @@ public class QoLSerializer : DefaultSerializationBinder
         [shortcutType2.FullName!] = shortcutType2,
         [shortcutShortName2] = shortcutType2,
 
+        [gamepadType.FullName!] = gamepadType,
+        [gamepadShortName] = gamepadType,
+
         [conditionSetType.FullName!] = conditionSetType,
         [conditionSetShortName] = conditionSetType,
 
@@ -66,6 +72,7 @@ public class QoLSerializer : DefaultSerializationBinder
         [shortcutType] = shortcutShortName,
         [barType2] = barShortName2,
         [shortcutType2] = shortcutShortName2,
+        [gamepadType] = gamepadShortName,
         [conditionSetType] = conditionSetShortName,
         [conditionType] = conditionShortName,
         [vector2Type] = vector2ShortName,

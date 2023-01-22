@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ImGuiNET;
 using Dalamud.Interface;
+using Gamepad;
 using static QoLBar.ShCfg;
 
 namespace QoLBar;
@@ -64,7 +65,7 @@ public class ShortcutUI : IDisposable
 
     public void SetupHotkeys()
     {
-        if (Config.Hotkey > 0 && Config.Type != ShortcutType.Spacer)
+        if ((Config.Hotkey > 0 || !GamepadBind.IsNullOrUnset(Config.HotPad))&& Config.Type != ShortcutType.Spacer)
             Keybind.AddHotkey(this);
 
         if (Config.Type == ShortcutType.Category)
@@ -433,7 +434,15 @@ public class ShortcutUI : IDisposable
                 ConfigEditorUI.EditShortcutColor(this);
 
                 if (Config.Type != ShortcutType.Spacer)
+                {
                     Keybind.KeybindInput(Config);
+                    GamepadBind pad = GamepadBind.DrawInputConfig(Config.HotPad, QoLBar.GamepadState);
+                    if(pad != null)
+                    {
+                        Config.HotPad = pad;
+                        QoLBar.Config.Save();
+                    }
+                }
 
                 ImGui.EndTabItem();
             }
