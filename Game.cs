@@ -127,7 +127,7 @@ public unsafe class Game
 
         // TODO change back to static whenever support is added
         //SignatureHelper.Initialise(typeof(Game));
-        SignatureHelper.Initialise(new Game());
+        DalamudApi.GameInteropProvider.InitializeFromAttributes(new Game());
 
         numCopiedMacroLinesPtr = DalamudApi.SigScanner.ScanText("49 8D 5E 70 BF ?? 00 00 00") + 0x5;
         numExecutedMacroLinesPtr = DalamudApi.SigScanner.ScanText("41 83 F8 ?? 0F 8D ?? ?? ?? ?? 49 6B C8 68") + 0x3;
@@ -365,7 +365,7 @@ public unsafe class Game
     {
         var units = raptureAtkUnitManager->AtkUnitManager.FocusedUnitsList;
         var count = units.Count;
-        return count == 0 ? null : (&units.AtkUnitEntries)[count - 1];
+        return count == 0 ? null : units.EntriesSpan[count - 1].Value;
     }
 
     public static void UseItem(uint id)
@@ -375,7 +375,7 @@ public unsafe class Game
         // Aether Compass support
         if (id == aetherCompassID)
         {
-            actionManager->UseAction(ActionType.Spell, 26988);
+            actionManager->UseAction(ActionType.Action, 26988);
             return;
         }
 

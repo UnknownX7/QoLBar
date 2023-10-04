@@ -3,11 +3,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Numerics;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
 using ImGuiNET;
-using Dalamud.Interface;
+using Dalamud.Interface.Utility;
 using Dalamud.Logging;
 
 namespace QoLBar;

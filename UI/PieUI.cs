@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using ImGuiNET;
-using Dalamud.Interface;
+using Dalamud.Interface.Utility;
 using static QoLBar.ShCfg;
 
 namespace QoLBar;

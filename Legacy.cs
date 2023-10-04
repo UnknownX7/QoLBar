@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Linq;
 using Newtonsoft.Json;
 using Dalamud.Interface;
+using Dalamud.Interface.Utility;
 using ImGuiNET;
 
 #pragma warning disable CS0612 // Type or member is obsolete

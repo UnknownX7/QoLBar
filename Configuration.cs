@@ -6,7 +6,7 @@ using System.ComponentModel;
 using Newtonsoft.Json;
 using ImGuiNET;
 using Dalamud.Configuration;
-using Dalamud.Interface;
+using Dalamud.Interface.Utility;
 using Dalamud.Logging;
 
 namespace QoLBar;

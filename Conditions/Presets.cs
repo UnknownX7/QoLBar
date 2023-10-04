@@ -40,7 +40,7 @@ public class AllCurrentConditionFlagsPreset : IConditionSetPreset
     {
         var set = new CndSetCfg { Name = "Condition Flags Active" };
 
-        for (int i = 0; i < Condition.MaxConditionEntries; i++)
+        for (int i = 0; i < DalamudApi.Condition.MaxEntries; i++)
         {
             if (!DalamudApi.Condition[i]) continue;
             set.Conditions.Add(new() { ID = ConditionFlagCondition.constID, Arg = i });

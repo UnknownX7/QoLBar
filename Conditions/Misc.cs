@@ -126,7 +126,7 @@ public class LoggedInCondition : ICondition
     public string ID => "l";
     public string ConditionName => "Is Logged In";
     public int DisplayPriority => 0;
-    public bool Check(dynamic arg) => DalamudApi.Condition.Any();
+    public bool Check(dynamic arg) => DalamudApi.ClientState.IsLoggedIn;
 }
 
 [MiscCondition]
@@ -366,10 +366,11 @@ public class PluginCondition : ICondition, IDrawableCondition, IArgCondition
     {
         if (ImGui.BeginCombo("##PluginsList", cndCfg.Arg is string ? cndCfg.Arg : string.Empty))
         {
-            for (int i = 0; i < DalamudApi.PluginInterface.PluginInternalNames.Count; i++)
+            var i = 0;
+            foreach (var plugin in DalamudApi.PluginInterface.InstalledPlugins)
             {
-                var name = DalamudApi.PluginInterface.PluginInternalNames[i];
-                if (!ImGui.Selectable($"{name}##{i}", cndCfg.Arg == name)) continue;
+                var name = plugin.InternalName;
+                if (!ImGui.Selectable($"{name}##{i++}", cndCfg.Arg == name)) continue;
 
                 cndCfg.Arg = name;
                 QoLBar.Config.Save();

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ImGuiNET;
 using Dalamud.Interface;
+using Dalamud.Interface.Utility;
 using static QoLBar.ShCfg;
 
 namespace QoLBar;

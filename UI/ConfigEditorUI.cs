@@ -4,8 +4,8 @@ using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 using ImGuiNET;
-using Dalamud.Interface;
 using Dalamud.Interface.Internal.Notifications;
+using Dalamud.Interface.Utility;
 using static QoLBar.BarCfg;
 using static QoLBar.ShCfg;
 

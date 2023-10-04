@@ -2,8 +2,9 @@
 using System.Numerics;
 using System.Collections.Generic;
 using System.Linq;
+using Dalamud.Interface.Internal;
 using ImGuiNET;
-using Dalamud.Interface;
+using Dalamud.Interface.Utility;
 using Lumina.Excel;
 
 namespace QoLBar;
@@ -189,7 +190,7 @@ public static class ImGuiEx
         public CooldownStyle cooldownStyle = CooldownStyle.None;
     }
 
-    public static void AddIcon(this ImDrawListPtr drawList, ImGuiScene.TextureWrap tex, Vector2 pos, IconSettings settings)
+    public static void AddIcon(this ImDrawListPtr drawList, IDalamudTextureWrap tex, Vector2 pos, IconSettings settings)
     {
         if (tex == null) return;
 
@@ -351,15 +352,15 @@ public static class ImGuiEx
         drawList.AddImage(cooldownSheet.ImGuiHandle, min, max, uv0, uv1);
     }
 
-    private static void DrawIcon(ImGuiScene.TextureWrap icon, IconSettings settings) => ImGui.GetWindowDrawList().AddIcon(icon, ImGui.GetItemRectMin(), settings);
+    private static void DrawIcon(IDalamudTextureWrap icon, IconSettings settings) => ImGui.GetWindowDrawList().AddIcon(icon, ImGui.GetItemRectMin(), settings);
 
-    public static void Icon(ImGuiScene.TextureWrap icon, IconSettings settings)
+    public static void Icon(IDalamudTextureWrap icon, IconSettings settings)
     {
         ImGui.Dummy(settings.size);
         DrawIcon(icon, settings);
     }
 
-    public static bool IconButton(string id, ImGuiScene.TextureWrap icon, IconSettings settings)
+    public static bool IconButton(string id, IDalamudTextureWrap icon, IconSettings settings)
     {
         var ret = ImGui.InvisibleButton(id, settings.size);
         settings.activeTime = (settings.activeTime >= 0) ? settings.activeTime : (ImGui.IsItemActive() ? -1 : 0);

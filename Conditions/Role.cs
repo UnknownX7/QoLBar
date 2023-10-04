@@ -22,8 +22,8 @@ public class RoleCondition : ICondition, IDrawableCondition, IArgCondition, ICon
     public string ConditionName => "Role";
     public string CategoryName => "Role";
     public int DisplayPriority => 0;
-    public bool Check(dynamic arg) => DalamudApi.DataManager.IsDataReady && DalamudApi.ClientState.LocalPlayer is { } player
-                                                                         && ((uint)arg < 30 ? player.ClassJob.GameData?.Role : player.ClassJob.GameData?.ClassJobCategory.Row) == (uint)arg;
+    public bool Check(dynamic arg) => DalamudApi.ClientState.LocalPlayer is { } player
+        && ((uint)arg < 30 ? player.ClassJob.GameData?.Role : player.ClassJob.GameData?.ClassJobCategory.Row) == (uint)arg;
     public string GetTooltip(CndCfg cndCfg) => null;
     public string GetSelectableTooltip(CndCfg cndCfg) => null;
     public void Draw(CndCfg cndCfg)

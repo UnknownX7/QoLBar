@@ -3,7 +3,7 @@ using System.Numerics;
 using System.Collections.Generic;
 using System.Diagnostics;
 using ImGuiNET;
-using Dalamud.Interface;
+using Dalamud.Interface.Utility;
 using Dalamud.Logging;
 
 namespace QoLBar;
@@ -23,7 +23,7 @@ public static class IconBrowserUI
     private static List<(int, int)> _iconList;
     private static bool _displayOutsideMain = true;
 
-    private const int iconMax = 200_000;
+    private const int iconMax = 250_000;
     private static HashSet<int> _iconExistsCache;
     private static readonly Dictionary<string, List<int>> _iconCache = new();
 
