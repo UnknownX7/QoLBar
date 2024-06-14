@@ -109,6 +109,9 @@ public class DalamudApi
     public static ITextureProvider TextureProvider { get; private set; }
 
     [PluginService]
+    public static ITextureSubstitutionProvider TextureSubstitutionProvider { get; private set; }
+
+    [PluginService]
     public static ITitleScreenMenu TitleScreenMenu { get; private set; }
 
     [PluginService]

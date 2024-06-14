@@ -56,7 +56,7 @@ public class TextureDictionary : ConcurrentDictionary<int, IDalamudTextureWrap>,
 
     public bool IsTaskLoading() => loadingTasks > 0 || loadingQueue.Count > 0;
 
-    private static string ResolvePath(string path) => IPC.PenumbraEnabled && QoLBar.Config.UsePenumbra ? IPC.ResolvePenumbraPath(path) : path;
+    private static string ResolvePath(string path) => DalamudApi.TextureSubstitutionProvider.GetSubstitutedPath(path);
 
     private static TexFile GetTex(string path)
     {

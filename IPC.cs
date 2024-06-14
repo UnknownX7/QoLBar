@@ -16,21 +16,6 @@ public static class IPC
     public static readonly ICallGateProvider<int, int, object> MovedConditionSetProvider = DalamudApi.PluginInterface.GetIpcProvider<int, int, object>("QoLBar.MovedConditionSet");
     public static readonly ICallGateProvider<int, object> RemovedConditionSetProvider = DalamudApi.PluginInterface.GetIpcProvider<int, object>("QoLBar.RemovedConditionSet");
 
-    // Penumbra support
-    public static bool PenumbraEnabled { get; private set; } = false;
-    private static ICallGateSubscriber<object> penumbraInitializedSubscriber;
-    private static ICallGateSubscriber<object> penumbraDisposedSubscriber;
-    private static ICallGateSubscriber<(int Breaking, int Features)> penumbraApiVersionsSubscriber;
-    private static ICallGateSubscriber<string, string> penumbraResolveInterfacePathSubscriber;
-    public static int PenumbraApiVersion
-    {
-        get
-        {
-            try { return penumbraApiVersionsSubscriber.InvokeFunc().Breaking; }
-            catch { return 0; }
-        }
-    }
-
     public static void Initialize()
     {
         GetVersionProvider.RegisterFunc(() => QoLBar.Config.PluginVersion);
@@ -38,43 +23,6 @@ public static class IPC
         ImportBarProvider.RegisterAction(import => QoLBar.Plugin.ui.ImportBar(import));
         GetConditionSetsProvider.RegisterFunc(() => QoLBar.Config.CndSetCfgs.Select(s => s.Name).ToArray());
         CheckConditionSetProvider.RegisterFunc(i => i >= 0 && i < QoLBar.Config.CndSetCfgs.Count && ConditionManager.CheckConditionSet(i));
-
-        penumbraInitializedSubscriber = DalamudApi.PluginInterface.GetIpcSubscriber<object>("Penumbra.Initialized");
-        penumbraDisposedSubscriber = DalamudApi.PluginInterface.GetIpcSubscriber<object>("Penumbra.Disposed");
-        penumbraApiVersionsSubscriber = DalamudApi.PluginInterface.GetIpcSubscriber<(int, int)>("Penumbra.ApiVersions");
-        penumbraResolveInterfacePathSubscriber = DalamudApi.PluginInterface.GetIpcSubscriber<string, string>("Penumbra.ResolveInterfacePath");
-
-        penumbraInitializedSubscriber.Subscribe(EnablePenumbraApi);
-        penumbraDisposedSubscriber.Subscribe(DisablePenumbraApi);
-
-        // Check if Penumbra is already available
-        EnablePenumbraApi();
-    }
-
-    public static void EnablePenumbraApi()
-    {
-        if (PenumbraApiVersion != 4) return;
-
-        PenumbraEnabled = true;
-
-        if (QoLBar.Config.UsePenumbra)
-            DalamudApi.Framework.RunOnTick(() => QoLBar.CleanTextures(false));
-    }
-
-    public static void DisablePenumbraApi()
-    {
-        if (!PenumbraEnabled) return;
-
-        PenumbraEnabled = false;
-
-        if (QoLBar.Config.UsePenumbra)
-            QoLBar.CleanTextures(false);
-    }
-
-    public static string ResolvePenumbraPath(string path)
-    {
-        try { return penumbraResolveInterfacePathSubscriber.InvokeFunc(path); }
-        catch { return path; }
     }
 
     public static void Dispose()
@@ -84,8 +32,5 @@ public static class IPC
         ImportBarProvider.UnregisterAction();
         GetConditionSetsProvider.UnregisterFunc();
         CheckConditionSetProvider.UnregisterFunc();
-
-        penumbraInitializedSubscriber.Unsubscribe(EnablePenumbraApi);
-        penumbraDisposedSubscriber.Unsubscribe(DisablePenumbraApi);
     }
 }
