@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Interface;
@@ -93,7 +92,7 @@ public static class MiscConditionHelpers
     {
         string addon = cndCfg.Arg is string ? cndCfg.Arg : string.Empty;
         var focusedAddon = Game.GetFocusedAddon();
-        var addonName = focusedAddon != null ? Marshal.PtrToStringAnsi((nint)focusedAddon->Name) : string.Empty;
+        var addonName = focusedAddon != null ? focusedAddon->NameString : string.Empty;
         if (ImGui.InputTextWithHint("##UIName", addonName, ref addon, 32))
         {
             cndCfg.Arg = addon;
@@ -275,7 +274,7 @@ public class PartyCondition : ICondition, IDrawableCondition, IArgCondition
     public string ID => "pt";
     public string ConditionName => "# Party Member Exists";
     public int DisplayPriority => 0;
-    public unsafe bool Check(dynamic arg) => Framework.Instance()->GetUiModule()->GetPronounModule()->ResolvePlaceholder($"<{arg}>", 0, 0) != null;
+    public unsafe bool Check(dynamic arg) => Framework.Instance()->GetUIModule()->GetPronounModule()->ResolvePlaceholder($"<{arg}>", 0, 0) != null;
     public string GetTooltip(CndCfg cndCfg) => "This will only return true if the party member exists in the current area.";
     public string GetSelectableTooltip(CndCfg cndCfg) => null;
     public void Draw(CndCfg cndCfg)
@@ -293,7 +292,7 @@ public class PetCondition : ICondition
     public string ID => "pe";
     public string ConditionName => "Pet Exists";
     public int DisplayPriority => 0;
-    public unsafe bool Check(dynamic arg) => Framework.Instance()->GetUiModule()->GetPronounModule()->ResolvePlaceholder("<pet>", 0, 0) != null;
+    public unsafe bool Check(dynamic arg) => Framework.Instance()->GetUIModule()->GetPronounModule()->ResolvePlaceholder("<pet>", 0, 0) != null;
 }
 
 [MiscCondition]
@@ -302,7 +301,7 @@ public class ChocoboCondition : ICondition
     public string ID => "ce";
     public string ConditionName => "Chocobo Exists";
     public int DisplayPriority => 0;
-    public unsafe bool Check(dynamic arg) => Framework.Instance()->GetUiModule()->GetPronounModule()->ResolvePlaceholder("<c>", 0, 0) != null;
+    public unsafe bool Check(dynamic arg) => Framework.Instance()->GetUIModule()->GetPronounModule()->ResolvePlaceholder("<c>", 0, 0) != null;
 }
 
 [MiscCondition]

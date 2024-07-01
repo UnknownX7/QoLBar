@@ -3,8 +3,8 @@ using System.Numerics;
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
+using Dalamud.Interface.ImGuiNotification;
 using ImGuiNET;
-using Dalamud.Interface.Internal.Notifications;
 using Dalamud.Interface.Utility;
 using static QoLBar.BarCfg;
 using static QoLBar.ShCfg;
@@ -466,5 +466,5 @@ public static class ConfigEditorUI
     }
 
     public static void DisplayRightClickDeleteMessage(string text = "Right click to delete!") =>
-        DalamudApi.PluginInterface.UiBuilder.AddNotification($"\t\t\t{text}\t\t\t\n\n", null, NotificationType.Info);
+        DalamudApi.ShowNotification($"\t\t\t{text}\t\t\t\n\n", NotificationType.Info);
 }

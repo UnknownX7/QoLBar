@@ -310,7 +310,7 @@ public static class Importing
             imported = ImportLegacy(import);
             if (imported == null && printError)
             {
-                PluginLog.LogError($"Invalid import string!\n{e}");
+                DalamudApi.LogError($"Invalid import string!\n{e}");
                 switch (e)
                 {
                     case FormatException:

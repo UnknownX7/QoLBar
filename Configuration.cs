@@ -7,7 +7,6 @@ using Newtonsoft.Json;
 using ImGuiNET;
 using Dalamud.Configuration;
 using Dalamud.Interface.Utility;
-using Dalamud.Logging;
 
 namespace QoLBar;
 
@@ -224,12 +223,12 @@ public class Configuration : IPluginConfiguration
         {
             if (!failed)
             {
-                PluginLog.LogError("Failed to save! Retrying...");
+                DalamudApi.LogError("Failed to save! Retrying...");
                 Save(true);
             }
             else
             {
-                PluginLog.LogError("Failed to save again :(");
+                DalamudApi.LogError("Failed to save again :(");
                 QoLBar.PrintError("Error saving config, is something else writing to it?");
             }
         }
@@ -245,7 +244,7 @@ public class Configuration : IPluginConfiguration
         }
         catch (Exception e)
         {
-            PluginLog.LogError(e, "Failed to create icon folder");
+            DalamudApi.LogError("Failed to create icon folder", e);
             return string.Empty;
         }
     }
@@ -260,7 +259,7 @@ public class Configuration : IPluginConfiguration
         }
         catch (Exception e)
         {
-            PluginLog.LogError(e, "Failed to create backup folder");
+            DalamudApi.LogError("Failed to create backup folder", e);
             return string.Empty;
         }
     }
@@ -273,7 +272,7 @@ public class Configuration : IPluginConfiguration
                 SaveTempConfig();
 
             try { tempConfig.CopyTo(backupFolder.FullName + $"\\v{PluginVersion} {DateTime.Now:yyyy-MM-dd HH.mm.ss}.json"); }
-            catch (Exception e) { PluginLog.LogError(e, "Failed to back up config!"); }
+            catch (Exception e) { DalamudApi.LogError("Failed to back up config!", e); }
 
             UpdateVersion();
             Save();
@@ -293,7 +292,7 @@ public class Configuration : IPluginConfiguration
                 backupFolder.Create();
             ConfigFile.CopyTo(tempConfig.FullName, true);
         }
-        catch (Exception e) { PluginLog.LogError(e, "Failed to save temp config!"); }
+        catch (Exception e) { DalamudApi.LogError("Failed to save temp config!", e); }
     }
 
     public void DoTimedBackup()
@@ -302,7 +301,7 @@ public class Configuration : IPluginConfiguration
 
         SaveTimedConfig();
         lastSave = -1; // Prevent from pointlessly saving if the config is never changed
-        PluginLog.LogInformation("Performed timed backup!");
+        DalamudApi.LogInfo("Performed timed backup!");
     }
 
     private void SaveTimedConfig()
@@ -313,7 +312,7 @@ public class Configuration : IPluginConfiguration
                 backupFolder.Create();
             ConfigFile.CopyTo(timedConfig.FullName, true);
         }
-        catch (Exception e) { PluginLog.LogError(e, "Failed to save timed backup!"); }
+        catch (Exception e) { DalamudApi.LogError("Failed to save timed backup!", e); }
     }
 
     public void LoadConfig(FileInfo file)
@@ -325,7 +324,7 @@ public class Configuration : IPluginConfiguration
             file.CopyTo(ConfigFile.FullName, true);
             QoLBar.Plugin.Reload();
         }
-        catch (Exception e) { PluginLog.LogError(e, "Failed to load config!"); }
+        catch (Exception e) { DalamudApi.LogError("Failed to load config!", e); }
     }
 
     public void SaveIconCache(HashSet<int> cache)

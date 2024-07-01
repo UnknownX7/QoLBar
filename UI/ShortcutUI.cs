@@ -287,9 +287,9 @@ public class ShortcutUI : IDisposable
 
             if (!string.IsNullOrEmpty(tooltip))
             {
-                ImGui.PopFont();
+                QoLBar.Font.Pop();
                 ImGui.SetTooltip(tooltip);
-                ImGui.PushFont(QoLBar.Font);
+                QoLBar.Font.Push();
             }
         }
 
@@ -393,9 +393,9 @@ public class ShortcutUI : IDisposable
                 ImGui.OpenPopup("addShortcut");
             ImGuiEx.PopFontScale();
             ImGui.PopStyleColor();
-            ImGui.PopFont();
+            QoLBar.Font.Pop();
             ImGuiEx.SetItemTooltip("Add a new shortcut.");
-            ImGui.PushFont(QoLBar.Font);
+            QoLBar.Font.Push();
         }
 
         if (ImGui.IsWindowHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Right) && ImGui.GetIO().KeyShift)

@@ -6,8 +6,9 @@ using System.Reflection;
 using Dalamud.Game;
 using Dalamud.Game.ClientState.Objects;
 using Dalamud.Game.Command;
+using Dalamud.Game.Gui.Toast;
+using Dalamud.Interface.ImGuiNotification;
 using Dalamud.IoC;
-using Dalamud.Logging;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 
@@ -19,7 +20,7 @@ namespace Dalamud;
 public class DalamudApi
 {
     [PluginService]
-    public static DalamudPluginInterface PluginInterface { get; private set; }
+    public static IDalamudPluginInterface PluginInterface { get; private set; }
 
     [PluginService]
     public static IAddonEventManager AddonEventManager { get; private set; }
@@ -88,7 +89,7 @@ public class DalamudApi
     public static IKeyState KeyState { get; private set; }
 
     [PluginService]
-    public static ILibcFunction LibcFunction { get; private set; }
+    public static INotificationManager NotificationManager { get; private set; }
 
     [PluginService]
     public static IObjectTable ObjectTable { get; private set; }
@@ -98,6 +99,9 @@ public class DalamudApi
 
     [PluginService]
     public static IPartyList PartyList { get; private set; }
+
+    [PluginService]
+    public static IPluginLog PluginLog { get; private set; }
 
     [PluginService]
     public static ISigScanner SigScanner { get; private set; }
@@ -118,16 +122,18 @@ public class DalamudApi
     public static IToastGui ToastGui { get; private set; }
 
     private static PluginCommandManager<IDalamudPlugin> pluginCommandManager;
+    private const string printName = "QoL Bar";
+    private const string printHeader = $"[{printName}] ";
 
     public DalamudApi() { }
 
     public DalamudApi(IDalamudPlugin plugin) => pluginCommandManager ??= new(plugin);
 
-    public DalamudApi(IDalamudPlugin plugin, DalamudPluginInterface pluginInterface)
+    public DalamudApi(IDalamudPlugin plugin, IDalamudPluginInterface pluginInterface)
     {
         if (!pluginInterface.Inject(this))
         {
-            PluginLog.LogError("Failed loading DalamudApi!");
+            LogError("Failed loading DalamudApi!");
             return;
         }
 
@@ -146,7 +152,31 @@ public class DalamudApi
         throw new InvalidOperationException();
     }
 
-    public static void Initialize(IDalamudPlugin plugin, DalamudPluginInterface pluginInterface) => _ = new DalamudApi(plugin, pluginInterface);
+    public static void PrintEcho(string message) => ChatGui.Print($"{printHeader}{message}");
+
+    public static void PrintError(string message) => ChatGui.PrintError($"{printHeader}{message}");
+
+    public static void ShowNotification(string message, NotificationType type = NotificationType.None, uint msDelay = 3_000u) => NotificationManager.AddNotification(new Notification { Type = type, Title = printName, Content = message, InitialDuration = TimeSpan.FromMilliseconds(msDelay) });
+
+    public static void ShowToast(string message, ToastOptions options = null) => ToastGui.ShowNormal($"{printHeader}{message}", options);
+
+    public static void ShowQuestToast(string message, QuestToastOptions options = null) => ToastGui.ShowQuest($"{printHeader}{message}", options);
+
+    public static void ShowErrorToast(string message) => ToastGui.ShowError($"{printHeader}{message}");
+
+    public static void LogVerbose(string message, Exception exception = null) => PluginLog.Verbose(exception, message);
+
+    public static void LogDebug(string message, Exception exception = null) => PluginLog.Debug(exception, message);
+
+    public static void LogInfo(string message, Exception exception = null) => PluginLog.Information(exception, message);
+
+    public static void LogWarning(string message, Exception exception = null) => PluginLog.Warning(exception, message);
+
+    public static void LogError(string message, Exception exception = null) => PluginLog.Error(exception, message);
+
+    public static void LogFatal(string message, Exception exception = null) => PluginLog.Fatal(exception, message);
+
+    public static void Initialize(IDalamudPlugin plugin, IDalamudPluginInterface pluginInterface) => _ = new DalamudApi(plugin, pluginInterface);
 
     public static void Dispose() => pluginCommandManager?.Dispose();
 }
@@ -182,7 +212,7 @@ public class PluginCommandManager<T> : IDisposable where T : IDalamudPlugin
 
     private IEnumerable<(string, CommandInfo)> GetCommandInfoTuple(MethodInfo method)
     {
-        var handlerDelegate = (CommandInfo.HandlerDelegate)Delegate.CreateDelegate(typeof(CommandInfo.HandlerDelegate), plugin, method);
+        var handlerDelegate = (IReadOnlyCommandInfo.HandlerDelegate)Delegate.CreateDelegate(typeof(IReadOnlyCommandInfo.HandlerDelegate), plugin, method);
 
         var command = handlerDelegate.Method.GetCustomAttribute<CommandAttribute>();
         var aliases = handlerDelegate.Method.GetCustomAttribute<AliasesAttribute>();

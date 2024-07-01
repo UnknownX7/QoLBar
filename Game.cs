@@ -45,7 +45,7 @@ public unsafe class Game
         }
     }
 
-    public static DateTimeOffset EorzeaTime => DateTimeOffset.FromUnixTimeSeconds(Framework.Instance()->EorzeaTime);
+    public static DateTimeOffset EorzeaTime => DateTimeOffset.FromUnixTimeSeconds(Framework.Instance()->ClientTime.EorzeaTime);
 
     public static bool IsInExplorerMode => (*((byte*)EventFramework.Instance()->GetInstanceContentDirector() + 0x33C) & 1) != 0; // Offset can be found in Client::Game::GameMain_IsInInstanceArea
 
@@ -54,13 +54,10 @@ public unsafe class Game
     public static bool IsGameTextInputActive => uiModule->GetRaptureAtkModule()->AtkModule.IsTextInputActive();
     public static bool IsMacroRunning => *(int*)((nint)raptureShellModule + 0x2C0) >= 0;
 
-    public static AgentModule* agentModule;
-    public static nint itemContextMenuAgent;
+    public static AgentInventoryContext* agentInventoryContext;
 
-    public static nint addonConfig;
-    [Signature("E8 ?? ?? ?? ?? 4D 8B 4D 50")]
-    private static delegate* unmanaged<nint, byte> getHUDLayout;
-    public static byte CurrentHUDLayout => getHUDLayout(addonConfig);
+    public static AddonConfig* addonConfig;
+    public static int CurrentHUDLayout => addonConfig->ModuleData->CurrentHudLayout;
 
     // Command Execution
     public delegate void ProcessChatBoxDelegate(UIModule* uiModule, nint message, nint unused, byte a4);
@@ -68,7 +65,7 @@ public unsafe class Game
     public static ProcessChatBoxDelegate ProcessChatBox;
 
     public delegate int GetCommandHandlerDelegate(RaptureShellModule* raptureShellModule, nint message, nint unused);
-    [Signature("E8 ?? ?? ?? ?? 83 F8 FE 74 1E")]
+    [Signature("E8 ?? ?? ?? ?? 66 89 06 66 85 C0")]
     public static GetCommandHandlerDelegate GetCommandHandler;
 
     // Macro Execution
@@ -103,36 +100,26 @@ public unsafe class Game
     // Misc
     private const int aetherCompassID = 2_001_886;
     private static Dictionary<uint, string> usables;
-    [Signature("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 89 7C 24 38")]
-    private static delegate* unmanaged<nint, uint, uint, uint, short, void> useItem;
-    private static ActionManager* actionManager;
-    private static RaptureAtkUnitManager* raptureAtkUnitManager;
-    [Signature("E8 ?? ?? ?? ?? 44 8B 4B 2C")]
-    private static delegate* unmanaged<uint, uint, uint> getActionID;
-    [Signature("48 8D 0D ?? ?? ?? ?? 4C 8B C0", ScanType = ScanType.StaticAddress, Offset = 3)]
+    [Signature("48 8D 0D ?? ?? ?? ?? 4C 8B C0 8B D7", ScanType = ScanType.StaticAddress)]
     private static nint performanceStruct;
-    [Signature("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 8B D6")]
+    [Signature("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 33 F6 83 F8 07")]
     private static delegate* unmanaged<nint, byte, void> startPerformance;
 
     public static void Initialize()
     {
-        uiModule = Framework.Instance()->GetUiModule();
+        uiModule = Framework.Instance()->GetUIModule();
 
         raptureShellModule = uiModule->GetRaptureShellModule();
         raptureMacroModule = uiModule->GetRaptureMacroModule();
-        addonConfig = ((delegate* unmanaged<UIModule*, nint>)uiModule->vfunc[19])(uiModule);
-        agentModule = uiModule->GetAgentModule();
-        actionManager = ActionManager.Instance();
-        raptureAtkUnitManager = AtkStage.GetSingleton()->RaptureAtkUnitManager;
+        addonConfig = uiModule->GetAddonConfig();
 
         // TODO change back to static whenever support is added
         //SignatureHelper.Initialise(typeof(Game));
         DalamudApi.GameInteropProvider.InitializeFromAttributes(new Game());
 
-        numCopiedMacroLinesPtr = DalamudApi.SigScanner.ScanText("49 8D 5E 70 BF ?? 00 00 00") + 0x5;
+        numCopiedMacroLinesPtr = DalamudApi.SigScanner.ScanText("48 8D 77 70 BF ?? 00 00 00") + 0x5;
         numExecutedMacroLinesPtr = DalamudApi.SigScanner.ScanText("41 83 F8 ?? 0F 8D ?? ?? ?? ?? 49 6B C8 68") + 0x3;
-
-        itemContextMenuAgent = GetAgentByInternalID(AgentId.InventoryContext);
+        agentInventoryContext = (AgentInventoryContext*)uiModule->GetAgentModule()->GetAgentByInternalId(AgentId.InventoryContext);
         usables = DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Item>()!.Where(i => i.ItemAction.Row > 0).ToDictionary(i => i.RowId, i => i.Name.ToString().ToLower())
             .Concat(DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.EventItem>()!.Where(i => i.Action.Row > 0).ToDictionary(i => i.RowId, i => i.Name.ToString().ToLower()))
             .ToDictionary(kv => kv.Key, kv => kv.Value);
@@ -140,26 +127,6 @@ public unsafe class Game
 
         ExecuteMacroHook.Enable();
     }
-
-    public static nint GetAgentByInternalID(AgentId id) => (nint)agentModule->GetAgentByInternalId(id);
-
-    public static nint GetAgentByInternalID(uint id) => (nint)agentModule->GetAgentByInternalID(id);
-
-    public static void DEBUG_FindAgent(long agent)
-    {
-        var found = false;
-        for (uint i = 0; i < 800; i++) // Dunno how many there are
-        {
-            if (GetAgentByInternalID(i).ToInt64() != agent) continue;
-            QoLBar.PrintEcho(i.ToString());
-            found = true;
-            break;
-        }
-
-        if (!found)
-            QoLBar.PrintEcho($"Failed to find agent {agent:X}");
-    }
-
 
     public static void ExecuteMacroDetour(RaptureShellModule* raptureShellModule, nint macro)
     {
@@ -363,9 +330,9 @@ public unsafe class Game
 
     public static AtkUnitBase* GetFocusedAddon()
     {
-        var units = raptureAtkUnitManager->AtkUnitManager.FocusedUnitsList;
+        var units = AtkStage.Instance()->RaptureAtkUnitManager->AtkUnitManager.FocusedUnitsList;
         var count = units.Count;
-        return count == 0 ? null : units.EntriesSpan[count - 1].Value;
+        return count == 0 ? null : units.Entries[count - 1].Value;
     }
 
     public static void UseItem(uint id)
@@ -375,14 +342,14 @@ public unsafe class Game
         // Aether Compass support
         if (id == aetherCompassID)
         {
-            actionManager->UseAction(ActionType.Action, 26988);
+            ActionManager.Instance()->UseAction(ActionType.Action, 26988);
             return;
         }
 
         // Dumb fix for dumb bug
         if (retryItem == 0 && id < 2_000_000)
         {
-            var actionID = getActionID(2, id);
+            var actionID = ActionManager.GetSpellIdForAction(ActionType.Item, id);
             if (actionID == 0)
             {
                 retryItem = id;
@@ -390,7 +357,7 @@ public unsafe class Game
             }
         }
 
-        useItem(itemContextMenuAgent, id, 9999, 0, 0);
+        agentInventoryContext->UseItem(id);
     }
 
     public static void UseItem(string name)
@@ -405,18 +372,16 @@ public unsafe class Game
         catch { }
     }
 
-    public static uint GetActionID(uint actionType, uint actionCategoryID) => getActionID(actionType, actionCategoryID);
-
     public static float GetRecastTime(ActionType actionType, uint actionID)
     {
-        var recast = actionManager->GetRecastTime(actionType, actionID);
+        var recast = ActionManager.Instance()->GetRecastTime(actionType, actionID);
         if (recast == 0) return -1;
         return recast;
     }
 
     public static float GetRecastTime(byte actionType, uint actionID) => GetRecastTime((ActionType)actionType, actionID);
 
-    public static float GetRecastTimeElapsed(ActionType actionType, uint actionID) => actionManager->GetRecastTimeElapsed(actionType, actionID);
+    public static float GetRecastTimeElapsed(ActionType actionType, uint actionID) => ActionManager.Instance()->GetRecastTimeElapsed(actionType, actionID);
 
     public static float GetRecastTimeElapsed(byte actionType, uint actionID) => GetRecastTimeElapsed((ActionType)actionType, actionID);
 

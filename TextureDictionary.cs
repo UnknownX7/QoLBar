@@ -5,8 +5,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Dalamud.Interface.Internal;
-using Dalamud.Logging;
+using Dalamud.Game;
+using Dalamud.Interface.Textures;
+using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
 using Lumina.Data.Files;
@@ -27,7 +28,7 @@ public class TextureDictionary : ConcurrentDictionary<int, IDalamudTextureWrap>,
     private int loadingTasks = 0;
     private readonly Queue<Task> loadingQueue = new();
     private readonly Stopwatch emptyStopwatch = new();
-    private static readonly IDalamudTextureWrap disposedTexture = DalamudApi.TextureProvider.GetIcon(0);
+    private static readonly IDalamudTextureWrap disposedTexture = DalamudApi.TextureProvider.CreateFromRaw(RawImageSpecification.Rgba32(1, 1), [ 0 ]); // CreateEmpty seems to be bugged? returns a random image
     private readonly bool useHR = false;
     private readonly bool useGrayscale = false;
 
@@ -45,7 +46,7 @@ public class TextureDictionary : ConcurrentDictionary<int, IDalamudTextureWrap>,
 
     public new bool TryGetValue(int k, out IDalamudTextureWrap tex)
     {
-        if (!IsEmptying) return base.TryGetValue(k, out tex) && (tex == null || tex.ImGuiHandle != nint.Zero) || LoadTexture(k, out tex);
+        if (!IsEmptying) return base.TryGetValue(k, out tex) && tex != disposedTexture || LoadTexture(k, out tex);
         tex = null;
         return false;
     }
@@ -70,7 +71,7 @@ public class TextureDictionary : ConcurrentDictionary<int, IDalamudTextureWrap>,
         }
         catch (Exception e)
         {
-            PluginLog.LogError($"Failed to get tex at {path}:\n{e}");
+            DalamudApi.LogError($"Failed to get tex at {path}:\n{e}");
         }
 
         tex ??= DalamudApi.DataManager.GetFile<TexFile>(path);
@@ -109,7 +110,7 @@ public class TextureDictionary : ConcurrentDictionary<int, IDalamudTextureWrap>,
             var newData = new byte[tex.Header.Width * tex.Header.Width * 4];
             var diff = (int)Math.Floor((tex.Header.Width - tex.Header.Height) / 2f);
             imageData.CopyTo(newData, diff * tex.Header.Width * 4);
-            return DalamudApi.PluginInterface.UiBuilder.LoadImageRaw(newData, tex.Header.Width, tex.Header.Width, 4);
+            return DalamudApi.TextureProvider.CreateFromRaw(RawImageSpecification.Rgba32(tex.Header.Width, tex.Header.Width), newData);
         }
         else if (tex.Header.Width < tex.Header.Height)
         {
@@ -129,11 +130,11 @@ public class TextureDictionary : ConcurrentDictionary<int, IDalamudTextureWrap>,
                     newData[pixel + 3] = imageData[imageDataPos++];
                 }
             }
-            return DalamudApi.PluginInterface.UiBuilder.LoadImageRaw(newData, tex.Header.Height, tex.Header.Height, 4);
+            return DalamudApi.TextureProvider.CreateFromRaw(RawImageSpecification.Rgba32(tex.Header.Height, tex.Header.Height), newData);
         }
         else
         {
-            return DalamudApi.PluginInterface.UiBuilder.LoadImageRaw(imageData, tex.Header.Width, tex.Header.Height, 4);
+            return DalamudApi.TextureProvider.CreateFromRaw(RawImageSpecification.Rgba32(tex.Header.Width, tex.Header.Width), imageData);
         }
     }
 
@@ -149,7 +150,7 @@ public class TextureDictionary : ConcurrentDictionary<int, IDalamudTextureWrap>,
             }
             catch (Exception e)
             {
-                PluginLog.LogError($"Failed to load icon {i}:\n{e}");
+                DalamudApi.LogError($"Failed to load icon {i}:\n{e}");
             }
         });
 
@@ -165,13 +166,13 @@ public class TextureDictionary : ConcurrentDictionary<int, IDalamudTextureWrap>,
     {
         try
         {
-            var tex = DalamudApi.PluginInterface.UiBuilder.LoadImage(path);
+            var tex = DalamudApi.TextureProvider.CreateFromImageAsync(File.OpenRead(path)).Result;
             this[iconSlot] = tex;
             return tex;
         }
         catch (Exception e)
         {
-            PluginLog.LogError($"Failed to load user texture {path}:\n{e}");
+            DalamudApi.LogError($"Failed to load user texture {path}:\n{e}");
         }
 
         return this[iconSlot];
@@ -255,7 +256,7 @@ public class TextureDictionary : ConcurrentDictionary<int, IDalamudTextureWrap>,
         {
             if (!int.TryParse(Path.GetFileNameWithoutExtension(file.Name), out var i) || i <= 0) continue;
             if (userIcons.ContainsKey(-i))
-                PluginLog.LogError($"Attempted to load {file.Name} into index {-i} but it already exists!");
+                DalamudApi.LogError($"Attempted to load {file.Name} into index {-i} but it already exists!");
             else
                 AddImage(-i, directory.FullName + "\\" + file.Name);
         }
@@ -276,10 +277,10 @@ public class TextureDictionary : ConcurrentDictionary<int, IDalamudTextureWrap>,
     {
         if (emptyStopwatch.Elapsed.TotalSeconds < 1) return;
 
-        PluginLog.LogInformation("Emptying textures.");
+        DalamudApi.LogInfo("Emptying textures.");
         Dispose();
         Clear();
-        PluginLog.LogInformation("Done emptying textures!");
+        DalamudApi.LogInfo("Done emptying textures!");
 
         IsEmptying = false;
         DalamudApi.Framework.Update -= UpdateEmpty;
@@ -289,14 +290,16 @@ public class TextureDictionary : ConcurrentDictionary<int, IDalamudTextureWrap>,
     {
         if (!base.TryGetValue(k, out var tex)) return;
 
-        tex?.Dispose();
-        TryUpdate(k, disposedTexture, null);
+        if (tex != disposedTexture)
+            tex?.Dispose();
+        TryUpdate(k, disposedTexture, tex);
     }
 
     public void Dispose()
     {
         foreach (var t in this)
             t.Value?.Dispose();
+        disposedTexture?.Dispose();
         GC.SuppressFinalize(this);
     }
 

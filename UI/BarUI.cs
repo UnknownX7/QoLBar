@@ -285,7 +285,7 @@ public class BarUI : IDisposable
             ImGui.SetNextWindowSize(barSize);
             ImGui.Begin($"QoLBar##{ID}", WindowFlags);
 
-            ImGui.PushFont(QoLBar.Font);
+            QoLBar.Font.Push();
 
             // Hide the bar if game isn't focused and it's outside the main viewport
             if (!IsDocked)
@@ -316,7 +316,7 @@ public class BarUI : IDisposable
             ImGui.PopStyleColor();
             ImGui.PopStyleVar(3);
 
-            ImGui.PopFont();
+            QoLBar.Font.Pop();
         }
 
         if (!_reveal)
@@ -460,9 +460,9 @@ public class BarUI : IDisposable
             if (ImGui.Button("+", new Vector2(Config.ButtonWidth * ImGuiHelpers.GlobalScale * Config.Scale, height)))
                 ImGui.OpenPopup("addShortcut");
             ImGuiEx.PopFontScale();
-            ImGui.PopFont();
+            QoLBar.Font.Pop();
             ImGuiEx.SetItemTooltip("Add a new shortcut.\nRight click this (or the bar background) for options.\nRight click other shortcuts to edit them.", ImGuiHoveredFlags.AllowWhenBlockedByPopup);
-            ImGui.PushFont(QoLBar.Font);
+            QoLBar.Font.Push();
 
             var size = ImGui.GetItemRectMax() - ImGui.GetWindowPos();
             MaxWidth = size.X;

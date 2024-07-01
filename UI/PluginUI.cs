@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using ImGuiNET;
 using Dalamud.Interface.Utility;
-using Dalamud.Logging;
 
 namespace QoLBar;
 
@@ -280,7 +279,7 @@ public class PluginUI : IDisposable
         {
             QoLBar.Config.FontSize = Math.Min(Math.Max(QoLBar.Config.FontSize, 1), QoLBar.MaxFontSize);
             QoLBar.Config.Save();
-            QoLBar.Plugin.ToggleFont(QoLBar.Config.FontSize != QoLBar.DefaultFontSize);
+            QoLBar.SetupFont();
         }
         ImGuiEx.SetItemTooltip($"Default: {QoLBar.DefaultFontSize}");
 
@@ -449,12 +448,6 @@ public class PluginUI : IDisposable
         ImGui.TextUnformatted($"{Game.IsGameTextInputActive}");
         ImGui.NextColumn();
 
-        ImGui.TextUnformatted("Agent Module");
-        ImGui.NextColumn();
-        ImGuiEx.TextCopyable($"{(nint)Game.agentModule:X}");
-        ImGui.NextColumn();
-        ImGui.NextColumn();
-
         ImGui.TextUnformatted("Rapture Shell Module");
         ImGui.NextColumn();
         ImGuiEx.TextCopyable($"{(nint)Game.raptureShellModule:X}");
@@ -470,14 +463,14 @@ public class PluginUI : IDisposable
 
         ImGui.TextUnformatted("Addon Config (HUD Layout #)");
         ImGui.NextColumn();
-        ImGuiEx.TextCopyable($"{Game.addonConfig:X}");
+        ImGuiEx.TextCopyable($"{(nint)Game.addonConfig:X}");
         ImGui.NextColumn();
         ImGui.TextUnformatted($"{Game.CurrentHUDLayout}");
         ImGui.NextColumn();
 
         ImGui.TextUnformatted("Item Context Menu Agent");
         ImGui.NextColumn();
-        ImGuiEx.TextCopyable($"{Game.itemContextMenuAgent:X}");
+        ImGuiEx.TextCopyable($"{(nint)Game.agentInventoryContext:X}");
         ImGui.NextColumn();
         ImGui.NextColumn();
 
@@ -648,7 +641,7 @@ public class PluginUI : IDisposable
 
             var path = QoLBar.Config.GetPluginBackupPath() + $"\\{name}.json";
             file.CopyTo(path, overwrite);
-            PluginLog.LogInformation($"Saved file to {path}");
+            DalamudApi.LogInfo($"Saved file to {path}");
         }
         catch (Exception e)
         {
@@ -664,7 +657,7 @@ public class PluginUI : IDisposable
                 throw new InvalidOperationException("File must be json!");
 
             file.Delete();
-            PluginLog.LogInformation($"Deleted file {file.FullName}");
+            DalamudApi.LogInfo($"Deleted file {file.FullName}");
         }
         catch (Exception e)
         {
@@ -683,12 +676,12 @@ public class PluginUI : IDisposable
     {
         if (noViewport)
             ImGuiHelpers.ForceNextWindowMainViewport();
-        ImGui.PopFont();
+        QoLBar.Font.Pop();
         ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, defaultSpacing);
         ImGuiEx.PushFontSize(QoLBar.DefaultFontSize);
         draw();
         ImGuiEx.PopFontSize();
         ImGui.PopStyleVar();
-        ImGui.PushFont(QoLBar.Font);
+        QoLBar.Font.Push();
     }
 }

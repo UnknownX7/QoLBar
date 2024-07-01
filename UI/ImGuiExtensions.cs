@@ -2,7 +2,7 @@
 using System.Numerics;
 using System.Collections.Generic;
 using System.Linq;
-using Dalamud.Interface.Internal;
+using Dalamud.Interface.Textures.TextureWraps;
 using ImGuiNET;
 using Dalamud.Interface.Utility;
 using Lumina.Excel;
@@ -267,7 +267,7 @@ public static class ImGuiEx
 
             if ((cooldownStyle & IconSettings.CooldownStyle.Number) != 0)
             {
-                ImGui.PushFont(QoLBar.Font);
+                QoLBar.Font.Push();
 
                 var wantedSize = size.X * 0.75f;
                 var str = $"{Math.Ceiling(cooldownMax - cooldownCurrent)}";
@@ -277,15 +277,18 @@ public static class ImGuiEx
                 var textSizeHalf = ImGui.CalcTextSize(str) / (2 * ImGuiHelpers.GlobalScale); // I don't know but it works
 
                 // Outline
-                var textOutlinePos = center - textSizeHalf + new Vector2(0, wantedSize * 0.05f);
-                drawList.AddText(QoLBar.Font, wantedSize, textOutlinePos, 0xFF000000, str);
+                using (var font = QoLBar.Font.Lock())
+                {
+                    var textOutlinePos = center - textSizeHalf + new Vector2(0, wantedSize * 0.05f);
+                    drawList.AddText(font.ImFont, wantedSize, textOutlinePos, 0xFF000000, str);
 
-                var textPos = center - textSizeHalf - Vector2.UnitY;
-                drawList.AddText(QoLBar.Font, wantedSize, textPos, 0xFFFFFFFF, str);
+                    var textPos = center - textSizeHalf - Vector2.UnitY;
+                    drawList.AddText(font.ImFont, wantedSize, textPos, 0xFFFFFFFF, str);
+                }
 
                 PopFontSize();
 
-                ImGui.PopFont();
+                QoLBar.Font.Pop();
             }
         }
 

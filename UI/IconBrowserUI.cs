@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using ImGuiNET;
 using Dalamud.Interface.Utility;
-using Dalamud.Logging;
 
 namespace QoLBar;
 
@@ -292,7 +291,7 @@ public static class IconBrowserUI
     private static void BuildTabCache()
     {
         if (_iconCache.ContainsKey(_name)) return;
-        PluginLog.LogInformation($"Building Icon Browser cache for tab \"{_name}\"");
+        DalamudApi.LogInfo($"Building Icon Browser cache for tab \"{_name}\"");
 
         var cache = _iconCache[_name] = new();
         foreach (var (start, end) in _iconList)
@@ -304,12 +303,12 @@ public static class IconBrowserUI
             }
         }
 
-        PluginLog.LogInformation($"Done building tab cache! {cache.Count} icons found.");
+        DalamudApi.LogInfo($"Done building tab cache! {cache.Count} icons found.");
     }
 
     public static void BuildCache(bool rebuild)
     {
-        PluginLog.LogInformation("Building Icon Browser cache");
+        DalamudApi.LogInfo("Building Icon Browser cache");
 
         _iconCache.Clear();
         _iconExistsCache = !rebuild ? QoLBar.Config.LoadIconCache() ?? new() : new();
@@ -333,6 +332,6 @@ public static class IconBrowserUI
         foreach (var kv in QoLBar.textureDictionaryLR.GetTextureOverrides())
             _iconExistsCache.Add(kv.Key);
 
-        PluginLog.LogInformation($"Done building cache! {_iconExistsCache.Count} icons found.");
+        DalamudApi.LogInfo($"Done building cache! {_iconExistsCache.Count} icons found.");
     }
 }
