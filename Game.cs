@@ -188,9 +188,22 @@ public unsafe class Game
                             if (int.TryParse(command[1..], out var macro))
                             {
                                 if (macro is >= 0 and < 200)
-                                    ExecuteMacroHook.Original(raptureShellModule, (nint)raptureMacroModule + 0x58 + (Macro.size * macro));
+                                {
+                                    if (macro < 100)
+                                    {
+                                        fixed (void* ptr = &raptureMacroModule->Individual[macro])
+                                            ExecuteMacroHook.Original(raptureShellModule, (nint)ptr);
+                                    }
+                                    else
+                                    {
+                                        fixed (void* ptr = &raptureMacroModule->Shared[macro - 100])
+                                            ExecuteMacroHook.Original(raptureShellModule, (nint)ptr);
+                                    }
+                                }
                                 else
+                                {
                                     QoLBar.PrintError("Invalid macro. Usage: \"//m0\" for individual macro #0, \"//m100\" for shared macro #0, valid up to 199.");
+                                }
                             }
                             else
                             {
