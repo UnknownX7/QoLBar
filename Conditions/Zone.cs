@@ -14,11 +14,11 @@ public class ZoneCondition : ICondition, IDrawableCondition, IArgCondition, ICon
     public string GetSelectableTooltip(CndCfg cndCfg) => null;
     public void Draw(CndCfg cndCfg)
     {
-        static string formatName(Lumina.Excel.GeneratedSheets.TerritoryType t) => $"[{t.RowId}] {t.PlaceName.Value?.Name}";
-        if (!ImGuiEx.ExcelSheetCombo<Lumina.Excel.GeneratedSheets.TerritoryType>("##Zone", out var territory, s => formatName(s.GetRow((uint)cndCfg.Arg)),
+        static string formatName(Lumina.Excel.Sheets.TerritoryType t) => $"[{t.RowId}] {t.PlaceName.ValueNullable?.Name}";
+        if (!ImGuiEx.ExcelSheetCombo<Lumina.Excel.Sheets.TerritoryType>("##Zone", out var territory, s => s.GetRowOrDefault((uint)cndCfg.Arg) is { } row ? formatName(row) : string.Empty,
             ImGuiComboFlags.None, (t, s) => formatName(t).Contains(s, StringComparison.CurrentCultureIgnoreCase),
             t => ImGui.Selectable(formatName(t), cndCfg.Arg == t.RowId))) return;
-        cndCfg.Arg = territory.RowId;
+        cndCfg.Arg = territory.Value.RowId;
         QoLBar.Config.Save();
     }
     // This list is completely and utterly awful so help people out a little bit

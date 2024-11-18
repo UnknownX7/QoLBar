@@ -10,8 +10,8 @@ public class CurrentJobPreset : IConditionSetPreset
         var jobRow = DalamudApi.ClientState.LocalPlayer?.ClassJob;
         if (jobRow == null) return null;
 
-        var set = new CndSetCfg { Name = jobRow.GameData?.Abbreviation };
-        set.Conditions.Add(new() { ID = new JobCondition().ID, Arg = jobRow.Id });
+        var set = new CndSetCfg { Name = jobRow.Value.ValueNullable?.Abbreviation.ExtractText() };
+        set.Conditions.Add(new() { ID = new JobCondition().ID, Arg = jobRow.Value.RowId });
 
         return set;
     }
@@ -25,7 +25,7 @@ public class CurrentRolePreset : IConditionSetPreset
         var jobRow = DalamudApi.ClientState.LocalPlayer?.ClassJob;
         if (jobRow == null) return null;
 
-        var role = jobRow.GameData?.Role;
+        var role = jobRow.Value.ValueNullable?.Role;
         var set = new CndSetCfg { Name = role is > 0 and < 5 ? RoleCondition.roleDictionary[(int)role] : string.Empty };
         set.Conditions.Add(new() { ID = new RoleCondition().ID, Arg = role });
 

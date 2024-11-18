@@ -287,17 +287,17 @@ public static class ConfigEditorUI
             QoLBar.Config.Save();
         }
 
-        static string formatName(Lumina.Excel.GeneratedSheets.Action a) => a.RowId switch
+        static string formatName(Lumina.Excel.Sheets.Action a) => a.RowId switch
         {
             0 => "None",
             847 => "[847] Item",
             _ => $"[{a.RowId}] {a.Name}"
         };
-        if (ImGuiEx.ExcelSheetCombo<Lumina.Excel.GeneratedSheets.Action>("Cooldown Action ID", out var action, s => s.GetRow(sh.Config.CooldownAction) is { } a ? formatName(a) : sh.Config.CooldownAction.ToString(),
-            ImGuiComboFlags.None, (a, s) => (a.RowId is 0 || a.CooldownGroup > 0 && a.ClassJobCategory.Row > 0) && formatName(a).Contains(s, StringComparison.CurrentCultureIgnoreCase),
+        if (ImGuiEx.ExcelSheetCombo<Lumina.Excel.Sheets.Action>("Cooldown Action ID", out var action, s => s.GetRowOrDefault(sh.Config.CooldownAction) is { } a ? formatName(a) : sh.Config.CooldownAction.ToString(),
+            ImGuiComboFlags.None, (a, s) => (a.RowId == 0 || a is { CooldownGroup: > 0, ClassJobCategory.RowId: > 0 }) && formatName(a).Contains(s, StringComparison.CurrentCultureIgnoreCase),
             a => ImGui.Selectable(formatName(a), sh.Config.CooldownAction == a.RowId)))
         {
-            sh.Config.CooldownAction = action.RowId;
+            sh.Config.CooldownAction = action.Value.RowId;
 
             if (sh.Config.CooldownAction == 0)
                 sh.Config.CooldownStyle = 0;

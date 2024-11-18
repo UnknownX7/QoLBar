@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Dalamud.Interface.Textures.TextureWraps;
 using ImGuiNET;
@@ -414,14 +415,14 @@ public static class ImGuiEx
     }
 
     private static string search = string.Empty;
-    private static HashSet<ExcelRow> filtered;
-    public static bool ExcelSheetCombo<T>(string id, out T selected, Func<ExcelSheet<T>, string> getPreview, ImGuiComboFlags flags, Func<T, string, bool> searchPredicate, Func<T, bool> selectableDrawing) where T : ExcelRow
+    private static HashSet<uint> filtered;
+    public static bool ExcelSheetCombo<T>(string id, [NotNullWhen(true)] out T? selected, Func<ExcelSheet<T>, string> getPreview, ImGuiComboFlags flags, Func<T, string, bool> searchPredicate, Func<T, bool> selectableDrawing) where T : struct, IExcelRow<T>
     {
         var sheet = DalamudApi.DataManager.GetExcelSheet<T>();
         return ExcelSheetCombo(id, out selected, getPreview(sheet), flags, sheet, searchPredicate, selectableDrawing);
     }
 
-    public static bool ExcelSheetCombo<T>(string id, out T selected, string preview, ImGuiComboFlags flags, ExcelSheet<T> sheet, Func<T, string, bool> searchPredicate, Func<T, bool> drawRow) where T : ExcelRow
+    public static bool ExcelSheetCombo<T>(string id, [NotNullWhen(true)] out T? selected, string preview, ImGuiComboFlags flags, ExcelSheet<T> sheet, Func<T, string, bool> searchPredicate, Func<T, bool> drawRow) where T : struct, IExcelRow<T>
     {
         selected = null;
         if (!ImGui.BeginCombo(id, preview, flags)) return false;
@@ -436,11 +437,13 @@ public static class ImGuiEx
         if (ImGui.InputText("##ExcelSheetComboSearch", ref search, 128))
             filtered = null;
 
-        filtered ??= sheet.Where(s => searchPredicate(s, search)).Select(s => (ExcelRow)s).ToHashSet();
+        filtered ??= sheet.Where(s => searchPredicate(s, search)).Select(s => s.RowId).ToHashSet();
 
         var i = 0;
-        foreach (var row in filtered.Cast<T>())
+        foreach (var rowID in filtered)
         {
+            if (sheet.GetRowOrDefault(rowID) is not { } row) continue;
+
             ImGui.PushID(i++);
             if (drawRow(row))
                 selected = row;

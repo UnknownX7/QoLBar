@@ -147,8 +147,8 @@ public class QoLBar : IDalamudPlugin
     public void OnPerformance(string command, string argument)
     {
         if (!byte.TryParse(argument, out var b)
-            && DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.GeneratedSheets.Perform>()!.FirstOrDefault(r
-                => argument.Equals(r.Instrument, StringComparison.CurrentCultureIgnoreCase)) is { } r)
+            && DalamudApi.DataManager.GetExcelSheet<Lumina.Excel.Sheets.Perform>().FirstOrDefault(r
+                => argument?.Equals(r.Instrument.ExtractText(), StringComparison.CurrentCultureIgnoreCase) ?? false) is { RowId: > 0 } r)
             b = (byte)r.RowId;
 
         if (b == 0)
