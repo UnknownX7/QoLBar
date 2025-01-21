@@ -262,8 +262,6 @@ public static class ConditionSetUI
         {
             ImGui.PushID(i);
 
-            ImGui.BeginGroup();
-
             var cndCfg = set.Conditions[i];
             var selectedCondition = ConditionManager.GetCondition(cndCfg.ID);
             var selectedCategory = ConditionManager.GetConditionCategory(selectedCondition);

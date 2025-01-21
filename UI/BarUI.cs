@@ -293,7 +293,7 @@ public class BarUI : IDisposable
 
             ImGuiEx.PushFontSize(QoLBar.DefaultFontSize * Config.Scale);
 
-            if (_mouseRevealed && ImGui.IsWindowHovered(ImGuiHoveredFlags.RectOnly))
+            if (_mouseRevealed && ImGui.IsWindowHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup | ImGuiHoveredFlags.AllowWhenBlockedByActiveItem))
                 Reveal();
 
             IsHovered = ImGui.IsWindowHovered();
@@ -311,12 +311,12 @@ public class BarUI : IDisposable
 
             ImGuiEx.PopFontSize();
 
+            QoLBar.Font.Pop();
+
             ImGui.End();
 
             ImGui.PopStyleColor();
             ImGui.PopStyleVar(3);
-
-            QoLBar.Font.Pop();
         }
 
         if (!_reveal)
