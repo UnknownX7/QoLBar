@@ -63,18 +63,6 @@ public class ShortcutUI : IDisposable
             children.Add(new ShortcutUI(this));
     }
 
-    public void SetupHotkeys()
-    {
-        if (Config.Hotkey > 0 && Config.Type != ShortcutType.Spacer)
-            Keybind.AddHotkey(this);
-
-        if (Config.Type == ShortcutType.Category)
-        {
-            foreach (var ui in children)
-                ui.SetupHotkeys();
-        }
-    }
-
     public void ClearActivated()
     {
         if (animTime == 0)
