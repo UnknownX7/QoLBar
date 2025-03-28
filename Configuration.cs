@@ -218,6 +218,7 @@ public class Configuration : IPluginConfiguration
         {
             DalamudApi.PluginInterface.SavePluginConfig(this);
             lastSave = QoLBar.RunTime;
+            Keybind.InvalidateCache();
         }
         catch
         {

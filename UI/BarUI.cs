@@ -121,6 +121,8 @@ public class BarUI : IDisposable
     private Vector2 _catpos = Vector2.Zero;
     private Vector2 _maincatpos = Vector2.Zero;
 
+    public readonly List<(BarUI, ShortcutUI)> HotkeyCache = new();
+
     public BarUI(int n)
     {
         ID = n;
@@ -231,12 +233,6 @@ public class BarUI : IDisposable
         }
         else
             return hidePos;
-    }
-
-    public void SetupHotkeys()
-    {
-        foreach (var ui in children)
-            ui.SetupHotkeys();
     }
 
     private void SetPosition()
