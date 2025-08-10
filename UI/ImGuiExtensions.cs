@@ -3,8 +3,8 @@ using System.Numerics;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Textures.TextureWraps;
-using ImGuiNET;
 using Dalamud.Interface.Utility;
 using Lumina.Excel;
 
@@ -100,7 +100,7 @@ public static class ImGuiEx
         if (!sliderEnabled) return;
 
         // You can blame ImGui for this
-        var popupOpen = !ImGui.IsPopupOpen("_SLIDER") && ImGui.IsPopupOpen(null, ImGuiPopupFlags.AnyPopup);
+        var popupOpen = !ImGui.IsPopupOpen("_SLIDER") && ImGui.IsPopupOpen(default, ImGuiPopupFlags.AnyPopup);
         if (!popupOpen)
         {
             ImGuiHelpers.ForceNextWindowMainViewport();
@@ -217,9 +217,9 @@ public static class ImGuiEx
             drawList.AddRectFilled(p1, p3, (settings.activeTime != 0) ? ImGui.GetColorU32(ImGuiCol.ButtonActive) : ImGui.GetColorU32(ImGuiCol.ButtonHovered));
 
         if (!settings.flipped)
-            drawList.AddImageQuad(tex.ImGuiHandle, p1, p2, p3, p4, uv1, uv2, uv3, uv4, settings.color);
+            drawList.AddImageQuad(tex.Handle, p1, p2, p3, p4, uv1, uv2, uv3, uv4, settings.color);
         else
-            drawList.AddImageQuad(tex.ImGuiHandle, p2, p1, p4, p3, uv1, uv2, uv3, uv4, settings.color);
+            drawList.AddImageQuad(tex.Handle, p2, p1, p4, p3, uv1, uv2, uv3, uv4, settings.color);
 
         if (settings.cooldownAction > 0)
         {
@@ -242,7 +242,7 @@ public static class ImGuiEx
     public static void AddIconFrame(this ImDrawListPtr drawList, Vector2 pos, Vector2 size, bool frame, bool hovered, float activeTime, float cooldownCurrent, float cooldownMax, IconSettings.CooldownStyle cooldownStyle)
     {
         var frameSheet = QoLBar.TextureDictionary[TextureDictionary.FrameIconID];
-        if (frameSheet == null || frameSheet.ImGuiHandle == nint.Zero) return;
+        if (frameSheet == null || frameSheet.Handle == nint.Zero) return;
 
         var halfSize = size / 2;
         var center = pos + halfSize;
@@ -251,7 +251,7 @@ public static class ImGuiEx
         var fMax = pos + size + frameSize;
 
         if (frame && (cooldownMax < 0 || (cooldownStyle & (IconSettings.CooldownStyle.Cooldown | IconSettings.CooldownStyle.Disable)) == 0))
-            drawList.AddImage(frameSheet.ImGuiHandle, fMin, fMax, iconFrameUV0, iconFrameUV1); // Frame
+            drawList.AddImage(frameSheet.Handle, fMin, fMax, iconFrameUV0, iconFrameUV1); // Frame
 
         // Cooldown Spin
         if (cooldownMax > 0)
@@ -295,16 +295,16 @@ public static class ImGuiEx
 
         if (!frame || !hovered) return;
 
-        drawList.AddImage(frameSheet.ImGuiHandle, fMin, fMax, iconHoverUV0, iconHoverUV1, 0x85FFFFFF); // Frame Center Glow
+        drawList.AddImage(frameSheet.Handle, fMin, fMax, iconHoverUV0, iconHoverUV1, 0x85FFFFFF); // Frame Center Glow
         fMax.Y += frameSize.Y * 0.70f; // I love rectangles
-        drawList.AddImage(frameSheet.ImGuiHandle, fMin - (frameSize * 3.5f), fMax + (frameSize * 3.5f), iconHoverFrameUV0, iconHoverFrameUV1); // Edge glow (its a fucking rectangle why)
+        drawList.AddImage(frameSheet.Handle, fMin - (frameSize * 3.5f), fMax + (frameSize * 3.5f), iconHoverFrameUV0, iconHoverFrameUV1); // Edge glow (its a fucking rectangle why)
         if (activeTime == 0) return;
 
         var animScale = ((activeTime >= 0) ? activeTime : ImGui.GetIO().MouseDownDuration[0]) / 0.2f;
         if (animScale >= 1.5) return;
 
         var animSize = new Vector2(1.5f) + halfSize * animScale;
-        ImGui.GetForegroundDrawList().AddImage(frameSheet.ImGuiHandle, center - animSize, center + animSize, iconClickUV0, iconClickUV1, ImGui.ColorConvertFloat4ToU32(new Vector4(1, 1, 1, 1 - 0.65f * animScale))); // Click
+        ImGui.GetForegroundDrawList().AddImage(frameSheet.Handle, center - animSize, center + animSize, iconClickUV0, iconClickUV1, ImGui.ColorConvertFloat4ToU32(new Vector4(1, 1, 1, 1 - 0.65f * animScale))); // Click
     }
 
     private const byte maxCooldownPhase = 80;
@@ -329,7 +329,7 @@ public static class ImGuiEx
             _ => null
         };
 
-        if (cooldownSheet == null || cooldownSheet.ImGuiHandle == nint.Zero) return;
+        if (cooldownSheet == null || cooldownSheet.Handle == nint.Zero) return;
 
         var phase = (byte)Math.Min(Math.Max(Math.Ceiling(maxCooldownPhase * progress), 0), maxCooldownPhase);
         var row = Math.DivRem(phase, 9, out var column);
@@ -353,7 +353,7 @@ public static class ImGuiEx
                 break;
         }
 
-        drawList.AddImage(cooldownSheet.ImGuiHandle, min, max, uv0, uv1);
+        drawList.AddImage(cooldownSheet.Handle, min, max, uv0, uv1);
     }
 
     private static void DrawIcon(IDalamudTextureWrap icon, IconSettings settings) => ImGui.GetWindowDrawList().AddIcon(icon, ImGui.GetItemRectMin(), settings);
@@ -684,12 +684,12 @@ public static class ImGuiPie
 
                     if (iSeg < arc_segments)
                     {
-                        pDrawList.PrimWriteIdx((ushort)(pDrawList._VtxCurrentIdx + 0));
-                        pDrawList.PrimWriteIdx((ushort)(pDrawList._VtxCurrentIdx + 2));
-                        pDrawList.PrimWriteIdx((ushort)(pDrawList._VtxCurrentIdx + 1));
-                        pDrawList.PrimWriteIdx((ushort)(pDrawList._VtxCurrentIdx + 3));
-                        pDrawList.PrimWriteIdx((ushort)(pDrawList._VtxCurrentIdx + 2));
-                        pDrawList.PrimWriteIdx((ushort)(pDrawList._VtxCurrentIdx + 1));
+                        pDrawList.PrimWriteIdx((ushort)(pDrawList.VtxCurrentIdx + 0));
+                        pDrawList.PrimWriteIdx((ushort)(pDrawList.VtxCurrentIdx + 2));
+                        pDrawList.PrimWriteIdx((ushort)(pDrawList.VtxCurrentIdx + 1));
+                        pDrawList.PrimWriteIdx((ushort)(pDrawList.VtxCurrentIdx + 3));
+                        pDrawList.PrimWriteIdx((ushort)(pDrawList.VtxCurrentIdx + 2));
+                        pDrawList.PrimWriteIdx((ushort)(pDrawList.VtxCurrentIdx + 1));
                     }
                     pDrawList.PrimWriteVtx(new Vector2(s_oPieMenuContext.m_oCenter.X + fCosInner * (fMinRadius + oStyle.ItemInnerSpacing.X), s_oPieMenuContext.m_oCenter.Y + fSinInner * (fMinRadius + oStyle.ItemInnerSpacing.X)), ImGui.GetFontTexUvWhitePixel(), iColor);
                     pDrawList.PrimWriteVtx(new Vector2(s_oPieMenuContext.m_oCenter.X + fCosOuter * (fMaxRadius - oStyle.ItemInnerSpacing.X), s_oPieMenuContext.m_oCenter.Y + fSinOuter * (fMaxRadius - oStyle.ItemInnerSpacing.X)), ImGui.GetFontTexUvWhitePixel(), iColor);

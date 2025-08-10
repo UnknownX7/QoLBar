@@ -1,6 +1,6 @@
 using System;
 using Dalamud.Game.ClientState.Conditions;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace QoLBar.Conditions;
 

@@ -70,7 +70,7 @@ public unsafe class Game
 
     // Macro Execution
     public delegate void ExecuteMacroDelegate(RaptureShellModule* raptureShellModule, nint macro);
-    [Signature("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4D 28")]
+    [Signature("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 4E ?? 49 8B D6")]
     public static Hook<ExecuteMacroDelegate> ExecuteMacroHook;
     public static RaptureShellModule* raptureShellModule;
     public static RaptureMacroModule* raptureMacroModule;
@@ -102,7 +102,7 @@ public unsafe class Game
     private static Dictionary<uint, string> usables;
     [Signature("48 8D 0D ?? ?? ?? ?? 4C 8B C0 8B D7", ScanType = ScanType.StaticAddress)]
     private static nint performanceStruct;
-    [Signature("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 33 F6 83 F8 07")]
+    [Signature("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 45 33 C0")]
     private static delegate* unmanaged<nint, byte, void> startPerformance;
 
     public static void Initialize()
@@ -137,7 +137,7 @@ public unsafe class Game
 
     public static void ReadyCommand()
     {
-        if (chatQueueTimer > 0 && (chatQueueTimer -= ImGuiNET.ImGui.GetIO().DeltaTime) <= 0 && chatQueue.Count > 0)
+        if (chatQueueTimer > 0 && (chatQueueTimer -= Dalamud.Bindings.ImGui.ImGui.GetIO().DeltaTime) <= 0 && chatQueue.Count > 0)
             ExecuteCommand(chatQueue.Dequeue(), true);
 
         if (retryItem > 0)
@@ -339,7 +339,7 @@ public unsafe class Game
         macroQueue.Clear();
     }
 
-    public static AtkUnitBase* GetAddonStructByName(string name, int index) => (AtkUnitBase*)DalamudApi.GameGui.GetAddonByName(name, index);
+    public static AtkUnitBase* GetAddonStructByName(string name, int index) => (AtkUnitBase*)DalamudApi.GameGui.GetAddonByName(name, index).Address;
 
     public static AtkUnitBase* GetFocusedAddon()
     {

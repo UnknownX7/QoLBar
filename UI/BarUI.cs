@@ -1,7 +1,7 @@
 using System;
 using System.Numerics;
 using System.Collections.Generic;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
 using static QoLBar.BarCfg;
 
