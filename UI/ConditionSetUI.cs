@@ -2,7 +2,7 @@ using System;
 using System.Numerics;
 using System.Collections.Generic;
 using System.Linq;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Logging;
@@ -112,7 +112,7 @@ public static class ConditionSetUI
         ImGui.SameLine();
 
         ImGui.Button(FontAwesomeIcon.Times.ToIconString(), buttonSize);
-        if (hasSelectedSet && ImGui.BeginPopupContextItem(null, ImGuiPopupFlags.MouseButtonLeft))
+        if (hasSelectedSet && ImGui.BeginPopupContextItem(default, ImGuiPopupFlags.MouseButtonLeft))
         {
             if (ImGui.Selectable(FontAwesomeIcon.TrashAlt.ToIconString()))
             {
@@ -266,7 +266,7 @@ public static class ConditionSetUI
             var selectedCondition = ConditionManager.GetCondition(cndCfg.ID);
             var selectedCategory = ConditionManager.GetConditionCategory(selectedCondition);
 
-            ImGui.Columns(3, null, false);
+            ImGui.Columns(3, default, false);
 
             ImGui.PushFont(UiBuilder.IconFont);
             ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(2, ImGui.GetStyle().FramePadding.Y));

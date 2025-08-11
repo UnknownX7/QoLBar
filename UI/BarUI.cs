@@ -1,7 +1,7 @@
 using System;
 using System.Numerics;
 using System.Collections.Generic;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
 using static QoLBar.BarCfg;
 
@@ -57,7 +57,7 @@ public class BarUI : IDisposable
     public static ShCfg tempSh;
 
     private Vector2 window = ImGuiHelpers.MainViewport.Size;
-    private Vector2 monitor = ImGui.GetPlatformIO().Monitors[0].MainSize;
+    private Vector2 monitor => ImGui.GetPlatformIO().Monitors[0].MainSize;
     public Vector2 UsableArea => IsDocked ? window : monitor;
 
     private Vector2 barSize = new(200, 38);

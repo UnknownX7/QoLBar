@@ -2,7 +2,7 @@ using System;
 using System.Numerics;
 using System.Collections.Generic;
 using System.Linq;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using static QoLBar.ShCfg;
@@ -302,7 +302,7 @@ public class ShortcutUI : IDisposable
                 var cols = parent.Config.CategoryColumns;
                 OnClick(cols > 0 && parent.children.Count >= (cols * (cols - 1) + 1), !activated, wasHovered);
                 if (!parent.Config.CategoryStaysOpen && sh.Type == ShortcutType.Command)
-                    ImGui.SetWindowFocus(null);
+                    ImGui.ClearWindowFocus();
             }
 
             if (activated)
@@ -360,7 +360,7 @@ public class ShortcutUI : IDisposable
         PluginUI.DrawExternalWindow(() => DrawConfig(Config.Name.Contains("::")), parentBar.IsDocked);
 
         var windowHovered = ImGui.IsWindowHovered(ImGuiHoveredFlags.AllowWhenBlockedByActiveItem | ImGuiHoveredFlags.ChildWindows);
-        isCategoryHovered = windowHovered || !wasCategoryHovered || ImGui.IsPopupOpen(null, ImGuiPopupFlags.AnyPopupId);
+        isCategoryHovered = windowHovered || !wasCategoryHovered || ImGui.IsPopupOpen(default, ImGuiPopupFlags.AnyPopupId);
 
         if (Config.CategoryHoverClose)
         {
@@ -769,7 +769,7 @@ public class ShortcutUI : IDisposable
         return ret;
     }
 
-    public static Vector4 AnimateColor(Vector4 c)
+    public static unsafe Vector4 AnimateColor(Vector4 c)
     {
         float r, g, b, a, x;
         r = g = b = a = 1;
@@ -779,13 +779,13 @@ public class ShortcutUI : IDisposable
         switch (anim)
         {
             case 0: // Slow Rainbow
-                ImGui.ColorConvertHSVtoRGB(((t * 15) % 360) / 360, 1, 1, out r, out g, out b);
+                ImGui.ColorConvertHSVtoRGB(((t * 15) % 360) / 360, 1, 1, &r, &g, &b);
                 break;
             case 1: // Rainbow
-                ImGui.ColorConvertHSVtoRGB(((t * 30) % 360) / 360, 1, 1, out r, out g, out b);
+                ImGui.ColorConvertHSVtoRGB(((t * 30) % 360) / 360, 1, 1, &r, &g, &b);
                 break;
             case 2: // Fast Rainbow
-                ImGui.ColorConvertHSVtoRGB(((t * 60) % 360) / 360, 1, 1, out r, out g, out b);
+                ImGui.ColorConvertHSVtoRGB(((t * 60) % 360) / 360, 1, 1, &r, &g, &b);
                 break;
             case 3: // Slow Fade
                 r = c.X; g = c.Y; b = c.Z;
