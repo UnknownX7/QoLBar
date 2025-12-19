@@ -22,7 +22,7 @@ public class RoleCondition : ICondition, IDrawableCondition, IArgCondition, ICon
     public string ConditionName => "Role";
     public string CategoryName => "Role";
     public int DisplayPriority => 0;
-    public bool Check(dynamic arg) => DalamudApi.ClientState.LocalPlayer is { } player
+    public bool Check(dynamic arg) => DalamudApi.ObjectTable.LocalPlayer is { } player
         && ((uint)arg < 30 ? player.ClassJob.ValueNullable?.Role : player.ClassJob.ValueNullable?.ClassJobCategory.RowId) == (uint)arg;
     public string GetTooltip(CndCfg cndCfg) => null;
     public string GetSelectableTooltip(CndCfg cndCfg) => null;

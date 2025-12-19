@@ -4,7 +4,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Numerics;
 using System.Text;
-using Dalamud.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 

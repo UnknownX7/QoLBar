@@ -8,7 +8,7 @@ public class JobCondition : ICondition, IDrawableCondition, IArgCondition, ICond
     public string ConditionName => "Job";
     public string CategoryName => "Job";
     public int DisplayPriority => 0;
-    public bool Check(dynamic arg) => DalamudApi.ClientState.LocalPlayer is { } player && player.ClassJob.RowId == (uint)arg;
+    public bool Check(dynamic arg) => DalamudApi.ObjectTable.LocalPlayer is { } player && player.ClassJob.RowId == (uint)arg;
     public string GetTooltip(CndCfg cndCfg) => null;
     public string GetSelectableTooltip(CndCfg cndCfg) => "Advanced condition.";
     public void Draw(CndCfg cndCfg)
@@ -27,5 +27,5 @@ public class JobCondition : ICondition, IDrawableCondition, IArgCondition, ICond
         }
         ImGui.EndCombo();
     }
-    public dynamic GetDefaultArg(CndCfg cndCfg) => DalamudApi.ClientState.LocalPlayer is { } player ? player.ClassJob.RowId : 0;
+    public dynamic GetDefaultArg(CndCfg cndCfg) => DalamudApi.ObjectTable.LocalPlayer is { } player ? player.ClassJob.RowId : 0;
 }
