@@ -271,8 +271,11 @@ public class Configuration : IPluginConfiguration
             if (!tempConfig.Exists)
                 SaveTempConfig();
 
-            try { tempConfig.CopyTo(backupFolder.FullName + $"\\v{PluginVersion} {DateTime.Now:yyyy-MM-dd HH.mm.ss}.json"); }
-            catch (Exception e) { DalamudApi.LogError("Failed to back up config!", e); }
+            if (tempConfig.Exists)
+            {
+                try { tempConfig.CopyTo(backupFolder.FullName + $"\\v{PluginVersion} {DateTime.Now:yyyy-MM-dd HH.mm.ss}.json"); }
+                catch (Exception e) { DalamudApi.LogError("Failed to back up config!", e); }
+            }
 
             UpdateVersion();
             Save();
@@ -288,6 +291,8 @@ public class Configuration : IPluginConfiguration
     {
         try
         {
+            if (!ConfigFile.Exists)
+                return;
             if (!backupFolder.Exists)
                 backupFolder.Create();
             ConfigFile.CopyTo(tempConfig.FullName, true);

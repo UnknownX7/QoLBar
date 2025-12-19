@@ -134,7 +134,7 @@ public class CharacterCondition : ICondition, IDrawableCondition, IArgCondition,
     public string ID => "c";
     public string ConditionName => "Character ID";
     public int DisplayPriority => 0;
-    public bool Check(dynamic arg) => (ulong)arg == DalamudApi.ClientState.LocalContentId;
+    public bool Check(dynamic arg) => (ulong)arg == DalamudApi.PlayerState.ContentId;
     public string GetTooltip(CndCfg cndCfg) => $"ID: {cndCfg.Arg}";
     public string GetSelectableTooltip(CndCfg cndCfg) => "Selecting this will assign the current character's ID to this condition.";
     public void Draw(CndCfg cndCfg)
@@ -152,7 +152,7 @@ public class CharacterCondition : ICondition, IDrawableCondition, IArgCondition,
 
         ImGuiEx.SetItemTooltip("If this condition has no data when imported,\nit will automatically be assigned.");
     }
-    public dynamic GetDefaultArg(CndCfg cndCfg) => DalamudApi.ClientState.LocalContentId;
+    public dynamic GetDefaultArg(CndCfg cndCfg) => DalamudApi.PlayerState.ContentId;
     public void OnImport(CndCfg cndCfg)
     {
         if (cndCfg.Arg == 0)
@@ -193,7 +193,7 @@ public class WeaponDrawnCondition : ICondition
     public string ID => "wd";
     public string ConditionName => "Weapon Drawn";
     public int DisplayPriority => 0;
-    public bool Check(dynamic arg) => DalamudApi.ClientState.LocalPlayer is { } player && (player.StatusFlags & StatusFlags.WeaponOut) != 0;
+    public bool Check(dynamic arg) => DalamudApi.ObjectTable.LocalPlayer is { } player && (player.StatusFlags & StatusFlags.WeaponOut) != 0;
 }
 
 [MiscCondition]

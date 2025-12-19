@@ -7,7 +7,7 @@ public class CurrentJobPreset : IConditionSetPreset
     public string Name => "Current Job";
     public CndSetCfg Generate()
     {
-        var jobRow = DalamudApi.ClientState.LocalPlayer?.ClassJob;
+        var jobRow = DalamudApi.ObjectTable.LocalPlayer?.ClassJob;
         if (jobRow == null) return null;
 
         var set = new CndSetCfg { Name = jobRow.Value.ValueNullable?.Abbreviation.ExtractText() };
@@ -22,7 +22,7 @@ public class CurrentRolePreset : IConditionSetPreset
     public string Name => "Current Role";
     public CndSetCfg Generate()
     {
-        var jobRow = DalamudApi.ClientState.LocalPlayer?.ClassJob;
+        var jobRow = DalamudApi.ObjectTable.LocalPlayer?.ClassJob;
         if (jobRow == null) return null;
 
         var role = jobRow.Value.ValueNullable?.Role;

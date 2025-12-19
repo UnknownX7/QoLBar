@@ -57,7 +57,7 @@ public unsafe class Game
     public static AgentInventoryContext* agentInventoryContext;
 
     public static AddonConfig* addonConfig;
-    public static int CurrentHUDLayout => addonConfig->ModuleData->CurrentHudLayout;
+    public static int CurrentHUDLayout => addonConfig->ActiveDataSet->CurrentHudLayout;
 
     // Command Execution
     public delegate void ProcessChatBoxDelegate(UIModule* uiModule, nint message, nint unused, byte a4);
