@@ -47,12 +47,12 @@ public unsafe class Game
 
     public static DateTimeOffset EorzeaTime => DateTimeOffset.FromUnixTimeSeconds(Framework.Instance()->ClientTime.EorzeaTime);
 
-    public static bool IsInExplorerMode => (*((byte*)EventFramework.Instance()->GetInstanceContentDirector() + 0x33C) & 1) != 0; // Offset can be found in Client::Game::GameMain_IsInInstanceArea
+    public static bool IsInExplorerMode => (EventFramework.Instance()->GetInstanceContentDirector()->ContentFlags & 1) != 0;
 
     public static UIModule* uiModule;
 
     public static bool IsGameTextInputActive => uiModule->GetRaptureAtkModule()->AtkModule.IsTextInputActive();
-    public static bool IsMacroRunning => *(int*)((nint)raptureShellModule + 0x2C0) >= 0;
+    public static bool IsMacroRunning => raptureShellModule->MacroCurrentLine >= 0;
 
     public static AgentInventoryContext* agentInventoryContext;
 
