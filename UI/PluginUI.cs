@@ -15,11 +15,7 @@ public class PluginUI : IDisposable
 
     public readonly List<BarUI> bars;
 
-#if DEBUG
-    public bool configOpen = true;
-#else
-        public bool configOpen = false;
-#endif
+    public bool configOpen = false;
     public void ToggleConfig() => configOpen = !configOpen;
 
     private bool lastConfigPopupOpen = false;
