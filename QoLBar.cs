@@ -193,7 +193,7 @@ public class QoLBar : IDalamudPlugin
             buildToolkit.OnPreBuild(tk =>
             {
                 var config = new SafeFontConfig { SizePx = Math.Min(Math.Max(Config.FontSize, 1), MaxFontSize) };
-                var font = tk.AddDalamudAssetFont(DalamudAsset.NotoSansJpMedium, config);
+                var font = tk.AddDalamudAssetFont(DalamudAsset.NotoSansCjkMedium, config);
                 config.MergeFont = font;
                 tk.AddGameSymbol(config);
                 tk.SetFontScaleMode(font, FontScaleMode.UndoGlobalScale);
