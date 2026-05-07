@@ -2,8 +2,8 @@ using System;
 using System.Text.RegularExpressions;
 using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Interface;
-using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using Dalamud.Bindings.ImGui;
+using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 
 namespace QoLBar.Conditions;
 
@@ -274,7 +274,7 @@ public class PartyCondition : ICondition, IDrawableCondition, IArgCondition
     public string ID => "pt";
     public string ConditionName => "# Party Member Exists";
     public int DisplayPriority => 0;
-    public unsafe bool Check(dynamic arg) => Framework.Instance()->GetUIModule()->GetPronounModule()->ResolvePlaceholder($"<{arg}>", 0, 0) != null;
+    public unsafe bool Check(dynamic arg) => PronounModule.Instance()->ResolvePlaceholder($"<{arg}>", 0, 0) != null;
     public string GetTooltip(CndCfg cndCfg) => "This will only return true if the party member exists in the current area.";
     public string GetSelectableTooltip(CndCfg cndCfg) => null;
     public void Draw(CndCfg cndCfg)
@@ -292,7 +292,7 @@ public class PetCondition : ICondition
     public string ID => "pe";
     public string ConditionName => "Pet Exists";
     public int DisplayPriority => 0;
-    public unsafe bool Check(dynamic arg) => Framework.Instance()->GetUIModule()->GetPronounModule()->ResolvePlaceholder("<pet>", 0, 0) != null;
+    public unsafe bool Check(dynamic arg) => PronounModule.Instance()->ResolvePlaceholder("<pet>", 0, 0) != null;
 }
 
 [MiscCondition]
@@ -301,7 +301,7 @@ public class ChocoboCondition : ICondition
     public string ID => "ce";
     public string ConditionName => "Chocobo Exists";
     public int DisplayPriority => 0;
-    public unsafe bool Check(dynamic arg) => Framework.Instance()->GetUIModule()->GetPronounModule()->ResolvePlaceholder("<c>", 0, 0) != null;
+    public unsafe bool Check(dynamic arg) => PronounModule.Instance()->ResolvePlaceholder("<c>", 0, 0) != null;
 }
 
 [MiscCondition]
